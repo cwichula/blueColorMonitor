@@ -34,7 +34,7 @@
       <canvas id="sampleOverlay" class="sample-overlay"></canvas>
       <div id="cameraPlaceholder" class="camera-placeholder">
         <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
-        <p>Naciśnij „Start”, aby uruchomić kamerę i skierować ją na ekran lub źródło światła.</p>
+        <p>Naciśnij „Start”.</p>
       </div>
     </div>
     <div class="camera-controls">
@@ -115,17 +115,17 @@
       <div class="legend-item">
         <span class="legend-swatch legend-good"></span>
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
-        <span>Bezpieczna — oczy odpoczywają</span>
+        <span>Bezpieczna</span>
       </div>
       <div class="legend-item">
         <span class="legend-swatch legend-warning"></span>
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-        <span>Umiarkowana — rób przerwy</span>
+        <span>Umiarkowana</span>
       </div>
       <div class="legend-item">
         <span class="legend-swatch legend-critical"></span>
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 1 12l11 10 11-10L12 2zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z"/></svg>
-        <span>Szkodliwa — bardzo męczy oczy</span>
+        <span>Szkodliwa</span>
       </div>
     </div>
 
@@ -136,19 +136,16 @@
           <th scope="col">Czas</th>
           <th scope="col">Jasność kanału B</th>
           <th scope="col">Udział niebieskiego</th>
-          <th scope="col">Strefa*</th>
+          <th scope="col">Strefa</th>
         </tr></thead>
         <tbody id="readingsBody"></tbody>
       </table>
-      <p class="hint">*Wg udziału niebieskiego — patrz zakładka „Dokumentacja”.</p>
     </div>
   </section>
 
   <details class="card settings-card">
     <summary>Ustawienia progów stref</summary>
     <div class="settings-body">
-      <p class="hint">Progi i wskazówki doboru: zakładka „Dokumentacja”.</p>
-
       <div class="settings-group">
         <h4 class="settings-group-title">Jasność kanału B</h4>
         <label class="slider-row">
@@ -182,6 +179,7 @@
   <nav class="doc-toc card" aria-label="Spis treści dokumentacji">
     <h2>Spis treści</h2>
     <ol>
+      <li><a href="#doc-start">Szybki start</a></li>
       <li><a href="#doc-metodologia">Jak działa pomiar</a></li>
       <li><a href="#doc-jednostki">Jednostki i normy</a></li>
       <li><a href="#doc-strefy">Strefy i progi</a></li>
@@ -189,17 +187,20 @@
     </ol>
   </nav>
 
-  <h2 id="doc-metodologia" class="doc-chapter">1. Jak działa pomiar</h2>
+  <h2 id="doc-start" class="doc-chapter">1. Szybki start</h2>
 
   <section class="card">
     <h3>Jak mierzyć trafniej</h3>
     <ul>
+      <li>Naciśnij „Start” w zakładce „Pomiar” i skieruj tylny aparat na ekran lub źródło światła, które chcesz sprawdzić.</li>
       <li>Ustaw telefon w stałej odległości od ekranu (np. 15–20 cm), bez zmiany oświetlenia otoczenia w trakcie pomiaru.</li>
       <li>Użyj tylnego aparatu — ma mniej agresywne korekcje automatyczne niż przedni.</li>
       <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
-      <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu (rozdział 3).</li>
+      <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu (rozdział 4).</li>
     </ul>
   </section>
+
+  <h2 id="doc-metodologia" class="doc-chapter">2. Jak działa pomiar</h2>
 
   <section class="card">
     <h3>Kamera telefonu a spektrometr</h3>
@@ -260,7 +261,7 @@
     tabeli odczytów.</p>
   </section>
 
-  <h2 id="doc-jednostki" class="doc-chapter">2. Jednostki i normy</h2>
+  <h2 id="doc-jednostki" class="doc-chapter">3. Jednostki i normy</h2>
 
   <section class="card">
     <h3>Dlaczego nie luksy ani lumeny</h3>
@@ -334,14 +335,14 @@
     odwzorowaniem żadnej normy (WHO, IEC, ICNIRP czy CIE).</p>
   </section>
 
-  <h2 id="doc-strefy" class="doc-chapter">3. Strefy i progi</h2>
+  <h2 id="doc-strefy" class="doc-chapter">4. Strefy i progi</h2>
 
   <section class="card">
     <h3>Strefy kolorów</h3>
     <p>Obie metryki mają własne, niezależnie ustawiane progi (zakładka
     „Pomiar” → „Ustawienia progów stref”) — 33%/66% na jednej nie znaczy tego
-    samego, co na drugiej (patrz rozdział 1 wyżej). To <b>udział niebieskiego</b>
-    decyduje o kolorze w tabeli odczytów:</p>
+    samego, co na drugiej (patrz rozdział 2 wyżej). To <b>udział niebieskiego</b>
+    decyduje o kolorze w legendzie pod wykresami i w tabeli odczytów:</p>
     <ul>
       <li><b>Zielona — bezpieczna:</b> światło ciepłe lub neutralne, oczy odpoczywają.</li>
       <li><b>Żółta — umiarkowana:</b> zauważalne przesunięcie w stronę niebieskiego, warto robić przerwy.</li>
@@ -356,14 +357,14 @@
     filmujesz. Dostosuj progi metodą prób do typowej jasności swojego
     ekranu/otoczenia.</p>
     <p><b>Udział niebieskiego</b> ma naturalny punkt startowy: <b>33%</b>
-    odpowiada mniej więcej neutralnej bieli (R≈G≈B — patrz rozdział 1).
+    odpowiada mniej więcej neutralnej bieli (R≈G≈B — patrz rozdział 2).
     Domyślne 33%/66% to dobry punkt wyjścia, który możesz zawęzić lub
     poszerzyć pod własne wyczucie.</p>
     <p>Progi obu metryk są całkowicie niezależne — zmiana jednej nie wpływa
     na drugą.</p>
   </section>
 
-  <h2 id="doc-urzadzenia" class="doc-chapter">4. Różnice między urządzeniami</h2>
+  <h2 id="doc-urzadzenia" class="doc-chapter">5. Różnice między urządzeniami</h2>
 
   <section class="card">
     <h3>Dlaczego podgląd wygląda inaczej na różnych urządzeniach</h3>
@@ -392,7 +393,7 @@
     kodzie i tej samej scenie różne modele telefonów mają różnej jakości
     sensory i różnie strojoną automatykę producenta — jeden szybciej i
     celniej dobierze ekspozycję w słabym świetle niż drugi. To, w połączeniu
-    z faktem, że wskaźniki w tej aplikacji są <b>względne</b> (patrz rozdział 1),
+    z faktem, że wskaźniki w tej aplikacji są <b>względne</b> (patrz rozdział 3),
     oznacza: wyniki (i wygląd podglądu) sensownie porównuj na tym samym
     telefonie w czasie, nie między różnymi modelami/urządzeniami.</p>
   </section>

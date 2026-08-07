@@ -337,7 +337,7 @@
     }
     video.srcObject = null;
     placeholder.classList.remove('hidden');
-    placeholder.querySelector('p').textContent = 'Naciśnij „Start”, aby uruchomić kamerę i skierować ją na ekran lub źródło światła.';
+    placeholder.querySelector('p').textContent = 'Naciśnij „Start”.';
     startBtn.disabled = false;
     stopBtn.disabled = true;
     switchBtn.disabled = true;
