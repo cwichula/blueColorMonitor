@@ -296,19 +296,14 @@
   }
 
   // ---- camera lifecycle ----
-  // Best-effort only: most Android browsers (incl. Chrome on Xiaomi/Ulefone-class phones)
-  // don't expose manual exposure/white-balance via getUserMedia, so this silently no-ops
-  // there. When it IS supported, locking to a fixed exposure/white-balance point stops the
-  // camera's auto-adjustment from fighting the very brightness changes we're trying to measure.
-  async function tryStabilizeExposure(track) {
-    try {
-      const caps = track.getCapabilities ? track.getCapabilities() : {};
-      const advanced = {};
-      if (caps.exposureMode && caps.exposureMode.includes('manual')) advanced.exposureMode = 'manual';
-      if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('manual')) advanced.whiteBalanceMode = 'manual';
-      if (Object.keys(advanced).length) await track.applyConstraints({ advanced: [advanced] });
-    } catch (_) { /* unsupported on this device/browser — falls back to full auto */ }
-  }
+  // We deliberately do NOT lock exposure/white-balance to 'manual' here. An earlier
+  // version tried that (to reduce reading jitter from auto-exposure hunting), but
+  // switching to manual mode without also pinning an explicit exposure value just
+  // freezes the camera at whatever it happened to be at that instant — often a dark,
+  // not-yet-converged reading — leaving the preview visibly dimmer than the native
+  // camera app for the rest of the session. Full auto gives a properly exposed image,
+  // matching what the native camera app shows; the "Jak to działa" tab already covers
+  // the measurement-noise trade-off this implies.
 
   async function startCamera() {
     startBtn.disabled = true;
@@ -320,9 +315,6 @@
       await video.play();
       placeholder.classList.add('hidden');
       drawOverlay();
-
-      const track = stream.getVideoTracks()[0];
-      await tryStabilizeExposure(track);
 
       stopBtn.disabled = false;
       switchBtn.disabled = false;
