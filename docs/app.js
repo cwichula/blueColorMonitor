@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   'use strict';
 
   const WINDOW_MS = 60_000;      // how much history the charts show
@@ -42,7 +42,6 @@
   const shareWarnLabel = document.getElementById('shareWarnLabel');
   const shareCritLabel = document.getElementById('shareCritLabel');
   const infoBtn = document.getElementById('infoBtn');
-  const infoDialog = document.getElementById('infoDialog');
 
   // ---- state ----
   let stream = null;
@@ -50,7 +49,7 @@
   let sampleTimer = null;
   let history = []; // {t, raw, share, brightness, zoneRaw, zoneShare}
   // Independent thresholds per metric — 33%/66% doesn't mean the same thing on
-  // both (see the "Jak to działa" tab), so each gets its own pair rather than
+  // both (see the "Dokumentacja" tab), so each gets its own pair rather than
   // sharing one slider that would silently misrepresent one of them.
   let thresholds = {
     raw: { warn: 33, crit: 66 },
@@ -274,7 +273,7 @@
     }
     r /= n; g /= n; b /= n;
 
-    // Two deliberately different metrics — see the "Jak to działa" tab for why both exist:
+    // Two deliberately different metrics — see the "Dokumentacja" tab for why both exist:
     //  - raw:   plain blue-channel brightness (0-255 -> %). Simple, but conflates brightness with hue.
     //  - share: blue's share of R+G+B. Isolates color shift from brightness — closer to what
     //           actually drives eye strain, and what night-mode filters act on.
@@ -302,7 +301,7 @@
   // freezes the camera at whatever it happened to be at that instant — often a dark,
   // not-yet-converged reading — leaving the preview visibly dimmer than the native
   // camera app for the rest of the session. Full auto gives a properly exposed image,
-  // matching what the native camera app shows; the "Jak to działa" tab already covers
+  // matching what the native camera app shows; the "Dokumentacja" tab already covers
   // the measurement-noise trade-off this implies.
 
   async function startCamera() {
@@ -384,9 +383,6 @@
     tableToggle.textContent = showing ? 'Pokaż jako tabelę' : 'Ukryj tabelę';
   });
 
-  // ---- info dialog ----
-  infoBtn.addEventListener('click', () => infoDialog.showModal());
-
   // ---- tabs ----
   function selectTab(btn) {
     const isMonitor = btn === tabMonitor;
@@ -400,6 +396,7 @@
   }
   tabMonitor.addEventListener('click', () => selectTab(tabMonitor));
   tabMethodology.addEventListener('click', () => selectTab(tabMethodology));
+  infoBtn.addEventListener('click', () => selectTab(tabMethodology));
 
   // ---- resize ----
   window.addEventListener('resize', () => { drawOverlay(); drawCharts(); });
@@ -416,4 +413,6 @@
       navigator.serviceWorker.register('sw.js').catch(() => {});
     });
   }
+
+  if (location.search.includes('tab=methodology')) selectTab(tabMethodology);
 })();

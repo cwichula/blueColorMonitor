@@ -15,14 +15,14 @@
 
 <header class="app-header">
   <h1>Monitor Światła Niebieskiego</h1>
-  <button id="infoBtn" class="icon-btn" type="button" aria-haspopup="dialog" aria-label="Skrócone wskazówki">
+  <button id="infoBtn" class="icon-btn" type="button" aria-label="Przejdź do dokumentacji">
     <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
   </button>
 </header>
 
 <div class="tabs" role="tablist" aria-label="Widoki aplikacji">
   <button id="tabMonitor" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelMonitor">Pomiar</button>
-  <button id="tabMethodology" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelMethodology" tabindex="-1">Jak to działa</button>
+  <button id="tabMethodology" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelMethodology" tabindex="-1">Dokumentacja</button>
 </div>
 
 <main>
@@ -140,15 +140,14 @@
         </tr></thead>
         <tbody id="readingsBody"></tbody>
       </table>
-      <p class="hint">*Strefa liczona wg nowej metryki (udziału niebieskiego) — uzasadnienie w zakładce „Jak to działa”.</p>
+      <p class="hint">*Wg udziału niebieskiego — patrz zakładka „Dokumentacja”.</p>
     </div>
   </section>
 
   <details class="card settings-card">
     <summary>Ustawienia progów stref</summary>
     <div class="settings-body">
-      <p class="hint">Obie metryki mają własne progi — 33%/66% na jednej nie znaczy tego
-      samego, co 33%/66% na drugiej (wyjaśnienie w zakładce „Jak to działa”).</p>
+      <p class="hint">Progi i wskazówki doboru: zakładka „Dokumentacja”.</p>
 
       <div class="settings-group">
         <h4 class="settings-group-title">Jasność kanału B</h4>
@@ -160,7 +159,6 @@
           <span>Granica zielony / żółty: <b id="rawWarnLabel">33%</b></span>
           <input id="rawWarnSlider" type="range" min="5" max="90" value="33">
         </label>
-        <p class="hint">Brak naturalnego punktu odniesienia — dostosuj do typowej jasności swojej sceny.</p>
       </div>
 
       <div class="settings-group">
@@ -173,7 +171,6 @@
           <span>Granica zielony / żółty: <b id="shareWarnLabel">33%</b></span>
           <input id="shareWarnSlider" type="range" min="5" max="90" value="33">
         </label>
-        <p class="hint">33% odpowiada mniej więcej neutralnej bieli (R≈G≈B) — naturalny punkt startowy.</p>
       </div>
     </div>
   </details>
@@ -182,8 +179,30 @@
 
 <div id="panelMethodology" role="tabpanel" aria-labelledby="tabMethodology" class="methodology" hidden>
 
+  <nav class="doc-toc card" aria-label="Spis treści dokumentacji">
+    <h2>Spis treści</h2>
+    <ol>
+      <li><a href="#doc-metodologia">Jak działa pomiar</a></li>
+      <li><a href="#doc-jednostki">Jednostki i normy</a></li>
+      <li><a href="#doc-strefy">Strefy i progi</a></li>
+      <li><a href="#doc-urzadzenia">Różnice między urządzeniami</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="doc-metodologia" class="doc-chapter">1. Jak działa pomiar</h2>
+
   <section class="card">
-    <h2>Kamera telefonu a spektrometr</h2>
+    <h3>Jak mierzyć trafniej</h3>
+    <ul>
+      <li>Ustaw telefon w stałej odległości od ekranu (np. 15–20 cm), bez zmiany oświetlenia otoczenia w trakcie pomiaru.</li>
+      <li>Użyj tylnego aparatu — ma mniej agresywne korekcje automatyczne niż przedni.</li>
+      <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
+      <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu (rozdział 3).</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h3>Kamera telefonu a spektrometr</h3>
     <p>Prawdziwy pomiar „ile jest szkodliwego niebieskiego światła” wymaga rozłożenia
     światła na długości fal — to robi <b>spektrometr</b>: pryzmat lub siatka
     dyfrakcyjna rozszczepia światło na dziesiątki/setki wąskich pasm (np. co
@@ -203,7 +222,7 @@
   </section>
 
   <section class="card">
-    <h2>Wykres 1 — Jasność kanału B</h2>
+    <h3>Wykres 1 — Jasność kanału B</h3>
     <p><b>Co pokazuje:</b> średnią jasność samego kanału niebieskiego (B) z
     próbkowanego fragmentu obrazu, w skali 0–255 przeliczonej na %.</p>
     <p><b>Algorytm:</b></p>
@@ -224,7 +243,7 @@
   </section>
 
   <section class="card">
-    <h2>Wykres 2 — Udział niebieskiego w świetle</h2>
+    <h3>Wykres 2 — Udział niebieskiego w świetle</h3>
     <p><b>Co pokazuje:</b> jaki procent całego zarejestrowanego światła (R+G+B)
     stanowi składowa niebieska — czyli przesunięcie koloru w stronę zimnego,
     niezależnie od tego, jak jasna jest scena.</p>
@@ -241,8 +260,10 @@
     tabeli odczytów.</p>
   </section>
 
+  <h2 id="doc-jednostki" class="doc-chapter">2. Jednostki i normy</h2>
+
   <section class="card">
-    <h2>Dlaczego nie luksy ani lumeny</h2>
+    <h3>Dlaczego nie luksy ani lumeny</h3>
     <p><b>Lumen (lm)</b> opisuje całkowity strumień światła emitowany przez
     źródło — to właściwość samego źródła, nie tego, co pada na dany punkt.
     <b>Luks (lx)</b> to już natężenie oświetlenia w punkcie (lm/m²) — bliższe
@@ -265,7 +286,7 @@
   </section>
 
   <section class="card">
-    <h2>Czy istnieją globalne normy dla progów bezpieczeństwa?</h2>
+    <h3>Czy istnieją globalne normy dla progów bezpieczeństwa?</h3>
     <p>Krótko: <b>nie ma normy wyrażonej w procentach kanału kamery</b> — to w
     ogóle nie jest jednostka, w której cokolwiek się reguluje. Realne normy
     dotyczące niebieskiego światła istnieją, ale mierzą inne wielkości, w
@@ -313,11 +334,13 @@
     odwzorowaniem żadnej normy (WHO, IEC, ICNIRP czy CIE).</p>
   </section>
 
+  <h2 id="doc-strefy" class="doc-chapter">3. Strefy i progi</h2>
+
   <section class="card">
-    <h2>Strefy kolorów</h2>
+    <h3>Strefy kolorów</h3>
     <p>Obie metryki mają własne, niezależnie ustawiane progi (zakładka
     „Pomiar” → „Ustawienia progów stref”) — 33%/66% na jednej nie znaczy tego
-    samego, co na drugiej (patrz sekcje wyżej). To <b>udział niebieskiego</b>
+    samego, co na drugiej (patrz rozdział 1 wyżej). To <b>udział niebieskiego</b>
     decyduje o kolorze w tabeli odczytów:</p>
     <ul>
       <li><b>Zielona — bezpieczna:</b> światło ciepłe lub neutralne, oczy odpoczywają.</li>
@@ -326,24 +349,56 @@
     </ul>
   </section>
 
+  <section class="card">
+    <h3>Jak dobrać progi w ustawieniach</h3>
+    <p><b>Jasność kanału B</b> nie ma naturalnego punktu odniesienia — sensowna
+    wartość progu zależy wyłącznie od tego, jak jasna jest scena, którą
+    filmujesz. Dostosuj progi metodą prób do typowej jasności swojego
+    ekranu/otoczenia.</p>
+    <p><b>Udział niebieskiego</b> ma naturalny punkt startowy: <b>33%</b>
+    odpowiada mniej więcej neutralnej bieli (R≈G≈B — patrz rozdział 1).
+    Domyślne 33%/66% to dobry punkt wyjścia, który możesz zawęzić lub
+    poszerzyć pod własne wyczucie.</p>
+    <p>Progi obu metryk są całkowicie niezależne — zmiana jednej nie wpływa
+    na drugą.</p>
+  </section>
+
+  <h2 id="doc-urzadzenia" class="doc-chapter">4. Różnice między urządzeniami</h2>
+
+  <section class="card">
+    <h3>Dlaczego podgląd wygląda inaczej na różnych urządzeniach</h3>
+    <p><b>Przeglądarka vs natywna aplikacja aparatu.</b> Gdy otwierasz aparat
+    fabrycznie zainstalowany na telefonie, producent (np. Xiaomi) dokłada do
+    podglądu na żywo własne, zastrzeżone algorytmy — HDR w czasie
+    rzeczywistym, cyfrowe wzmacnianie jasności w słabym świetle, wygładzanie.
+    Strona internetowa dostaje przez przeglądarkę dużo bardziej „surowy”
+    strumień z kamery (funkcja <code>getUserMedia</code>), bez żadnego z tych
+    ulepszeń — więc z zasady będzie wyglądać płasko/ciemniej niż natywny
+    aparat, niezależnie od telefonu.</p>
+    <p><b>Różne możliwości sterowania kamerą.</b> To, jak dużo kontroli nad
+    ekspozycją i balansem bieli przeglądarka w ogóle dostaje od systemu,
+    zależy od konkretnego telefonu, sterownika kamery i wersji
+    Chrome/WebView — jedne urządzenia (typowo komputery z kamerą USB) zgłaszają
+    tylko pełną automatykę, inne (część telefonów z Androidem) zgłaszają
+    dodatkowe, bardziej zaawansowane tryby. Wcześniejsza wersja tej aplikacji
+    próbowała przełączać się na tryb ręcznej ekspozycji tam, gdzie telefon na
+    to pozwalał, bez ustawienia konkretnej wartości — co na części telefonów
+    zamrażało obraz na przypadkowej, ciemnej ekspozycji z chwili startu
+    kamery. To był błąd w kodzie (już poprawiony), nie różnica jednostek —
+    ale dobrze pokazuje, jak łatwo zachowanie potrafi się różnić między
+    urządzeniami, skoro nawet ta sama linijka kodu włącza się tylko na
+    części z nich.</p>
+    <p><b>Różne sensory i przetwarzanie obrazu (ISP).</b> Nawet przy identycznym
+    kodzie i tej samej scenie różne modele telefonów mają różnej jakości
+    sensory i różnie strojoną automatykę producenta — jeden szybciej i
+    celniej dobierze ekspozycję w słabym świetle niż drugi. To, w połączeniu
+    z faktem, że wskaźniki w tej aplikacji są <b>względne</b> (patrz rozdział 1),
+    oznacza: wyniki (i wygląd podglądu) sensownie porównuj na tym samym
+    telefonie w czasie, nie między różnymi modelami/urządzeniami.</p>
+  </section>
+
 </div>
 </main>
-
-<dialog id="infoDialog" class="info-dialog">
-  <form method="dialog">
-    <h2>Szybkie wskazówki</h2>
-    <p>Pełne wyjaśnienie algorytmów, jednostek i różnicy między kamerą a
-    spektrometrem jest w zakładce <b>„Jak to działa”</b> u góry ekranu.
-    Tu tylko skrót, jak mierzyć trafniej:</p>
-    <ul>
-      <li>Ustaw telefon w stałej odległości od ekranu (np. 15–20 cm), bez zmiany oświetlenia otoczenia w trakcie pomiaru.</li>
-      <li>Użyj tylnego aparatu — ma mniej agresywne korekcje automatyczne niż przedni.</li>
-      <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
-      <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu.</li>
-    </ul>
-    <button class="btn btn-primary" type="submit">Rozumiem</button>
-  </form>
-</dialog>
 
 <script src="app.js"></script>
 </body>
