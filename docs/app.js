@@ -1,0 +1,427 @@
+(() => {
+  'use strict';
+
+  const WINDOW_MS = 60_000;      // how much history the charts show
+  const SAMPLE_MS = 200;         // sampling cadence (5 Hz) — light enough for budget phones
+  const SAMPLE_SIZE = 32;        // offscreen sampling canvas side, px
+  const CROP_FRACTION = 0.6;     // sample the center 60% of the frame
+
+  const ICONS = {
+    good: '<path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>',
+    warning: '<path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
+    critical: '<path fill="currentColor" d="M12 2 1 12l11 10 11-10L12 2zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z"/>'
+  };
+  const ZONE_LABEL = { good: 'BEZPIECZNA', warning: 'UMIARKOWANA', critical: 'SZKODLIWA' };
+  const ZONE_VAR = { good: '--status-good', warning: '--status-warning', critical: '--status-critical' };
+
+  // ---- DOM: camera ----
+  const video = document.getElementById('video');
+  const overlay = document.getElementById('sampleOverlay');
+  const placeholder = document.getElementById('cameraPlaceholder');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const switchBtn = document.getElementById('switchBtn');
+
+  // ---- DOM: tabs ----
+  const tabMonitor = document.getElementById('tabMonitor');
+  const tabMethodology = document.getElementById('tabMethodology');
+  const panelMonitor = document.getElementById('panelMonitor');
+  const panelMethodology = document.getElementById('panelMethodology');
+
+  // ---- DOM: shared stats / controls ----
+  const overallBrightnessEl = document.getElementById('overallBrightness');
+  const tableToggle = document.getElementById('tableToggle');
+  const tableWrap = document.getElementById('tableWrap');
+  const readingsBody = document.getElementById('readingsBody');
+  const rawWarnSlider = document.getElementById('rawWarnSlider');
+  const rawCritSlider = document.getElementById('rawCritSlider');
+  const rawWarnLabel = document.getElementById('rawWarnLabel');
+  const rawCritLabel = document.getElementById('rawCritLabel');
+  const shareWarnSlider = document.getElementById('shareWarnSlider');
+  const shareCritSlider = document.getElementById('shareCritSlider');
+  const shareWarnLabel = document.getElementById('shareWarnLabel');
+  const shareCritLabel = document.getElementById('shareCritLabel');
+  const infoBtn = document.getElementById('infoBtn');
+  const infoDialog = document.getElementById('infoDialog');
+
+  // ---- state ----
+  let stream = null;
+  let facingMode = 'environment';
+  let sampleTimer = null;
+  let history = []; // {t, raw, share, brightness, zoneRaw, zoneShare}
+  // Independent thresholds per metric — 33%/66% doesn't mean the same thing on
+  // both (see the "Jak to działa" tab), so each gets its own pair rather than
+  // sharing one slider that would silently misrepresent one of them.
+  let thresholds = {
+    raw: { warn: 33, crit: 66 },
+    share: { warn: 33, crit: 66 }
+  };
+
+  const sampleCanvas = document.createElement('canvas');
+  sampleCanvas.width = SAMPLE_SIZE;
+  sampleCanvas.height = SAMPLE_SIZE;
+  const sampleCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+
+  function css(varName) {
+    return getComputedStyle(document.body).getPropertyValue(varName).trim();
+  }
+
+  function zoneFor(value, t) {
+    if (value < t.warn) return 'good';
+    if (value < t.crit) return 'warning';
+    return 'critical';
+  }
+
+  // ---- gauge geometry (shared math, per-instance elements) ----
+  // CY sits above the viewBox's vertical middle so the hub — and the needle
+  // swinging from it — stay clear of the value/badge text anchored below.
+  const CX = 100, CY = 95, R = 78;
+  function angleForValue(v) { return 180 - v * 1.8; }
+  function polar(cx, cy, r, angleDeg) {
+    const rad = (angleDeg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
+  }
+  function arcPath(v0, v1) {
+    const a0 = angleForValue(v0);
+    const a1 = angleForValue(v1);
+    const p0 = polar(CX, CY, R, a0);
+    const p1 = polar(CX, CY, R, a1);
+    return `M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)} A ${R} ${R} 0 0 1 ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+  }
+
+  function createGauge(svgId, valueElId, badgeId) {
+    const svg = document.getElementById(svgId);
+    const badge = document.getElementById(badgeId);
+    return {
+      good: svg.querySelector('.gauge-good'),
+      warn: svg.querySelector('.gauge-warning'),
+      crit: svg.querySelector('.gauge-critical'),
+      needle: svg.querySelector('.gauge-needle'),
+      valueEl: document.getElementById(valueElId),
+      badge,
+      icon: badge.querySelector('.status-icon'),
+      label: badge.querySelector('.status-label')
+    };
+  }
+  const gaugeRaw = createGauge('gaugeRaw', 'gaugeValueRaw', 'statusBadgeRaw');
+  const gaugeShare = createGauge('gaugeShare', 'gaugeValueShare', 'statusBadgeShare');
+
+  function drawGaugeBands(g, t) {
+    g.good.setAttribute('d', arcPath(0, t.warn));
+    g.warn.setAttribute('d', arcPath(t.warn, t.crit));
+    g.crit.setAttribute('d', arcPath(t.crit, 100));
+  }
+  function setNeedle(g, value) {
+    g.needle.style.transform = `rotate(${1.8 * value - 90}deg)`;
+  }
+  function setStatus(g, zone, value) {
+    const cls = zone == null ? 'idle' : zone;
+    g.badge.className = `status-badge status-${cls}`;
+    g.label.textContent = zone == null ? 'Brak danych' : ZONE_LABEL[zone];
+    g.icon.innerHTML = zone == null ? '' : ICONS[zone];
+    g.icon.style.color = zone == null ? '' : `var(${ZONE_VAR[zone]})`;
+  }
+  function updateGauge(g, zone, value) {
+    g.valueEl.textContent = value == null ? '--' : `${Math.round(value)}%`;
+    setNeedle(g, value == null ? 0 : value);
+    setStatus(g, zone, value);
+  }
+
+  // ---- charts ----
+  function resizeCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.round(rect.width * dpr));
+    const h = Math.max(1, Math.round(rect.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    return { w: canvas.width, h: canvas.height };
+  }
+
+  function drawChart(canvas, ctx, accessor, emptyMessage, t) {
+    const { w, h } = resizeCanvas(canvas);
+    ctx.clearRect(0, 0, w, h);
+
+    const padL = 34, padR = 8, padT = 10, padB = 20;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+    const yFor = (val) => padT + plotH * (1 - val / 100);
+
+    const bands = [
+      { from: 0, to: t.warn, color: css('--status-good-bg') },
+      { from: t.warn, to: t.crit, color: css('--status-warning-bg') },
+      { from: t.crit, to: 100, color: css('--status-critical-bg') }
+    ];
+    for (const b of bands) {
+      const y0 = yFor(b.to), y1 = yFor(b.from);
+      ctx.fillStyle = b.color;
+      ctx.fillRect(padL, y0, plotW, y1 - y0);
+    }
+
+    ctx.strokeStyle = css('--gridline');
+    ctx.lineWidth = 1;
+    ctx.fillStyle = css('--text-muted');
+    ctx.font = `${11 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    [0, 25, 50, 75, 100].forEach((tick) => {
+      const y = yFor(tick);
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + plotW, y);
+      ctx.stroke();
+      ctx.fillText(String(tick), padL - 6, y);
+    });
+
+    ctx.strokeStyle = css('--baseline');
+    ctx.beginPath();
+    ctx.moveTo(padL, padT);
+    ctx.lineTo(padL, padT + plotH);
+    ctx.lineTo(padL + plotW, padT + plotH);
+    ctx.stroke();
+
+    const now = Date.now();
+    const windowStart = now - WINDOW_MS;
+    const visible = history.filter((p) => p.t >= windowStart);
+
+    if (visible.length < 2) {
+      ctx.fillStyle = css('--text-muted');
+      ctx.textAlign = 'center';
+      ctx.font = `${13 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
+      ctx.fillText(emptyMessage, padL + plotW / 2, padT + plotH / 2);
+    } else {
+      const xFor = (t) => padL + ((t - windowStart) / WINDOW_MS) * plotW;
+      ctx.strokeStyle = css('--series-1');
+      ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      visible.forEach((p, i) => {
+        const { value } = accessor(p);
+        const x = xFor(p.t), y = yFor(value);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      const last = visible[visible.length - 1];
+      const { value: lastValue, zone: lastZone } = accessor(last);
+      const lx = xFor(last.t), ly = yFor(lastValue);
+      const dotR = 4 * (window.devicePixelRatio || 1);
+      ctx.beginPath();
+      ctx.arc(lx, ly, dotR + 2, 0, Math.PI * 2);
+      ctx.fillStyle = css('--surface-1');
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(lx, ly, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = css(`--status-${lastZone}`);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = css('--text-muted');
+    ctx.font = `${11 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('-60s', padL, h - 4);
+    ctx.textAlign = 'right';
+    ctx.fillText('teraz', padL + plotW, h - 4);
+  }
+
+  const chartRawCanvas = document.getElementById('chartRaw');
+  const chartRawCtx = chartRawCanvas.getContext('2d');
+  const chartShareCanvas = document.getElementById('chartShare');
+  const chartShareCtx = chartShareCanvas.getContext('2d');
+
+  function drawCharts() {
+    drawChart(chartRawCanvas, chartRawCtx, (p) => ({ value: p.raw, zone: p.zoneRaw }), 'Uruchom kamerę, aby zobaczyć wykres', thresholds.raw);
+    drawChart(chartShareCanvas, chartShareCtx, (p) => ({ value: p.share, zone: p.zoneShare }), 'Uruchom kamerę, aby zobaczyć wykres', thresholds.share);
+  }
+
+  function drawOverlay() {
+    const { w, h } = resizeCanvas(overlay);
+    const octx = overlay.getContext('2d');
+    octx.clearRect(0, 0, w, h);
+    const cw = w * CROP_FRACTION, ch = h * CROP_FRACTION;
+    const x = (w - cw) / 2, y = (h - ch) / 2;
+    octx.strokeStyle = 'rgba(255,255,255,0.85)';
+    octx.lineWidth = 2 * (window.devicePixelRatio || 1);
+    octx.setLineDash([8, 6]);
+    octx.strokeRect(x, y, cw, ch);
+  }
+
+  function pushTableRow(p) {
+    const time = new Date(p.t).toLocaleTimeString('pl-PL', { hour12: false });
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${time}</td><td>${Math.round(p.raw)}%</td><td>${Math.round(p.share)}%</td>` +
+      `<td><span class="zone-dot" style="background:var(${ZONE_VAR[p.zoneShare]})"></span>${ZONE_LABEL[p.zoneShare]}</td>`;
+    readingsBody.prepend(tr);
+    while (readingsBody.rows.length > 60) readingsBody.deleteRow(-1);
+  }
+
+  // ---- sampling ----
+  function takeSample() {
+    if (!video.videoWidth) return;
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const sw = vw * CROP_FRACTION, sh = vh * CROP_FRACTION;
+    const sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+    sampleCtx.drawImage(video, sx, sy, sw, sh, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+    const { data } = sampleCtx.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+    let r = 0, g = 0, b = 0;
+    const n = data.length / 4;
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i]; g += data[i + 1]; b += data[i + 2];
+    }
+    r /= n; g /= n; b /= n;
+
+    // Two deliberately different metrics — see the "Jak to działa" tab for why both exist:
+    //  - raw:   plain blue-channel brightness (0-255 -> %). Simple, but conflates brightness with hue.
+    //  - share: blue's share of R+G+B. Isolates color shift from brightness — closer to what
+    //           actually drives eye strain, and what night-mode filters act on.
+    const raw = (b / 255) * 100;
+    const share = (b / (r + g + b + 1e-6)) * 100;
+    const brightness = ((r + g + b) / 3 / 255) * 100;
+    const zoneRaw = zoneFor(raw, thresholds.raw);
+    const zoneShare = zoneFor(share, thresholds.share);
+    const point = { t: Date.now(), raw, share, brightness, zoneRaw, zoneShare };
+    history.push(point);
+    const cutoff = Date.now() - WINDOW_MS - SAMPLE_MS;
+    history = history.filter((p) => p.t >= cutoff);
+
+    updateGauge(gaugeRaw, zoneRaw, raw);
+    updateGauge(gaugeShare, zoneShare, share);
+    overallBrightnessEl.textContent = `${Math.round(brightness)}%`;
+    pushTableRow(point);
+    drawCharts();
+  }
+
+  // ---- camera lifecycle ----
+  // Best-effort only: most Android browsers (incl. Chrome on Xiaomi/Ulefone-class phones)
+  // don't expose manual exposure/white-balance via getUserMedia, so this silently no-ops
+  // there. When it IS supported, locking to a fixed exposure/white-balance point stops the
+  // camera's auto-adjustment from fighting the very brightness changes we're trying to measure.
+  async function tryStabilizeExposure(track) {
+    try {
+      const caps = track.getCapabilities ? track.getCapabilities() : {};
+      const advanced = {};
+      if (caps.exposureMode && caps.exposureMode.includes('manual')) advanced.exposureMode = 'manual';
+      if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('manual')) advanced.whiteBalanceMode = 'manual';
+      if (Object.keys(advanced).length) await track.applyConstraints({ advanced: [advanced] });
+    } catch (_) { /* unsupported on this device/browser — falls back to full auto */ }
+  }
+
+  async function startCamera() {
+    startBtn.disabled = true;
+    try {
+      const constraints = { video: { facingMode: { ideal: facingMode }, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      video.classList.toggle('rear', facingMode === 'environment');
+      await video.play();
+      placeholder.classList.add('hidden');
+      drawOverlay();
+
+      const track = stream.getVideoTracks()[0];
+      await tryStabilizeExposure(track);
+
+      stopBtn.disabled = false;
+      switchBtn.disabled = false;
+      startBtn.textContent = 'Start';
+      clearInterval(sampleTimer);
+      sampleTimer = setInterval(takeSample, SAMPLE_MS);
+    } catch (err) {
+      placeholder.classList.remove('hidden');
+      placeholder.querySelector('p').textContent =
+        'Nie udało się uruchomić kamery. Sprawdź uprawnienia przeglądarki do kamery i spróbuj ponownie. (' + (err && err.message ? err.message : err) + ')';
+      startBtn.disabled = false;
+    }
+  }
+
+  function stopCamera() {
+    clearInterval(sampleTimer);
+    sampleTimer = null;
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    placeholder.classList.remove('hidden');
+    placeholder.querySelector('p').textContent = 'Naciśnij „Start”, aby uruchomić kamerę i skierować ją na ekran lub źródło światła.';
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    switchBtn.disabled = true;
+    updateGauge(gaugeRaw, null, null);
+    updateGauge(gaugeShare, null, null);
+    overallBrightnessEl.textContent = '--%';
+  }
+
+  startBtn.addEventListener('click', startCamera);
+  stopBtn.addEventListener('click', stopCamera);
+  switchBtn.addEventListener('click', async () => {
+    facingMode = facingMode === 'environment' ? 'user' : 'environment';
+    if (stream) stream.getTracks().forEach((t) => t.stop());
+    await startCamera();
+  });
+
+  // ---- thresholds (each metric owns its own pair — see the state comment above) ----
+  function makeThresholdHandler(kind, warnSlider, critSlider, warnLabel, critLabel, gauge) {
+    return () => {
+      let warn = Number(warnSlider.value);
+      let crit = Number(critSlider.value);
+      if (warn >= crit) warn = crit - 1;
+      warnSlider.value = String(warn);
+      thresholds[kind] = { warn, crit };
+      warnLabel.textContent = `${warn}%`;
+      critLabel.textContent = `${crit}%`;
+      drawGaugeBands(gauge, thresholds[kind]);
+      drawCharts();
+    };
+  }
+  const onRawThresholdChange = makeThresholdHandler('raw', rawWarnSlider, rawCritSlider, rawWarnLabel, rawCritLabel, gaugeRaw);
+  const onShareThresholdChange = makeThresholdHandler('share', shareWarnSlider, shareCritSlider, shareWarnLabel, shareCritLabel, gaugeShare);
+  rawWarnSlider.addEventListener('input', onRawThresholdChange);
+  rawCritSlider.addEventListener('input', onRawThresholdChange);
+  shareWarnSlider.addEventListener('input', onShareThresholdChange);
+  shareCritSlider.addEventListener('input', onShareThresholdChange);
+
+  // ---- table toggle ----
+  tableToggle.addEventListener('click', () => {
+    const showing = !tableWrap.hidden;
+    tableWrap.hidden = showing;
+    tableToggle.setAttribute('aria-pressed', String(!showing));
+    tableToggle.textContent = showing ? 'Pokaż jako tabelę' : 'Ukryj tabelę';
+  });
+
+  // ---- info dialog ----
+  infoBtn.addEventListener('click', () => infoDialog.showModal());
+
+  // ---- tabs ----
+  function selectTab(btn) {
+    const isMonitor = btn === tabMonitor;
+    tabMonitor.setAttribute('aria-selected', String(isMonitor));
+    tabMonitor.tabIndex = isMonitor ? 0 : -1;
+    tabMethodology.setAttribute('aria-selected', String(!isMonitor));
+    tabMethodology.tabIndex = isMonitor ? -1 : 0;
+    panelMonitor.hidden = !isMonitor;
+    panelMethodology.hidden = isMonitor;
+    if (isMonitor) requestAnimationFrame(() => { drawOverlay(); drawCharts(); });
+  }
+  tabMonitor.addEventListener('click', () => selectTab(tabMonitor));
+  tabMethodology.addEventListener('click', () => selectTab(tabMethodology));
+
+  // ---- resize ----
+  window.addEventListener('resize', () => { drawOverlay(); drawCharts(); });
+
+  // ---- init ----
+  drawGaugeBands(gaugeRaw, thresholds.raw);
+  drawGaugeBands(gaugeShare, thresholds.share);
+  updateGauge(gaugeRaw, null, null);
+  updateGauge(gaugeShare, null, null);
+  drawCharts();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+})();

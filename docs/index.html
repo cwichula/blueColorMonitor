@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monitor Światła Niebieskiego</title>
+<meta name="description" content="Mierzy kamerą natężenie koloru niebieskiego na ekranie i pokazuje je na czytelnym wykresie ze strefami: bezpieczna, umiarkowana, szkodliwa.">
+<meta name="theme-color" content="#1a1a19">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="viz-root">
+
+<header class="app-header">
+  <h1>Monitor Światła Niebieskiego</h1>
+  <button id="infoBtn" class="icon-btn" type="button" aria-haspopup="dialog" aria-label="Skrócone wskazówki">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
+  </button>
+</header>
+
+<div class="tabs" role="tablist" aria-label="Widoki aplikacji">
+  <button id="tabMonitor" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelMonitor">Pomiar</button>
+  <button id="tabMethodology" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelMethodology" tabindex="-1">Jak to działa</button>
+</div>
+
+<main>
+<div id="panelMonitor" role="tabpanel" aria-labelledby="tabMonitor">
+
+  <section class="card camera-card" aria-label="Podgląd kamery">
+    <div class="video-wrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="sampleOverlay" class="sample-overlay"></canvas>
+      <div id="cameraPlaceholder" class="camera-placeholder">
+        <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+        <p>Naciśnij „Start”, aby uruchomić kamerę i skierować ją na ekran lub źródło światła.</p>
+      </div>
+    </div>
+    <div class="camera-controls">
+      <button id="startBtn" class="btn btn-primary" type="button">Start</button>
+      <button id="stopBtn" class="btn" type="button" disabled>Stop</button>
+      <button id="switchBtn" class="btn" type="button" disabled>Zmień kamerę</button>
+    </div>
+  </section>
+
+  <section class="card reading-card" aria-label="Aktualne odczyty">
+    <div class="reading-grid">
+
+      <div class="reading-block">
+        <h3 class="reading-title">Jasność kanału B</h3>
+        <div class="gauge-wrap">
+          <svg id="gaugeRaw" viewBox="0 0 200 130" class="gauge">
+            <path class="gauge-band gauge-good" d="" />
+            <path class="gauge-band gauge-warning" d="" />
+            <path class="gauge-band gauge-critical" d="" />
+            <line class="gauge-needle" x1="100" y1="95" x2="100" y2="32" />
+            <circle cx="100" cy="95" r="6" class="gauge-hub" />
+          </svg>
+          <div class="gauge-readout">
+            <div id="gaugeValueRaw" class="gauge-value">--</div>
+            <div class="gauge-unit">% jasności kanału B</div>
+            <div id="statusBadgeRaw" class="status-badge status-idle">
+              <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"></svg>
+              <span class="status-label">Brak danych</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reading-block">
+        <h3 class="reading-title">Udział niebieskiego</h3>
+        <div class="gauge-wrap">
+          <svg id="gaugeShare" viewBox="0 0 200 130" class="gauge">
+            <path class="gauge-band gauge-good" d="" />
+            <path class="gauge-band gauge-warning" d="" />
+            <path class="gauge-band gauge-critical" d="" />
+            <line class="gauge-needle" x1="100" y1="95" x2="100" y2="32" />
+            <circle cx="100" cy="95" r="6" class="gauge-hub" />
+          </svg>
+          <div class="gauge-readout">
+            <div id="gaugeValueShare" class="gauge-value">--</div>
+            <div class="gauge-unit">% udziału niebieskiego</div>
+            <div id="statusBadgeShare" class="status-badge status-idle">
+              <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"></svg>
+              <span class="status-label">Brak danych</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="secondary-stats">
+      <div class="stat"><span class="stat-label">Jasność ogólna sceny</span><span id="overallBrightness" class="stat-value">--%</span></div>
+    </div>
+  </section>
+
+  <section class="card chart-card" aria-label="Wykresy w czasie">
+    <div class="chart-header">
+      <h2>Wykresy w czasie (ostatnie 60 s)</h2>
+      <button id="tableToggle" class="btn btn-small" type="button" aria-pressed="false">Pokaż jako tabelę</button>
+    </div>
+
+    <div class="chart-block">
+      <h3 class="chart-title">Jasność kanału B</h3>
+      <canvas id="chartRaw" class="chart-canvas" role="img" aria-label="Wykres jasności kanału B w czasie, z oznaczonymi strefami bezpieczną, umiarkowaną i szkodliwą"></canvas>
+    </div>
+
+    <div class="chart-block">
+      <h3 class="chart-title">Udział niebieskiego w świetle</h3>
+      <canvas id="chartShare" class="chart-canvas" role="img" aria-label="Wykres udziału niebieskiego w świetle w czasie, z oznaczonymi strefami bezpieczną, umiarkowaną i szkodliwą"></canvas>
+    </div>
+
+    <div class="legend" aria-hidden="false">
+      <div class="legend-item">
+        <span class="legend-swatch legend-good"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+        <span>Bezpieczna — oczy odpoczywają</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch legend-warning"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <span>Umiarkowana — rób przerwy</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch legend-critical"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 1 12l11 10 11-10L12 2zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z"/></svg>
+        <span>Szkodliwa — bardzo męczy oczy</span>
+      </div>
+    </div>
+
+    <div id="tableWrap" class="table-wrap" hidden>
+      <table class="readings-table">
+        <caption>Ostatnie odczyty (najnowszy na górze)</caption>
+        <thead><tr>
+          <th scope="col">Czas</th>
+          <th scope="col">Jasność kanału B</th>
+          <th scope="col">Udział niebieskiego</th>
+          <th scope="col">Strefa*</th>
+        </tr></thead>
+        <tbody id="readingsBody"></tbody>
+      </table>
+      <p class="hint">*Strefa liczona wg nowej metryki (udziału niebieskiego) — uzasadnienie w zakładce „Jak to działa”.</p>
+    </div>
+  </section>
+
+  <details class="card settings-card">
+    <summary>Ustawienia progów stref</summary>
+    <div class="settings-body">
+      <p class="hint">Obie metryki mają własne progi — 33%/66% na jednej nie znaczy tego
+      samego, co 33%/66% na drugiej (wyjaśnienie w zakładce „Jak to działa”).</p>
+
+      <div class="settings-group">
+        <h4 class="settings-group-title">Jasność kanału B</h4>
+        <label class="slider-row">
+          <span>Granica żółty / czerwony: <b id="rawCritLabel">66%</b></span>
+          <input id="rawCritSlider" type="range" min="10" max="95" value="66">
+        </label>
+        <label class="slider-row">
+          <span>Granica zielony / żółty: <b id="rawWarnLabel">33%</b></span>
+          <input id="rawWarnSlider" type="range" min="5" max="90" value="33">
+        </label>
+        <p class="hint">Brak naturalnego punktu odniesienia — dostosuj do typowej jasności swojej sceny.</p>
+      </div>
+
+      <div class="settings-group">
+        <h4 class="settings-group-title">Udział niebieskiego</h4>
+        <label class="slider-row">
+          <span>Granica żółty / czerwony: <b id="shareCritLabel">66%</b></span>
+          <input id="shareCritSlider" type="range" min="10" max="95" value="66">
+        </label>
+        <label class="slider-row">
+          <span>Granica zielony / żółty: <b id="shareWarnLabel">33%</b></span>
+          <input id="shareWarnSlider" type="range" min="5" max="90" value="33">
+        </label>
+        <p class="hint">33% odpowiada mniej więcej neutralnej bieli (R≈G≈B) — naturalny punkt startowy.</p>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div id="panelMethodology" role="tabpanel" aria-labelledby="tabMethodology" class="methodology" hidden>
+
+  <section class="card">
+    <h2>Kamera telefonu a spektrometr</h2>
+    <p>Prawdziwy pomiar „ile jest szkodliwego niebieskiego światła” wymaga rozłożenia
+    światła na długości fal — to robi <b>spektrometr</b>: pryzmat lub siatka
+    dyfrakcyjna rozszczepia światło na dziesiątki/setki wąskich pasm (np. co
+    1–5 nm) i mierzy moc optyczną w każdym z osobna. Dopiero z takiego pełnego
+    rozkładu widmowego liczy się jednostki takie jak luks, lumen czy
+    napromienienie ważone funkcją zagrożenia niebieskim światłem.</p>
+    <p><b>Kamera telefonu nie robi nic z tego.</b> Ma trzy szerokie filtry
+    (Bayer: R/G/B), z których każdy zbiera światło z szerokiego,
+    nakładającego się zakresu długości fal — „kanał niebieski” to nie wąskie
+    pasmo ok. 435–440 nm (szczyt zagrożenia dla siatkówki), tylko z grubsza
+    400–570 nm zmieszane z zielenią. Po drodze dochodzi demozaikowanie,
+    automatyczna ekspozycja, automatyczny balans bieli i kompresja gamma
+    sRGB — żadnego z tych kroków przeglądarka nie pozwala w pełni wyłączyć.
+    W efekcie wartość piksela, którą widzi JavaScript, nie jest liniowo
+    związana z rzeczywistą mocą optyczną padającą na sensor. To fundamentalne
+    ograniczenie sprzętowe, nie błąd tej aplikacji.</p>
+  </section>
+
+  <section class="card">
+    <h2>Wykres 1 — Jasność kanału B</h2>
+    <p><b>Co pokazuje:</b> średnią jasność samego kanału niebieskiego (B) z
+    próbkowanego fragmentu obrazu, w skali 0–255 przeliczonej na %.</p>
+    <p><b>Algorytm:</b></p>
+    <ol>
+      <li>5 razy na sekundę pobieramy klatkę z kamery.</li>
+      <li>Wycinamy środkowe 60% kadru (unika krawędzi obrazu i poświaty z boków).</li>
+      <li>Skalujemy wycięty fragment do siatki 32×32 piksele (wystarczająco
+        dokładnie, dużo szybciej niż liczenie pełnej rozdzielczości — ważne
+        na słabszym sprzęcie jak Xiaomi/Ulefone budżetowej klasy).</li>
+      <li>Uśredniamy wartość B wszystkich 1024 pikseli tej siatki.</li>
+      <li><code>wynik = średnia_B ÷ 255 × 100</code></li>
+    </ol>
+    <p><b>Po co ją zostawiliśmy:</b> to najprostszy, bezpośredni odczyt „ile
+    sygnału niebieskiego w ogóle rejestruje sensor”. Wadą jest to, że miesza
+    jasność z barwą — bardzo jasna, ale neutralnie biała scena też da wysoki
+    wynik, mimo że nie jest szczególnie „niebieska”. Dlatego obok niej
+    pokazujemy wykres 2.</p>
+  </section>
+
+  <section class="card">
+    <h2>Wykres 2 — Udział niebieskiego w świetle</h2>
+    <p><b>Co pokazuje:</b> jaki procent całego zarejestrowanego światła (R+G+B)
+    stanowi składowa niebieska — czyli przesunięcie koloru w stronę zimnego,
+    niezależnie od tego, jak jasna jest scena.</p>
+    <p><b>Algorytm:</b> te same kroki 1–4 co wyżej, ale zamiast samego B liczymy:</p>
+    <p class="formula-block"><code>wynik = B ÷ (R + G + B) × 100</code></p>
+    <p>Neutralna biel (R≈G≈B) daje ok. <b>33%</b>. Światło cieplejsze/bardziej
+    czerwone — mniej. Mocno niebieskie — więcej, aż do granicy ~100% dla
+    światła niemal czysto niebieskiego.</p>
+    <p><b>Dlaczego to dokładniejsza miara „szkodliwego niebieskiego”:</b> to ta
+    sama zasada, na której działają filtry typu tryb nocny / Night Shift —
+    liczy się <b>barwa</b>, nie jasność. Bardzo jasny, ale neutralny ekran nie
+    zostanie fałszywie oznaczony jako szkodliwy; przygaszony, ale mocno
+    niebieski — owszem. Dlatego to ta metryka steruje kolorem strefy w
+    tabeli odczytów.</p>
+  </section>
+
+  <section class="card">
+    <h2>Dlaczego nie luksy ani lumeny</h2>
+    <p><b>Lumen (lm)</b> opisuje całkowity strumień światła emitowany przez
+    źródło — to właściwość samego źródła, nie tego, co pada na dany punkt.
+    <b>Luks (lx)</b> to już natężenie oświetlenia w punkcie (lm/m²) — bliższe
+    temu, o co chodzi, ale nadal jednostka <b>fotometryczna</b>: waży widmo
+    krzywą czułości ludzkiego oka na jasność (V(λ)), nie krzywą zagrożenia
+    niebieskim światłem. Do prawdziwego pomiaru zagrożenia potrzebna jest
+    trzecia, węższa jednostka: napromienienie ważone widmowo w
+    <b>W/m²</b> (norma IEC 62471, szczyt czułości ok. 435–440 nm), a to
+    wymaga spektrometru — patrz sekcja wyżej.</p>
+    <p>Nawet gdyby poprzestać na luksach: telefon bez zewnętrznego,
+    skalibrowanego czujnika światła nie jest w stanie ich wiarygodnie
+    wyznaczyć. Wbudowany czujnik światła telefonu (tam gdzie istnieje) mierzy
+    zresztą światło z <b>przeciwnej strony</b> obudowy niż ta, którą celujesz
+    w ekran tylnym aparatem — mierzyłby więc światło za Twoimi plecami, nie
+    to z ekranu. Dlatego zamiast zgadywać liczbę w jednostce, która i tak
+    byłaby niewiarygodna, pokazujemy uczciwie opisany <b>wskaźnik względny
+    (%)</b> — sensowny do porównań na tym samym telefonie w tych samych
+    warunkach (np. tryb nocny włączony/wyłączony), nie jako wartość
+    bezwzględna.</p>
+  </section>
+
+  <section class="card">
+    <h2>Czy istnieją globalne normy dla progów bezpieczeństwa?</h2>
+    <p>Krótko: <b>nie ma normy wyrażonej w procentach kanału kamery</b> — to w
+    ogóle nie jest jednostka, w której cokolwiek się reguluje. Realne normy
+    dotyczące niebieskiego światła istnieją, ale mierzą inne wielkości, w
+    innych jednostkach, i dotyczą innego zjawiska niż zwykle mamy na myśli,
+    mówiąc „niebieskie światło męczy oczy”.</p>
+
+    <p><b>Ostre uszkodzenie fotochemiczne siatkówki — IEC 62471 / ICNIRP.</b>
+    Jedyna faktycznie regulowana „szkodliwość niebieskiego światła” — norma
+    dla lamp i systemów oświetleniowych, wspierana wytycznymi ICNIRP
+    (International Commission on Non-Ionizing Radiation Protection). Klasyfikuje
+    źródła do grup ryzyka RG0–RG3 na podstawie radiancji ważonej funkcją
+    zagrożenia B(λ), w <b>W·m⁻²·sr⁻¹</b>, z limitem czasu ekspozycji
+    (<code>t_max = 100 / L_B</code> sekund). Ekrany telefonów i monitorów —
+    nawet przy maksymalnej jasności — praktycznie zawsze mieszczą się w
+    <b>RG0 (zwolnione, bez ograniczeń)</b>. Ta norma dotyczy źródeł dużo
+    intensywniejszych (łuki spawalnicze, niektóre projektory, przemysłowe
+    LED-y), nie ekranów konsumenckich.</p>
+
+    <p><b>Wpływ na rytm dobowy / sen — CIE S 026.</b> To zjawisko, o które
+    zwykle chodzi (ekran wieczorem „rozbudza”) — ale to nie uszkodzenie oka,
+    tylko wpływ na zegar biologiczny przez komórki zwojowe siatkówki (ipRGC),
+    najczulsze ok. 480 nm. Norma CIE S 026:2018 definiuje jednostkę
+    <b>luks melanopiczny (melanopic EDI)</b>. Najbliższy „oficjalny” konsensus
+    naukowy to publikacja Browna i współautorów (<i>PLOS Biology</i>, 2022),
+    rekomendująca orientacyjnie: wieczorem &lt; 10 luksów melanopicznych, w
+    dzień &gt; 250. To rekomendacje badaczy snu, nie przepis prawny.</p>
+
+    <p><b>WHO.</b> Światowa Organizacja Zdrowia nie publikuje własnych,
+    niezależnych limitów ekspozycji na niebieskie światło — dla bezpieczeństwa
+    promieniowania optycznego odsyła do ICNIRP (wyżej). Jedyny konkretny,
+    autorski dokument WHO w temacie ekranów to <i>Guidelines on physical
+    activity, sedentary behaviour and sleep for children under 5 years of
+    age</i> (2019) — dotyczy jednak <b>czasu</b> spędzanego przy ekranie, nie
+    koloru czy natężenia światła: brak ekranu poniżej 1. roku życia, maks. do
+    1 godziny dla 2–4 lat. Dla dorosłych WHO nie ma równie skonkretyzowanych
+    wytycznych liczbowych.</p>
+
+    <p><b>Dlaczego to i tak nie pomaga skalibrować aplikacji:</b> obie normy
+    (IEC/ICNIRP i CIE) wymagają pełnego rozkładu widmowego i skalibrowanej
+    radiancji w znanej geometrii pomiaru — dokładnie tego, czego telefon przez
+    przeglądarkę nie potrafi dostarczyć (patrz sekcja „Kamera telefonu a
+    spektrometr” wyżej). Nie istnieje przelicznik „33% udziału niebieskiego =
+    X luksów melanopicznych”. Progi w tej aplikacji pozostają więc <b>umownym,
+    subiektywnym punktem startowym</b> do porównań na własnym telefonie — nie
+    odwzorowaniem żadnej normy (WHO, IEC, ICNIRP czy CIE).</p>
+  </section>
+
+  <section class="card">
+    <h2>Strefy kolorów</h2>
+    <p>Obie metryki mają własne, niezależnie ustawiane progi (zakładka
+    „Pomiar” → „Ustawienia progów stref”) — 33%/66% na jednej nie znaczy tego
+    samego, co na drugiej (patrz sekcje wyżej). To <b>udział niebieskiego</b>
+    decyduje o kolorze w tabeli odczytów:</p>
+    <ul>
+      <li><b>Zielona — bezpieczna:</b> światło ciepłe lub neutralne, oczy odpoczywają.</li>
+      <li><b>Żółta — umiarkowana:</b> zauważalne przesunięcie w stronę niebieskiego, warto robić przerwy.</li>
+      <li><b>Czerwona — szkodliwa:</b> silnie niebieskie światło, mocno męczy oczy przy dłuższej ekspozycji (zwłaszcza wieczorem).</li>
+    </ul>
+  </section>
+
+</div>
+</main>
+
+<dialog id="infoDialog" class="info-dialog">
+  <form method="dialog">
+    <h2>Szybkie wskazówki</h2>
+    <p>Pełne wyjaśnienie algorytmów, jednostek i różnicy między kamerą a
+    spektrometrem jest w zakładce <b>„Jak to działa”</b> u góry ekranu.
+    Tu tylko skrót, jak mierzyć trafniej:</p>
+    <ul>
+      <li>Ustaw telefon w stałej odległości od ekranu (np. 15–20 cm), bez zmiany oświetlenia otoczenia w trakcie pomiaru.</li>
+      <li>Użyj tylnego aparatu — ma mniej agresywne korekcje automatyczne niż przedni.</li>
+      <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
+      <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu.</li>
+    </ul>
+    <button class="btn btn-primary" type="submit">Rozumiem</button>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
