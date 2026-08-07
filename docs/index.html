@@ -161,12 +161,12 @@
       <div class="settings-group">
         <h4 class="settings-group-title">Udział niebieskiego</h4>
         <label class="slider-row">
-          <span>Granica żółty / czerwony: <b id="shareCritLabel">66%</b></span>
-          <input id="shareCritSlider" type="range" min="10" max="95" value="66">
+          <span>Granica żółty / czerwony: <b id="shareCritLabel">33%</b></span>
+          <input id="shareCritSlider" type="range" min="10" max="95" value="33">
         </label>
         <label class="slider-row">
-          <span>Granica zielony / żółty: <b id="shareWarnLabel">33%</b></span>
-          <input id="shareWarnSlider" type="range" min="5" max="90" value="33">
+          <span>Granica zielony / żółty: <b id="shareWarnLabel">26%</b></span>
+          <input id="shareWarnSlider" type="range" min="5" max="90" value="26">
         </label>
       </div>
     </div>
@@ -330,9 +330,14 @@
     radiancji w znanej geometrii pomiaru — dokładnie tego, czego telefon przez
     przeglądarkę nie potrafi dostarczyć (patrz sekcja „Kamera telefonu a
     spektrometr” wyżej). Nie istnieje przelicznik „33% udziału niebieskiego =
-    X luksów melanopicznych”. Progi w tej aplikacji pozostają więc <b>umownym,
-    subiektywnym punktem startowym</b> do porównań na własnym telefonie — nie
-    odwzorowaniem żadnej normy (WHO, IEC, ICNIRP czy CIE).</p>
+    X luksów melanopicznych”, więc progi w tej aplikacji <b>nie odwzorowują
+    żadnej normy bezpieczeństwa</b> (WHO, IEC, ICNIRP czy CIE — dla tego
+    wskaźnika po prostu nie istnieje). Domyślne wartości progu udziału
+    niebieskiego są za to wyprowadzone z realnych temperatur barwowych
+    światła i powszechnie powtarzanej, praktycznej rekomendacji ciepłego
+    światła wieczorem — solidniejsza podstawa niż zwykłe zaokrąglenie, ale
+    wciąż nie formalna norma (pełne wyprowadzenie: rozdział 4). Zawsze
+    możesz je zmienić na własne w ustawieniach.</p>
   </section>
 
   <h2 id="doc-strefy" class="doc-chapter">4. Strefy i progi</h2>
@@ -351,17 +356,38 @@
   </section>
 
   <section class="card">
-    <h3>Jak dobrać progi w ustawieniach</h3>
+    <h3>Skąd domyślne progi</h3>
     <p><b>Jasność kanału B</b> nie ma naturalnego punktu odniesienia — sensowna
     wartość progu zależy wyłącznie od tego, jak jasna jest scena, którą
-    filmujesz. Dostosuj progi metodą prób do typowej jasności swojego
-    ekranu/otoczenia.</p>
-    <p><b>Udział niebieskiego</b> ma naturalny punkt startowy: <b>33%</b>
-    odpowiada mniej więcej neutralnej bieli (R≈G≈B — patrz rozdział 2).
-    Domyślne 33%/66% to dobry punkt wyjścia, który możesz zawęzić lub
-    poszerzyć pod własne wyczucie.</p>
+    filmujesz (to miara jasności, nie koloru). Domyślne 33%/66% to tu wciąż
+    umowny punkt wyjścia — dostosuj go metodą prób do typowej jasności
+    swojego ekranu/otoczenia.</p>
+    <p><b>Udział niebieskiego</b> ma domyślne progi wyprowadzone z realnych
+    temperatur barwowych światła (fizyka, nie zaokrąglenie), nie z żadnej
+    normy bezpieczeństwa — takiej normy dla tej wielkości nie ma (rozdział 3).
+    Punkty odniesienia:</p>
+    <ul>
+      <li><b>~4000K</b> („ciepła biel", typowa żarówka LED) → ok. <b>26%</b>
+        udziału niebieskiego. Światło cieplejsze od tego (niższa temperatura
+        barwowa) to zakres szeroko rekomendowany wieczorem przez narzędzia
+        typu f.lux czy Night Shift — stąd dolny próg.</li>
+      <li><b>6500K (D65)</b>, standardowy punkt bieli dla większości ekranów
+        telefonów i monitorów fabrycznie — ok. <b>33%</b>. Od tej wartości w
+        górę zaczyna się zakres, w którym typowo stosuje się zalecenia
+        ograniczenia niebieskiego światła — stąd górny próg.</li>
+    </ul>
+    <p>Ważne zastrzeżenie: to, jak bardzo „niebieskie" jest światło, nie zależy
+    od pory dnia, ale zalecenia ograniczania niebieskiego światła dotyczą
+    właściwie tylko <b>wieczora/nocy</b> — w dzień ekspozycja na chłodne,
+    niebieskie światło (także słoneczne) jest normalna, a nawet korzystna dla
+    rytmu dobowego. Czerwona strefa w środku dnia patrząc w zwykły,
+    niezmieniony ekran nie oznacza realnego zagrożenia — to samo światło
+    wieczorem jest już warte ograniczenia.</p>
     <p>Progi obu metryk są całkowicie niezależne — zmiana jednej nie wpływa
-    na drugą.</p>
+    na drugą. Zmienione progi są <b>zapamiętywane w tym urządzeniu i
+    przeglądarce</b> między kolejnymi otwarciami aplikacji (lokalnie, nic
+    nigdzie nie jest wysyłane) — przycisk „Start" nie resetuje ich do
+    domyślnych.</p>
   </section>
 
   <h2 id="doc-urzadzenia" class="doc-chapter">5. Różnice między urządzeniami</h2>

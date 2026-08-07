@@ -48,12 +48,48 @@
   let facingMode = 'environment';
   let sampleTimer = null;
   let history = []; // {t, raw, share, brightness, zoneRaw, zoneShare}
+
   // Independent thresholds per metric — 33%/66% doesn't mean the same thing on
-  // both (see the "Dokumentacja" tab), so each gets its own pair rather than
-  // sharing one slider that would silently misrepresent one of them.
-  let thresholds = {
+  // both (see the "Dokumentacja" tab), so each gets its own pair.
+  //
+  // "raw" (blue channel brightness) has no natural reference point — it's a
+  // brightness measure, not a color measure — so its defaults stay arbitrary,
+  // user-tunable starting points.
+  //
+  // "share" (blue's share of R+G+B) defaults are derived from real standard
+  // illuminant color temperatures, not picked arbitrarily: 4000K ("soft
+  // white", ~26% share) and 6500K/D65 (the standard daylight white point most
+  // phone/monitor displays ship with by default, ~33% share). Warm light
+  // below ~4000K is the range broadly recommended for evening use by tools
+  // like f.lux/Night Shift; at-or-past the 6500K default-display baseline is
+  // where most "reduce blue light" guidance starts applying. See the
+  // "Dokumentacja" tab for the full derivation and sources — this is a
+  // colorimetric anchor point, not a regulatory safety standard (none exists
+  // for this metric).
+  const DEFAULT_THRESHOLDS = {
     raw: { warn: 33, crit: 66 },
-    share: { warn: 33, crit: 66 }
+    share: { warn: 26, crit: 33 }
+  };
+  const THRESHOLDS_STORAGE_KEY = 'blueMonitor.thresholds.v1';
+
+  function loadStoredThresholds() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(THRESHOLDS_STORAGE_KEY));
+      if (saved && saved.raw && saved.share
+        && Number.isFinite(saved.raw.warn) && Number.isFinite(saved.raw.crit)
+        && Number.isFinite(saved.share.warn) && Number.isFinite(saved.share.crit)) {
+        return saved;
+      }
+    } catch (_) { /* localStorage unavailable (private mode etc.) — fall back to defaults */ }
+    return null;
+  }
+  function persistThresholds() {
+    try { localStorage.setItem(THRESHOLDS_STORAGE_KEY, JSON.stringify(thresholds)); } catch (_) { /* ignore */ }
+  }
+
+  let thresholds = loadStoredThresholds() || {
+    raw: { ...DEFAULT_THRESHOLDS.raw },
+    share: { ...DEFAULT_THRESHOLDS.share }
   };
 
   const sampleCanvas = document.createElement('canvas');
@@ -366,6 +402,7 @@
       critLabel.textContent = `${crit}%`;
       drawGaugeBands(gauge, thresholds[kind]);
       drawCharts();
+      persistThresholds();
     };
   }
   const onRawThresholdChange = makeThresholdHandler('raw', rawWarnSlider, rawCritSlider, rawWarnLabel, rawCritLabel, gaugeRaw);
@@ -402,6 +439,18 @@
   window.addEventListener('resize', () => { drawOverlay(); drawCharts(); });
 
   // ---- init ----
+  // Sync the slider controls/labels to whatever thresholds we ended up with
+  // (restored from localStorage, or the defaults) — the HTML's hardcoded
+  // `value` attributes only match the defaults by coincidence.
+  rawWarnSlider.value = String(thresholds.raw.warn);
+  rawCritSlider.value = String(thresholds.raw.crit);
+  rawWarnLabel.textContent = `${thresholds.raw.warn}%`;
+  rawCritLabel.textContent = `${thresholds.raw.crit}%`;
+  shareWarnSlider.value = String(thresholds.share.warn);
+  shareCritSlider.value = String(thresholds.share.crit);
+  shareWarnLabel.textContent = `${thresholds.share.warn}%`;
+  shareCritLabel.textContent = `${thresholds.share.crit}%`;
+
   drawGaugeBands(gaugeRaw, thresholds.raw);
   drawGaugeBands(gaugeShare, thresholds.share);
   updateGauge(gaugeRaw, null, null);
