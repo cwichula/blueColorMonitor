@@ -198,12 +198,16 @@ main {
   flex: 1 1 auto;
 }
 
-/* ---- gauge / reading ---- */
-.reading-card { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+/* ---- gauge / reading ----
+   Sized so both gauges fit together on one screen without scrolling on most
+   phones — the charts below are meant to be reached by scrolling past them,
+   not by switching to another tab, so this block can't be allowed to grow
+   as large as when it had a screen to itself. */
+.reading-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .reading-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 36px;
+  gap: 18px;
   width: 100%;
 }
 .reading-block { display: flex; flex-direction: column; align-items: center; }
@@ -211,15 +215,15 @@ main {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-secondary);
-  margin: 0 0 14px;
+  margin: 0 0 8px;
 }
 
-.gauge-wrap { position: relative; width: 100%; max-width: 100%; }
+.gauge-wrap { position: relative; width: 100%; max-width: 260px; }
 .gauge { width: 100%; height: auto; display: block; }
-.gauge-band { fill: none; stroke-width: 20; stroke-linecap: butt; }
+.gauge-band { fill: none; stroke-width: 16; stroke-linecap: butt; }
 .gauge-good { stroke: var(--status-good); }
 .gauge-warning { stroke: var(--status-warning); }
 .gauge-critical { stroke: var(--status-critical); }
@@ -227,27 +231,27 @@ main {
 .gauge-hub { fill: var(--text-primary); }
 
 /* In normal flow below the gauge rather than absolutely overlaid on the
-   needle — at this app's font sizes an overlay would grow taller than the
+   needle — at larger font sizes an overlay would grow taller than the
    space reserved for it and spill upward over the arc. */
 .gauge-readout {
   text-align: center;
-  margin-top: 14px;
+  margin-top: 8px;
 }
-.gauge-value { font-size: clamp(56px, 18vw, 108px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-.gauge-unit { font-size: 17px; color: var(--text-muted); margin-top: 2px; }
+.gauge-value { font-size: clamp(28px, 9vw, 40px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.gauge-unit { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 14px;
-  padding: 10px 20px;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 12px;
   border-radius: 999px;
-  font-size: 20px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
-.status-icon { flex: none; width: 26px; height: 26px; }
+.status-icon { flex: none; width: 16px; height: 16px; }
 .status-idle { background: var(--border); color: var(--text-secondary); }
 .status-good { background: var(--status-good-bg); color: var(--status-good); }
 .status-warning { background: var(--status-warning-bg); color: #7a5400; }
@@ -264,8 +268,8 @@ main {
   margin-top: 4px;
 }
 .stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-label { font-size: 14px; color: var(--text-muted); }
-.stat-value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 12px; color: var(--text-muted); }
+.stat-value { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ---- chart ---- */
 .chart-header {

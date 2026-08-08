@@ -24,11 +24,9 @@
 
   // ---- DOM: tabs ----
   const tabCamera = document.getElementById('tabCamera');
-  const tabGauges = document.getElementById('tabGauges');
-  const tabCharts = document.getElementById('tabCharts');
+  const tabMonitoring = document.getElementById('tabMonitoring');
   const panelCamera = document.getElementById('panelCamera');
-  const panelGauges = document.getElementById('panelGauges');
-  const panelCharts = document.getElementById('panelCharts');
+  const panelMonitoring = document.getElementById('panelMonitoring');
   const panelMethodology = document.getElementById('panelMethodology');
 
   // ---- DOM: shared stats / controls ----
@@ -423,11 +421,10 @@
     tableToggle.textContent = showing ? 'Pokaż jako tabelę' : 'Ukryj tabelę';
   });
 
-  // ---- tabs (Kamera / Gałki / Wykresy) ----
+  // ---- tabs (Kamera / Monitoring) ----
   const TABS = [
     { btn: tabCamera, panel: panelCamera, onShow: () => drawOverlay() },
-    { btn: tabGauges, panel: panelGauges, onShow: null },
-    { btn: tabCharts, panel: panelCharts, onShow: () => drawCharts() }
+    { btn: tabMonitoring, panel: panelMonitoring, onShow: () => drawCharts() }
   ];
   function selectTab(selected) {
     TABS.forEach(({ btn, panel, onShow }) => {
