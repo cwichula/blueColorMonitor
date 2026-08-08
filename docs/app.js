@@ -25,7 +25,6 @@
   // ---- DOM: tabs ----
   const tabCamera = document.getElementById('tabCamera');
   const tabMonitor = document.getElementById('tabMonitor');
-  const tabMethodology = document.getElementById('tabMethodology');
   const panelCamera = document.getElementById('panelCamera');
   const panelMonitor = document.getElementById('panelMonitor');
   const panelMethodology = document.getElementById('panelMethodology');
@@ -423,11 +422,10 @@
     tableToggle.textContent = showing ? 'Pokaż jako tabelę' : 'Ukryj tabelę';
   });
 
-  // ---- tabs ----
+  // ---- tabs (Kamera / Pomiar) ----
   const TABS = [
     { btn: tabCamera, panel: panelCamera, onShow: () => drawOverlay() },
-    { btn: tabMonitor, panel: panelMonitor, onShow: () => drawCharts() },
-    { btn: tabMethodology, panel: panelMethodology, onShow: null }
+    { btn: tabMonitor, panel: panelMonitor, onShow: () => drawCharts() }
   ];
   function selectTab(selected) {
     TABS.forEach(({ btn, panel, onShow }) => {
@@ -437,9 +435,20 @@
       panel.hidden = !isSelected;
       if (isSelected && onShow) requestAnimationFrame(onShow);
     });
+    panelMethodology.hidden = true;
   }
   TABS.forEach(({ btn }) => btn.addEventListener('click', () => selectTab(btn)));
-  infoBtn.addEventListener('click', () => selectTab(tabMethodology));
+
+  // ---- Dokumentacja (not a tab — reached only via the "i" button) ----
+  function showDocs() {
+    TABS.forEach(({ btn, panel }) => {
+      btn.setAttribute('aria-selected', 'false');
+      btn.tabIndex = -1;
+      panel.hidden = true;
+    });
+    panelMethodology.hidden = false;
+  }
+  infoBtn.addEventListener('click', showDocs);
 
   // ---- focus mode (large text/gauges for low-vision users) ----
   const FOCUS_STORAGE_KEY = 'blueMonitor.focusMode.v1';
@@ -484,5 +493,5 @@
     });
   }
 
-  if (location.search.includes('tab=methodology')) selectTab(tabMethodology);
+  if (location.search.includes('tab=methodology')) showDocs();
 })();
