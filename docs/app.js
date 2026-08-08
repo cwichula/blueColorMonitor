@@ -24,9 +24,11 @@
 
   // ---- DOM: tabs ----
   const tabCamera = document.getElementById('tabCamera');
-  const tabMonitor = document.getElementById('tabMonitor');
+  const tabGauges = document.getElementById('tabGauges');
+  const tabCharts = document.getElementById('tabCharts');
   const panelCamera = document.getElementById('panelCamera');
-  const panelMonitor = document.getElementById('panelMonitor');
+  const panelGauges = document.getElementById('panelGauges');
+  const panelCharts = document.getElementById('panelCharts');
   const panelMethodology = document.getElementById('panelMethodology');
 
   // ---- DOM: shared stats / controls ----
@@ -43,7 +45,6 @@
   const shareWarnLabel = document.getElementById('shareWarnLabel');
   const shareCritLabel = document.getElementById('shareCritLabel');
   const infoBtn = document.getElementById('infoBtn');
-  const focusBtn = document.getElementById('focusBtn');
 
   // ---- state ----
   let stream = null;
@@ -181,7 +182,7 @@
     const { w, h } = resizeCanvas(canvas);
     ctx.clearRect(0, 0, w, h);
 
-    const padL = 34, padR = 8, padT = 10, padB = 20;
+    const padL = 42, padR = 8, padT = 10, padB = 26;
     const plotW = w - padL - padR;
     const plotH = h - padT - padB;
     const yFor = (val) => padT + plotH * (1 - val / 100);
@@ -200,7 +201,7 @@
     ctx.strokeStyle = css('--gridline');
     ctx.lineWidth = 1;
     ctx.fillStyle = css('--text-muted');
-    ctx.font = `${11 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
+    ctx.font = `${14 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     [0, 25, 50, 75, 100].forEach((tick) => {
@@ -226,7 +227,7 @@
     if (visible.length < 2) {
       ctx.fillStyle = css('--text-muted');
       ctx.textAlign = 'center';
-      ctx.font = `${13 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
+      ctx.font = `${16 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
       ctx.fillText(emptyMessage, padL + plotW / 2, padT + plotH / 2);
     } else {
       const xFor = (t) => padL + ((t - windowStart) / WINDOW_MS) * plotW;
@@ -257,12 +258,12 @@
     }
 
     ctx.fillStyle = css('--text-muted');
-    ctx.font = `${11 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
+    ctx.font = `${14 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText('-60s', padL, h - 4);
+    ctx.fillText('-60s', padL, h - 6);
     ctx.textAlign = 'right';
-    ctx.fillText('teraz', padL + plotW, h - 4);
+    ctx.fillText('teraz', padL + plotW, h - 6);
   }
 
   const chartRawCanvas = document.getElementById('chartRaw');
@@ -422,10 +423,11 @@
     tableToggle.textContent = showing ? 'Pokaż jako tabelę' : 'Ukryj tabelę';
   });
 
-  // ---- tabs (Kamera / Pomiar) ----
+  // ---- tabs (Kamera / Gałki / Wykresy) ----
   const TABS = [
     { btn: tabCamera, panel: panelCamera, onShow: () => drawOverlay() },
-    { btn: tabMonitor, panel: panelMonitor, onShow: () => drawCharts() }
+    { btn: tabGauges, panel: panelGauges, onShow: null },
+    { btn: tabCharts, panel: panelCharts, onShow: () => drawCharts() }
   ];
   function selectTab(selected) {
     TABS.forEach(({ btn, panel, onShow }) => {
@@ -450,25 +452,10 @@
   }
   infoBtn.addEventListener('click', showDocs);
 
-  // ---- focus mode (large text/gauges for low-vision users) ----
-  const FOCUS_STORAGE_KEY = 'blueMonitor.focusMode.v1';
-  function setFocusMode(on) {
-    document.body.classList.toggle('focus-mode', on);
-    focusBtn.setAttribute('aria-pressed', String(on));
-    focusBtn.setAttribute('aria-label', on ? 'Wyłącz tryb Focus' : 'Włącz tryb Focus — duże czcionki i gałki dla osób niedowidzących');
-    try { localStorage.setItem(FOCUS_STORAGE_KEY, on ? '1' : '0'); } catch (_) { /* ignore */ }
-    requestAnimationFrame(() => { drawOverlay(); drawCharts(); });
-  }
-  focusBtn.addEventListener('click', () => setFocusMode(!document.body.classList.contains('focus-mode')));
-
   // ---- resize ----
   window.addEventListener('resize', () => { drawOverlay(); drawCharts(); });
 
   // ---- init ----
-  let storedFocusMode = '0';
-  try { storedFocusMode = localStorage.getItem(FOCUS_STORAGE_KEY) || '0'; } catch (_) { /* ignore */ }
-  setFocusMode(storedFocusMode === '1');
-
   // Sync the slider controls/labels to whatever thresholds we ended up with
   // (restored from localStorage, or the defaults) — the HTML's hardcoded
   // `value` attributes only match the defaults by coincidence.

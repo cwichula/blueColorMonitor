@@ -51,6 +51,9 @@
   --status-critical-bg: rgba(208,59,59,0.24);
 }
 
+/* This app has one look: large text and full-width gauges throughout, so
+   it stays readable for low-vision users without any mode switch. */
+
 * { box-sizing: border-box; }
 html, body {
   margin: 0;
@@ -74,7 +77,7 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   background: var(--page-plane);
   border-bottom: 1px solid var(--border);
 }
-.app-header h1 { font-size: 17px; margin: 0; font-weight: 700; }
+.app-header h1 { font-size: 22px; margin: 0; font-weight: 700; }
 .header-actions { display: flex; align-items: center; gap: 2px; }
 
 .tabs {
@@ -89,9 +92,9 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: 10px 6px 8px;
+  padding: 14px 8px 12px;
   margin-bottom: -1px;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-secondary);
   cursor: pointer;
@@ -110,7 +113,6 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   cursor: pointer;
 }
 .icon-btn:hover { background: var(--border); }
-.icon-btn[aria-pressed="true"] { background: var(--series-1); color: #fff; }
 
 main {
   max-width: 640px;
@@ -165,13 +167,14 @@ main {
   padding: 20px;
   background: var(--surface-1);
 }
-.camera-placeholder p { margin: 0; font-size: 13px; max-width: 30ch; }
+.camera-placeholder p { margin: 0; font-size: 20px; max-width: none; }
 .camera-placeholder.hidden { display: none; }
 
 .camera-controls {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .btn {
@@ -189,12 +192,18 @@ main {
 .btn-primary { background: var(--series-1); color: #fff; border-color: transparent; }
 .btn-small { padding: 6px 10px; font-size: 12px; }
 
+.camera-controls .btn {
+  font-size: 20px;
+  padding: 18px 22px;
+  flex: 1 1 auto;
+}
+
 /* ---- gauge / reading ---- */
 .reading-card { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .reading-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 18px;
+  grid-template-columns: 1fr;
+  gap: 36px;
   width: 100%;
 }
 .reading-block { display: flex; flex-direction: column; align-items: center; }
@@ -202,47 +211,43 @@ main {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-secondary);
-  margin: 0 0 8px;
+  margin: 0 0 14px;
 }
 
-.gauge-wrap { position: relative; width: 100%; max-width: 260px; }
+.gauge-wrap { position: relative; width: 100%; max-width: 100%; }
 .gauge { width: 100%; height: auto; display: block; }
-.gauge-band { fill: none; stroke-width: 16; stroke-linecap: butt; }
+.gauge-band { fill: none; stroke-width: 20; stroke-linecap: butt; }
 .gauge-good { stroke: var(--status-good); }
 .gauge-warning { stroke: var(--status-warning); }
 .gauge-critical { stroke: var(--status-critical); }
 .gauge-needle { stroke: var(--text-primary); stroke-width: 3; stroke-linecap: round; transition: transform 0.25s ease-out; transform-origin: 100px 95px; }
 .gauge-hub { fill: var(--text-primary); }
 
+/* In normal flow below the gauge rather than absolutely overlaid on the
+   needle — at this app's font sizes an overlay would grow taller than the
+   space reserved for it and spill upward over the arc. */
 .gauge-readout {
-  position: absolute;
-  left: 50%;
-  bottom: 4%;
-  transform: translateX(-50%);
-  width: max-content;
   text-align: center;
-  background: var(--surface-1);
-  border-radius: 12px;
-  padding: 2px 10px 4px;
+  margin-top: 14px;
 }
-.gauge-value { font-size: 32px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-.gauge-unit { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
+.gauge-value { font-size: clamp(56px, 18vw, 108px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.gauge-unit { font-size: 17px; color: var(--text-muted); margin-top: 2px; }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 4px 10px;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 20px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 700;
   white-space: nowrap;
 }
-.status-icon { flex: none; }
+.status-icon { flex: none; width: 26px; height: 26px; }
 .status-idle { background: var(--border); color: var(--text-secondary); }
 .status-good { background: var(--status-good-bg); color: var(--status-good); }
 .status-warning { background: var(--status-warning-bg); color: #7a5400; }
@@ -254,12 +259,13 @@ main {
 
 .secondary-stats {
   display: flex;
+  justify-content: center;
   gap: 24px;
   margin-top: 4px;
 }
 .stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-label { font-size: 11px; color: var(--text-muted); }
-.stat-value { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 14px; color: var(--text-muted); }
+.stat-value { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ---- chart ---- */
 .chart-header {
@@ -267,136 +273,86 @@ main {
   align-items: center;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 6px 8px;
-  margin-bottom: 8px;
+  gap: 8px 10px;
+  margin-bottom: 10px;
 }
-.chart-header h2 { flex: 1 1 190px; min-width: 0; font-size: 14px; margin: 0; font-weight: 700; color: var(--text-secondary); }
-.chart-header .btn { flex: none; }
+.chart-header h2 { flex: 1 1 190px; min-width: 0; font-size: 19px; margin: 0; font-weight: 700; color: var(--text-secondary); }
+.chart-header .btn { flex: none; font-size: 15px; padding: 10px 14px; }
 
-.chart-block + .chart-block { margin-top: 20px; }
-.chart-canvas { width: 100%; height: 180px; display: block; }
+.chart-block + .chart-block { margin-top: 28px; }
+.chart-canvas { width: 100%; height: 260px; display: block; }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 10px;
-  padding-top: 10px;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
   border-top: 1px solid var(--gridline);
 }
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 16px;
   color: var(--text-secondary);
 }
-.legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legend-swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; }
 .legend-good { background: var(--status-good); }
 .legend-warning { background: var(--status-warning); }
 .legend-critical { background: var(--status-critical); }
-.legend-item svg { color: var(--text-muted); flex: none; }
+.legend-item svg { color: var(--text-muted); flex: none; width: 18px; height: 18px; }
 
-.table-wrap { margin-top: 12px; max-height: 240px; overflow: auto; border-top: 1px solid var(--gridline); }
-.readings-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.readings-table caption { text-align: left; font-size: 11px; color: var(--text-muted); padding: 8px 0 4px; }
-.readings-table th, .readings-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--gridline); font-variant-numeric: tabular-nums; }
-.readings-table th { color: var(--text-muted); font-weight: 600; font-size: 11px; }
-.zone-dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 6px; }
+.table-wrap { margin-top: 14px; max-height: 320px; overflow: auto; border-top: 1px solid var(--gridline); }
+.readings-table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.readings-table caption { text-align: left; font-size: 13px; color: var(--text-muted); padding: 10px 0 6px; }
+.readings-table th, .readings-table td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--gridline); font-variant-numeric: tabular-nums; }
+.readings-table th { color: var(--text-muted); font-weight: 600; font-size: 13px; }
+.zone-dot { display: inline-block; width: 10px; height: 10px; border-radius: 999px; margin-right: 8px; }
 
 /* ---- settings ---- */
-.settings-card summary { cursor: pointer; font-weight: 700; font-size: 14px; }
-.settings-body { margin-top: 12px; display: flex; flex-direction: column; gap: 14px; }
-.settings-group { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--gridline); }
-.settings-group-title { display: flex; align-items: center; gap: 6px; font-size: 13px; margin: 0; color: var(--text-primary); }
-.slider-row { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
-.slider-row input[type="range"] { width: 100%; }
-.hint { font-size: 12px; color: var(--text-muted); margin: 0; }
+.settings-card summary { cursor: pointer; font-weight: 700; font-size: 19px; }
+.settings-body { margin-top: 14px; display: flex; flex-direction: column; gap: 18px; }
+.settings-group { display: flex; flex-direction: column; gap: 12px; padding-top: 14px; border-top: 1px solid var(--gridline); }
+.settings-group-title { display: flex; align-items: center; gap: 6px; font-size: 17px; margin: 0; color: var(--text-primary); }
+.slider-row { display: flex; flex-direction: column; gap: 8px; font-size: 17px; }
+.slider-row input[type="range"] { width: 100%; height: 28px; }
+.hint { font-size: 15px; color: var(--text-muted); margin: 0; }
 
-/* ---- methodology tab ---- */
+/* ---- documentation ---- */
 .methodology:not([hidden]) { display: flex; flex-direction: column; gap: 12px; }
 .methodology h3 {
-  font-size: 15px;
+  font-size: 21px;
   margin: 0 0 10px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.methodology p, .methodology li { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 8px 0; }
-.methodology ol, .methodology ul { margin: 8px 0; padding-left: 22px; }
+.methodology p, .methodology li { font-size: 17px; line-height: 1.65; color: var(--text-secondary); margin: 8px 0; }
+.methodology ol, .methodology ul { margin: 8px 0; padding-left: 24px; }
 .methodology b { color: var(--text-primary); }
 .methodology code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   background: var(--border);
   padding: 1px 5px;
   border-radius: 4px;
-  font-size: 12.5px;
+  font-size: 15px;
   color: var(--text-primary);
 }
 .formula-block { text-align: center; margin: 12px 0; }
-.formula-block code { font-size: 14px; padding: 6px 12px; }
+.formula-block code { font-size: 17px; padding: 6px 12px; }
 
 /* ---- documentation chapters / TOC ---- */
 .doc-chapter {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
   color: var(--text-muted);
-  margin: 22px 4px 4px;
+  margin: 24px 4px 4px;
 }
-.doc-toc h2 { font-size: 15px; margin: 0 0 8px; }
-.doc-toc ol { margin: 0; padding-left: 20px; }
-.doc-toc li { font-size: 13.5px; line-height: 1.7; }
+.doc-toc h2 { font-size: 20px; margin: 0 0 8px; }
+.doc-toc ol { margin: 0; padding-left: 22px; }
+.doc-toc li { font-size: 17px; line-height: 1.8; }
 .doc-toc a { color: var(--series-1); text-decoration: none; }
 .doc-toc a:hover { text-decoration: underline; }
-
-/* ---- focus mode: large text, full-width gauges, simplified for low vision ---- */
-body.focus-mode .app-header h1 { font-size: 24px; }
-body.focus-mode .tab-btn { font-size: 19px; padding: 14px 10px 12px; }
-
-body.focus-mode #panelMonitor .chart-card,
-body.focus-mode #panelMonitor .settings-card,
-body.focus-mode #panelMonitor .secondary-stats {
-  display: none;
-}
-
-body.focus-mode .camera-placeholder p { font-size: 20px; max-width: none; }
-body.focus-mode .camera-controls { flex-wrap: wrap; }
-body.focus-mode .camera-controls .btn {
-  font-size: 20px;
-  padding: 18px 22px;
-  flex: 1 1 auto;
-}
-
-body.focus-mode .reading-grid { grid-template-columns: 1fr; gap: 36px; }
-body.focus-mode .reading-title { font-size: 22px; margin-bottom: 14px; }
-body.focus-mode .gauge-wrap { max-width: 100%; }
-body.focus-mode .gauge-band { stroke-width: 20; }
-/* Taken out of the absolute overlay (used in normal mode to sit over the
-   needle) and into normal flow below the gauge instead — at these much
-   larger font sizes the overlay approach would grow taller than the space
-   reserved for it and spill upward over the arc. */
-body.focus-mode .gauge-readout {
-  position: static;
-  left: auto;
-  bottom: auto;
-  transform: none;
-  width: auto;
-  background: none;
-  padding: 0;
-  margin-top: 14px;
-}
-body.focus-mode .gauge-value { font-size: clamp(56px, 18vw, 108px); }
-body.focus-mode .gauge-unit { font-size: 17px; }
-body.focus-mode .status-badge { font-size: 20px; padding: 10px 20px; gap: 10px; margin-top: 14px; }
-body.focus-mode .status-icon { width: 26px; height: 26px; }
-
-/* ---- focus mode: also scale up the Dokumentacja tab, not just Pomiar ---- */
-body.focus-mode .doc-toc h2 { font-size: 20px; }
-body.focus-mode .doc-toc li { font-size: 17px; line-height: 1.8; }
-body.focus-mode .doc-chapter { font-size: 16px; }
-body.focus-mode .methodology h3 { font-size: 21px; }
-body.focus-mode .methodology p,
-body.focus-mode .methodology li { font-size: 17px; line-height: 1.65; }
-body.focus-mode .methodology code { font-size: 15px; }
