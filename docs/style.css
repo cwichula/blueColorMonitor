@@ -102,6 +102,7 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   text-align: center;
 }
 .tab-btn[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--series-1); }
+.tab-btn:hover { color: var(--text-primary); }
 
 .icon-btn {
   background: none;
@@ -206,8 +207,8 @@ main {
 .reading-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .reading-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 18px;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
   width: 100%;
 }
 .reading-block { display: flex; flex-direction: column; align-items: center; }
@@ -360,3 +361,24 @@ main {
 .doc-toc li { font-size: 17px; line-height: 1.8; }
 .doc-toc a { color: var(--series-1); text-decoration: none; }
 .doc-toc a:hover { text-decoration: underline; }
+
+/* ---- desktop / wide-viewport layout ----
+   On a phone the tab bar filling the full width edge-to-edge is normal; on a
+   wide desktop browser window the same flex:1-stretched buttons end up
+   spanning the whole browser width, which reads as oversized and empty.
+   From here up, align the tab bar with the content column instead and let
+   each tab size to its label rather than stretching. */
+@media (min-width: 700px) {
+  main { max-width: 760px; }
+  .tabs {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px;
+    gap: 4px;
+  }
+  .tab-btn {
+    flex: 0 0 auto;
+    padding: 16px 28px 14px;
+  }
+  .video-wrap { max-width: 480px; margin: 0 auto; }
+}
