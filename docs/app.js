@@ -23,8 +23,10 @@
   const switchBtn = document.getElementById('switchBtn');
 
   // ---- DOM: tabs ----
+  const tabCamera = document.getElementById('tabCamera');
   const tabMonitor = document.getElementById('tabMonitor');
   const tabMethodology = document.getElementById('tabMethodology');
+  const panelCamera = document.getElementById('panelCamera');
   const panelMonitor = document.getElementById('panelMonitor');
   const panelMethodology = document.getElementById('panelMethodology');
 
@@ -422,18 +424,21 @@
   });
 
   // ---- tabs ----
-  function selectTab(btn) {
-    const isMonitor = btn === tabMonitor;
-    tabMonitor.setAttribute('aria-selected', String(isMonitor));
-    tabMonitor.tabIndex = isMonitor ? 0 : -1;
-    tabMethodology.setAttribute('aria-selected', String(!isMonitor));
-    tabMethodology.tabIndex = isMonitor ? -1 : 0;
-    panelMonitor.hidden = !isMonitor;
-    panelMethodology.hidden = isMonitor;
-    if (isMonitor) requestAnimationFrame(() => { drawOverlay(); drawCharts(); });
+  const TABS = [
+    { btn: tabCamera, panel: panelCamera, onShow: () => drawOverlay() },
+    { btn: tabMonitor, panel: panelMonitor, onShow: () => drawCharts() },
+    { btn: tabMethodology, panel: panelMethodology, onShow: null }
+  ];
+  function selectTab(selected) {
+    TABS.forEach(({ btn, panel, onShow }) => {
+      const isSelected = btn === selected;
+      btn.setAttribute('aria-selected', String(isSelected));
+      btn.tabIndex = isSelected ? 0 : -1;
+      panel.hidden = !isSelected;
+      if (isSelected && onShow) requestAnimationFrame(onShow);
+    });
   }
-  tabMonitor.addEventListener('click', () => selectTab(tabMonitor));
-  tabMethodology.addEventListener('click', () => selectTab(tabMethodology));
+  TABS.forEach(({ btn }) => btn.addEventListener('click', () => selectTab(btn)));
   infoBtn.addEventListener('click', () => selectTab(tabMethodology));
 
   // ---- focus mode (large text/gauges for low-vision users) ----

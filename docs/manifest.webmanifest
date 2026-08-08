@@ -1,6 +1,6 @@
 {
-  "name": "Monitor Światła Niebieskiego",
-  "short_name": "BlueMonitor",
+  "name": "Monitoring Światła Szkodliwego",
+  "short_name": "Monitoring",
   "description": "Mierzy kamerą natężenie koloru niebieskiego i pokazuje je na czytelnym wykresie ze strefami bezpieczną, umiarkowaną i szkodliwą dla oczu.",
   "start_url": "./index.html",
   "scope": "./",

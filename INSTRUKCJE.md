@@ -1,4 +1,4 @@
-# Monitor Światła Niebieskiego — instrukcja uruchomienia
+# Monitoring Światła Szkodliwego — instrukcja uruchomienia
 
 Aplikacja jest w folderze `docs/`. To progresywna aplikacja webowa (PWA) —
 zwykła strona, którą Chrome na Androidzie potrafi „zainstalować" jak normalną
@@ -108,7 +108,7 @@ narzędzie **[PWABuilder](https://www.pwabuilder.com/)**:
 6. Znajomy klika plik → Android poprosi o zgodę na „instalację z nieznanego
    źródła" (normalne dla plików spoza Sklepu Play, nie oznacza niczego
    niebezpiecznego — to Twoja własna apka) → **Zainstaluj**. Ikona
-   „Monitor Światła Niebieskiego" wyląduje na ekranie głównym.
+   „Monitoring Światła Szkodliwego" wyląduje na ekranie głównym.
 
 Uwaga: przy pierwszym uruchomieniu telefon znajomego musi na chwilę połączyć
 się z internetem, żeby pobrać i zapisać aplikację offline (ten sam mechanizm

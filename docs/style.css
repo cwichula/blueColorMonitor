@@ -95,7 +95,7 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   font-weight: 700;
   color: var(--text-secondary);
   cursor: pointer;
-  flex: 1 1 50%;
+  flex: 1 1 0;
   text-align: center;
 }
 .tab-btn[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--series-1); }

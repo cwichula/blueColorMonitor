@@ -1,4 +1,4 @@
-const CACHE_NAME = 'blue-monitor-v12';
+const CACHE_NAME = 'blue-monitor-v13';
 const APP_SHELL = [
   './',
   './index.html',
