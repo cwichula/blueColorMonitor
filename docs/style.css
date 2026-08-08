@@ -95,6 +95,8 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   font-weight: 700;
   color: var(--text-secondary);
   cursor: pointer;
+  flex: 1 1 50%;
+  text-align: center;
 }
 .tab-btn[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--series-1); }
 
@@ -371,7 +373,30 @@ body.focus-mode .reading-grid { grid-template-columns: 1fr; gap: 36px; }
 body.focus-mode .reading-title { font-size: 22px; margin-bottom: 14px; }
 body.focus-mode .gauge-wrap { max-width: 100%; }
 body.focus-mode .gauge-band { stroke-width: 20; }
+/* Taken out of the absolute overlay (used in normal mode to sit over the
+   needle) and into normal flow below the gauge instead — at these much
+   larger font sizes the overlay approach would grow taller than the space
+   reserved for it and spill upward over the arc. */
+body.focus-mode .gauge-readout {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  width: auto;
+  background: none;
+  padding: 0;
+  margin-top: 14px;
+}
 body.focus-mode .gauge-value { font-size: clamp(56px, 18vw, 108px); }
 body.focus-mode .gauge-unit { font-size: 17px; }
 body.focus-mode .status-badge { font-size: 20px; padding: 10px 20px; gap: 10px; margin-top: 14px; }
 body.focus-mode .status-icon { width: 26px; height: 26px; }
+
+/* ---- focus mode: also scale up the Dokumentacja tab, not just Pomiar ---- */
+body.focus-mode .doc-toc h2 { font-size: 20px; }
+body.focus-mode .doc-toc li { font-size: 17px; line-height: 1.8; }
+body.focus-mode .doc-chapter { font-size: 16px; }
+body.focus-mode .methodology h3 { font-size: 21px; }
+body.focus-mode .methodology p,
+body.focus-mode .methodology li { font-size: 17px; line-height: 1.65; }
+body.focus-mode .methodology code { font-size: 15px; }
