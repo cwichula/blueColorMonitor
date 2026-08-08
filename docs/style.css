@@ -75,6 +75,7 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   border-bottom: 1px solid var(--border);
 }
 .app-header h1 { font-size: 17px; margin: 0; font-weight: 700; }
+.header-actions { display: flex; align-items: center; gap: 2px; }
 
 .tabs {
   display: flex;
@@ -107,6 +108,7 @@ body { padding-bottom: env(safe-area-inset-bottom, 0); }
   cursor: pointer;
 }
 .icon-btn:hover { background: var(--border); }
+.icon-btn[aria-pressed="true"] { background: var(--series-1); color: #fff; }
 
 main {
   max-width: 640px;
@@ -346,3 +348,30 @@ main {
 .doc-toc li { font-size: 13.5px; line-height: 1.7; }
 .doc-toc a { color: var(--series-1); text-decoration: none; }
 .doc-toc a:hover { text-decoration: underline; }
+
+/* ---- focus mode: large text, full-width gauges, simplified for low vision ---- */
+body.focus-mode .app-header h1 { font-size: 24px; }
+body.focus-mode .tab-btn { font-size: 19px; padding: 14px 10px 12px; }
+
+body.focus-mode #panelMonitor .chart-card,
+body.focus-mode #panelMonitor .settings-card,
+body.focus-mode #panelMonitor .secondary-stats {
+  display: none;
+}
+
+body.focus-mode .camera-placeholder p { font-size: 20px; max-width: none; }
+body.focus-mode .camera-controls { flex-wrap: wrap; }
+body.focus-mode .camera-controls .btn {
+  font-size: 20px;
+  padding: 18px 22px;
+  flex: 1 1 auto;
+}
+
+body.focus-mode .reading-grid { grid-template-columns: 1fr; gap: 36px; }
+body.focus-mode .reading-title { font-size: 22px; margin-bottom: 14px; }
+body.focus-mode .gauge-wrap { max-width: 100%; }
+body.focus-mode .gauge-band { stroke-width: 20; }
+body.focus-mode .gauge-value { font-size: clamp(56px, 18vw, 108px); }
+body.focus-mode .gauge-unit { font-size: 17px; }
+body.focus-mode .status-badge { font-size: 20px; padding: 10px 20px; gap: 10px; margin-top: 14px; }
+body.focus-mode .status-icon { width: 26px; height: 26px; }

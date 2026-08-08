@@ -15,9 +15,14 @@
 
 <header class="app-header">
   <h1>Monitor Światła Niebieskiego</h1>
-  <button id="infoBtn" class="icon-btn" type="button" aria-label="Przejdź do dokumentacji">
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
-  </button>
+  <div class="header-actions">
+    <button id="focusBtn" class="icon-btn" type="button" aria-pressed="false" aria-label="Włącz tryb Focus — duże czcionki i gałki dla osób niedowidzących">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><text x="3" y="18" font-size="16" font-weight="700" fill="currentColor">A</text><text x="14" y="19" font-size="10" font-weight="700" fill="currentColor">A</text></svg>
+    </button>
+    <button id="infoBtn" class="icon-btn" type="button" aria-label="Przejdź do dokumentacji">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
+    </button>
+  </div>
 </header>
 
 <div class="tabs" role="tablist" aria-label="Widoki aplikacji">
@@ -198,6 +203,15 @@
       <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
       <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu (rozdział 4).</li>
     </ul>
+  </section>
+
+  <section class="card">
+    <h3>Tryb Focus dla osób niedowidzących</h3>
+    <p>Przycisk <b>„Aa”</b> w nagłówku (obok ikony „i") włącza uproszczony
+    widok: duże czcionki, jedna gałka pod drugą na pełną szerokość ekranu
+    zamiast dwóch obok siebie, bez wykresów, tabeli i ustawień — tylko
+    kamera i odczyt. Stan przełącznika jest <b>zapamiętywany</b> między
+    otwarciami aplikacji, tak samo jak progi stref.</p>
   </section>
 
   <h2 id="doc-metodologia" class="doc-chapter">2. Jak działa pomiar</h2>

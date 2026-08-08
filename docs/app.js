@@ -42,6 +42,7 @@
   const shareWarnLabel = document.getElementById('shareWarnLabel');
   const shareCritLabel = document.getElementById('shareCritLabel');
   const infoBtn = document.getElementById('infoBtn');
+  const focusBtn = document.getElementById('focusBtn');
 
   // ---- state ----
   let stream = null;
@@ -435,10 +436,25 @@
   tabMethodology.addEventListener('click', () => selectTab(tabMethodology));
   infoBtn.addEventListener('click', () => selectTab(tabMethodology));
 
+  // ---- focus mode (large text/gauges for low-vision users) ----
+  const FOCUS_STORAGE_KEY = 'blueMonitor.focusMode.v1';
+  function setFocusMode(on) {
+    document.body.classList.toggle('focus-mode', on);
+    focusBtn.setAttribute('aria-pressed', String(on));
+    focusBtn.setAttribute('aria-label', on ? 'Wyłącz tryb Focus' : 'Włącz tryb Focus — duże czcionki i gałki dla osób niedowidzących');
+    try { localStorage.setItem(FOCUS_STORAGE_KEY, on ? '1' : '0'); } catch (_) { /* ignore */ }
+    requestAnimationFrame(() => { drawOverlay(); drawCharts(); });
+  }
+  focusBtn.addEventListener('click', () => setFocusMode(!document.body.classList.contains('focus-mode')));
+
   // ---- resize ----
   window.addEventListener('resize', () => { drawOverlay(); drawCharts(); });
 
   // ---- init ----
+  let storedFocusMode = '0';
+  try { storedFocusMode = localStorage.getItem(FOCUS_STORAGE_KEY) || '0'; } catch (_) { /* ignore */ }
+  setFocusMode(storedFocusMode === '1');
+
   // Sync the slider controls/labels to whatever thresholds we ended up with
   // (restored from localStorage, or the defaults) — the HTML's hardcoded
   // `value` attributes only match the defaults by coincidence.
