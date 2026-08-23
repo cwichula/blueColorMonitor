@@ -10,25 +10,37 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="style.css">
+<!-- Must load AFTER style.css: its global [hidden]{display:none!important} and
+     .btn-large need to win on source order, not on specificity hacks. -->
+<link rel="stylesheet" href="monetization.css">
 </head>
 <body class="viz-root">
 
 <header class="app-header">
   <h1>Monitoring Światła Szkodliwego</h1>
   <div class="header-actions">
+    <!-- Second permanent entry point to Premium. monetization-ui.js owns the
+         label and aria-label; menu.js only wires the click. -->
+    <button id="premiumPill" class="mz-pill" type="button" aria-label="Przejdź na Premium — wersja demonstracyjna"><span id="premiumPillLabel">PRO</span></button>
     <button id="infoBtn" class="icon-btn" type="button" aria-label="Przejdź do dokumentacji">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
     </button>
   </div>
 </header>
 
-<div class="tabs" role="tablist" aria-label="Widoki aplikacji">
+<!-- Kept in the DOM (app.js still owns selectTab) but hidden by menu.js, so the
+     screen reader never hears the same navigation twice. -->
+<div class="tabs" id="legacyTabs" role="tablist" aria-label="Widoki aplikacji">
   <button id="tabCamera" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelCamera">Kamera</button>
   <button id="tabMonitoring" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelMonitoring" tabindex="-1">Monitoring</button>
 </div>
 
 <main>
-<div id="panelCamera" role="tabpanel" aria-labelledby="tabCamera">
+<!-- role="region", not "tabpanel": menu.js hides #legacyTabs, so there is no
+     role="tablist" and no role="tab" left in the accessibility tree and a
+     tabpanel here would be orphaned. app.js only toggles .hidden and
+     aria-selected, so it is unaffected. -->
+<div id="panelCamera" role="region" aria-label="Kamera">
 
   <section class="card camera-card" aria-label="Podgląd kamery">
     <div class="video-wrap">
@@ -47,7 +59,7 @@
   </section>
 </div>
 
-<div id="panelMonitoring" role="tabpanel" aria-labelledby="tabMonitoring" hidden>
+<div id="panelMonitoring" role="region" aria-label="Monitoring" hidden>
 
   <section class="card reading-card" aria-label="Aktualne odczyty">
     <div class="reading-grid">
@@ -98,12 +110,16 @@
     <div class="secondary-stats">
       <div class="stat"><span class="stat-label">Jasność ogólna sceny</span><span id="overallBrightness" class="stat-value">--%</span></div>
     </div>
+    <p id="medicalDisclaimerShort" class="mz-disclaimer-short">Wynik orientacyjny. To nie jest wyrób medyczny. <a id="medicalDisclaimerLink" href="#">Więcej</a></p>
   </section>
 
   <section class="card chart-card" aria-label="Wykresy w czasie">
     <div class="chart-header">
       <h2>Wykresy w czasie (ostatnie 60 s)</h2>
       <button id="tableToggle" class="btn btn-small" type="button" aria-pressed="false">Pokaż jako tabelę</button>
+      <!-- No onclick here on purpose: monetization-ui.js wires the handler and
+           adds the padlock (it marks the button with data-mz-wired). -->
+      <button id="exportCsvBtn" class="btn" type="button">Eksport CSV</button>
     </div>
 
     <div class="chart-block">
@@ -134,6 +150,10 @@
       </div>
     </div>
 
+    <!-- Filled by monetization-ui.js: locked-history upsell for the free tier,
+         the real history browser once the entitlement exists. -->
+    <div id="historyUpsell"></div>
+
     <div id="tableWrap" class="table-wrap" hidden>
       <table class="readings-table">
         <caption>Ostatnie odczyty (najnowszy na górze)</caption>
@@ -148,7 +168,7 @@
     </div>
   </section>
 
-  <details class="card settings-card">
+  <details class="card settings-card" id="settingsCard">
     <summary>Ustawienia progów stref</summary>
     <div class="settings-body">
       <div class="settings-group">
@@ -174,12 +194,35 @@
           <input id="shareWarnSlider" type="range" min="5" max="90" value="26">
         </label>
       </div>
+
+      <!-- Filled by monetization-ui.js: threshold-profile upsell / manager. -->
+      <div id="profilesUpsell"></div>
     </div>
   </details>
 
+  <!-- Ad slot, deliberately the LAST element of the panel and far away from
+       Start/Stop (those live in panelCamera). Height is reserved so nothing
+       ever jumps under the user's finger. -->
+  <div id="adSlotMonitoring" class="ad-slot ad-slot-reserved" hidden></div>
+
 </div>
 
-<div id="panelMethodology" aria-label="Dokumentacja" class="methodology" hidden>
+<div id="panelMethodology" role="region" aria-label="Dokumentacja" class="methodology" hidden>
+
+  <!-- data-nav-back is menu.js's delegated back handler; no per-screen wiring. -->
+  <div class="mz-row">
+    <button type="button" class="mz-back-btn" data-nav-back aria-label="Wróć do poprzedniego ekranu">← Wróć</button>
+  </div>
+
+  <section class="card mz-disclaimer" role="note">
+    <h3>To nie jest wyrób medyczny</h3>
+    <p>Ta aplikacja nie jest wyrobem medycznym. Nie służy do diagnozowania,
+    leczenia ani zapobiegania jakimkolwiek chorobom. Wyniki pomiaru kamerą
+    telefonu mają charakter orientacyjny i nie zastępują badania ani porady
+    lekarza. W sprawach zdrowia wzroku skonsultuj się z lekarzem lub
+    optometrystą. Progi stref w tej aplikacji nie odwzorowują żadnej normy
+    bezpieczeństwa — szczegóły w rozdziale 3.</p>
+  </section>
 
   <nav class="doc-toc card" aria-label="Spis treści dokumentacji">
     <h2>Spis treści</h2>
@@ -197,8 +240,8 @@
   <section class="card">
     <h3>Jak mierzyć trafniej</h3>
     <ul>
-      <li>W zakładce „Kamera” naciśnij „Start” i skieruj tylny aparat na ekran lub źródło światła, które chcesz sprawdzić.</li>
-      <li>Przełącz się na zakładkę „Monitoring” — u góry zobaczysz obie gałki naraz, a niżej (przewiń) wykresy zmian w czasie. Pomiar działa w tle niezależnie od tego, którą zakładkę akurat oglądasz.</li>
+      <li>Na ekranie „Kamera” (pierwszy przycisk na dolnym pasku) naciśnij „Start” i skieruj tylny aparat na ekran lub źródło światła, które chcesz sprawdzić.</li>
+      <li>Przejdź na ekran „Monitoring” (drugi przycisk dolnego paska) — u góry zobaczysz obie gałki naraz, a niżej (przewiń) wykresy zmian w czasie. Pomiar działa w tle niezależnie od tego, który ekran akurat oglądasz.</li>
       <li>Ustaw telefon w stałej odległości od ekranu (np. 15–20 cm), bez zmiany oświetlenia otoczenia w trakcie pomiaru.</li>
       <li>Użyj tylnego aparatu — ma mniej agresywne korekcje automatyczne niż przedni.</li>
       <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
@@ -210,7 +253,7 @@
     <h3>Duże czcionki i gałki — zawsze</h3>
     <p>Cała aplikacja używa dużych, czytelnych czcionek i pełnowymiarowych
     gałek, tak żeby osoby niedowidzące (i wszyscy inni) mogli odczytać dane
-    bez dodatkowych ustawień. W zakładce „Monitoring” obie gałki mieszczą się
+    bez dodatkowych ustawień. Na ekranie „Monitoring” obie gałki mieszczą się
     razem na jednym ekranie, bez przewijania — wykresy zmian w czasie są
     zaraz pod nimi, o przewinięcie dalej.</p>
   </section>
@@ -359,7 +402,7 @@
 
   <section class="card">
     <h3>Strefy kolorów i skąd biorą się progi</h3>
-    <p>Obie metryki mają własne, niezależnie ustawiane progi (zakładka
+    <p>Obie metryki mają własne, niezależnie ustawiane progi (ekran
     „Monitoring” → „Ustawienia progów stref”, na dole strony) — 33%/66% na jednej nie znaczy tego
     samego, co na drugiej (patrz rozdział 2 wyżej). To <b>udział niebieskiego</b>
     decyduje o kolorze w legendzie pod wykresami i w tabeli odczytów:</p>
@@ -437,8 +480,28 @@
   </section>
 
 </div>
+
+<!-- Overlay screens. Deliberately plain <div>s, NOT role="tabpanel" — they sit
+     outside the tablist, exactly like #panelMethodology. Content is injected by
+     monetization-ui.js (premium, account) and menu.js (more, about). -->
+<div id="panelPremium" class="mz-screen" role="region" aria-labelledby="premiumTitle" hidden></div>
+<div id="panelAccount" class="mz-screen" role="region" aria-labelledby="accountTitle" hidden></div>
+<div id="panelMore" class="mz-screen" role="region" aria-labelledby="moreTitle" hidden></div>
+<div id="panelAbout" class="mz-screen" role="region" aria-labelledby="aboutTitle" hidden></div>
 </main>
 
+<!-- Global layers, all filled at runtime. -->
+<nav id="appNav" class="nav-bar" aria-label="Menu główne"></nav>
+<div id="navLive" class="mz-visually-hidden" aria-live="polite"></div>
+<div id="mzLayer"></div>
+<div id="mzToastRegion" class="mz-toast-region" role="status" aria-live="polite"></div>
+
+<!-- Load order is a hard contract: billing defines the engine, monetization-ui
+     and menu define the surfaces, app.js publishes AppTabs/AppData last and
+     fires 'app:ready', which boots the other three. No defer/async, no modules. -->
+<script src="billing.js"></script>
+<script src="monetization-ui.js"></script>
+<script src="menu.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
