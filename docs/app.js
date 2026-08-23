@@ -6,6 +6,15 @@
   const SAMPLE_SIZE = 32;        // offscreen sampling canvas side, px
   const CROP_FRACTION = 0.6;     // sample the center 60% of the frame
 
+  // Long-term buffer. Collected for EVERYONE, free tier included — only reading
+  // it is a premium feature, so a purchase reveals real history instead of an
+  // empty table. Downsampled to 1 point / 5 s to stay cheap on budget phones.
+  const LONG_STEP_MS = 5000;
+  const LONG_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+  // "Aha moment": the soft paywall may be offered only after this much
+  // uninterrupted successful measurement, never before.
+  const VALUE_MOMENT_MS = 45_000;
+
   const ICONS = {
     good: '<path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>',
     warning: '<path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
@@ -50,6 +59,34 @@
   let sampleTimer = null;
   let history = []; // {t, raw, share, brightness, zoneRaw, zoneShare}
 
+  // Populated from localStorage further down, once HISTORY_STORAGE_KEY and the
+  // codec below it exist (they are `const`, so they cannot be touched earlier).
+  let historyLong = [];          // same shape, 1 point per LONG_STEP_MS, 30-day window
+  let lastLongAt = 0;
+  let historyDirty = false;
+  let longPushCount = 0;
+  let sessionStartedAt = null;
+  let sessionSamples = 0;
+  let sessionZones = { good: 0, warning: 0, critical: 0 };
+  let valueMomentTimer = null;
+  const sampleListeners = [];
+  const sessionEndListeners = [];
+
+  // Listener dispatch never lets one broken subscriber break the others, and
+  // never lets one break the measurement loop it is called from.
+  function notify(list, payload) {
+    for (let i = 0; i < list.length; i++) {
+      try { list[i](payload); } catch (_) { /* ignore */ }
+    }
+  }
+  function addListener(list, cb) {
+    if (typeof cb === 'function' && list.indexOf(cb) === -1) list.push(cb);
+  }
+  function removeListener(list, cb) {
+    const i = list.indexOf(cb);
+    if (i >= 0) list.splice(i, 1);
+  }
+
   // Independent thresholds per metric — 33%/66% doesn't mean the same thing on
   // both (see the "Dokumentacja" tab), so each gets its own pair.
   //
@@ -72,6 +109,76 @@
     share: { warn: 26, crit: 33 }
   };
   const THRESHOLDS_STORAGE_KEY = 'blueMonitor.thresholds.v1';
+  const HISTORY_STORAGE_KEY = 'blueMonitor.history.v1';
+  // Storage budget guard. 30 days at 1 point / 5 s is ~518k points, far past the
+  // ~5 MB localStorage quota, so only the newest slice is persisted. Real usage
+  // is intermittent, so this still covers many days of sessions.
+  const HISTORY_MAX_STORED = 15000;
+  const HISTORY_FLUSH_EVERY = 64;   // long points between batch writes (~5 min)
+  const ZONE_CODES = ['good', 'warning', 'critical'];
+
+  // Compact row form keeps the JSON small: [t, raw, share, brightness, zoneRaw, zoneShare].
+  function encodeHistoryPoint(p) {
+    return [
+      p.t,
+      Math.round(p.raw * 10) / 10,
+      Math.round(p.share * 10) / 10,
+      Math.round(p.brightness * 10) / 10,
+      ZONE_CODES.indexOf(p.zoneRaw),
+      ZONE_CODES.indexOf(p.zoneShare)
+    ];
+  }
+  function decodeHistoryPoint(row) {
+    if (!Array.isArray(row) || row.length < 6) return null;
+    const t = Number(row[0]);
+    const zoneRaw = ZONE_CODES[row[4]];
+    const zoneShare = ZONE_CODES[row[5]];
+    if (!Number.isFinite(t) || !zoneRaw || !zoneShare) return null;
+    return {
+      t,
+      raw: Number(row[1]) || 0,
+      share: Number(row[2]) || 0,
+      brightness: Number(row[3]) || 0,
+      zoneRaw,
+      zoneShare
+    };
+  }
+  function loadHistoryLong() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY));
+      if (!saved || !Array.isArray(saved.points)) return [];
+      const now = Date.now();
+      const cutoff = now - LONG_WINDOW_MS;
+      const out = [];
+      for (const row of saved.points) {
+        const p = decodeHistoryPoint(row);
+        // Guard against a clock that moved backwards: future stamps are dropped.
+        if (p && p.t >= cutoff && p.t <= now + 60_000) out.push(p);
+      }
+      out.sort((a, b) => a.t - b.t);
+      return out.slice(-HISTORY_MAX_STORED);
+    } catch (_) { /* localStorage unavailable or corrupt — start empty */ }
+    return [];
+  }
+  function persistHistoryLong() {
+    const write = () => {
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify({
+        v: 1,
+        points: historyLong.slice(-HISTORY_MAX_STORED).map(encodeHistoryPoint)
+      }));
+      historyDirty = false;
+    };
+    try {
+      write();
+    } catch (_) {
+      // Quota exceeded: drop the oldest half and retry once, so recent history
+      // survives instead of the whole buffer silently vanishing.
+      try {
+        historyLong = historyLong.slice(-Math.floor(HISTORY_MAX_STORED / 2));
+        write();
+      } catch (__) { /* storage unavailable — buffer stays in memory only */ }
+    }
+  }
 
   function loadStoredThresholds() {
     try {
@@ -87,6 +194,10 @@
   function persistThresholds() {
     try { localStorage.setItem(THRESHOLDS_STORAGE_KEY, JSON.stringify(thresholds)); } catch (_) { /* ignore */ }
   }
+
+  // Restore the long buffer now that its key, codec and window are all defined.
+  historyLong = loadHistoryLong();
+  lastLongAt = historyLong.length ? historyLong[historyLong.length - 1].t : 0;
 
   let thresholds = loadStoredThresholds() || {
     raw: { ...DEFAULT_THRESHOLDS.raw },
@@ -324,11 +435,29 @@
     const cutoff = Date.now() - WINDOW_MS - SAMPLE_MS;
     history = history.filter((p) => p.t >= cutoff);
 
+    // Long buffer: one point per LONG_STEP_MS. Trimmed every 64 pushes rather
+    // than every sample so the 5 Hz path never walks a 30-day array.
+    if (point.t - lastLongAt >= LONG_STEP_MS) {
+      lastLongAt = point.t;
+      historyLong.push(point);
+      historyDirty = true;
+      longPushCount += 1;
+      if (longPushCount % HISTORY_FLUSH_EVERY === 0) {
+        const longCutoff = point.t - LONG_WINDOW_MS;
+        historyLong = historyLong.filter((p) => p.t >= longCutoff);
+        persistHistoryLong();
+      }
+    }
+
+    sessionSamples += 1;
+    if (sessionZones[zoneShare] !== undefined) sessionZones[zoneShare] += 1;
+
     updateGauge(gaugeRaw, zoneRaw, raw);
     updateGauge(gaugeShare, zoneShare, share);
     overallBrightnessEl.textContent = `${Math.round(brightness)}%`;
     pushTableRow(point);
     drawCharts();
+    notify(sampleListeners, point);
   }
 
   // ---- camera lifecycle ----
@@ -355,6 +484,20 @@
       stopBtn.disabled = false;
       switchBtn.disabled = false;
       startBtn.textContent = 'Start';
+
+      // Session bookkeeping. The monetization layer is NOT allowed to gate the
+      // camera in any way — it only gets told that a session has begun.
+      sessionStartedAt = Date.now();
+      sessionSamples = 0;
+      sessionZones = { good: 0, warning: 0, critical: 0 };
+      clearTimeout(valueMomentTimer);
+      valueMomentTimer = setTimeout(() => {
+        valueMomentTimer = null;
+        if (window.MonetizationUI && window.MonetizationUI.maybeShowValueMomentPaywall) {
+          try { window.MonetizationUI.maybeShowValueMomentPaywall(); } catch (_) { /* ignore */ }
+        }
+      }, VALUE_MOMENT_MS);
+
       clearInterval(sampleTimer);
       sampleTimer = setInterval(takeSample, SAMPLE_MS);
     } catch (err) {
@@ -368,6 +511,8 @@
   function stopCamera() {
     clearInterval(sampleTimer);
     sampleTimer = null;
+    clearTimeout(valueMomentTimer);
+    valueMomentTimer = null;
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
       stream = null;
@@ -381,6 +526,29 @@
     updateGauge(gaugeRaw, null, null);
     updateGauge(gaugeShare, null, null);
     overallBrightnessEl.textContent = '--%';
+
+    if (historyDirty) persistHistoryLong();
+
+    if (sessionStartedAt) {
+      const endedAt = Date.now();
+      const total = sessionSamples || 1;
+      const summary = {
+        startedAt: sessionStartedAt,
+        endedAt,
+        durationMs: endedAt - sessionStartedAt,
+        samples: sessionSamples,
+        zoneShares: {
+          good: sessionZones.good / total,
+          warning: sessionZones.warning / total,
+          critical: sessionZones.critical / total
+        }
+      };
+      sessionStartedAt = null;
+      notify(sessionEndListeners, summary);
+    }
+
+    // No ad is shown here on purpose. Better Ads / Play policy forbids an ad
+    // triggered by "Start" or "Stop", so stopping a measurement stays silent.
   }
 
   startBtn.addEventListener('click', startCamera);
@@ -392,22 +560,37 @@
   });
 
   // ---- thresholds (each metric owns its own pair — see the state comment above) ----
-  function makeThresholdHandler(kind, warnSlider, critSlider, warnLabel, critLabel, gauge) {
+  // One descriptor per metric, so both the sliders and AppData.setThresholds
+  // (threshold profiles) drive the exact same repaint path.
+  const THRESHOLD_UI = {
+    raw: { warnSlider: rawWarnSlider, critSlider: rawCritSlider, warnLabel: rawWarnLabel, critLabel: rawCritLabel, gauge: gaugeRaw },
+    share: { warnSlider: shareWarnSlider, critSlider: shareCritSlider, warnLabel: shareWarnLabel, critLabel: shareCritLabel, gauge: gaugeShare }
+  };
+
+  function syncThresholdUi(kind) {
+    const ui = THRESHOLD_UI[kind];
+    const t = thresholds[kind];
+    ui.warnSlider.value = String(t.warn);
+    ui.critSlider.value = String(t.crit);
+    ui.warnLabel.textContent = `${t.warn}%`;
+    ui.critLabel.textContent = `${t.crit}%`;
+    drawGaugeBands(ui.gauge, t);
+  }
+
+  function makeThresholdHandler(kind) {
+    const ui = THRESHOLD_UI[kind];
     return () => {
-      let warn = Number(warnSlider.value);
-      let crit = Number(critSlider.value);
+      let warn = Number(ui.warnSlider.value);
+      const crit = Number(ui.critSlider.value);
       if (warn >= crit) warn = crit - 1;
-      warnSlider.value = String(warn);
       thresholds[kind] = { warn, crit };
-      warnLabel.textContent = `${warn}%`;
-      critLabel.textContent = `${crit}%`;
-      drawGaugeBands(gauge, thresholds[kind]);
+      syncThresholdUi(kind);
       drawCharts();
       persistThresholds();
     };
   }
-  const onRawThresholdChange = makeThresholdHandler('raw', rawWarnSlider, rawCritSlider, rawWarnLabel, rawCritLabel, gaugeRaw);
-  const onShareThresholdChange = makeThresholdHandler('share', shareWarnSlider, shareCritSlider, shareWarnLabel, shareCritLabel, gaugeShare);
+  const onRawThresholdChange = makeThresholdHandler('raw');
+  const onShareThresholdChange = makeThresholdHandler('share');
   rawWarnSlider.addEventListener('input', onRawThresholdChange);
   rawCritSlider.addEventListener('input', onRawThresholdChange);
   shareWarnSlider.addEventListener('input', onShareThresholdChange);
@@ -421,32 +604,62 @@
     tableToggle.textContent = showing ? 'Pokaż jako tabelę' : 'Ukryj tabelę';
   });
 
-  // ---- tabs (Kamera / Monitoring) ----
+  // ---- panels: two tabs + any number of overlay screens ----
+  // The visible navigation is menu.js's bottom bar; this layer only owns panel
+  // visibility and the canvas repaints, and is driven through window.AppTabs.
   const TABS = [
-    { btn: tabCamera, panel: panelCamera, onShow: () => drawOverlay() },
-    { btn: tabMonitoring, panel: panelMonitoring, onShow: () => drawCharts() }
+    { id: 'camera', btn: tabCamera, panel: panelCamera, onShow: () => drawOverlay() },
+    { id: 'monitoring', btn: tabMonitoring, panel: panelMonitoring, onShow: () => drawCharts() }
   ];
+  // Overlay screens live outside the tablist. menu.js and monetization-ui.js add
+  // their own via AppTabs.registerOverlay(); the documentation ships registered.
+  const OVERLAY_PANELS = [panelMethodology];
+  const OVERLAY_ON_SHOW = new Map();
+
+  let currentTabId = 'camera';
+  let currentView = { kind: 'tab', id: 'camera' };
+  const viewListeners = [];
+
+  function emitViewChange() {
+    notify(viewListeners, { kind: currentView.kind, id: currentView.id });
+  }
+
+  function hideOverlays() {
+    OVERLAY_PANELS.forEach((p) => { if (p) p.hidden = true; });
+  }
+
   function selectTab(selected) {
-    TABS.forEach(({ btn, panel, onShow }) => {
+    TABS.forEach(({ id, btn, panel, onShow }) => {
       const isSelected = btn === selected;
       btn.setAttribute('aria-selected', String(isSelected));
       btn.tabIndex = isSelected ? 0 : -1;
       panel.hidden = !isSelected;
-      if (isSelected && onShow) requestAnimationFrame(onShow);
+      if (isSelected) {
+        currentTabId = id;
+        if (onShow) requestAnimationFrame(onShow);
+      }
     });
-    panelMethodology.hidden = true;
+    hideOverlays();
+    currentView = { kind: 'tab', id: currentTabId };
+    emitViewChange();
   }
   TABS.forEach(({ btn }) => btn.addEventListener('click', () => selectTab(btn)));
 
-  // ---- Dokumentacja (not a tab — reached only via the "i" button) ----
-  function showDocs() {
-    TABS.forEach(({ btn, panel }) => {
-      btn.setAttribute('aria-selected', 'false');
-      btn.tabIndex = -1;
-      panel.hidden = true;
-    });
-    panelMethodology.hidden = false;
+  // Showing an overlay deliberately does NOT clear aria-selected on the tabs:
+  // an empty tablist reads as "nothing selected" to a screen reader. The last
+  // active tab stays marked, exactly as it will be when the overlay closes.
+  function showOverlayPanel(panel) {
+    if (!panel) return;
+    TABS.forEach(({ panel: p }) => { p.hidden = true; });
+    OVERLAY_PANELS.forEach((p) => { if (p) p.hidden = (p !== panel); });
+    currentView = { kind: 'overlay', id: panel.id };
+    const onShow = OVERLAY_ON_SHOW.get(panel.id);
+    if (onShow) requestAnimationFrame(() => { try { onShow(panel); } catch (_) { /* ignore */ } });
+    emitViewChange();
   }
+
+  // ---- Dokumentacja (not a tab — reached via the "i" button and the deep link) ----
+  const showDocs = () => showOverlayPanel(panelMethodology);
   infoBtn.addEventListener('click', showDocs);
 
   // ---- resize ----
@@ -456,17 +669,9 @@
   // Sync the slider controls/labels to whatever thresholds we ended up with
   // (restored from localStorage, or the defaults) — the HTML's hardcoded
   // `value` attributes only match the defaults by coincidence.
-  rawWarnSlider.value = String(thresholds.raw.warn);
-  rawCritSlider.value = String(thresholds.raw.crit);
-  rawWarnLabel.textContent = `${thresholds.raw.warn}%`;
-  rawCritLabel.textContent = `${thresholds.raw.crit}%`;
-  shareWarnSlider.value = String(thresholds.share.warn);
-  shareCritSlider.value = String(thresholds.share.crit);
-  shareWarnLabel.textContent = `${thresholds.share.warn}%`;
-  shareCritLabel.textContent = `${thresholds.share.crit}%`;
+  syncThresholdUi('raw');
+  syncThresholdUi('share');
 
-  drawGaugeBands(gaugeRaw, thresholds.raw);
-  drawGaugeBands(gaugeShare, thresholds.share);
   updateGauge(gaugeRaw, null, null);
   updateGauge(gaugeShare, null, null);
   drawCharts();
@@ -478,4 +683,97 @@
   }
 
   if (location.search.includes('tab=methodology')) showDocs();
+
+  // ---- public API for billing.js / monetization-ui.js / menu.js ----
+  // Thin, stable surface over what already exists. Nothing here may gate,
+  // delay or interrupt measurement — that is a promise made to the user in
+  // the documentation and it is not negotiable.
+  window.AppTabs = {
+    select(tabId) {
+      const tab = TABS.find((t) => t.id === tabId);
+      if (tab) selectTab(tab.btn);
+    },
+    showOverlay(panelId) {
+      showOverlayPanel(typeof panelId === 'string' ? document.getElementById(panelId) : panelId);
+    },
+    hideOverlays() {
+      hideOverlays();
+      const tab = TABS.find((t) => t.id === currentTabId) || TABS[0];
+      selectTab(tab.btn);
+    },
+    registerOverlay(panelId, opts) {
+      const panel = typeof panelId === 'string' ? document.getElementById(panelId) : panelId;
+      if (!panel) return;
+      if (OVERLAY_PANELS.indexOf(panel) === -1) OVERLAY_PANELS.push(panel);
+      if (opts && typeof opts.onShow === 'function') OVERLAY_ON_SHOW.set(panel.id, opts.onShow);
+    },
+    current() { return { kind: currentView.kind, id: currentView.id }; },
+    // Canvases measured while hidden report a zero-size box and window 'resize'
+    // never fires for a panel reveal — so every reveal must redraw explicitly.
+    redraw() { drawOverlay(); drawCharts(); },
+    onChange(cb) { addListener(viewListeners, cb); },
+    offChange(cb) { removeListener(viewListeners, cb); }
+  };
+
+  window.AppData = {
+    getHistory() { return history.slice(); },
+    getHistoryLong(opts) {
+      const o = opts || {};
+      const since = Number.isFinite(o.sinceMs) ? o.sinceMs : -Infinity;
+      const until = Number.isFinite(o.untilMs) ? o.untilMs : Infinity;
+      return historyLong.filter((p) => p.t >= since && p.t <= until);
+    },
+    getHistoryLongRangeMs() { return LONG_WINDOW_MS; },
+    clearHistoryLong() {
+      historyLong = [];
+      lastLongAt = 0;
+      longPushCount = 0;
+      historyDirty = false;
+      try { localStorage.removeItem(HISTORY_STORAGE_KEY); } catch (_) { /* ignore */ }
+    },
+    flushHistoryLong() { if (historyDirty) persistHistoryLong(); },
+    getThresholds() {
+      return {
+        raw: { warn: thresholds.raw.warn, crit: thresholds.raw.crit },
+        share: { warn: thresholds.share.warn, crit: thresholds.share.crit }
+      };
+    },
+    setThresholds(next) {
+      if (!next || !next.raw || !next.share) return false;
+      const clean = {};
+      for (const kind of ['raw', 'share']) {
+        const warn = Number(next[kind].warn);
+        const crit = Number(next[kind].crit);
+        if (!Number.isFinite(warn) || !Number.isFinite(crit) || warn >= crit) return false;
+        clean[kind] = { warn, crit };
+      }
+      thresholds.raw = clean.raw;
+      thresholds.share = clean.share;
+      syncThresholdUi('raw');
+      syncThresholdUi('share');
+      drawCharts();
+      persistThresholds();
+      return true;
+    },
+    isMeasuring() { return sampleTimer !== null; },
+    getSessionStartedAt() { return sessionStartedAt; },
+    onSample(cb) { addListener(sampleListeners, cb); },
+    offSample(cb) { removeListener(sampleListeners, cb); },
+    onSessionEnd(cb) { addListener(sessionEndListeners, cb); },
+    offSessionEnd(cb) { removeListener(sessionEndListeners, cb); }
+  };
+
+  // Flush the long buffer when the page is backgrounded or torn down, so a PWA
+  // killed by the system does not lose up to HISTORY_FLUSH_EVERY points.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && historyDirty) persistHistoryLong();
+  });
+  window.addEventListener('pagehide', () => { if (historyDirty) persistHistoryLong(); });
+
+  window.BlueMonitor = window.BlueMonitor || {};
+  window.BlueMonitor.AppTabs = window.AppTabs;
+  window.BlueMonitor.AppData = window.AppData;
+
+  // Boots billing.js / monetization-ui.js / menu.js. MUST stay last.
+  document.dispatchEvent(new CustomEvent('app:ready'));
 })();

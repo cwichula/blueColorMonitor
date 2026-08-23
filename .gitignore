@@ -37,3 +37,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+### Local dev tools inside the published docs/ site — never deploy these ###
+docs/__*.js
+docs/__*.html

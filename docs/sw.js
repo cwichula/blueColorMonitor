@@ -1,8 +1,12 @@
-const CACHE_NAME = 'blue-monitor-v18';
+const CACHE_NAME = 'blue-monitor-v24';
 const APP_SHELL = [
   './',
   './index.html',
   './style.css',
+  './monetization.css',
+  './billing.js',
+  './monetization-ui.js',
+  './menu.js',
   './app.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
