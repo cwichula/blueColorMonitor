@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pl" data-accent="ocean">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#eff2f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1622" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Monitor Światła — mierzy kamerą siedem wielkości światła wokół Ciebie. Wszystko liczy się na tym urządzeniu, nic nie wychodzi do sieci.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Monitor Światła">
+  <title>Monitor Światła</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="icon" href="icons/icon-512.png" sizes="512x512" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Kolejność jest znacząca: tokeny, potem reset i powłoka, potem komponenty,
+       na końcu układy ekranów. Odwrócenie jej przewraca kaskadę. -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/screens.css">
+
+  <script>
+  /* Jedyny skrypt wykonywany przed pierwszym malowaniem. Czyta zapisane
+     ustawienia i przepisuje je na atrybuty <html>, żeby ktoś, kto wybrał motyw
+     ciemny albo większy tekst, nie zobaczył błysku ustawień domyślnych.
+     Ten skrypt WYŁĄCZNIE CZYTA — zapis, walidacja i reszta logiki ustawień
+     należą tylko do js/store.js. Brak atrybutu znaczy „domyślnie”, więc
+     wartości domyślnych celowo nie wypisujemy. */
+  (function () {
+    'use strict';
+    var root = document.documentElement;
+    var raw = null;
+    try { raw = window.localStorage ? window.localStorage.getItem('ms5.settings.v1') : null; }
+    catch (e) { return; }                 /* tryb prywatny: zostają wartości domyślne */
+    if (!raw) return;
+    var s = null;
+    try { s = JSON.parse(raw); } catch (e) { return; }
+    if (!s || typeof s !== 'object') return;
+
+    if (s.theme === 'light' || s.theme === 'dark') root.setAttribute('data-theme', s.theme);
+    if (typeof s.accent === 'string' && /^[a-z]{2,12}$/.test(s.accent)) root.setAttribute('data-accent', s.accent);
+    if (s.textScale === 1.15 || s.textScale === 1.3) root.setAttribute('data-text-scale', String(s.textScale));
+    if (s.density === 'compact') root.setAttribute('data-density', 'compact');
+    if (s.motion === 'reduced') root.setAttribute('data-motion', 'reduced');
+  }());
+  </script>
+
+  <noscript><style>
+  /* Styl istnieje tylko wtedy, gdy JavaScript jest wyłączony — czyli wtedy, gdy
+     nikt nie zdąży dołożyć klas z komponentów. Stąd te kilka linii tutaj
+     zamiast piątego arkusza, którego reszta aplikacji nigdy by nie użyła. */
+  .m5-noscript {
+    max-width: var(--content-max);
+    margin: var(--sp-6) auto;
+    padding: var(--sp-6) max(var(--sp-4), var(--safe-l));
+    color: var(--text-1);
+  }
+  .m5-noscript h2 { margin-bottom: var(--sp-3); font-size: var(--fs-h2); }
+  .m5-noscript p { max-width: 60ch; color: var(--text-2); line-height: var(--lh-normal); }
+  </style></noscript>
+</head>
+<body>
+
+  <!-- Pierwszy element w kolejności tabulacji: skok ponad paski powłoki. -->
+  <a class="m5-skip" href="#main">Przejdź do treści</a>
+
+  <div class="m5-app">
+
+    <!-- Pasek boczny (od 900 px) i pasek zakładek (poniżej) niosą tę samą
+         nawigację; widoczny jest zawsze dokładnie jeden, więc czytnik ekranu
+         nie dostaje dwóch takich samych list. Wypełnia je js/app.js. -->
+    <nav class="m5-sidenav" id="sidenav" aria-label="Nawigacja główna"></nav>
+
+    <header class="m5-topbar">
+      <div class="m5-topbar__inner">
+        <h1 class="m5-topbar__title" id="screenTitle">Pomiar</h1>
+        <!-- Wskaźnik trwającego pomiaru; poza ekranem pomiaru jest jedynym
+             śladem, że kamera pracuje. -->
+        <div class="m5-topbar__status" id="topbarStatus"></div>
+        <div class="m5-topbar__actions" id="topbarActions"></div>
+      </div>
+    </header>
+
+    <!-- Główny obszar przewijania aplikacji. tabindex="-1", bo po zmianie
+         ekranu app.js przenosi tu fokus. -->
+    <main class="m5-main" id="main" tabindex="-1">
+      <noscript>
+        <div class="m5-noscript">
+          <h2>Ta aplikacja potrzebuje JavaScriptu</h2>
+          <p>Cały pomiar odbywa się w tej karcie przeglądarki: to JavaScript odczytuje
+          klatki z kamery i liczy z nich siedem wielkości światła. Bez niego nie ma czym
+          mierzyć. Włącz obsługę JavaScriptu dla tej strony i otwórz ją ponownie —
+          nadal nic nie zostanie wysłane do sieci.</p>
+        </div>
+      </noscript>
+    </main>
+
+    <nav class="m5-tabbar" id="tabbar" aria-label="Nawigacja główna"></nav>
+  </div>
+
+  <!-- Źródła obrazu dla js/camera.js. Muszą istnieć w dokumencie, zanim ruszy
+       ekran pomiaru: screens/measure.js przenosi <video> do swojego kafelka
+       podglądu, a <canvas> zostaje tutaj, niewidoczny — to z niego czytamy
+       piksele, nikt nigdy go nie ogląda. -->
+  <div class="m5-camera-source" id="cameraSource" hidden>
+    <video id="camera" data-m5-camera playsinline muted autoplay aria-hidden="true"></video>
+    <canvas id="camCanvas" data-m5-camera width="64" height="64" hidden></canvas>
+  </div>
+
+  <!-- Warstwy nad interfejsem. js/ui/overlays.js wstawia wyłącznie tutaj. -->
+  <div class="m5-scrim" id="scrim" hidden></div>
+  <div class="m5-layer m5-layer--sheet" id="sheetHost" hidden></div>
+  <div class="m5-layer m5-layer--dialog" id="dialogHost" hidden></div>
+  <div class="m5-toasts" id="toasts"></div>
+
+  <!-- Jedyny region komunikatów dla czytnika ekranu w całej aplikacji. -->
+  <p class="m5-sronly" id="live" role="status" aria-live="polite"></p>
+
+  <!-- Jedyne wejście. Reszta modułów dociąga się importami. -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

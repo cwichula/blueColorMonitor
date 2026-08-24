@@ -1,0 +1,227 @@
+/* tokens.css - the whole design system of Monitor Swiatla v3.
+   Only :root lives here. Not a single element selector, not a single component rule.
+   Nothing declared below may be redefined in base.css or components.css. */
+
+:root {
+  color-scheme: light dark;
+
+  /* ---- surfaces (light theme = "white instrument faceplate") ---- */
+  --ms3-plate:      #DCE0E6;   /* page background: the metal around the panel */
+  --ms3-panel:      #FFFFFF;   /* raised panel */
+  --ms3-well:       #F1F3F7;   /* recessed well: the readout lives here */
+  --ms3-hairline:   #C7CDD5;   /* DECORATION ONLY, 1,60:1 - never carries meaning */
+  --ms3-rule:       #6A7480;   /* every meaningful border: 4,75 / 3,58 / 4,27 */
+
+  /* ---- ink ---- */
+  --ms3-ink:        #0B0E13;   /* 19,33 / 14,59 / 17,40 */
+  --ms3-ink-2:      #454E5A;   /*  8,43 /  6,36 /  7,59 */
+  --ms3-ink-3:      #565F6B;   /*  6,47 /  4,88 /  5,83  - floor, only at 15 px and up */
+
+  /* ---- signal ---- */
+  --ms3-accent:     #0A6A85;   /*  6,15 /  4,64 /  5,54 */
+  --ms3-on-accent:  #FFFFFF;   /*  6,15 on accent */
+  --ms3-good:       #0A6B2E;   /*  6,66 /  5,02 /  5,99 */
+  --ms3-warn:       #85480A;   /*  7,17 /  5,41 /  6,45 */
+  --ms3-crit:       #B01F19;   /*  6,87 /  5,19 /  6,19 */
+  --ms3-on-crit:    #FFFFFF;   /*  6,87 on crit */
+  --ms3-premium:    #5A34AD;   /*  8,30 /  6,27 /  7,47 */
+  --ms3-demo:       #9E0F76;   /*  7,54 /  5,69 /  6,79  - simulation only */
+  --ms3-focus:      #0B3FA8;   /*  9,17 /  6,92 /  8,25 */
+
+  /* ---- zone band fills (behind the scale, never behind text) ---- */
+  --ms3-fill-good:  rgba(10,107,46,.20);
+  --ms3-fill-warn:  rgba(133,72,10,.20);
+  --ms3-fill-crit:  rgba(176,31,25,.22);
+  --ms3-hatch-a:    rgba(133,72,10,.55);   /* 45 deg stripes in the warning band */
+  --ms3-hatch-b:    rgba(176,31,25,.55);   /* crossed stripes in the critical band */
+
+  /* ---- engraving: the ONLY depth effect. Inset, never a drop shadow. ---- */
+  --ms3-engrave-panel: inset 0 1px 0 rgba(255,255,255,.90), inset 0 -1px 0 rgba(11,14,19,.10);
+  --ms3-engrave-well:  inset 0 1px 0 rgba(11,14,19,.10),  inset 0 -1px 0 rgba(255,255,255,.85);
+  --ms3-shadow: none;          /* there is no drop shadow in this application */
+
+  /* ---- type: system stack only. No web font. No monospace. ---- */
+  --ms3-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --ms3-t-readout:  clamp(56px, 17vw, 96px); /* the big number */
+  --ms3-t-counter:  40px;   /* session clock 00:04:12 */
+  --ms3-t-h1:       24px;   /* module title */
+  --ms3-t-h2:       20px;   /* section title */
+  --ms3-t-channel:  24px;   /* value in a channel row */
+  --ms3-t-verdict:  20px;   /* the plain-Polish sentence */
+  --ms3-t-body:     18px;   /* body text, line-height 1.55 */
+  --ms3-t-name:     17px;   /* channel name, button labels */
+  --ms3-t-legend:   15px;   /* engraved uppercase legends, tick numbers, units */
+  /* 15 px is the absolute floor. Nothing smaller exists in this application. */
+  --ms3-tracking-legend: .06em;   /* uppercase only; drops to 0 in the large-text setting */
+  --ms3-lh-tight: 1.05;
+  --ms3-lh-body:  1.55;
+
+  /* ---- text-size setting (module 13) multiplies the whole scale ---- */
+  --ms3-scale: 1;            /* 1 | 1.15 | 1.3 */
+
+  /* ---- spacing: 4 px rhythm ---- */
+  --ms3-s-1: 4px;  --ms3-s-2: 8px;  --ms3-s-3: 12px; --ms3-s-4: 16px;
+  --ms3-s-5: 20px; --ms3-s-6: 24px; --ms3-s-7: 32px; --ms3-s-8: 40px;
+
+  /* ---- fixed heights (chapter 4 does the budget arithmetic) ---- */
+  --ms3-h-rail:    40px;   /* status rail */
+  --ms3-h-desk:    80px;   /* control desk, plus safe area */
+  --ms3-h-row:     56px;   /* channel row */
+  --ms3-h-live:    56px;   /* live bar at the bottom of every module */
+  --ms3-h-hero:    clamp(216px, 30vh, 268px);
+  --ms3-h-monitor: 96px;   /* collapsed camera monitor, square */
+  --ms3-tap:       48px;   /* absolute minimum touch target */
+
+  /* ---- radii: flat instrument. Nothing is a pill. ---- */
+  --ms3-r-panel: 2px;  --ms3-r-key: 3px;  --ms3-r-badge: 2px;
+
+  /* ---- motion ---- */
+  --ms3-dur-needle: 120ms;  /* linear, never springy: an instrument does not bounce */
+  --ms3-dur-press:   90ms;
+  --ms3-dur-camera: 200ms;
+  --ms3-dur-screen: 160ms;
+  --ms3-ease: linear;
+  --ms3-ease-screen: cubic-bezier(.2,0,0,1);
+
+  --ms3-z-sheet: 40; --ms3-z-desk: 50; --ms3-z-alert: 60;
+}
+
+/* ---- dark theme ("dark faceplate"). Colours only. Geometry never changes. ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ms3-plate: #0B0E13; --ms3-panel: #141922; --ms3-well: #0F141C;
+    --ms3-hairline: #2C3542;                    /* 1,42:1, decoration */
+    --ms3-rule: #606C7A;                        /* 3,29 / 3,61 / 3,45 */
+    --ms3-ink: #EDF1F6;                         /* 15,53 / 17,04 / 16,28 */
+    --ms3-ink-2: #A9B4C2;                       /*  8,39 /  9,20 /  8,79 */
+    --ms3-ink-3: #7E8A98;                       /*  5,01 /  5,50 /  5,26 */
+    --ms3-accent: #5CC8E8;                      /*  9,13 / 10,02 /  9,57 */
+    --ms3-on-accent: #04222E;                   /*  8,55 on accent */
+    --ms3-good: #4BD684;                        /*  9,44 / 10,36 /  9,89 */
+    --ms3-warn: #F5B740;                        /*  9,84 / 10,80 / 10,32 */
+    --ms3-crit: #FF7060;                        /*  6,49 /  7,12 /  6,81 */
+    --ms3-on-crit: #330B07;                     /*  6,49 on crit */
+    --ms3-premium: #B99BFF;                     /*  7,71 /  8,46 /  8,09 */
+    --ms3-demo: #FF8FD4;                        /*  8,50 /  9,33 /  8,91 */
+    --ms3-focus: #86DFF5;                       /* 11,65 / 12,78 / 12,21 */
+    --ms3-fill-good: rgba(75,214,132,.22);
+    --ms3-fill-warn: rgba(245,183,64,.22);
+    --ms3-fill-crit: rgba(255,112,96,.24);
+    --ms3-hatch-a: rgba(245,183,64,.55);
+    --ms3-hatch-b: rgba(255,112,96,.55);
+    --ms3-engrave-panel: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.35);
+    --ms3-engrave-well:  inset 0 1px 0 rgba(0,0,0,.35),  inset 0 -1px 0 rgba(255,255,255,.05);
+  }
+}
+
+/* The same block, repeated verbatim for the explicit toggle. Copy-paste on purpose:
+   a shared @media/[data-theme] selector list is not supported everywhere we ship. */
+:root[data-theme="dark"] {
+  --ms3-plate: #0B0E13; --ms3-panel: #141922; --ms3-well: #0F141C;
+  --ms3-hairline: #2C3542;                    /* 1,42:1, decoration */
+  --ms3-rule: #606C7A;                        /* 3,29 / 3,61 / 3,45 */
+  --ms3-ink: #EDF1F6;                         /* 15,53 / 17,04 / 16,28 */
+  --ms3-ink-2: #A9B4C2;                       /*  8,39 /  9,20 /  8,79 */
+  --ms3-ink-3: #7E8A98;                       /*  5,01 /  5,50 /  5,26 */
+  --ms3-accent: #5CC8E8;                      /*  9,13 / 10,02 /  9,57 */
+  --ms3-on-accent: #04222E;                   /*  8,55 on accent */
+  --ms3-good: #4BD684;                        /*  9,44 / 10,36 /  9,89 */
+  --ms3-warn: #F5B740;                        /*  9,84 / 10,80 / 10,32 */
+  --ms3-crit: #FF7060;                        /*  6,49 /  7,12 /  6,81 */
+  --ms3-on-crit: #330B07;                     /*  6,49 on crit */
+  --ms3-premium: #B99BFF;                     /*  7,71 /  8,46 /  8,09 */
+  --ms3-demo: #FF8FD4;                        /*  8,50 /  9,33 /  8,91 */
+  --ms3-focus: #86DFF5;                       /* 11,65 / 12,78 / 12,21 */
+  --ms3-fill-good: rgba(75,214,132,.22);
+  --ms3-fill-warn: rgba(245,183,64,.22);
+  --ms3-fill-crit: rgba(255,112,96,.24);
+  --ms3-hatch-a: rgba(245,183,64,.55);
+  --ms3-hatch-b: rgba(255,112,96,.55);
+  --ms3-engrave-panel: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.35);
+  --ms3-engrave-well:  inset 0 1px 0 rgba(0,0,0,.35),  inset 0 -1px 0 rgba(255,255,255,.05);
+}
+
+/* The light faceplate is a first-class theme, not "the dark one inverted".
+   Repeated in full so the explicit toggle wins on a device set to dark. */
+:root[data-theme="light"] {
+  --ms3-plate: #DCE0E6; --ms3-panel: #FFFFFF; --ms3-well: #F1F3F7;
+  --ms3-hairline: #C7CDD5;
+  --ms3-rule: #6A7480;
+  --ms3-ink: #0B0E13;
+  --ms3-ink-2: #454E5A;
+  --ms3-ink-3: #565F6B;
+  --ms3-accent: #0A6A85;
+  --ms3-on-accent: #FFFFFF;
+  --ms3-good: #0A6B2E;
+  --ms3-warn: #85480A;
+  --ms3-crit: #B01F19;
+  --ms3-on-crit: #FFFFFF;
+  --ms3-premium: #5A34AD;
+  --ms3-demo: #9E0F76;
+  --ms3-focus: #0B3FA8;
+  --ms3-fill-good: rgba(10,107,46,.20);
+  --ms3-fill-warn: rgba(133,72,10,.20);
+  --ms3-fill-crit: rgba(176,31,25,.22);
+  --ms3-hatch-a: rgba(133,72,10,.55);
+  --ms3-hatch-b: rgba(176,31,25,.55);
+  --ms3-engrave-panel: inset 0 1px 0 rgba(255,255,255,.90), inset 0 -1px 0 rgba(11,14,19,.10);
+  --ms3-engrave-well:  inset 0 1px 0 rgba(11,14,19,.10),  inset 0 -1px 0 rgba(255,255,255,.85);
+}
+
+/* ---- high contrast: the pattern becomes a solid fill with a thicker edge ---- */
+@media (prefers-contrast: more) {
+  :root {
+    --ms3-fill-good: rgba(10,107,46,.38);
+    --ms3-fill-warn: rgba(133,72,10,.38);
+    --ms3-fill-crit: rgba(176,31,25,.40);
+    --ms3-hatch-a: transparent; --ms3-hatch-b: transparent;  /* hatching off, see 6.4 */
+  }
+}
+/* Same step for the dark faceplate: the light fills would disappear on a dark well,
+   so the dark band colours take the same alpha increase. */
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ms3-fill-good: rgba(75,214,132,.38);
+    --ms3-fill-warn: rgba(245,183,64,.38);
+    --ms3-fill-crit: rgba(255,112,96,.40);
+    --ms3-hatch-a: transparent; --ms3-hatch-b: transparent;
+  }
+}
+@media (prefers-contrast: more) {
+  :root[data-theme="dark"] {
+    --ms3-fill-good: rgba(75,214,132,.38);
+    --ms3-fill-warn: rgba(245,183,64,.38);
+    --ms3-fill-crit: rgba(255,112,96,.40);
+    --ms3-hatch-a: transparent; --ms3-hatch-b: transparent;
+  }
+  :root[data-theme="light"] {
+    --ms3-fill-good: rgba(10,107,46,.38);
+    --ms3-fill-warn: rgba(133,72,10,.38);
+    --ms3-fill-crit: rgba(176,31,25,.40);
+    --ms3-hatch-a: transparent; --ms3-hatch-b: transparent;
+  }
+}
+
+/* ---- reduced motion: 1 ms, not 0 - transitionend must still fire ---- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ms3-dur-needle: 1ms; --ms3-dur-press: 1ms;
+    --ms3-dur-camera: 1ms; --ms3-dur-screen: 1ms;
+  }
+}
+/* The same, switched by hand in module 13 (UI3.setMotion). */
+:root[data-motion="reduced"] {
+  --ms3-dur-needle: 1ms; --ms3-dur-press: 1ms;
+  --ms3-dur-camera: 1ms; --ms3-dur-screen: 1ms;
+}
+
+/* ---- text size setting (module 13). Uppercase tracking drops to 0 above x1:
+       wide letter-spacing eats line width exactly when width is scarce. ---- */
+:root[data-text-scale="1"]    { --ms3-scale: 1; }
+:root[data-text-scale="1.15"] { --ms3-scale: 1.15; --ms3-tracking-legend: 0; }
+:root[data-text-scale="1.3"]  { --ms3-scale: 1.3;  --ms3-tracking-legend: 0; }
+
+/* ---- desktop: only the big number grows; every other size stays put (4.8) ---- */
+@media (min-width: 900px) {
+  :root { --ms3-t-readout: clamp(72px, 7vw, 112px); }
+}

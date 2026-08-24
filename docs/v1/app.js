@@ -677,8 +677,11 @@
   drawCharts();
 
   if ('serviceWorker' in navigator) {
+    // 'sw.js' resolves relatively, i.e. to /v1/sw.js, and the explicit './'
+    // scope keeps the worker confined to its own version's directory — the
+    // same convention v2-v4 use.
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
     });
   }
 

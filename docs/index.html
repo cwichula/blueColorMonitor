@@ -3,505 +3,881 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Monitoring Światła Szkodliwego</title>
-<meta name="description" content="Mierzy kamerą natężenie koloru niebieskiego na ekranie i pokazuje je na czytelnym wykresie ze strefami: bezpieczna, umiarkowana, szkodliwa.">
-<meta name="theme-color" content="#1a1a19">
-<link rel="manifest" href="manifest.webmanifest">
+<title>Monitor Światła — powłoka porównawcza</title>
+<meta name="description" content="Powłoka deweloperska: przełączanie między pięcioma wersjami aplikacji Monitor Światła (v1–v5) w jednym oknie.">
+<meta name="color-scheme" content="light dark">
+<!-- Powłoka nie ma własnego motywu: theme-color idzie za motywem systemu,
+     żeby pasek przeglądarki nie faworyzował ani jasnej, ani ciemnej wersji. -->
+<meta name="theme-color" content="#f2f2f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="style.css">
-<!-- Must load AFTER style.css: its global [hidden]{display:none!important} and
-     .btn-large need to win on source order, not on specificity hacks. -->
-<link rel="stylesheet" href="monetization.css">
-</head>
-<body class="viz-root">
+<style>
+/* ---------------------------------------------------------------------------
+   Powłoka jest CHROMEM NARZĘDZIA, nie eksponatem. Jedna z osadzanych wersji
+   jest jasna, inna ciemna — gdyby powłoka miała mocny własny kolor, zaburzałaby
+   ocenę tego, co widać w ramce. Stąd wyłącznie neutralne szarości o niskim
+   nasyceniu i tylko jeden kolor akcentu, użyty do obrysu fokusu.
+   --------------------------------------------------------------------------- */
+:root {
+  --bg: #e9e9eb;          /* tło poza ramką podglądu */
+  --bar: #f7f7f8;         /* pasek narzędzi */
+  --surface: #ffffff;     /* kafelki, aktywna zakładka */
+  --border: #c9c9ce;
+  --border-strong: #8e8e97;
+  --text: #17171a;        /* na --bar kontrast ok. 15:1 */
+  --muted: #55555e;       /* na --bar ok. 7:1 — powyżej wymaganych 4,5:1 */
+  --focus: #1d4ed8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .12), 0 8px 24px rgba(0, 0, 0, .08);
+  --dur: .16s;
+}
 
-<header class="app-header">
-  <h1>Monitoring Światła Szkodliwego</h1>
-  <div class="header-actions">
-    <!-- Second permanent entry point to Premium. monetization-ui.js owns the
-         label and aria-label; menu.js only wires the click. -->
-    <button id="premiumPill" class="mz-pill" type="button" aria-label="Przejdź na Premium — wersja demonstracyjna"><span id="premiumPillLabel">PRO</span></button>
-    <button id="infoBtn" class="icon-btn" type="button" aria-label="Przejdź do dokumentacji">
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
-    </button>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f11;
+    --bar: #1a1a1d;
+    --surface: #26262b;
+    --border: #3a3a41;
+    --border-strong: #74747e;
+    --text: #f0f0f2;
+    --muted: #b3b3bc;      /* na --bar ok. 9:1 */
+    --focus: #8ab4ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+/* Powłoka zajmuje dokładnie jeden ekran: pasek u góry, ramka wypełnia resztę.
+   Dlatego strona sama się nie przewija — przewija się zawartość iframe'a. */
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Ruch jest krótki i wyłącznie na opacity/transform — nigdy na wymiarach,
+   żeby przełączanie wersji nie wywoływało przeliczania układu. */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+:where(a, button, [role="tab"]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* --- pasek --------------------------------------------------------------- */
+
+.bar {
+  position: sticky;      /* pasek zostaje na wierzchu także wtedy, gdy telefon
+                            skróci widok o pasek adresu */
+  top: 0;
+  z-index: 3;
+  flex: none;
+  padding: .5rem 0;
+  padding-left: max(.75rem, env(safe-area-inset-left));
+  padding-right: max(.75rem, env(safe-area-inset-right));
+  background: var(--bar);
+  border-bottom: 1px solid var(--border);
+}
+
+.bar__row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 0;
+}
+
+.brand {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand b { font-size: .95rem; font-weight: 650; }
+
+.brand span {
+  font-size: .72rem;
+  color: var(--muted);
+  letter-spacing: .02em;
+}
+
+/* --- zakładki ------------------------------------------------------------ */
+
+/* Opakowanie istnieje po to, żeby dało się położyć na krawędzi sygnał
+   przewijania. Na telefonie lista zakładek nie mieści się w szerokości i musi
+   być widać, że jest dalszy ciąg — inaczej v5 znika bez śladu. */
+.tabs-wrap { position: relative; min-width: 0; flex: 1 1 auto; }
+
+.tabs {
+  display: flex;
+  gap: .25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+  padding: 2px 2px 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) { .tabs { scroll-behavior: auto; } }
+
+/* Cień-zapowiedź przy krawędzi: pojawia się tylko wtedy, gdy realnie jest co
+   przewijać, i znika po dojechaniu do końca. Sam gradient bywa niewidoczny
+   dla osób z zaburzeniami kontrastu, więc towarzyszy mu pionowa kreska. */
+.tabs-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 4px;
+  right: 0;
+  width: 2.25rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur) ease;
+  background: linear-gradient(to right, transparent, var(--bar) 78%);
+  border-right: 2px solid var(--border-strong);
+}
+
+.tabs-wrap[data-more="1"]::after { opacity: 1; }
+
+.tab {
+  flex: none;
+  min-height: 44px;         /* cel dotyku */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: .3rem .7rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity var(--dur) ease;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab b { font-size: .9rem; font-weight: 600; letter-spacing: .01em; }
+
+.tab span { font-size: .72rem; white-space: nowrap; }
+
+/* Stan wybrany rozpoznawalny BEZ koloru: inne tło, obrys, grubsza czcionka
+   i pełny podkreślnik u dołu kafelka. */
+.tab[aria-selected="true"] {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+  box-shadow: inset 0 -3px 0 0 var(--text);
+  font-weight: 700;
+}
+
+.tab[aria-selected="true"] b { font-weight: 800; }
+
+/* --- narzędzia ----------------------------------------------------------- */
+
+.tools {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.seg {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.btn {
+  flex: none;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  padding: 0 .6rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: .82rem;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity var(--dur) ease;
+}
+
+.btn:hover { opacity: .82; }
+
+.btn[disabled] { opacity: .5; cursor: default; }
+
+.seg .btn { border-color: transparent; background: transparent; }
+
+.seg .btn[aria-pressed="true"] {
+  border-color: var(--border-strong);
+  background: var(--bar);
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 0 var(--text);
+}
+
+.btn--danger { border-color: var(--border-strong); font-weight: 600; }
+
+/* --- opis wersji --------------------------------------------------------- */
+
+.note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .2rem .55rem;
+  margin: .35rem 0 0;
+  font-size: .8rem;
+  color: var(--muted);
+}
+
+.note b { color: var(--text); font-weight: 700; }
+
+.note .hint { font-size: .76rem; opacity: .95; }
+
+/* --- scena z ramką ------------------------------------------------------- */
+
+.stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Przy zawężonym podglądzie ramka dostaje oddech i widoczną krawędź urządzenia,
+   żeby było jasne, gdzie kończy się aplikacja, a zaczyna powłoka. */
+.stage[data-width="phone"], .stage[data-width="tablet"] { padding: .75rem; }
+
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.stage[data-width="phone"] .frame { max-width: 390px; }
+
+.stage[data-width="tablet"] .frame { max-width: 820px; }
+
+.stage:not([data-width="full"]) .frame {
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* --- warstwa stanu (ładowanie / błąd) ------------------------------------ */
+
+.veil {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: var(--bar);
+  color: var(--text);
+}
+
+.veil[data-state="loading"], .veil[data-state="error"], .veil--noscript { display: flex; }
+
+.veil--noscript { z-index: 1; }   /* przykrywa warstwę „wczytywanie”, która bez JS nigdy nie zniknie */
+
+.veil[data-state="loading"] { animation: veil-in var(--dur) ease both; }
+
+@keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+
+.veil p { margin: 0; max-width: 34rem; color: var(--muted); font-size: .9rem; }
+
+.veil strong { font-size: 1rem; color: var(--text); }
+
+/* Także :visited — inaczej odwiedzona wersja dostaje domyślny fiolet, który
+   w tym chromie jest jedynym nasyconym kolorem na ekranie. */
+.veil a, .veil a:visited { color: var(--focus); }
+
+/* --- komunikat ----------------------------------------------------------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 5;
+  max-width: min(34rem, calc(100vw - 2rem));
+  padding: .65rem .9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: .85rem;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translate(-50%, .5rem);
+  transition: opacity var(--dur) ease, transform var(--dur) ease;
+  pointer-events: none;
+}
+
+.toast[data-show="1"] { opacity: 1; transform: translate(-50%, 0); }
+
+/* --- układ wąski --------------------------------------------------------- */
+
+/* Poniżej ~80rem (typowy laptop) zakładki schodzą do własnego wiersza, a
+   tożsamość i narzędzia zostają razem w pierwszym. Próg jest wysoki celowo:
+   w jednym wierszu pięć zakładek i cztery narzędzia mieszczą się dopiero na
+   szerokim monitorze, a ściśnięte zakładki są gorsze niż drugi wiersz. */
+@media (max-width: 80rem) {
+  .bar__row { flex-wrap: wrap; }
+  .brand { flex: 1 1 auto; }
+  .tools { margin-left: auto; }        /* narzędzia zostają przy prawej krawędzi */
+  .tabs-wrap { order: 2; flex-basis: 100%; }
+}
+
+/* Poniżej ~52rem narzędzia nie mieszczą się już obok tożsamości i dostają
+   własny, przewijany wiersz — wąski pasek narzędzi przy nazwie byłby gorszy
+   niż pełnej szerokości. */
+@media (max-width: 52rem) {
+  .tools {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 30rem) {
+  .brand span { display: none; }
+  .btn { font-size: .8rem; padding: 0 .55rem; }
+  .hint__more { display: none; }   /* na telefonie liczy się każdy wiersz paska */
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar__row">
+
+    <div class="brand">
+      <b>Monitor Światła</b>
+      <span>powłoka porównawcza v1–v5</span>
+    </div>
+
+    <div class="tabs-wrap" id="tabsWrap">
+      <!-- Aktywacja RĘCZNA (strzałki przesuwają fokus, Enter/Spacja otwiera).
+           Automatyczna aktywacja byłaby tu szkodliwa: każde wejście na zakładkę
+           ładuje całą aplikację i rejestruje jej service workera, więc samo
+           przejechanie strzałkami przez listę zainstalowałoby pięć workerów. -->
+      <div class="tabs" role="tablist" id="tabs"
+           aria-label="Wersje aplikacji — strzałki przenoszą fokus, Enter otwiera wersję"></div>
+    </div>
+
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Szerokość podglądu">
+        <button class="btn" type="button" data-width="phone"  aria-pressed="false">Telefon</button>
+        <button class="btn" type="button" data-width="tablet" aria-pressed="false">Tablet</button>
+        <!-- Etykieta widoczna skrócona (miejsce w pasku), nazwa dostępna pełna
+             i zawierająca widoczny tekst — sterowanie głosem nadal zadziała. -->
+        <button class="btn" type="button" data-width="full"   aria-pressed="true" aria-label="Pełna szerokość">Pełna</button>
+      </div>
+      <a class="btn" id="openTab" href="./v5/" target="_blank" rel="noopener">Otwórz w nowej karcie</a>
+      <button class="btn" type="button" id="reload">Przeładuj</button>
+      <button class="btn btn--danger" type="button" id="purge">Wyczyść pamięć wersji</button>
+    </div>
+
   </div>
+
+  <p class="note">
+    <b id="descTitle">v5</b>
+    <span id="descText">—</span>
+    <!-- Wyjaśnienie stoi przy opisie wersji, a nie w dymku przycisku, bo dymek
+         nie istnieje na telefonie. Na najwęższych ekranach zostaje samo sedno. -->
+    <span class="hint">Instalacja PWA i pełny ekran działają tylko pod własnym adresem
+      wersji<span class="hint__more">, nie w tej powłoce — do tego służy „Otwórz w nowej karcie”</span>.</span>
+  </p>
 </header>
 
-<!-- Kept in the DOM (app.js still owns selectTab) but hidden by menu.js, so the
-     screen reader never hears the same navigation twice. -->
-<div class="tabs" id="legacyTabs" role="tablist" aria-label="Widoki aplikacji">
-  <button id="tabCamera" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelCamera">Kamera</button>
-  <button id="tabMonitoring" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelMonitoring" tabindex="-1">Monitoring</button>
-</div>
+<main class="stage" id="stage" data-width="full">
+  <div class="frame" id="frame" role="tabpanel" aria-labelledby="tab-v5">
+    <!-- iframe wstawia skrypt: nowy element przy każdej zmianie wersji,
+         powód opisany przy mountFrame(). -->
+    <div class="veil" id="veil" data-state="loading">
+      <strong id="veilTitle">Wczytywanie wersji…</strong>
+      <p id="veilText">Pierwsze wejście pobiera całą aplikację.</p>
+      <p id="veilActions" hidden><a id="veilLink" href="./v5/">Otwórz wersję pod jej własnym adresem</a></p>
+    </div>
 
-<main>
-<!-- role="region", not "tabpanel": menu.js hides #legacyTabs, so there is no
-     role="tablist" and no role="tab" left in the accessibility tree and a
-     tabpanel here would be orphaned. app.js only toggles .hidden and
-     aria-selected, so it is unaffected. -->
-<div id="panelCamera" role="region" aria-label="Kamera">
-
-  <section class="card camera-card" aria-label="Podgląd kamery">
-    <div class="video-wrap">
-      <video id="video" playsinline muted></video>
-      <canvas id="sampleOverlay" class="sample-overlay"></canvas>
-      <div id="cameraPlaceholder" class="camera-placeholder">
-        <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
-        <p>Naciśnij „Start”.</p>
+    <!-- Bez JavaScriptu powłoka nie umie nic osadzić, ale wersje działają same.
+         Zamiast pustej ramki dajemy pięć zwykłych odnośników. -->
+    <noscript>
+      <div class="veil veil--noscript">
+        <strong>Powłoka porównawcza wymaga JavaScriptu</strong>
+        <p>Same wersje działają bez niej — otwórz wybraną bezpośrednio:</p>
+        <p>
+          <a href="./v1/">v1</a> ·
+          <a href="./v2/">v2</a> ·
+          <a href="./v3/">v3</a> ·
+          <a href="./v4/">v4</a> ·
+          <a href="./v5/">v5</a>
+        </p>
       </div>
-    </div>
-    <div class="camera-controls">
-      <button id="startBtn" class="btn btn-primary" type="button">Start</button>
-      <button id="stopBtn" class="btn" type="button" disabled>Stop</button>
-      <button id="switchBtn" class="btn" type="button" disabled>Zmień kamerę</button>
-    </div>
-  </section>
-</div>
-
-<div id="panelMonitoring" role="region" aria-label="Monitoring" hidden>
-
-  <section class="card reading-card" aria-label="Aktualne odczyty">
-    <div class="reading-grid">
-
-      <div class="reading-block">
-        <h3 class="reading-title">Jasność kanału B</h3>
-        <div class="gauge-wrap">
-          <svg id="gaugeRaw" viewBox="0 0 200 130" class="gauge">
-            <path class="gauge-band gauge-good" d="" />
-            <path class="gauge-band gauge-warning" d="" />
-            <path class="gauge-band gauge-critical" d="" />
-            <line class="gauge-needle" x1="100" y1="95" x2="100" y2="32" />
-            <circle cx="100" cy="95" r="6" class="gauge-hub" />
-          </svg>
-          <div class="gauge-readout">
-            <div id="gaugeValueRaw" class="gauge-value">--</div>
-            <div class="gauge-unit">% jasności kanału B</div>
-            <div id="statusBadgeRaw" class="status-badge status-idle">
-              <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"></svg>
-              <span class="status-label">Brak danych</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="reading-block">
-        <h3 class="reading-title">Udział niebieskiego</h3>
-        <div class="gauge-wrap">
-          <svg id="gaugeShare" viewBox="0 0 200 130" class="gauge">
-            <path class="gauge-band gauge-good" d="" />
-            <path class="gauge-band gauge-warning" d="" />
-            <path class="gauge-band gauge-critical" d="" />
-            <line class="gauge-needle" x1="100" y1="95" x2="100" y2="32" />
-            <circle cx="100" cy="95" r="6" class="gauge-hub" />
-          </svg>
-          <div class="gauge-readout">
-            <div id="gaugeValueShare" class="gauge-value">--</div>
-            <div class="gauge-unit">% udziału niebieskiego</div>
-            <div id="statusBadgeShare" class="status-badge status-idle">
-              <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"></svg>
-              <span class="status-label">Brak danych</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    <div class="secondary-stats">
-      <div class="stat"><span class="stat-label">Jasność ogólna sceny</span><span id="overallBrightness" class="stat-value">--%</span></div>
-    </div>
-    <p id="medicalDisclaimerShort" class="mz-disclaimer-short">Wynik orientacyjny. To nie jest wyrób medyczny. <a id="medicalDisclaimerLink" href="#">Więcej</a></p>
-  </section>
-
-  <section class="card chart-card" aria-label="Wykresy w czasie">
-    <div class="chart-header">
-      <h2>Wykresy w czasie (ostatnie 60 s)</h2>
-      <button id="tableToggle" class="btn btn-small" type="button" aria-pressed="false">Pokaż jako tabelę</button>
-      <!-- No onclick here on purpose: monetization-ui.js wires the handler and
-           adds the padlock (it marks the button with data-mz-wired). -->
-      <button id="exportCsvBtn" class="btn" type="button">Eksport CSV</button>
-    </div>
-
-    <div class="chart-block">
-      <h3 class="chart-title">Jasność kanału B</h3>
-      <canvas id="chartRaw" class="chart-canvas" role="img" aria-label="Wykres jasności kanału B w czasie, z oznaczonymi strefami bezpieczną, umiarkowaną i szkodliwą"></canvas>
-    </div>
-
-    <div class="chart-block">
-      <h3 class="chart-title">Udział niebieskiego w świetle</h3>
-      <canvas id="chartShare" class="chart-canvas" role="img" aria-label="Wykres udziału niebieskiego w świetle w czasie, z oznaczonymi strefami bezpieczną, umiarkowaną i szkodliwą"></canvas>
-    </div>
-
-    <div class="legend" aria-hidden="false">
-      <div class="legend-item">
-        <span class="legend-swatch legend-good"></span>
-        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
-        <span>Bezpieczna</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-swatch legend-warning"></span>
-        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-        <span>Umiarkowana</span>
-      </div>
-      <div class="legend-item">
-        <span class="legend-swatch legend-critical"></span>
-        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 1 12l11 10 11-10L12 2zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z"/></svg>
-        <span>Szkodliwa</span>
-      </div>
-    </div>
-
-    <!-- Filled by monetization-ui.js: locked-history upsell for the free tier,
-         the real history browser once the entitlement exists. -->
-    <div id="historyUpsell"></div>
-
-    <div id="tableWrap" class="table-wrap" hidden>
-      <table class="readings-table">
-        <caption>Ostatnie odczyty (najnowszy na górze)</caption>
-        <thead><tr>
-          <th scope="col">Czas</th>
-          <th scope="col">Jasność kanału B</th>
-          <th scope="col">Udział niebieskiego</th>
-          <th scope="col">Strefa</th>
-        </tr></thead>
-        <tbody id="readingsBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <details class="card settings-card" id="settingsCard">
-    <summary>Ustawienia progów stref</summary>
-    <div class="settings-body">
-      <div class="settings-group">
-        <h4 class="settings-group-title">Jasność kanału B</h4>
-        <label class="slider-row">
-          <span>Granica żółty / czerwony: <b id="rawCritLabel">66%</b></span>
-          <input id="rawCritSlider" type="range" min="10" max="95" value="66">
-        </label>
-        <label class="slider-row">
-          <span>Granica zielony / żółty: <b id="rawWarnLabel">33%</b></span>
-          <input id="rawWarnSlider" type="range" min="5" max="90" value="33">
-        </label>
-      </div>
-
-      <div class="settings-group">
-        <h4 class="settings-group-title">Udział niebieskiego</h4>
-        <label class="slider-row">
-          <span>Granica żółty / czerwony: <b id="shareCritLabel">33%</b></span>
-          <input id="shareCritSlider" type="range" min="10" max="95" value="33">
-        </label>
-        <label class="slider-row">
-          <span>Granica zielony / żółty: <b id="shareWarnLabel">26%</b></span>
-          <input id="shareWarnSlider" type="range" min="5" max="90" value="26">
-        </label>
-      </div>
-
-      <!-- Filled by monetization-ui.js: threshold-profile upsell / manager. -->
-      <div id="profilesUpsell"></div>
-    </div>
-  </details>
-
-  <!-- Ad slot, deliberately the LAST element of the panel and far away from
-       Start/Stop (those live in panelCamera). Height is reserved so nothing
-       ever jumps under the user's finger. -->
-  <div id="adSlotMonitoring" class="ad-slot ad-slot-reserved" hidden></div>
-
-</div>
-
-<div id="panelMethodology" role="region" aria-label="Dokumentacja" class="methodology" hidden>
-
-  <!-- data-nav-back is menu.js's delegated back handler; no per-screen wiring. -->
-  <div class="mz-row">
-    <button type="button" class="mz-back-btn" data-nav-back aria-label="Wróć do poprzedniego ekranu">← Wróć</button>
+    </noscript>
   </div>
-
-  <section class="card mz-disclaimer" role="note">
-    <h3>To nie jest wyrób medyczny</h3>
-    <p>Ta aplikacja nie jest wyrobem medycznym. Nie służy do diagnozowania,
-    leczenia ani zapobiegania jakimkolwiek chorobom. Wyniki pomiaru kamerą
-    telefonu mają charakter orientacyjny i nie zastępują badania ani porady
-    lekarza. W sprawach zdrowia wzroku skonsultuj się z lekarzem lub
-    optometrystą. Progi stref w tej aplikacji nie odwzorowują żadnej normy
-    bezpieczeństwa — szczegóły w rozdziale 3.</p>
-  </section>
-
-  <nav class="doc-toc card" aria-label="Spis treści dokumentacji">
-    <h2>Spis treści</h2>
-    <ol>
-      <li><a href="#doc-start">Szybki start</a></li>
-      <li><a href="#doc-metodologia">Jak działa pomiar</a></li>
-      <li><a href="#doc-jednostki">Jednostki i normy</a></li>
-      <li><a href="#doc-strefy">Strefy i progi</a></li>
-      <li><a href="#doc-urzadzenia">Różnice między urządzeniami</a></li>
-    </ol>
-  </nav>
-
-  <h2 id="doc-start" class="doc-chapter">1. Szybki start</h2>
-
-  <section class="card">
-    <h3>Jak mierzyć trafniej</h3>
-    <ul>
-      <li>Na ekranie „Kamera” (pierwszy przycisk na dolnym pasku) naciśnij „Start” i skieruj tylny aparat na ekran lub źródło światła, które chcesz sprawdzić.</li>
-      <li>Przejdź na ekran „Monitoring” (drugi przycisk dolnego paska) — u góry zobaczysz obie gałki naraz, a niżej (przewiń) wykresy zmian w czasie. Pomiar działa w tle niezależnie od tego, który ekran akurat oglądasz.</li>
-      <li>Ustaw telefon w stałej odległości od ekranu (np. 15–20 cm), bez zmiany oświetlenia otoczenia w trakcie pomiaru.</li>
-      <li>Użyj tylnego aparatu — ma mniej agresywne korekcje automatyczne niż przedni.</li>
-      <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
-      <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu (rozdział 4).</li>
-    </ul>
-  </section>
-
-  <section class="card">
-    <h3>Duże czcionki i gałki — zawsze</h3>
-    <p>Cała aplikacja używa dużych, czytelnych czcionek i pełnowymiarowych
-    gałek, tak żeby osoby niedowidzące (i wszyscy inni) mogli odczytać dane
-    bez dodatkowych ustawień. Na ekranie „Monitoring” obie gałki mieszczą się
-    razem na jednym ekranie, bez przewijania — wykresy zmian w czasie są
-    zaraz pod nimi, o przewinięcie dalej.</p>
-  </section>
-
-  <h2 id="doc-metodologia" class="doc-chapter">2. Jak działa pomiar</h2>
-
-  <section class="card">
-    <h3>Kamera telefonu a spektrometr</h3>
-    <p>Prawdziwy pomiar „ile jest szkodliwego niebieskiego światła” wymaga rozłożenia
-    światła na długości fal — to robi <b>spektrometr</b>: pryzmat lub siatka
-    dyfrakcyjna rozszczepia światło na dziesiątki/setki wąskich pasm (np. co
-    1–5 nm) i mierzy moc optyczną w każdym z osobna. Dopiero z takiego pełnego
-    rozkładu widmowego liczy się jednostki takie jak luks, lumen czy
-    napromienienie ważone funkcją zagrożenia niebieskim światłem.</p>
-    <p><b>Kamera telefonu nie robi nic z tego.</b> Ma trzy szerokie filtry
-    (Bayer: R/G/B), z których każdy zbiera światło z szerokiego,
-    nakładającego się zakresu długości fal — „kanał niebieski” to nie wąskie
-    pasmo ok. 435–440 nm (szczyt zagrożenia dla siatkówki), tylko z grubsza
-    400–570 nm zmieszane z zielenią. Po drodze dochodzi demozaikowanie,
-    automatyczna ekspozycja, automatyczny balans bieli i kompresja gamma
-    sRGB — żadnego z tych kroków przeglądarka nie pozwala w pełni wyłączyć.
-    W efekcie wartość piksela, którą widzi JavaScript, nie jest liniowo
-    związana z rzeczywistą mocą optyczną padającą na sensor. To fundamentalne
-    ograniczenie sprzętowe, nie błąd tej aplikacji.</p>
-  </section>
-
-  <section class="card">
-    <h3>Wykres 1 — Jasność kanału B</h3>
-    <p><b>Co pokazuje:</b> średnią jasność samego kanału niebieskiego (B) z
-    próbkowanego fragmentu obrazu, w skali 0–255 przeliczonej na %.</p>
-    <p><b>Algorytm:</b></p>
-    <ol>
-      <li>5 razy na sekundę pobieramy klatkę z kamery.</li>
-      <li>Wycinamy środkowe 60% kadru (unika krawędzi obrazu i poświaty z boków).</li>
-      <li>Skalujemy wycięty fragment do siatki 32×32 piksele (wystarczająco
-        dokładnie, dużo szybciej niż liczenie pełnej rozdzielczości — ważne
-        na słabszym sprzęcie jak Xiaomi/Ulefone budżetowej klasy).</li>
-      <li>Uśredniamy wartość B wszystkich 1024 pikseli tej siatki.</li>
-      <li><code>wynik = średnia_B ÷ 255 × 100</code></li>
-    </ol>
-    <p><b>Po co ją zostawiliśmy:</b> to najprostszy, bezpośredni odczyt „ile
-    sygnału niebieskiego w ogóle rejestruje sensor”. Wadą jest to, że miesza
-    jasność z barwą — bardzo jasna, ale neutralnie biała scena też da wysoki
-    wynik, mimo że nie jest szczególnie „niebieska”. Dlatego obok niej
-    pokazujemy wykres 2.</p>
-  </section>
-
-  <section class="card">
-    <h3>Wykres 2 — Udział niebieskiego w świetle</h3>
-    <p><b>Co pokazuje:</b> jaki procent całego zarejestrowanego światła (R+G+B)
-    stanowi składowa niebieska — czyli przesunięcie koloru w stronę zimnego,
-    niezależnie od tego, jak jasna jest scena.</p>
-    <p><b>Algorytm:</b> te same kroki 1–4 co wyżej, ale zamiast samego B liczymy:</p>
-    <p class="formula-block"><code>wynik = B ÷ (R + G + B) × 100</code></p>
-    <p>Neutralna biel (R≈G≈B) daje ok. <b>33%</b>. Światło cieplejsze/bardziej
-    czerwone — mniej. Mocno niebieskie — więcej, aż do granicy ~100% dla
-    światła niemal czysto niebieskiego.</p>
-    <p><b>Dlaczego to dokładniejsza miara „szkodliwego niebieskiego”:</b> to ta
-    sama zasada, na której działają filtry typu tryb nocny / Night Shift —
-    liczy się <b>barwa</b>, nie jasność. Bardzo jasny, ale neutralny ekran nie
-    zostanie fałszywie oznaczony jako szkodliwy; przygaszony, ale mocno
-    niebieski — owszem. Dlatego to ta metryka steruje kolorem strefy w
-    tabeli odczytów.</p>
-  </section>
-
-  <h2 id="doc-jednostki" class="doc-chapter">3. Jednostki i normy</h2>
-
-  <section class="card">
-    <h3>Dlaczego nie luksy ani lumeny</h3>
-    <p><b>Lumen (lm)</b> opisuje całkowity strumień światła emitowany przez
-    źródło — to właściwość samego źródła, nie tego, co pada na dany punkt.
-    <b>Luks (lx)</b> to już natężenie oświetlenia w punkcie (lm/m²) — bliższe
-    temu, o co chodzi, ale nadal jednostka <b>fotometryczna</b>: waży widmo
-    krzywą czułości ludzkiego oka na jasność (V(λ)), nie krzywą zagrożenia
-    niebieskim światłem. Do prawdziwego pomiaru zagrożenia potrzebna jest
-    trzecia, węższa jednostka: napromienienie ważone widmowo w
-    <b>W/m²</b> (norma IEC 62471, szczyt czułości ok. 435–440 nm), a to
-    wymaga spektrometru — patrz sekcja wyżej.</p>
-    <p>Nawet gdyby poprzestać na luksach: telefon bez zewnętrznego,
-    skalibrowanego czujnika światła nie jest w stanie ich wiarygodnie
-    wyznaczyć. Wbudowany czujnik światła telefonu (tam gdzie istnieje) mierzy
-    zresztą światło z <b>przeciwnej strony</b> obudowy niż ta, którą celujesz
-    w ekran tylnym aparatem — mierzyłby więc światło za Twoimi plecami, nie
-    to z ekranu. Dlatego zamiast zgadywać liczbę w jednostce, która i tak
-    byłaby niewiarygodna, pokazujemy uczciwie opisany <b>wskaźnik względny
-    (%)</b> — sensowny do porównań na tym samym telefonie w tych samych
-    warunkach (np. tryb nocny włączony/wyłączony), nie jako wartość
-    bezwzględna.</p>
-  </section>
-
-  <section class="card">
-    <h3>Czy istnieją globalne normy dla progów bezpieczeństwa?</h3>
-    <p>Krótko: <b>nie ma normy wyrażonej w procentach kanału kamery</b> — to w
-    ogóle nie jest jednostka, w której cokolwiek się reguluje. Realne normy
-    dotyczące niebieskiego światła istnieją, ale mierzą inne wielkości, w
-    innych jednostkach, i dotyczą innego zjawiska niż zwykle mamy na myśli,
-    mówiąc „niebieskie światło męczy oczy”.</p>
-
-    <p><b>Ostre uszkodzenie fotochemiczne siatkówki — IEC 62471 / ICNIRP.</b>
-    Jedyna faktycznie regulowana „szkodliwość niebieskiego światła” — norma
-    dla lamp i systemów oświetleniowych, wspierana wytycznymi ICNIRP
-    (International Commission on Non-Ionizing Radiation Protection). Klasyfikuje
-    źródła do grup ryzyka RG0–RG3 na podstawie radiancji ważonej funkcją
-    zagrożenia B(λ), w <b>W·m⁻²·sr⁻¹</b>, z limitem czasu ekspozycji
-    (<code>t_max = 100 / L_B</code> sekund). Ekrany telefonów i monitorów —
-    nawet przy maksymalnej jasności — praktycznie zawsze mieszczą się w
-    <b>RG0 (zwolnione, bez ograniczeń)</b>. Ta norma dotyczy źródeł dużo
-    intensywniejszych (łuki spawalnicze, niektóre projektory, przemysłowe
-    LED-y), nie ekranów konsumenckich.</p>
-
-    <p><b>Wpływ na rytm dobowy / sen — CIE S 026.</b> To zjawisko, o które
-    zwykle chodzi (ekran wieczorem „rozbudza”) — ale to nie uszkodzenie oka,
-    tylko wpływ na zegar biologiczny przez komórki zwojowe siatkówki (ipRGC),
-    najczulsze ok. 480 nm. Norma CIE S 026:2018 definiuje jednostkę
-    <b>luks melanopiczny (melanopic EDI)</b>. Najbliższy „oficjalny” konsensus
-    naukowy to publikacja Browna i współautorów (<i>PLOS Biology</i>, 2022),
-    rekomendująca orientacyjnie: wieczorem &lt; 10 luksów melanopicznych, w
-    dzień &gt; 250. To rekomendacje badaczy snu, nie przepis prawny.</p>
-
-    <p><b>WHO.</b> Światowa Organizacja Zdrowia nie publikuje własnych,
-    niezależnych limitów ekspozycji na niebieskie światło — dla bezpieczeństwa
-    promieniowania optycznego odsyła do ICNIRP (wyżej). Jedyny konkretny,
-    autorski dokument WHO w temacie ekranów to <i>Guidelines on physical
-    activity, sedentary behaviour and sleep for children under 5 years of
-    age</i> (2019) — dotyczy jednak <b>czasu</b> spędzanego przy ekranie, nie
-    koloru czy natężenia światła: brak ekranu poniżej 1. roku życia, maks. do
-    1 godziny dla 2–4 lat. Dla dorosłych WHO nie ma równie skonkretyzowanych
-    wytycznych liczbowych.</p>
-
-    <p><b>Dlaczego to i tak nie pomaga skalibrować aplikacji:</b> obie normy
-    (IEC/ICNIRP i CIE) wymagają pełnego rozkładu widmowego i skalibrowanej
-    radiancji w znanej geometrii pomiaru — dokładnie tego, czego telefon przez
-    przeglądarkę nie potrafi dostarczyć (patrz sekcja „Kamera telefonu a
-    spektrometr” wyżej). Nie istnieje przelicznik „33% udziału niebieskiego =
-    X luksów melanopicznych”, więc progi w tej aplikacji <b>nie odwzorowują
-    żadnej normy bezpieczeństwa</b> (WHO, IEC, ICNIRP czy CIE — dla tego
-    wskaźnika po prostu nie istnieje). Domyślne wartości progu udziału
-    niebieskiego są za to wyprowadzone z realnych temperatur barwowych
-    światła i powszechnie powtarzanej, praktycznej rekomendacji ciepłego
-    światła wieczorem — solidniejsza podstawa niż zwykłe zaokrąglenie, ale
-    wciąż nie formalna norma (pełne wyprowadzenie: rozdział 4). Zawsze
-    możesz je zmienić na własne w ustawieniach.</p>
-  </section>
-
-  <h2 id="doc-strefy" class="doc-chapter">4. Strefy i progi</h2>
-
-  <section class="card">
-    <h3>Strefy kolorów i skąd biorą się progi</h3>
-    <p>Obie metryki mają własne, niezależnie ustawiane progi (ekran
-    „Monitoring” → „Ustawienia progów stref”, na dole strony) — 33%/66% na jednej nie znaczy tego
-    samego, co na drugiej (patrz rozdział 2 wyżej). To <b>udział niebieskiego</b>
-    decyduje o kolorze w legendzie pod wykresami i w tabeli odczytów:</p>
-    <ul>
-      <li><b>Zielona — bezpieczna:</b> światło ciepłe lub neutralne, oczy odpoczywają.</li>
-      <li><b>Żółta — umiarkowana:</b> zauważalne przesunięcie w stronę niebieskiego, warto robić przerwy.</li>
-      <li><b>Czerwona — szkodliwa:</b> silnie niebieskie światło, mocno męczy oczy przy dłuższej ekspozycji (zwłaszcza wieczorem).</li>
-    </ul>
-
-    <p><b>Skąd te konkretne liczby.</b> <b>Jasność kanału B</b> nie ma
-    naturalnego punktu odniesienia — sensowna wartość progu zależy wyłącznie
-    od tego, jak jasna jest scena, którą filmujesz (to miara jasności, nie
-    koloru). Domyślne 33%/66% to tu wciąż umowny punkt wyjścia — dostosuj go
-    metodą prób do typowej jasności swojego ekranu/otoczenia.</p>
-    <p><b>Udział niebieskiego</b> ma domyślne progi wyprowadzone z realnych
-    temperatur barwowych światła (fizyka, nie zaokrąglenie), nie z żadnej
-    normy bezpieczeństwa — takiej normy dla tej wielkości nie ma (rozdział 3).
-    Punkty odniesienia:</p>
-    <ul>
-      <li><b>~4000K</b> („ciepła biel", typowa żarówka LED) → ok. <b>26%</b>
-        udziału niebieskiego. Światło cieplejsze od tego (niższa temperatura
-        barwowa) to zakres szeroko rekomendowany wieczorem przez narzędzia
-        typu f.lux czy Night Shift — stąd dolny próg.</li>
-      <li><b>6500K (D65)</b>, standardowy punkt bieli dla większości ekranów
-        telefonów i monitorów fabrycznie — ok. <b>33%</b>. Od tej wartości w
-        górę zaczyna się zakres, w którym typowo stosuje się zalecenia
-        ograniczenia niebieskiego światła — stąd górny próg.</li>
-    </ul>
-    <p><b>Ważne zastrzeżenie:</b> to, jak bardzo „niebieskie" jest światło, nie
-    zależy od pory dnia, ale zalecenia ograniczania niebieskiego światła
-    dotyczą właściwie tylko <b>wieczora/nocy</b> — w dzień ekspozycja na
-    chłodne, niebieskie światło (także słoneczne) jest normalna, a nawet
-    korzystna dla rytmu dobowego. Czerwona strefa w środku dnia patrząc w
-    zwykły, niezmieniony ekran nie oznacza realnego zagrożenia — to samo
-    światło wieczorem jest już warte ograniczenia.</p>
-    <p>Progi obu metryk są całkowicie niezależne — zmiana jednej nie wpływa
-    na drugą. Zmienione progi są <b>zapamiętywane w tym urządzeniu i
-    przeglądarce</b> między kolejnymi otwarciami aplikacji (lokalnie, nic
-    nigdzie nie jest wysyłane) — przycisk „Start" nie resetuje ich do
-    domyślnych.</p>
-  </section>
-
-  <h2 id="doc-urzadzenia" class="doc-chapter">5. Różnice między urządzeniami</h2>
-
-  <section class="card">
-    <h3>Dlaczego podgląd wygląda inaczej na różnych urządzeniach</h3>
-    <p><b>Przeglądarka vs natywna aplikacja aparatu.</b> Gdy otwierasz aparat
-    fabrycznie zainstalowany na telefonie, producent (np. Xiaomi) dokłada do
-    podglądu na żywo własne, zastrzeżone algorytmy — HDR w czasie
-    rzeczywistym, cyfrowe wzmacnianie jasności w słabym świetle, wygładzanie.
-    Strona internetowa dostaje przez przeglądarkę dużo bardziej „surowy”
-    strumień z kamery (funkcja <code>getUserMedia</code>), bez żadnego z tych
-    ulepszeń — więc z zasady będzie wyglądać płasko/ciemniej niż natywny
-    aparat, niezależnie od telefonu.</p>
-    <p><b>Różne możliwości sterowania kamerą.</b> To, jak dużo kontroli nad
-    ekspozycją i balansem bieli przeglądarka w ogóle dostaje od systemu,
-    zależy od konkretnego telefonu, sterownika kamery i wersji
-    Chrome/WebView — jedne urządzenia (typowo komputery z kamerą USB) zgłaszają
-    tylko pełną automatykę, inne (część telefonów z Androidem) zgłaszają
-    dodatkowe, bardziej zaawansowane tryby. Wcześniejsza wersja tej aplikacji
-    próbowała przełączać się na tryb ręcznej ekspozycji tam, gdzie telefon na
-    to pozwalał, bez ustawienia konkretnej wartości — co na części telefonów
-    zamrażało obraz na przypadkowej, ciemnej ekspozycji z chwili startu
-    kamery. To był błąd w kodzie (już poprawiony), nie różnica jednostek —
-    ale dobrze pokazuje, jak łatwo zachowanie potrafi się różnić między
-    urządzeniami, skoro nawet ta sama linijka kodu włącza się tylko na
-    części z nich.</p>
-    <p><b>Różne sensory i przetwarzanie obrazu (ISP).</b> Nawet przy identycznym
-    kodzie i tej samej scenie różne modele telefonów mają różnej jakości
-    sensory i różnie strojoną automatykę producenta — jeden szybciej i
-    celniej dobierze ekspozycję w słabym świetle niż drugi. To, w połączeniu
-    z faktem, że wskaźniki w tej aplikacji są <b>względne</b> (patrz rozdział 3),
-    oznacza: wyniki (i wygląd podglądu) sensownie porównuj na tym samym
-    telefonie w czasie, nie między różnymi modelami/urządzeniami.</p>
-  </section>
-
-</div>
-
-<!-- Overlay screens. Deliberately plain <div>s, NOT role="tabpanel" — they sit
-     outside the tablist, exactly like #panelMethodology. Content is injected by
-     monetization-ui.js (premium, account) and menu.js (more, about). -->
-<div id="panelPremium" class="mz-screen" role="region" aria-labelledby="premiumTitle" hidden></div>
-<div id="panelAccount" class="mz-screen" role="region" aria-labelledby="accountTitle" hidden></div>
-<div id="panelMore" class="mz-screen" role="region" aria-labelledby="moreTitle" hidden></div>
-<div id="panelAbout" class="mz-screen" role="region" aria-labelledby="aboutTitle" hidden></div>
 </main>
 
-<!-- Global layers, all filled at runtime. -->
-<nav id="appNav" class="nav-bar" aria-label="Menu główne"></nav>
-<div id="navLive" class="mz-visually-hidden" aria-live="polite"></div>
-<div id="mzLayer"></div>
-<div id="mzToastRegion" class="mz-toast-region" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- Load order is a hard contract: billing defines the engine, monetization-ui
-     and menu define the surfaces, app.js publishes AppTabs/AppData last and
-     fires 'app:ready', which boots the other three. No defer/async, no modules. -->
-<script src="billing.js"></script>
-<script src="monetization-ui.js"></script>
-<script src="menu.js"></script>
-<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* Pięć samodzielnych aplikacji. Opisy przeniesione ze starej strony
+     rozgałęzienia — tester ma po jednym zdaniu wiedzieć, na co patrzy. */
+  var VERSIONS = [
+    { id: 'v1', short: 'jeden wykres',
+      desc: 'Pierwsza wersja: kamera i jeden wykres natężenia koloru niebieskiego ze strefami bezpieczną, umiarkowaną i szkodliwą.' },
+    { id: 'v2', short: 'siedem wskaźników',
+      desc: 'Przebudowany interfejs: siedem wskaźników światła zamiast jednego, wykres, historia pomiarów i ekran konta.' },
+    { id: 'v3', short: 'moduł przyrządowy',
+      desc: 'Pomiar siedmiu wielkości światła na module przyrządowym, z naciskiem na czytelność i pracę offline.' },
+    { id: 'v4', short: 'osobne ekrany',
+      desc: 'Te same siedem wielkości na osobnych ekranach pomiaru, historii i narzędzi, z motywami i kolorami akcentu.' },
+    { id: 'v5', short: 'najnowsza',
+      desc: 'Najnowsza wersja: te same siedem wielkości, napisane od nowa na modułach ES — wskaźnik strefowy, wykres historii, progi i kalibracja, w całości offline.' }
+  ];
+
+  var DEFAULT_ID = 'v5';                 /* goły adres otwiera najnowszą */
+  var STORE_KEY = 'shell.lastVersion';
+  var WIDTH_KEY = 'shell.width';
+  var LOAD_TIMEOUT = 12000;              /* po tylu ms uznajemy wersję za niewczytaną */
+
+  var tabsEl = document.getElementById('tabs');
+  var tabsWrap = document.getElementById('tabsWrap');
+  var stage = document.getElementById('stage');
+  var frame = document.getElementById('frame');
+  var veil = document.getElementById('veil');
+  var veilTitle = document.getElementById('veilTitle');
+  var veilText = document.getElementById('veilText');
+  var veilActions = document.getElementById('veilActions');
+  var veilLink = document.getElementById('veilLink');
+  var descTitle = document.getElementById('descTitle');
+  var descText = document.getElementById('descText');
+  var openTab = document.getElementById('openTab');
+  var toastEl = document.getElementById('toast');
+
+  var iframeEl = null;
+  var current = null;
+  var loadTimer = 0;
+  var toastTimer = 0;
+
+  function byId(id) {
+    for (var i = 0; i < VERSIONS.length; i++) if (VERSIONS[i].id === id) return VERSIONS[i];
+    return null;
+  }
+
+  function urlOf(id) { return './' + id + '/'; }
+
+  /* --- pamięć wyboru ----------------------------------------------------- */
+
+  function remember(id) {
+    try { localStorage.setItem(STORE_KEY, id); } catch (e) { /* tryb prywatny */ }
+  }
+
+  function recall() {
+    try { return localStorage.getItem(STORE_KEY); } catch (e) { return null; }
+  }
+
+  /* Hash strony NADRZĘDNEJ ma postać '#v3' i nic więcej. Wersje v4 i v5 używają
+     hasha do własnej nawigacji ('#/history'), ale to hash DOKUMENTU W IFRAME —
+     osobnego okna, z osobnym adresem. Zmiana hasha wewnątrz ramki nie rusza
+     location.hash powłoki i odwrotnie, więc jedno nie może nadpisać drugiego.
+     Warunek jest tylko taki, żeby powłoka nie przeładowywała ramki na każdym
+     zdarzeniu hashchange — stąd porównanie z 'current' poniżej. */
+  function idFromHash() {
+    var m = /^#(v[1-5])$/.exec(location.hash || '');
+    return m ? m[1] : null;
+  }
+
+  function initialId() {
+    var fromHash = idFromHash();
+    if (fromHash) return fromHash;                 /* hash ma pierwszeństwo */
+    var saved = recall();
+    if (byId(saved)) return saved;
+    return DEFAULT_ID;
+  }
+
+  /* --- zakładki ---------------------------------------------------------- */
+
+  var tabButtons = [];
+
+  VERSIONS.forEach(function (v) {
+    var b = document.createElement('button');
+    b.className = 'tab';
+    b.type = 'button';
+    b.id = 'tab-' + v.id;
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', 'false');
+    b.setAttribute('aria-controls', 'frame');
+    b.tabIndex = -1;
+    b.dataset.id = v.id;
+
+    var num = document.createElement('b');
+    num.textContent = v.id;
+    var name = document.createElement('span');
+    name.textContent = v.short;
+    b.appendChild(num);
+    b.appendChild(name);
+
+    b.addEventListener('click', function () { select(v.id); });
+    tabsEl.appendChild(b);
+    tabButtons.push(b);
+  });
+
+  function focusTab(i) {
+    var n = tabButtons.length;
+    var b = tabButtons[((i % n) + n) % n];
+    b.focus();
+    /* Fokus musi wjechać w widok także wtedy, gdy lista jest przewinięta. */
+    if (b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  tabsEl.addEventListener('keydown', function (e) {
+    var i = tabButtons.indexOf(document.activeElement);
+    if (i < 0) return;
+    var handled = true;
+    if (e.key === 'ArrowRight') focusTab(i + 1);
+    else if (e.key === 'ArrowLeft') focusTab(i - 1);
+    else if (e.key === 'Home') focusTab(0);
+    else if (e.key === 'End') focusTab(tabButtons.length - 1);
+    else handled = false;
+    if (handled) e.preventDefault();
+  });
+
+  /* Sygnał „jest jeszcze coś dalej”. Liczony po każdym przewinięciu i po każdej
+     zmianie rozmiaru, bo przy szerokim oknie zakładki mieszczą się w całości. */
+  function updateScrollHint() {
+    var more = tabsEl.scrollWidth - tabsEl.clientWidth - tabsEl.scrollLeft > 4;
+    tabsWrap.dataset.more = more ? '1' : '0';
+  }
+
+  tabsEl.addEventListener('scroll', updateScrollHint, { passive: true });
+  window.addEventListener('resize', updateScrollHint);
+
+  /* --- warstwa stanu ----------------------------------------------------- */
+
+  function showLoading(v) {
+    veil.dataset.state = 'loading';
+    veilTitle.textContent = 'Wczytywanie wersji ' + v.id + '…';
+    veilText.textContent = 'Pierwsze wejście pobiera całą aplikację.';
+    veilActions.hidden = true;
+  }
+
+  /* Bez tego użytkownik zobaczyłby pustą białą ramkę i nie wiedziałby, czy to
+     awaria, czy jeszcze się ładuje. */
+  function showError(v, reason) {
+    veil.dataset.state = 'error';
+    veilTitle.textContent = 'Nie udało się wczytać wersji ' + v.id;
+    veilText.textContent = reason;
+    veilLink.href = urlOf(v.id);
+    veilLink.textContent = 'Otwórz ' + v.id + ' pod własnym adresem';
+    veilActions.hidden = false;
+  }
+
+  function hideVeil() { veil.dataset.state = 'idle'; }
+
+  /* --- wybór wersji ------------------------------------------------------ */
+
+  function showVersion(id) {
+    var v = byId(id);
+    if (!v) return;
+    current = id;
+
+    tabButtons.forEach(function (b) {
+      var on = b.dataset.id === id;
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;         /* roving tabindex: jeden przystanek Tab */
+      /* Na telefonie lista zakładek jest przewijana, a wybrana wersja może leżeć
+         poza widokiem — np. po wejściu z adresu z hashem #v5. */
+      if (on && b.scrollIntoView) {
+        try { b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+      }
+    });
+
+    frame.setAttribute('aria-labelledby', 'tab-' + id);
+    descTitle.textContent = v.id;
+    descText.textContent = v.desc;
+    openTab.href = urlOf(id);
+    openTab.setAttribute('aria-label', 'Otwórz ' + v.id + ' w nowej karcie');
+    document.title = 'Monitor Światła — ' + v.id + ' (powłoka porównawcza)';
+
+    mountFrame(v);
+    updateScrollHint();
+  }
+
+  /* Przy każdej zmianie wersji powstaje NOWY element iframe zamiast podmiany
+     src istniejącego. Powód: nawigacja ramki dokłada wpisy do wspólnej historii
+     okna, więc podmienianie src zaśmiecałoby przycisk Wstecz kolejnymi wersjami.
+     Pierwsze wczytanie świeżo utworzonej ramki zastępuje jej wpis about:blank
+     i historii nie rusza. Przy okazji stary dokument ginie razem z kamerą,
+     której nie trzeba wtedy zwalniać ręcznie. */
+  function mountFrame(v) {
+    clearTimeout(loadTimer);
+    showLoading(v);
+
+    if (iframeEl && iframeEl.parentNode) iframeEl.parentNode.removeChild(iframeEl);
+
+    var f = document.createElement('iframe');
+    f.title = 'Monitor Światła — wersja ' + v.id;   /* tytuł idzie za wersją */
+    /* Bez allow="camera" osadzona aplikacja nie dostanie strumienia z kamery
+       i pomiaru nie da się w powłoce uruchomić w ogóle. */
+    f.setAttribute('allow', 'camera; fullscreen');
+    f.setAttribute('src', urlOf(v.id));
+
+    /* Zdarzenie 'load' NIE znaczy „wersja się wczytała”: pada także wtedy, gdy
+       w ramce wylądowała strona błędu przeglądarki (zerwane połączenie, brak
+       sieci). Taka strona ma inne pochodzenie, więc contentDocument jest wtedy
+       niedostępny — i dokładnie po tym ją poznajemy. Wszystkie wersje leżą pod
+       tym samym pochodzeniem co powłoka, więc przy poprawnym wczytaniu dokument
+       jest widoczny, a jego ścieżka zawiera katalog wersji. */
+    f.addEventListener('load', function () {
+      clearTimeout(loadTimer);
+      var ok = false;
+      try {
+        var d = f.contentDocument;
+        ok = !!(d && d.location && d.location.pathname.indexOf('/' + v.id + '/') !== -1);
+      } catch (e) { ok = false; }
+      if (ok) hideVeil();
+      else showError(v, 'Przeglądarka pokazała w ramce stronę błędu zamiast wersji — najczęściej znaczy to zerwane połączenie z serwerem.');
+    });
+
+    /* Zdarzenie 'error' na iframe bywa w ogóle nie wywoływane i nie dotyczy
+       odpowiedzi 404 — te wczytują się „poprawnie”. Dlatego stan awaryjny stoi
+       na trzech nogach: sprawdzeniu dokumentu wyżej, zegarze poniżej i osobnym
+       zapytaniu HEAD, które wykrywa brak katalogu wersji od razu. */
+    f.addEventListener('error', function () {
+      clearTimeout(loadTimer);
+      showError(v, 'Przeglądarka odrzuciła wczytanie ramki.');
+    });
+
+    iframeEl = f;
+    frame.insertBefore(f, veil);
+
+    loadTimer = setTimeout(function () {
+      if (current === v.id) {
+        showError(v, 'Wersja nie odpowiedziała w ciągu 12 sekund. Otwórz ją bezpośrednio, żeby zobaczyć powód.');
+      }
+    }, LOAD_TIMEOUT);
+
+    if (window.fetch) {
+      fetch(urlOf(v.id), { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+        if (!r.ok && current === v.id) {
+          clearTimeout(loadTimer);
+          showError(v, 'Serwer odpowiedział kodem ' + r.status + ' na adres ' + urlOf(v.id) + '.');
+        }
+      }).catch(function () { /* offline albo brak sieci: zostaje zegar */ });
+    }
+  }
+
+  function select(id) {
+    if (!byId(id)) return;
+    remember(id);
+    if (idFromHash() === id) {           /* hash już wskazuje tę wersję */
+      if (current !== id) showVersion(id);
+      return;
+    }
+    /* Zmiana hasha dokłada wpis do historii — o to chodzi: Wstecz ma wracać do
+       poprzednio oglądanej wersji. Samo przełączenie robi handler hashchange. */
+    location.hash = '#' + id;
+  }
+
+  window.addEventListener('hashchange', function () {
+    var id = idFromHash();
+    /* Ktoś skasował albo zepsuł hash: przywracamy bieżący, bez wpisu w historii. */
+    if (!id) { location.replace('#' + (current || DEFAULT_ID)); return; }
+    if (id !== current) { remember(id); showVersion(id); }
+  });
+
+  /* --- narzędzia --------------------------------------------------------- */
+
+  var widthButtons = [].slice.call(document.querySelectorAll('[data-width]'));
+
+  function setWidth(w, persist) {
+    stage.dataset.width = w;
+    widthButtons.forEach(function (o) {
+      o.setAttribute('aria-pressed', o.dataset.width === w ? 'true' : 'false');
+    });
+    if (persist) { try { localStorage.setItem(WIDTH_KEY, w); } catch (e) {} }
+  }
+
+  widthButtons.forEach(function (b) {
+    b.addEventListener('click', function () { setWidth(b.dataset.width, true); });
+  });
+
+  document.getElementById('reload').addEventListener('click', function () {
+    /* Przeładowujemy samą wersję, nie powłokę: nowa ramka pod tym samym
+       adresem. Jeśli wersję serwuje jej własny service worker, to i tak
+       zobaczymy kopię z pamięci — od tego jest przycisk obok. */
+    if (!current) return;
+    mountFrame(byId(current));
+    toast('Przeładowano wersję ' + current + ' w ramce.');
+  });
+
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.dataset.show = '1';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.dataset.show = '0'; }, 7000);
+  }
+
+  /* NAJWAŻNIEJSZE NARZĘDZIE TEJ STRONY.
+     Każda wersja ma własnego service workera i własne pamięci podręczne, więc
+     porównywanie bardzo łatwo pokazuje kopię sprzed zmian zamiast tego, co leży
+     teraz na serwerze. Ta operacja wyrejestrowuje workery WSZYSTKICH pięciu
+     wersji i kasuje ich pamięci, po czym przeładowuje ramkę.
+     Uruchamiana wyłącznie ręcznie, na kliknięcie — nigdy sama z siebie, bo
+     kasuje też to, dzięki czemu wersje działają offline.
+     Wzorzec nazw obejmuje wyłącznie pamięci tych pięciu aplikacji
+     ('blue-monitor-v1-28', 'blue-monitor-v2-2', 'blue-monitor-v3-2', 'ms4-5',
+     'ms5-3') oraz pozostałość po dawnym korzeniu ('blue-monitor-v27'). Nazwy są
+     wspólne dla całego pochodzenia, a na github.io pochodzenie dzielą wszystkie
+     repozytoria właściciela — dlatego wzorzec jest wąski, a nie „skasuj
+     wszystko”. */
+  var PURGE_SCOPE = /\/v[1-5]\/$/;
+  var PURGE_CACHE = /^(blue-monitor-v[1-5]-\d+|ms[45]-\d+|blue-monitor-v\d+)$/;
+
+  document.getElementById('purge').addEventListener('click', function () {
+    var btn = this;
+    btn.disabled = true;
+    toast('Czyszczenie pamięci wersji…');
+
+    var swDone = Promise.resolve(0);
+    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+      swDone = navigator.serviceWorker.getRegistrations().then(function (regs) {
+        var mine = regs.filter(function (r) { return PURGE_SCOPE.test(String(r.scope || '')); });
+        return Promise.all(mine.map(function (r) {
+          return r.unregister().catch(function () { return false; });
+        })).then(function (res) { return res.filter(Boolean).length; });
+      }).catch(function () { return 0; });
+    }
+
+    var cacheDone = Promise.resolve(0);
+    if ('caches' in window) {
+      cacheDone = caches.keys().then(function (names) {
+        var mine = names.filter(function (n) { return PURGE_CACHE.test(n); });
+        return Promise.all(mine.map(function (n) {
+          return caches.delete(n).catch(function () { return false; });
+        })).then(function (res) { return res.filter(Boolean).length; });
+      }).catch(function () { return 0; });
+    }
+
+    Promise.all([swDone, cacheDone]).then(function (r) {
+      btn.disabled = false;
+      /* Potwierdzenie musi być widoczne, inaczej nie wiadomo, czy cokolwiek
+         się wydarzyło — komunikat podaje liczby, nie samo „gotowe”. */
+      toast('Wyrejestrowano workery: ' + r[0] + '. Usunięto pamięci: ' + r[1] + '. Przeładowuję wersję ' + current + '.');
+      if (current) mountFrame(byId(current));
+    });
+  });
+
+  /* --- start ------------------------------------------------------------- */
+
+  try {
+    var w = localStorage.getItem(WIDTH_KEY);
+    if (w === 'phone' || w === 'tablet' || w === 'full') setWidth(w, false);
+  } catch (e) {}
+
+  var startId = initialId();
+  /* Adres ma być gotowy do wysłania testerowi także wtedy, gdy ktoś wszedł na
+     goły adres — ale bez dokładania wpisu do historii, stąd replace. */
+  if (idFromHash() !== startId) location.replace('#' + startId);
+  remember(startId);
+  showVersion(startId);
+  updateScrollHint();
+}());
+</script>
+
+<script>
+/* Sprzątanie po service workerze wersji 1.
+   Zanim wersja 1 trafiła do /v1/, jej worker był rejestrowany w KORZENIU
+   witryny. U każdego, kto odwiedził stronę wcześniej, ta rejestracja nadal
+   siedzi w przeglądarce z zasięgiem '/' — serwuje z pamięci podręcznej starą
+   stronę główną i potrafi przesłonić tę tutaj. Ten skrypt wyrejestrowuje
+   wyłącznie rejestracje korzenia (workery wersji 1–5 mają zasięg swoich
+   katalogów i zostają nietknięte) oraz usuwa pamięci podręczne o nazwach
+   'blue-monitor-vN' — tak nazywał się cache starego korzenia. Wszystkie pięć
+   żywych wersji ma w nazwie przedrostek z myślnikiem ('blue-monitor-v1-28',
+   'blue-monitor-v2-2', 'blue-monitor-v3-2', 'ms4-5', 'ms5-3'), więc ten wzorzec
+   ich nie obejmuje.
+   Sama powłoka NIE rejestruje żadnego service workera i nigdy nie może tego
+   robić: żywy worker w korzeniu to dokładnie ten problem, który ten skrypt
+   sprząta.
+   Całość jest defensywna: bez API nic się nie dzieje, błędy są połykane,
+   strona nigdy nie jest przeładowywana. */
+(function () {
+  'use strict';
+
+  var VERSION_SCOPE = /\/v[1-5]\/$/;              /* zasięg katalogu wersji */
+  var V1_CACHE = /^blue-monitor-v\d+$/;           /* pamięci starego korzenia */
+
+  try {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (reg) {
+          try {
+            var scope = reg && reg.scope ? String(reg.scope) : '';
+            if (!scope || VERSION_SCOPE.test(scope)) return;
+            reg.unregister().catch(function () {});
+          } catch (e) { /* jedna rejestracja mniej — nie przerywamy reszty */ }
+        });
+      }).catch(function () {});
+    }
+  } catch (e) { /* brak dostępu do API: nie ma czego sprzątać */ }
+
+  try {
+    if ('caches' in window) {
+      caches.keys().then(function (names) {
+        names.forEach(function (name) {
+          if (V1_CACHE.test(name)) caches.delete(name).catch(function () {});
+        });
+      }).catch(function () {});
+    }
+  } catch (e) { /* tryb prywatny potrafi rzucić już przy odczycie */ }
+}());
+</script>
+
 </body>
 </html>

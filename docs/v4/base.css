@@ -1,0 +1,1001 @@
+@charset "utf-8";
+/* ============================================================================
+   base.css — Monitor Światła v4
+   ----------------------------------------------------------------------------
+   ROLA PLIKU: fundament i POWŁOKA. Wszystko, co jest w aplikacji dokładnie raz:
+   zerowanie przeglądarki, typografia dokumentu, siatka powłoki, górna belka,
+   dolna nawigacja, boczna nawigacja, kontener widoków i ich przełączanie,
+   klasy pomocnicze, stan fokusu, obsługa data-motion oraz wydruk.
+
+   CZEGO TU NIE MA: komponentów. Karty, przyciski, chipy, wiersze list, arkusze,
+   okna, toasty, wskaźniki i wykresy rysuje components.css; układy poszczególnych
+   ekranów rysuje screens.css. Ten plik nie zna żadnej z tych klas — poza
+   wydrukiem, gdzie z konieczności musi wygasić cienie kart.
+
+   ŹRÓDŁO WARTOŚCI: wyłącznie var(--…) z tokens.css. W pliku nie ma ani jednej
+   wartości barwy, ani jednej liczby pikseli poza tymi, które są geometrią
+   konkretnego elementu powłoki (8 px kropka stanu, 56×32 px pigułka zakładki,
+   1 px krawędź) i nie mają sensu jako token.
+
+   !important: dokładnie dwa miejsca, oba udokumentowane niżej — klasa
+   `.is-hidden` (SPEC 5.A) i blok wygaszania ruchu.
+
+   PUNKTY ŁAMANIA — co się zmienia (SPEC 3):
+     360 / 390 / 430 px  telefon. Jeden układ, bez media query. Nawigacja na dole,
+                         treść na pełnej szerokości minus --s-4 z każdej strony,
+                         belka 56 px + bezpieczny margines górny. Przy 360 px
+                         etykieta zakładki ma 90 px na tekst — mieści „Narzędzia”.
+     768 px              próg „tablet” (@media min-width: 600px). Kolumna treści
+                         zatrzymuje się na 720 px i staje na środku; dolna
+                         nawigacja przestaje się rozciągać (pozycje maks. 160 px)
+                         i również trafia na środek; karty dostają większy padding.
+    1024 px              próg „desktop”. Dolna nawigacja znika, po lewej wjeżdża
+                         boczna (260 px), powłoka dostaje o nią padding, kolumna
+                         treści rośnie do 1180 px, marginesy do --s-5, a dolny
+                         zapas pod nawigację znika. Pojawiają się stany :hover.
+    1440 px              próg „szeroki”. Treść NIE rośnie dalej — rośnie margines.
+                         Boczna nawigacja zyskuje stopkę ze stanem subskrypcji
+                         i wersją aplikacji.
+   ============================================================================ */
+
+
+/* ============================================================================
+   1. ZEROWANIE
+   Minimalne i celowe: pudełka, marginesy, dziedziczenie kroju w formantach,
+   media jako bloki. Nie zerujemy tego, co i tak nadpisze components.css.
+   ============================================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+h1, h2, h3, h4, h5, h6,
+p, figure, blockquote, dl, dd,
+ul, ol {
+  margin: 0;
+  padding: 0;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* Formanty nie dziedziczą kroju ani rozmiaru z dokumentu — trzeba im go dać
+   ręcznie, inaczej przycisk na Androidzie dostaje 13,3 px Arial. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  margin: 0;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* Ikony rysuje UI.icon(): stroke, currentColor, 24×24, stroke-width 1.75 —
+   fill="none" siedzi już w atrybucie rysunku. Żadnej reguły `fill` tutaj NIE MA:
+   `fill` jest własnością dziedziczoną i wpisana w CSS na <svg> pogasiłaby
+   podpisy osi i wypełnienia wykresów z gauge.js. */
+
+table {
+  border-collapse: collapse;
+}
+
+a {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+
+[hidden] {
+  display: none;
+}
+
+
+/* ============================================================================
+   2. DOKUMENT
+   ============================================================================ */
+html {
+  /* Bez wygładzania skoków: kotwica „przejdź do treści” i przewijanie do sekcji
+     Ustawienia mają być natychmiastowe, gdy użytkownik prosi o mniej ruchu —
+     blok wygaszania ruchu na końcu pliku wyłącza tę własność. */
+  scroll-behavior: smooth;
+  /* Belka jest przyklejona, więc kotwica nie może wylądować pod nią. */
+  scroll-padding-top: calc(var(--h-topbar) + env(safe-area-inset-top) + var(--s-3));
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font);
+  font-size: var(--t-body);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  /* Zakaz przewijania w poziomie: cokolwiek szerokiego (tabela, wykres, taśma)
+     przewija się WEWNĄTRZ .ms4-scroll-x, nigdy całą stroną. */
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+/* Nagłówki dostają rozmiar od komponentu, w którym stoją. Tu tylko wspólny
+   rytm: ciasna interlinia i brak własnej wagi „bold” od przeglądarki. */
+h1, h2, h3, h4, h5, h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: var(--lh-tight);
+}
+
+strong, b {
+  font-weight: var(--fw-bold);
+}
+
+small {
+  font-size: var(--t-caption);
+}
+
+/* Każda zmieniająca się liczba ma cyfry o równej szerokości — inaczej wskaźnik
+   drga w rytm cyfr przy pięciu próbkach na sekundę. */
+code, kbd, samp, output {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-ink);
+}
+
+
+/* ============================================================================
+   3. FOKUS
+   Jedna reguła na całą aplikację: obrys 2 px w --c-focus z odstępem 2 px,
+   wyłącznie na :focus-visible. Nigdzie nie ma `outline: none` bez zamiennika.
+   ============================================================================ */
+:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* Fokus myszą nie rysuje obrysu, ale fokus klawiaturą tak — dlatego zdejmujemy
+   TYLKO domyślny obrys :focus i tylko tam, gdzie :focus-visible go zastąpi. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Kontener widoków dostaje fokus programowo (App.go → viewRoot.focus()), żeby
+   czytnik ekranu zaczął czytać od nowego ekranu. To nie jest fokus użytkownika,
+   więc obrysu nie rysujemy. */
+.ms4-app__main:focus {
+  outline: none;
+}
+
+
+/* ============================================================================
+   4. PASKI PRZEWIJANIA
+   Dyskretne, w kolorach powierzchni, w obu motywach. Tam, gdzie przeglądarka
+   nie zna ::-webkit-scrollbar, robi to samo scrollbar-color.
+   ============================================================================ */
+* {
+  scrollbar-color: var(--c-surface-3) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-surface-3);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: var(--r-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-border-strong);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+
+/* ============================================================================
+   5. POWŁOKA — .ms4-app i .ms4-app__main
+   ============================================================================ */
+.ms4-app {
+  min-height: 100dvh;
+  display: block;
+  background: var(--c-bg);
+}
+
+.ms4-app__main {
+  /* Dolny zapas robi miejsce pod przyklejoną nawigacją i pod paskiem systemowym
+     telefonu — bez niego ostatnia karta chowa się pod zakładkami. */
+  padding: var(--s-4) var(--s-4)
+           calc(var(--h-tabbar) + var(--s-8) + env(safe-area-inset-bottom));
+}
+
+
+/* ============================================================================
+   6. WIDOKI — .ms4-view i .ms4-view__inner
+   Cztery widoki żyją równolegle w DOM; widoczny jest ten z .is-active.
+   Przełączenie to zmiana display + krótkie wejście (opacity + 8 px w górę).
+   ============================================================================ */
+.ms4-view {
+  display: none;
+}
+
+.ms4-view.is-active {
+  display: block;
+  animation: ms4-view-in var(--dur) var(--ease) both;
+}
+
+@keyframes ms4-view-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ms4-view__inner {
+  width: 100%;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+
+/* ============================================================================
+   7. GÓRNA BELKA
+   ============================================================================ */
+.ms4-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  padding-top: env(safe-area-inset-top);
+  transition: box-shadow var(--dur) var(--ease);
+}
+
+/* Rozmycie tylko tam, gdzie przeglądarka je zna — inaczej belka zrobiłaby się
+   przezroczysta bez rozmycia i tekst pod nią byłby nieczytelny. */
+@supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+  .ms4-topbar {
+    background: color-mix(in srgb, var(--c-surface) 82%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    backdrop-filter: saturate(1.4) blur(12px);
+  }
+}
+
+/* app.js dokłada is-scrolled po przewinięciu strony o więcej niż 8 px. */
+.ms4-topbar.is-scrolled {
+  box-shadow: var(--e-1);
+}
+
+.ms4-topbar__inner {
+  /* Ta sama kolumna co treść widoku: max-width kolumny + jej marginesy boczne,
+     dzięki czemu tytuł belki stoi dokładnie nad pierwszą kartą. */
+  width: 100%;
+  max-width: calc(var(--w-content) + var(--s-4) * 2);
+  margin-inline: auto;
+  min-height: var(--h-topbar);
+  padding-inline: var(--s-4);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.ms4-topbar__title {
+  margin-right: auto;
+  min-width: 0;
+  font-size: var(--t-h2);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms4-topbar__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 0 1 auto;
+  min-width: 0;
+  background: var(--c-surface-2);
+  border-radius: var(--r-pill);
+  padding: 4px 10px 4px 6px;
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  color: var(--c-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Czas sesji („Pomiar 00:04:12”) przepisuje się raz na sekundę — cyfry o stałej
+   szerokości trzymają pigułkę w miejscu. */
+.ms4-topbar__status > span:last-child {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms4-topbar__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-text-3);
+}
+
+.ms4-topbar__dot--idle { background: var(--c-text-3); }
+.ms4-topbar__dot--good { background: var(--c-good); }
+.ms4-topbar__dot--warn { background: var(--c-warn); }
+.ms4-topbar__dot--crit { background: var(--c-crit); }
+
+/* Kropka „uruchamiam / trwa pomiar”. Puls 0,5 Hz — jedyne dwa pulsujące
+   elementy w aplikacji to ona i kropka „Na żywo” przy podglądzie kamery.
+   Poniżej 3 Hz nie ma ryzyka migotania (SPEC 8.2). */
+.ms4-topbar__dot--run {
+  background: var(--c-accent);
+  animation: ms4-pulse 2s var(--ease) infinite;
+}
+
+@keyframes ms4-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .45; }
+}
+
+.ms4-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex: 0 0 auto;
+}
+
+.ms4-topbar__btn {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  min-width: var(--tap);
+  border-radius: var(--r-pill);
+  color: var(--c-text-2);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease);
+}
+
+.ms4-topbar__btn:active {
+  transform: scale(.94);
+}
+
+.ms4-topbar__btn > svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Inicjały zalogowanego użytkownika zamiast ikony konta. Koło 32 px siedzi
+   w środku celu dotyku 44 px, więc cel nie maleje. */
+.ms4-topbar__avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-2));
+  color: var(--c-on-accent);
+  font-size: var(--t-label);
+  font-weight: var(--fw-bold);
+  letter-spacing: .02em;
+  line-height: 1;
+}
+
+
+/* ============================================================================
+   8. DOLNA NAWIGACJA (telefon i tablet)
+   ============================================================================ */
+.ms4-tabbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: var(--z-nav);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Zakładka to siatka o dwóch wierszach: 32 px na pigułkę z ikoną i wiersz
+   automatyczny na etykietę. Pigułka i ikona dzielą JEDNĄ komórkę, więc trzymają
+   się siebie niezależnie od tego, jak wysoka zrobi się etykieta przy
+   --text-scale 1,3 — pozycjonowanie bezwzględne rozjechałoby się w tym miejscu. */
+.ms4-tabbar__item {
+  min-height: var(--h-tabbar);
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 32px auto;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: var(--s-2) var(--s-1);
+  border-radius: var(--r-md);
+  color: var(--c-text-3);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease);
+}
+
+.ms4-tabbar__item:active {
+  transform: scale(.95);
+}
+
+.ms4-tabbar__item.is-active {
+  color: var(--c-accent);
+}
+
+/* Pigułka pod ikoną aktywnej zakładki. Wypełnia całą komórkę pierwszego wiersza
+   i leży pod ikoną (z-index 0 kontra 1), więc nie przykrywa rysunku. */
+.ms4-tabbar__indicator {
+  grid-row: 1;
+  grid-column: 1;
+  z-index: 0;
+  width: 56px;
+  max-width: 100%;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: var(--c-accent-soft);
+  opacity: 0;
+  transform: scaleX(.6);
+  transition: opacity var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease);
+}
+
+.ms4-tabbar__item.is-active .ms4-tabbar__indicator {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.ms4-tabbar__icon {
+  grid-row: 1;
+  grid-column: 1;
+  align-self: center;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+}
+
+.ms4-tabbar__label {
+  grid-row: 2;
+  grid-column: 1;
+  max-width: 100%;
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms4-tabbar__item.is-active .ms4-tabbar__label {
+  font-weight: var(--fw-bold);
+}
+
+
+/* ============================================================================
+   9. BOCZNA NAWIGACJA (desktop)
+   Poniżej 1024 px nie istnieje. app.js zdejmuje z niej atrybut `hidden` przy
+   starcie (chroni przed mignięciem przed wczytaniem CSS) — od tego momentu
+   o widoczności decyduje wyłącznie ten plik.
+   ============================================================================ */
+.ms4-sidenav {
+  display: none;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: var(--z-nav);
+  width: var(--w-sidenav);
+  flex-direction: column;
+  padding: var(--s-5) var(--s-3);
+  padding-top: calc(var(--s-5) + env(safe-area-inset-top));
+  padding-bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  background: var(--c-surface);
+  border-right: 1px solid var(--c-border);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.ms4-sidenav__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  margin-bottom: var(--s-5);
+  color: var(--c-text);
+}
+
+.ms4-sidenav__brand .ms4-sidenav__icon {
+  width: 28px;
+  height: 28px;
+  color: var(--c-accent);
+}
+
+.ms4-sidenav__brand .ms4-sidenav__label {
+  font-size: var(--t-h3);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+}
+
+.ms4-sidenav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.ms4-sidenav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  padding-inline: var(--s-3);
+  border-radius: var(--r-md);
+  color: var(--c-text-2);
+  font-size: var(--t-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease);
+}
+
+.ms4-sidenav__item:hover {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+
+.ms4-sidenav__item.is-active {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-ink);
+}
+
+.ms4-sidenav__item.is-active .ms4-sidenav__label {
+  font-weight: var(--fw-bold);
+}
+
+.ms4-sidenav__icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  color: currentColor;
+}
+
+.ms4-sidenav__label {
+  min-width: 0;
+  font-size: var(--t-body);
+  font-weight: var(--fw-med);
+  line-height: var(--lh-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Stopka nawigacji: stan subskrypcji i wersja. Widoczna dopiero przy 1440 px —
+   niżej zabiera wysokość, której nawigacja potrzebuje na pozycje. */
+.ms4-sidenav__foot {
+  display: none;
+  margin-top: auto;
+  padding: var(--s-3);
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ms4-sidenav__foot .ms4-sidenav__label {
+  font-size: var(--t-caption);
+  font-weight: 400;
+  color: var(--c-text-3);
+  white-space: normal;
+}
+
+
+/* ============================================================================
+   10. SKOK DO TREŚCI I TEKST DLA CZYTNIKA EKRANU
+   ============================================================================ */
+.ms4-skip {
+  position: fixed;
+  top: -100px;
+  left: var(--s-4);
+  z-index: var(--z-toast);
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-size: var(--t-body-sm);
+  font-weight: var(--fw-bold);
+  box-shadow: var(--e-2);
+  transition: top var(--dur) var(--ease);
+}
+
+/* Jedyne miejsce w pliku, gdzie zmienia się `top` w przejściu: element jest
+   poza ekranem i nic pod nim nie leży, więc nie ma czego przeliczać. */
+.ms4-skip:focus {
+  top: calc(env(safe-area-inset-top) + var(--s-2));
+}
+
+.ms4-sronly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+
+
+/* ============================================================================
+   11. KLASY POMOCNICZE (SPEC 5.A i 5.S)
+   ============================================================================ */
+
+/* Jedyne !important w warstwie układu. Klasę zakłada i zdejmuje JavaScript,
+   więc musi wygrać z każdym `display` komponentu, na który trafi (SPEC 5.A). */
+.is-hidden {
+  display: none !important;
+}
+
+.ms4-scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  /* Przewijanie palcem w poziomie nie ma szarpać stroną w pionie. */
+  -webkit-overflow-scrolling: touch;
+}
+
+.ms4-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.ms4-row-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.ms4-clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ms4-num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+.ms4-muted {
+  color: var(--c-text-3);
+}
+
+.ms4-center {
+  text-align: center;
+}
+
+
+/* ============================================================================
+   12. KOMUNIKAT BEZ JAVASCRIPTU
+   Stoi w <noscript>, czyli poza powłoką i przed nią. Nigdy nie zderza się
+   z układem aplikacji, bo w chwili, gdy jest widoczny, aplikacji nie ma.
+   Klasy .ms4-note__title i .ms4-note__text są tu zawężone do wnętrza
+   .ms4-noscript — samą notę rysuje components.css i nie ma tu kolizji.
+   ============================================================================ */
+.ms4-noscript {
+  max-width: 46ch;
+  margin: var(--s-4) auto;
+  padding: var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--c-warn-soft);
+  color: var(--c-warn);
+}
+
+.ms4-noscript .ms4-note__title {
+  font-size: var(--t-h3);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--s-2);
+}
+
+.ms4-noscript .ms4-note__text {
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+}
+
+
+/* ============================================================================
+   13. PRÓG TABLET — @media (min-width: 600px)
+   Widoczny przy 768 px: kolumna treści zatrzymuje się na 720 px i staje na
+   środku, dolna nawigacja przestaje się rozciągać na całą szerokość ekranu,
+   a odstęp między kartami rośnie o 4 px.
+   ============================================================================ */
+@media (min-width: 600px) {
+
+  .ms4-view__inner {
+    max-width: 720px;
+    gap: var(--s-5);
+  }
+
+  .ms4-topbar__inner {
+    max-width: calc(720px + var(--s-4) * 2);
+  }
+
+  /* Cztery pozycje po maks. 160 px, całość wyśrodkowana — pasek rozciągnięty
+     na 768 px dawałby zakładki szerokie na 190 px z ikoną w środku pustki. */
+  .ms4-tabbar {
+    grid-template-columns: repeat(4, minmax(0, 160px));
+    justify-content: center;
+  }
+}
+
+
+/* ============================================================================
+   14. PRÓG DESKTOP — @media (min-width: 1024px)
+   Dolna nawigacja znika, wjeżdża boczna, powłoka dostaje na nią miejsce,
+   kolumna treści rośnie do --w-content, znika zapas pod zakładkami,
+   pojawiają się stany :hover.
+   ============================================================================ */
+@media (min-width: 1024px) {
+
+  .ms4-app {
+    padding-left: var(--w-sidenav);
+  }
+
+  /* Belka jest wewnątrz .ms4-app, więc padding powłoki już ją odsunął —
+     osobny margin-left byłby policzony dwa razy. */
+  .ms4-app__main {
+    padding: var(--s-5) var(--s-5) var(--s-8);
+  }
+
+  .ms4-view__inner {
+    max-width: var(--w-content);
+  }
+
+  .ms4-topbar__inner {
+    max-width: calc(var(--w-content) + var(--s-5) * 2);
+    padding-inline: var(--s-5);
+  }
+
+  .ms4-topbar__btn:hover {
+    background: var(--c-surface-2);
+    color: var(--c-text);
+  }
+
+  .ms4-tabbar {
+    display: none;
+  }
+
+  .ms4-sidenav {
+    display: flex;
+  }
+
+  /* Zanim app.js zdejmie `hidden`, nawigacja ma pozostać niewidoczna także
+     powyżej progu — atrybut wygrywa z powyższym display: flex. */
+  .ms4-sidenav[hidden] {
+    display: none;
+  }
+}
+
+
+/* ============================================================================
+   15. PRÓG SZEROKI — @media (min-width: 1440px)
+   Treść NIE rozlewa się dalej niż --w-content; rośnie margines. Boczna
+   nawigacja zyskuje stopkę.
+   ============================================================================ */
+@media (min-width: 1440px) {
+
+  .ms4-app__main {
+    padding-inline: var(--s-6);
+  }
+
+  .ms4-topbar__inner {
+    max-width: calc(var(--w-content) + var(--s-6) * 2);
+    padding-inline: var(--s-6);
+  }
+
+  .ms4-sidenav__foot {
+    display: flex;
+  }
+}
+
+
+/* ============================================================================
+   16. NAJWIĘKSZA SKALA TEKSTU
+   Przy --text-scale: 1,3 etykieta „Narzędzia” nie mieści się w jednej linii
+   zakładki szerokiej na 90 px (telefon 360 px). Zamiast ucinać tekst, oddajemy
+   zakładce dwie linie i pozwalamy pasować wysokości — `min-height`, nigdy
+   `height`, więc nic nie zostaje przycięte (SPEC 8.2).
+   ============================================================================ */
+:root[data-text-scale="1.3"] .ms4-tabbar__label {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+}
+
+:root[data-text-scale="1.3"] .ms4-sidenav__label {
+  white-space: normal;
+}
+
+:root[data-text-scale="1.3"] .ms4-topbar__status {
+  /* Pigułka stanu ustępuje tytułowi — w razie ciasnoty zwija się do kropki
+     i pierwszych znaków, zamiast spychać tytuł ekranu poza belkę. */
+  max-width: 40%;
+}
+
+
+/* ============================================================================
+   17. OGRANICZONY RUCH
+   tokens.css skraca same czasy. Tutaj znikają rzeczy, których skrócenie czasu
+   nie usuwa: przesunięcie przy wejściu widoku (zostaje samo krycie), puls
+   kropki stanu i płynne przewijanie. Blok jest ostatni i jedyny, w którym
+   wolno użyć !important — musi wygrać z regułą dowolnego komponentu.
+   ============================================================================ */
+:root[data-motion="reduced"] .ms4-view.is-active {
+  animation-name: ms4-view-fade;
+}
+
+:root[data-motion="reduced"] .ms4-topbar__dot--run {
+  animation: none;
+}
+
+:root[data-motion="reduced"] {
+  scroll-behavior: auto;
+}
+
+@keyframes ms4-view-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  .ms4-view.is-active {
+    animation-name: ms4-view-fade !important;
+  }
+
+  .ms4-topbar__dot--run {
+    animation: none !important;
+  }
+}
+
+
+/* ============================================================================
+   18. WYDRUK
+   Sens ma wydruk raportu i dokumentacji: sama treść, na białym, bez powłoki.
+   Znikają wszystkie warstwy nawigacyjne i modalne, karty tracą cień i dostają
+   krawędź, kolumna treści rozprostowuje się na całą stronę.
+   ============================================================================ */
+@media print {
+
+  /* Papier jest biały niezależnie od motywu, w którym stoi aplikacja, więc
+     wydruk NIE może sięgnąć po --c-bg ani --c-text: w motywie ciemnym dałyby
+     czarną stronę i biały tusz. Stąd dwa słowa kluczowe `white` i `black` —
+     jedyne dwie barwy w tym pliku spoza tokens.css, obie tylko na wydruku. */
+  html,
+  body,
+  .ms4-app {
+    min-height: 0;
+    background: white;
+    color: black;
+    overflow: visible;
+  }
+
+  .ms4-app {
+    padding-left: 0;
+  }
+
+  /* Powłoka i warstwy: nic z tego nie ma sensu na papierze. */
+  .ms4-skip,
+  .ms4-topbar,
+  .ms4-tabbar,
+  .ms4-sidenav,
+  .ms4-scrim,
+  .ms4-sheet-host,
+  .ms4-dialog-host,
+  .ms4-toasts,
+  .ms4-noscript {
+    display: none;
+  }
+
+  .ms4-app__main {
+    padding: 0;
+  }
+
+  .ms4-view__inner {
+    max-width: none;
+    gap: var(--s-4);
+  }
+
+  /* Widok nieaktywny zostaje ukryty — drukujemy to, co użytkownik ma przed
+     sobą, a nie cztery ekrany naraz. */
+  .ms4-view {
+    display: none;
+  }
+
+  .ms4-view.is-active {
+    display: block;
+    animation: none;
+  }
+
+  /* Wszystko, co przewija się na ekranie, na papierze ma się rozłożyć. */
+  .ms4-scroll-x {
+    overflow: visible;
+  }
+
+  /* Jedyne dotknięcie klas komponentów w tym pliku: cień nie drukuje się
+     sensownie, a karta bez cienia i bez krawędzi zlewa się z tłem strony. */
+  .ms4-card,
+  .ms4-note,
+  .ms4-table {
+    box-shadow: none;
+    border: 1px solid var(--c-border-strong);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .ms4-section__title,
+  .ms4-card__title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+}

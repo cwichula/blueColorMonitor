@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<!-- viewport-fit=cover so the safe-area tokens in styles.css have something to
+     read on a notched phone; user-scalable is deliberately NOT disabled — the
+     audience of this app zooms. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Monitor Światła — pomiar udziału światła niebieskiego kamerą telefonu. Siedem wskaźników, wykres, historia. Wersja demonstracyjna interfejsu.">
+<meta name="color-scheme" content="light dark">
+<!-- Painted by the browser behind the page before the stylesheet applies.
+     Two values, so the flash on load matches the theme the user actually has. -->
+<meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Monitor Światła">
+<title>Monitor Światła — pomiar światła niebieskiego</title>
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+
+<script>
+/* The theme attribute must land before the first paint, otherwise a user who
+   chose "Ciemny" gets a white flash on every launch. This is the only inline
+   script in the file and it is deliberately eight lines long: it reads the one
+   settings key that ui-core.js owns and writes one attribute. */
+(function () {
+  try {
+    var raw = localStorage.getItem('ms2.settings.v1');
+    var theme = raw ? JSON.parse(raw).theme : null;
+    if (theme === 'light' || theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  } catch (e) { /* private mode: the media query decides, which is correct too */ }
+}());
+</script>
+</head>
+<body>
+
+<!-- ===================================================================
+     SHELL
+     ===================================================================
+     Everything below is a container. Screen contents are built by the modules
+     that own them, in one place each:
+       ui-core.js  — Pomiar, Historia, Narzędzia (pusta lista), Więcej, Dokumentacja,
+                     arkusze sheetDialog i sheetHelp, przyciemnienie i toasty
+       account.js  — Konto, Premium, sheetLogin, sheetPurchase, sheetPaywall,
+                     sheetRewarded, treść trzech slotów reklamowych
+       tools.js    — wiersze #toolsList i wnętrza siedmiu nakładek narzędziowych
+       engine.js   — tekst w #cameraPlaceholderText
+     Ten plik nie buduje żadnego z tych ekranów: dwa właściciele jednego węzła
+     były błędem wersji 1 i nie są tu powtórzone.
+     =================================================================== -->
+
+<div class="ms-app" id="appRoot">
+
+  <a class="ms-skip" id="skipLink" href="#appMain">Przejdź do treści</a>
+
+  <header class="ms-header" id="appHeader">
+    <div class="ms-header__inner">
+      <h1 class="ms-header__title" id="appTitle">Monitor Światła</h1>
+
+      <!-- Shown only while measuring AND away from the Pomiar screen, where the
+           camera preview already says the same thing. -->
+      <span class="ms-status ms-status--good" id="measureStatus" hidden>
+        <span class="ms-icon ms-icon--play ms-icon--sm" aria-hidden="true"></span>
+        <span>Pomiar trwa</span>
+      </span>
+
+      <div class="ms-header__actions">
+        <button class="ms-iconbtn" id="btnAccountShortcut" type="button" aria-label="Konto">
+          <span class="ms-icon ms-icon--person" aria-hidden="true"></span>
+        </button>
+        <button class="ms-iconbtn" id="btnInfo" type="button" aria-label="Dokumentacja i wyjaśnienia">
+          <span class="ms-icon ms-icon--info" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="ms-main" id="appMain" tabindex="-1">
+    <div class="ms-main__inner" id="appMainInner">
+
+      <!-- ---- five tab screens ---- -->
+      <section class="ms-view" id="panelMeasure" hidden></section>
+      <section class="ms-view" id="panelHistory" hidden></section>
+      <section class="ms-view" id="panelTools" hidden></section>
+      <section class="ms-view" id="panelPremium" hidden>
+        <div class="ms-main__inner"></div>
+      </section>
+      <section class="ms-view" id="panelMore" hidden></section>
+
+      <!-- ---- ten overlay screens ----
+           Each gets its back button and title from ui-core (convention
+           panelXxx -> backXxx / titleXxx), so navigation works even when the
+           module that fills the screen is not loaded. -->
+      <section class="ms-view" id="panelAccount" hidden>
+        <div class="ms-main__inner"></div>
+      </section>
+      <section class="ms-view" id="panelDocs" hidden></section>
+      <section class="ms-view" id="panelThresholds" hidden></section>
+      <section class="ms-view" id="panelReports" hidden></section>
+      <section class="ms-view" id="panelExport" hidden></section>
+      <section class="ms-view" id="panelCompare" hidden></section>
+      <section class="ms-view" id="panelCalibration" hidden></section>
+      <section class="ms-view" id="panelScreenCheck" hidden></section>
+      <section class="ms-view" id="panelSchedule" hidden></section>
+      <section class="ms-view" id="panelAlerts" hidden></section>
+
+    </div>
+  </main>
+
+  <!-- Icon AND label on every item, always: an icon-only bar is unusable for
+       exactly the people this app is for. -->
+  <!-- role="tablist" belongs on the element that DIRECTLY owns the tabs. On the
+       <nav> it did two kinds of damage at once: a generic <div> stood between
+       the list and its role="tab" children (aria-required-children), and the
+       role overrode the navigation landmark, removing the one shortcut a
+       screen-reader user has for jumping to the bar. -->
+  <nav class="ms-nav" id="navBar" aria-label="Główna nawigacja">
+    <div class="ms-nav__list" role="tablist" aria-label="Ekrany aplikacji">
+      <button class="ms-nav__item" id="navMeasure" type="button" role="tab"
+              aria-selected="true" aria-controls="panelMeasure" tabindex="0">
+        <span class="ms-nav__icon"><span class="ms-icon ms-icon--monitor" aria-hidden="true"></span></span>
+        <span class="ms-nav__label">Pomiar</span>
+      </button>
+      <button class="ms-nav__item" id="navHistory" type="button" role="tab"
+              aria-selected="false" aria-controls="panelHistory" tabindex="-1">
+        <span class="ms-nav__icon"><span class="ms-icon ms-icon--history" aria-hidden="true"></span></span>
+        <span class="ms-nav__label">Historia</span>
+      </button>
+      <button class="ms-nav__item" id="navTools" type="button" role="tab"
+              aria-selected="false" aria-controls="panelTools" tabindex="-1">
+        <span class="ms-nav__icon"><span class="ms-icon ms-icon--tune" aria-hidden="true"></span></span>
+        <span class="ms-nav__label">Narzędzia</span>
+      </button>
+      <button class="ms-nav__item" id="navPremium" type="button" role="tab"
+              aria-selected="false" aria-controls="panelPremium" tabindex="-1">
+        <span class="ms-nav__icon">
+          <span class="ms-icon ms-icon--crown" aria-hidden="true"></span>
+          <!-- Marks an ACTIVE subscription. Never a nag dot over an offer. -->
+          <span class="ms-nav__badge" id="navPremiumBadge" hidden></span>
+        </span>
+        <span class="ms-nav__label">Premium</span>
+      </button>
+      <button class="ms-nav__item" id="navMore" type="button" role="tab"
+              aria-selected="false" aria-controls="panelMore" tabindex="-1">
+        <span class="ms-nav__icon"><span class="ms-icon ms-icon--menu" aria-hidden="true"></span></span>
+        <span class="ms-nav__label">Więcej</span>
+      </button>
+    </div>
+  </nav>
+
+</div>
+
+<!-- ===================================================================
+     SHEET LAYER
+     ===================================================================
+     #sheetScrim, #sheetDialog and #sheetHelp are created by ui-core.js — it
+     attaches their handlers at the moment it creates them, so shipping them
+     as static markup here would leave dead buttons. The four money sheets are
+     empty shells on purpose: account.js fills head, body and foot, and only
+     window.UI ever sets `hidden` or `.is-open` on them.
+     =================================================================== -->
+<div id="sheetLayer">
+
+  <div class="ms-sheet" id="sheetPaywall" hidden role="dialog" aria-labelledby="paywallTitle">
+    <div class="ms-sheet__grabber" aria-hidden="true"></div>
+    <div class="ms-sheet__head">
+      <div class="ms-sheet__titles">
+        <h2 class="ms-sheet__title" id="paywallTitle">Funkcja Premium</h2>
+        <p class="ms-sheet__sub">Pomiar i cztery bezpłatne metryki działają dalej bez zmian.</p>
+      </div>
+    </div>
+    <div class="ms-sheet__body"></div>
+    <div class="ms-sheet__foot"></div>
+  </div>
+
+  <div class="ms-sheet" id="sheetPurchase" hidden role="dialog" aria-labelledby="purchaseTitle">
+    <div class="ms-sheet__grabber" aria-hidden="true"></div>
+    <div class="ms-sheet__head">
+      <div class="ms-sheet__titles">
+        <h2 class="ms-sheet__title" id="purchaseTitle">Potwierdzenie zakupu (DEMO)</h2>
+        <p class="ms-sheet__sub">Symulacja płatności — nie pobieramy żadnej opłaty.</p>
+      </div>
+    </div>
+    <div class="ms-sheet__body"></div>
+    <div class="ms-sheet__foot"></div>
+  </div>
+
+  <div class="ms-sheet" id="sheetLogin" hidden role="dialog" aria-labelledby="loginTitle">
+    <div class="ms-sheet__grabber" aria-hidden="true"></div>
+    <div class="ms-sheet__head">
+      <div class="ms-sheet__titles">
+        <h2 class="ms-sheet__title" id="loginTitle">Logowanie (symulacja)</h2>
+        <p class="ms-sheet__sub">Nie łączymy się z serwerami Google ani Facebooka.</p>
+      </div>
+    </div>
+    <div class="ms-sheet__body"></div>
+    <div class="ms-sheet__foot"></div>
+  </div>
+
+  <div class="ms-sheet" id="sheetRewarded" hidden role="dialog" aria-labelledby="rewardedTitle">
+    <div class="ms-sheet__grabber" aria-hidden="true"></div>
+    <div class="ms-sheet__head">
+      <div class="ms-sheet__titles">
+        <h2 class="ms-sheet__title" id="rewardedTitle">Reklama nagradzana (DEMO)</h2>
+        <p class="ms-sheet__sub">Atrapa. Możesz ją zamknąć w każdej chwili.</p>
+      </div>
+    </div>
+    <div class="ms-sheet__body"></div>
+    <div class="ms-sheet__foot"></div>
+  </div>
+
+</div>
+
+<!-- Outside #appRoot on purpose. An open sheet marks #appRoot inert and
+     aria-hidden so a swipe gesture cannot wander into the screen behind it;
+     living inside it, these two regions would have been silenced along with
+     it and every announcement made from a sheet would have been lost. -->
+<div class="ms-visually-hidden" id="liveRegion" role="status" aria-live="polite" aria-atomic="true"></div>
+<div class="ms-visually-hidden" id="liveRegionAlert" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+<div id="toastLayer"></div>
+
+<!-- ===================================================================
+     SCRIPTS
+     ===================================================================
+     Order is a contract, not a preference:
+       metrics.js  — pure maths, the single source of truth about a reading.
+                     Everything below refuses to define itself without it.
+       ui-core.js  — installs window.Bus (or leaves a real bus.js alone) and
+                     window.UI before any module tries to register a listener.
+       engine.js   — the camera. Registers on the bus at parse time.
+       account.js  — Account, Store and Ads. Also registers at parse time.
+       tools.js    — the seven tool screens; asks Store, never decides itself.
+       boot.js     — last: reports what is missing and registers the worker.
+     No script is deferred and none is async, because every one of them
+     registers bus listeners while the others are still loading, and the shell
+     waits for DOMContentLoaded before it builds anything.
+     =================================================================== -->
+<script src="metrics.js"></script>
+<script src="ui-core.js"></script>
+<script src="engine.js"></script>
+<script src="account.js"></script>
+<script src="tools.js"></script>
+<script src="boot.js"></script>
+
+</body>
+</html>

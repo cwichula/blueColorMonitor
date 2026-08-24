@@ -1,0 +1,2029 @@
+/* components.css - every ms3-* component of the faceplate.
+   Sizes come from the derived --ms3-fs-* variables in base.css, colours from tokens.css.
+   Depth is engraving only: inset shadows with zero blur. No drop shadow, no blur,
+   no conic gradient, no radius above 3 px (the status dot is the single exception). */
+
+/* =====================================================================
+   1. Shared marks: legend, status shape, badge, lock
+   ===================================================================== */
+
+.ms3-legend {
+  display: block;
+  font-size: var(--ms3-fs-legend);
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-3);
+}
+.ms3-legend--strong { color: var(--ms3-ink-2); }
+
+/* Status is never colour alone: shape here, word next to it, texture on the scale. */
+.ms3-shape {
+  --ms3-shape-size: 18px;
+  display: inline-block;
+  flex: none;
+  width: var(--ms3-shape-size);
+  height: var(--ms3-shape-size);
+  background: var(--ms3-ink-3);
+}
+.ms3-shape--sm { --ms3-shape-size: 18px; }
+.ms3-shape--md { --ms3-shape-size: 20px; }
+.ms3-shape--lg { --ms3-shape-size: 24px; }
+
+.ms3-shape--good     { background: var(--ms3-good); border-radius: 50%; }
+.ms3-shape--warning  { background: var(--ms3-warn);
+                       clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.ms3-shape--critical { background: var(--ms3-crit); }
+.ms3-shape--none     { background: transparent; border: 2px solid var(--ms3-ink-3);
+                       border-radius: 50%; }
+
+.ms3-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  border-radius: var(--ms3-r-badge);
+  background: transparent;
+  color: var(--ms3-ink-2);
+  font-size: var(--ms3-fs-legend);
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  white-space: nowrap;
+}
+.ms3-badge--premium { color: var(--ms3-premium); }
+.ms3-badge--live    { color: var(--ms3-good); }
+.ms3-badge--approx  { color: var(--ms3-ink-3); }
+.ms3-badge--demo    { color: var(--ms3-demo); border-width: 2px; border-style: dashed; }
+
+/* A padlock drawn from two boxes: a squared shackle and a body. No rounded corners,
+   so it stays inside the geometry rules of this faceplate. */
+.ms3-lock {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--ms3-premium);
+}
+.ms3-lock::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 4px;
+  width: 12px; height: 9px;
+  border: 2px solid currentColor;
+  border-bottom: 0;
+}
+.ms3-lock::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 20px; height: 11px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+/* =====================================================================
+   2. ms3-readout - the well (block B)
+   ===================================================================== */
+
+.ms3-readout, #ms3Readout {
+  display: flex;
+  flex-direction: column;
+  /* Multiplied by the text-size setting like every other fixed height in the app.
+     Without it the ruler and the context line drop out of the well at scale 1,3 -
+     the well kept its 216-268 px while everything inside it grew by a third. */
+  min-height: calc(var(--ms3-h-hero) * var(--ms3-scale));
+  margin-inline: var(--ms3-s-3);
+  padding: var(--ms3-s-4);
+  background: var(--ms3-well);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-panel);
+  box-shadow: var(--ms3-engrave-well);
+}
+
+/* Two engraved lines on the left, the "?" key on the right. Laid out as a grid so it
+   works both with a .ms3-readout__legend wrapper and with the three spans loose. */
+.ms3-readout__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--ms3-s-3);
+  row-gap: 2px;
+  align-items: start;
+  min-height: 34px;
+}
+.ms3-readout__head > .ms3-legend { grid-column: 1; }
+.ms3-readout__legend {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* 32 px of ink, 48 px of touch target - the pseudo element does the widening. */
+.ms3-help, #ms3Help {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: var(--ms3-panel);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-key);
+  color: var(--ms3-ink-2);
+  font-size: var(--ms3-fs-name);
+  font-weight: 700;
+  transition: background-color var(--ms3-dur-press) var(--ms3-ease);
+}
+.ms3-help::before { content: ""; position: absolute; inset: -8px; }
+.ms3-help:active { background: var(--ms3-well); }
+
+.ms3-readout__value, #ms3ReadoutValue {
+  display: flex;
+  align-items: baseline;
+  margin-block: var(--ms3-s-1);
+  font-size: var(--ms3-fs-readout);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--ms3-ink);
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+/* Four locked character cells. Without this, 9 -> 10 shoves the unit sideways. */
+/* The field is locked to four characters so 9 -> 10 moves nothing. It is aligned
+   to the RIGHT inside that field, not to the left: left alignment parks the unit
+   two character widths away from a one-digit value ("2      %"), which reads as a
+   layout fault rather than as a readout. Right alignment keeps the unit welded to
+   the number and still holds the digits' right edge perfectly still. */
+.ms3-readout__num, #ms3Num {
+  min-width: 4ch;
+  display: inline-block;
+  text-align: right;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+/* No value yet. Three em dashes at 96 px are a black rule across the well, and the
+   eye reads a rule as a redaction, not as "nothing measured". Same glyphs, quieter
+   ink and a fraction of the size: unmistakably a placeholder. */
+.ms3-readout__num--empty, #ms3Num[data-empty="true"] {
+  font-size: .34em;
+  color: var(--ms3-ink-3);
+  vertical-align: .30em;
+}
+.ms3-readout__unit, #ms3Unit {
+  font-size: .36em;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ms3-ink-2);
+  margin-left: .1em;
+}
+/* The "about" mark: visible honesty for kelvin and melanopic. aria-hidden in markup. */
+.ms3-readout__approx, #ms3Approx {
+  font-size: .45em;
+  font-weight: 600;
+  color: var(--ms3-ink-3);
+  margin-right: .06em;
+}
+
+.ms3-stamp, #ms3Stamp {
+  display: flex;
+  align-items: center;
+  /* Wraps as a whole, never inside the threshold: "(próg 6000" on one line and
+     "K)" on the next is how a large-text setting makes a reading look broken. */
+  flex-wrap: wrap;
+  gap: var(--ms3-s-2);
+  min-height: 26px;
+  font-size: var(--ms3-fs-name);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-3);
+}
+.ms3-stamp--good,     .ms3-stamp[data-zone="good"]     { color: var(--ms3-good); }
+.ms3-stamp--warning,  .ms3-stamp[data-zone="warning"]  { color: var(--ms3-warn); }
+.ms3-stamp--critical, .ms3-stamp[data-zone="critical"] { color: var(--ms3-crit); }
+.ms3-stamp--none,     .ms3-stamp[data-zone="none"]     { color: var(--ms3-ink-3); }
+.ms3-stamp .ms3-shape, #ms3StampShape { --ms3-shape-size: 18px; }
+.ms3-stamp__word, #ms3StampWord { color: inherit; }
+.ms3-stamp__threshold, #ms3StampThreshold {
+  white-space: nowrap;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ms3-ink-3);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* The plain-Polish sentence. Two lines are budgeted, a third may borrow slack. */
+.ms3-verdict, #ms3Verdict {
+  margin-top: var(--ms3-s-1);
+  /* 4 lines at line-height 1.35. The sentences of 8.3 run from one line to four,
+     and the well must not change height when the lead channel changes (4.3): a
+     reserved box is what keeps the channel strip below from jumping. No
+     max-height — clipping the one sentence written in plain Polish would cost
+     more than the empty space costs. */
+  min-height: 5.4em;
+  font-size: var(--ms3-fs-verdict);
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--ms3-ink);
+}
+
+.ms3-context, #ms3Context {
+  margin-top: var(--ms3-s-1);
+  font-size: var(--ms3-fs-legend);
+  line-height: 1.3;
+  color: var(--ms3-ink-3);
+  font-variant-numeric: tabular-nums lining-nums;
+  /* Wraps rather than truncates. "min 6004 · śr. 6041 · maks 6065 — ostatnie …"
+     hides the very word that says what the window is, and the line has room for
+     a second row inside the well. */
+  overflow-wrap: break-word;
+}
+
+/* =====================================================================
+   3. ms3-scale - the main ruler (6.1)
+   Vertical stack inside 60 px:
+     0-16  needle triangle      16-26 zone bands      26-28 baseline
+     28-32 min-max trace        32-44 ticks           44-60 labels
+   ===================================================================== */
+
+.ms3-scale, #ms3Scale {
+  position: relative;
+  height: 60px;
+  margin-top: auto;              /* ruler and context sit at the bottom of the well */
+}
+
+.ms3-scale__bands, #ms3Bands {
+  position: absolute;
+  left: 0; right: 0; top: 16px;
+  height: 10px;
+}
+.ms3-band { position: absolute; top: 0; height: 100%; }
+/* The threshold between two bands is a real line, not a colour change. */
+.ms3-band + .ms3-band { box-shadow: inset 1px 0 0 var(--ms3-rule); }
+
+.ms3-band--good { background-color: var(--ms3-fill-good); }
+.ms3-band--warning {
+  background-color: var(--ms3-fill-warn);
+  background-image: repeating-linear-gradient(45deg,
+    var(--ms3-hatch-a) 0 1px, transparent 1px 6px);   /* 45 deg, 6 px pitch */
+}
+.ms3-band--critical {
+  background-color: var(--ms3-fill-crit);
+  background-image:
+    repeating-linear-gradient(45deg,  var(--ms3-hatch-b) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, var(--ms3-hatch-b) 0 1px, transparent 1px 5px);
+}
+
+.ms3-scale__base, #ms3Base {
+  position: absolute;
+  left: 0; right: 0; top: 26px;
+  height: 2px;
+  background: var(--ms3-rule);
+}
+/* Unreliable reading (kelvinReliable / flickerWithinRange false): the baseline breaks up.
+   The doubt is drawn into the instrument itself. */
+.ms3-scale__base--dashed,
+.ms3-scale--unreliable .ms3-scale__base,
+.ms3-scale[data-reliable="false"] .ms3-scale__base,
+#ms3Scale[data-reliable="false"] #ms3Base {
+  background: repeating-linear-gradient(90deg,
+    var(--ms3-rule) 0 6px, transparent 6px 12px);
+}
+
+.ms3-scale__ticks, #ms3Ticks {
+  position: absolute;
+  left: 0; right: 0; top: 32px;
+  height: 12px;
+}
+.ms3-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 6px;
+  background: var(--ms3-hairline);
+  transform: translateX(-50%);
+}
+.ms3-tick--major {
+  width: 2px;
+  height: 12px;
+  background: var(--ms3-rule);
+}
+
+/* min-max over the last 60 s: a bar with two end caps, same geometry as the needle. */
+.ms3-scale__trace, #ms3Trace {
+  position: absolute;
+  top: 28px;
+  height: 4px;
+  background: var(--ms3-ink-3);
+}
+.ms3-scale__trace::before, .ms3-scale__trace::after,
+#ms3Trace::before, #ms3Trace::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 10px;
+  background: var(--ms3-ink-3);
+}
+.ms3-scale__trace::before, #ms3Trace::before { left: 0; }
+.ms3-scale__trace::after,  #ms3Trace::after  { right: 0; }
+
+.ms3-needle-track, #ms3NeedleTrack {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 28px;
+}
+/* The needle box is exactly as wide as the track, so translateX in percent of its own
+   width equals percent of the ruler. In the 5 Hz loop only --ms3-pos is written;
+   the transition is a compositor transform, never a repaint of a background. */
+.ms3-needle, #ms3Needle {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: translateX(calc(var(--ms3-pos, 0) * 1%));
+  transition: transform var(--ms3-dur-needle) var(--ms3-ease);
+  will-change: transform;
+}
+.ms3-needle::before, #ms3Needle::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -10px;
+  width: 20px; height: 16px;
+  background: var(--ms3-ink);
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+.ms3-needle::after, #ms3Needle::after {
+  content: "";
+  position: absolute;
+  top: 16px; left: -1px;
+  width: 2px; height: 12px;
+  background: var(--ms3-ink);
+}
+
+.ms3-scale__labels, #ms3Labels {
+  position: absolute;
+  left: 0; right: 0; top: 44px;
+  height: 16px;
+  font-size: var(--ms3-fs-legend);
+  line-height: 16px;
+  color: var(--ms3-ink-3);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-scale__labels > *, #ms3Labels > * {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+/* Outermost labels align inwards so they never leave the well. */
+.ms3-scale__labels > :first-child, #ms3Labels > :first-child { transform: translateX(0); }
+.ms3-scale__labels > :last-child,  #ms3Labels > :last-child  { transform: translateX(-100%); }
+
+/* Below ~240 px of ruler the minor ticks merge into a grey smear. */
+@media (max-width: 319.98px), (orientation: landscape) and (max-width: 620px) {
+  .ms3-tick:not(.ms3-tick--major) { display: none; }
+}
+
+/* =====================================================================
+   4. ms3-micro - 88 x 18 px, the same instrument one size down (5.4)
+   No ticks, no labels, NO HATCHING - at 6 px the pattern turns to mud.
+   ===================================================================== */
+
+.ms3-micro {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 88px;
+  height: 18px;
+}
+.ms3-micro__bands { position: absolute; left: 0; right: 0; top: 8px; height: 6px; }
+.ms3-micro .ms3-band--warning,
+.ms3-micro .ms3-band--critical { background-image: none; }
+.ms3-micro .ms3-band + .ms3-band { box-shadow: inset 1px 0 0 var(--ms3-rule); }
+
+.ms3-micro__base {
+  position: absolute;
+  left: 0; right: 0; top: 14px;
+  height: 2px;
+  background: var(--ms3-rule);
+}
+.ms3-micro__track { position: absolute; left: 0; right: 0; top: 0; height: 8px; }
+.ms3-micro__needle {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 8px;
+  transform: translateX(calc(var(--ms3-pos, 0) * 1%));
+  transition: transform var(--ms3-dur-needle) var(--ms3-ease);
+}
+.ms3-micro__needle::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -5px;
+  width: 10px; height: 8px;
+  background: var(--ms3-ink);
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+/* Locked (Premium) row: a dotted baseline, no bands, no needle. Nothing is invented. */
+.ms3-micro--locked .ms3-micro__bands,
+.ms3-micro--locked .ms3-micro__needle { display: none; }
+.ms3-micro--locked .ms3-micro__base {
+  background: repeating-linear-gradient(90deg,
+    var(--ms3-ink-3) 0 2px, transparent 2px 5px);
+}
+/* An empty locked micro (no inner markup) still draws its dotted baseline. */
+.ms3-micro--locked:empty::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 14px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg,
+    var(--ms3-ink-3) 0 2px, transparent 2px 5px);
+}
+
+/* =====================================================================
+   5. ms3-channel - a channel row (block C)
+   ===================================================================== */
+
+.ms3-channels, #ms3Channels {
+  display: block;
+  border-top: 1px solid var(--ms3-rule);
+}
+
+.ms3-channel {
+  display: grid;
+  /* 4ch, not 5: the widest value any metric produces is four characters
+     ("6049", "0,38", "100"), and the fifth column was stealing width the metric
+     NAME needed. On a 360 px phone that fifth character cost "Temperatura
+     barwowa" its ending. */
+  /* `ch` in grid-template-columns resolves against the ROW's font (17 px), not
+     against the value's own 24 px — a 4ch track was 34 px wide and the unit was
+     printed on top of the last digit. The tracks size to content instead, and the
+     four-character floor lives on the element, where `ch` means what it says. */
+  grid-template-columns: 24px minmax(0, 1fr) 88px auto auto;
+  align-items: center;
+  gap: var(--ms3-s-3);
+  width: 100%;
+  min-height: var(--ms3-row-h);
+  padding-inline: var(--ms3-s-4);
+  background: var(--ms3-panel);
+  color: var(--ms3-ink);
+  border: 0;
+  border-bottom: 1px solid var(--ms3-rule);
+  text-align: left;
+  transition: background-color var(--ms3-dur-press) var(--ms3-ease);
+}
+.ms3-channel:active { background: var(--ms3-well); }
+.ms3-channel > .ms3-shape { --ms3-shape-size: 24px; }
+
+.ms3-channel__name {
+  display: flex;
+  align-items: center;
+  gap: var(--ms3-s-2);
+  min-width: 0;
+  font-size: var(--ms3-fs-name);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ms3-channel__value {
+  min-width: 4ch;
+  font-size: var(--ms3-fs-channel);
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+.ms3-channel__unit {
+  min-width: 2ch;
+  font-size: var(--ms3-fs-legend);
+  color: var(--ms3-ink-2);
+  white-space: nowrap;
+}
+/* Same reason as in the well: at 24 px three em dashes are a line, not a gap. */
+.ms3-channel__value[data-empty="true"] {
+  font-size: var(--ms3-fs-legend);
+  color: var(--ms3-ink-3);
+}
+
+/* Narrow phones. The name is the one thing in this row that must never be cut:
+   it is what the user is looking for, and "Temperatura…" is not a metric.
+   Everything else gives width back to it. */
+@media (max-width: 419.98px) {
+  .ms3-channel {
+    gap: var(--ms3-s-2);
+    padding-inline: var(--ms3-s-3);
+  }
+  .ms3-channel .ms3-micro { width: 56px; }
+  /* Two lines beat an ellipsis. "Temperatura ba…" is not the name of anything,
+     and this is an application for people who are already straining to read. */
+  .ms3-channel__name {
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.15;
+  }
+}
+/* Locked and stale rows say so with the mark, the value and the micro scale at once. */
+.ms3-channel--locked .ms3-channel__value,
+.ms3-channel--stale  .ms3-channel__value { color: var(--ms3-ink-3); }
+/* If the current lead channel is ever kept in the list, it carries the accent edge. */
+.ms3-channel--lead { box-shadow: inset 3px 0 0 var(--ms3-accent); }
+
+/* The row is as wide as #ms3Scroll, which clips overflow-x: an outward ring would
+   lose its left and right edges. Inward, all four sides stay visible. */
+.ms3-channel:focus-visible { outline-offset: -3px; }
+
+/* After a stop the numbers stay on screen but stop being live (7.1). The verdict
+   and the names are not dimmed — they are still true. */
+.ms3-readout--frozen .ms3-readout__value,
+.ms3-readout--frozen .ms3-stamp,
+.ms3-readout--frozen .ms3-context,
+.ms3-channels--frozen .ms3-channel__value,
+.ms3-channels--frozen .ms3-micro { opacity: .72; }
+
+/* =====================================================================
+   6. ms3-key - every key of the instrument (5.6)
+   ===================================================================== */
+
+.ms3-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ms3-s-2);
+  min-height: var(--ms3-tap);
+  padding-inline: var(--ms3-s-4);
+  background: var(--ms3-panel);
+  color: var(--ms3-ink);
+  border: 1px solid transparent;
+  border-radius: var(--ms3-r-key);
+  font-size: var(--ms3-fs-name);
+  font-weight: 700;
+  text-align: center;
+  transition: background-color var(--ms3-dur-press) var(--ms3-ease);
+}
+.ms3-key__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The one key that must never be abbreviated. At text scale 1,3 the label read
+   "Start …", which is the exact opposite of what a large-text setting is for:
+   it wraps instead, and the key grows to fit. */
+.ms3-key--primary .ms3-key__label,
+.ms3-key--stop .ms3-key__label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  line-height: 1.15;
+}
+.ms3-key__icon  { flex: none; width: 20px; height: 20px; }
+/* Pressed state is a background step plus an inner line. Never transform: scale(). */
+.ms3-key:active { box-shadow: inset 0 0 0 2px currentColor; }
+
+.ms3-key--primary {
+  flex: 1 1 auto;
+  min-width: 88px;
+  /* min-height, not height: the label is allowed to wrap at large text scales and
+     a fixed height would clip its second line. */
+  min-height: calc(64px * var(--ms3-scale));
+  background: var(--ms3-accent);
+  color: var(--ms3-on-accent);
+  font-size: var(--ms3-fs-body);
+}
+.ms3-key--primary .ms3-key__icon {
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);     /* play triangle */
+}
+/* Shrinkable, like the START key it replaces. With `flex: 0 0 auto` the docked
+   camera monitor (96 px) pushed the row 11 px past the right edge of a 360 px
+   phone and ate the desk's own padding. It still never goes below 88 px. */
+.ms3-key--stop {
+  flex: 1 1 auto;
+  min-width: 88px;
+  min-height: calc(64px * var(--ms3-scale));
+  background: var(--ms3-crit);
+  color: var(--ms3-on-crit);
+  font-size: var(--ms3-fs-body);
+}
+.ms3-key--stop .ms3-key__icon {
+  width: 18px; height: 18px;
+  background: currentColor;
+  clip-path: none;                               /* square */
+}
+.ms3-key--square {
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 2px;
+  width: calc(64px * var(--ms3-scale));
+  height: calc(64px * var(--ms3-scale));
+  padding-inline: 2px;
+  background: var(--ms3-panel);
+  border-color: var(--ms3-rule);
+  font-size: var(--ms3-fs-legend);
+  font-weight: 600;
+}
+.ms3-key--square .ms3-key__label { font-size: var(--ms3-fs-legend); font-weight: 600; }
+.ms3-key--square:active { background: var(--ms3-well); }
+.ms3-key--ghost {
+  background: transparent;
+  border-color: var(--ms3-rule);
+  color: var(--ms3-ink);
+  font-weight: 600;
+}
+.ms3-key--ghost:active { background: var(--ms3-well); }
+.ms3-key--demo {
+  background: transparent;
+  border: 2px dashed var(--ms3-demo);
+  color: var(--ms3-demo);
+}
+/* Starting up: same size, same place, visibly not pressable. */
+.ms3-key[aria-disabled="true"], .ms3-key[disabled] {
+  background: var(--ms3-ink-3);
+  color: var(--ms3-panel);
+  border-color: var(--ms3-ink-3);
+  cursor: default;
+}
+.ms3-key[aria-disabled="true"]:active, .ms3-key[disabled]:active { box-shadow: none; }
+
+/* Icons drawn as shapes, never as glyphs: system fonts disagree about arrows. */
+.ms3-key__icon--flip, #ms3KeyFlip .ms3-key__icon {
+  width: 24px; height: 24px;
+  background: currentColor;
+  clip-path: polygon(0 50%, 30% 20%, 30% 40%, 70% 40%, 70% 20%, 100% 50%,
+                     70% 80%, 70% 60%, 30% 60%, 30% 80%);
+}
+.ms3-key__icon--menu, #ms3KeyMenu .ms3-key__icon {
+  width: 24px; height: 19px;
+  background: repeating-linear-gradient(to bottom,
+    currentColor 0 3px, transparent 3px 8px);
+}
+.ms3-key__icon--back {
+  width: 12px; height: 20px;
+  background: currentColor;
+  clip-path: polygon(100% 0, 100% 22%, 38% 50%, 100% 78%, 100% 100%, 0 50%);
+}
+
+/* =====================================================================
+   7. ms3-monitor - camera monitor and reticle (5.7)
+   ===================================================================== */
+
+.ms3-monitor, #ms3CameraPanel {
+  position: relative;                 /* the collapsed open key covers the panel */
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-2);
+  margin-inline: var(--ms3-s-3);
+  transition: width var(--ms3-dur-camera) var(--ms3-ease-screen),
+              height var(--ms3-dur-camera) var(--ms3-ease-screen);
+}
+
+.ms3-monitor__frame, #ms3MonitorFrame {
+  position: relative;
+  height: 168px;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;              /* replaced from videoWidth/videoHeight on metadata */
+  margin-inline: auto;
+  overflow: hidden;
+  background: var(--ms3-well);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-panel);
+}
+
+/* Never display:none and never visibility:hidden here - that would kill the stream. */
+.ms3-monitor__frame > video, #cameraVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--ms3-well);
+}
+
+#cameraPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--ms3-s-3);
+  background: var(--ms3-panel);
+  text-align: center;
+}
+#cameraPlaceholderText {
+  font-size: var(--ms3-fs-name);
+  line-height: 1.4;
+  color: var(--ms3-ink-2);
+}
+
+/* inset: 20% is the truth only while the frame keeps the stream ratio (0.6 crop). */
+.ms3-reticle, #ms3Reticle {
+  position: absolute;
+  inset: 20%;
+  pointer-events: none;
+  border: 2px solid var(--ms3-accent);
+  background:
+    linear-gradient(var(--ms3-accent) 0 0) 0    0    / 12px 3px no-repeat,
+    linear-gradient(var(--ms3-accent) 0 0) 0    0    / 3px 12px no-repeat,
+    linear-gradient(var(--ms3-accent) 0 0) 100% 0    / 12px 3px no-repeat,
+    linear-gradient(var(--ms3-accent) 0 0) 100% 0    / 3px 12px no-repeat,
+    linear-gradient(var(--ms3-accent) 0 0) 0    100% / 12px 3px no-repeat,
+    linear-gradient(var(--ms3-accent) 0 0) 0    100% / 3px 12px no-repeat,
+    linear-gradient(var(--ms3-accent) 0 0) 100% 100% / 12px 3px no-repeat,
+    linear-gradient(var(--ms3-accent) 0 0) 100% 100% / 3px 12px no-repeat;
+}
+
+.ms3-monitor__open { align-self: flex-start; }
+
+.ms3-monitor__badge {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  background: var(--ms3-panel);
+}
+
+/* Docked in the control desk while measuring: 96 x 96, square crop, no reticle -
+   at that size the reticle would stop telling the truth about the sampled crop. */
+.ms3-monitor--collapsed, .ms3-monitor[data-state="collapsed"] {
+  width: var(--ms3-h-monitor);
+  height: var(--ms3-h-monitor);
+  margin: 0;
+  gap: 0;
+}
+.ms3-monitor--collapsed > .ms3-legend,
+.ms3-monitor[data-state="collapsed"] > .ms3-legend,
+.ms3-monitor--collapsed .ms3-reticle,
+.ms3-monitor[data-state="collapsed"] .ms3-reticle { display: none; }
+
+/* Collapsed there is no room for a labelled key beside the 96x96 frame, so the
+   key BECOMES the frame: still one real <button>, still in the tab order, still
+   named. Never a <div> with a click handler (rule 5). */
+.ms3-monitor--collapsed .ms3-monitor__open,
+.ms3-monitor[data-state="collapsed"] .ms3-monitor__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: transparent;
+  font-size: 0;                       /* the name lives in aria-label */
+}
+.ms3-monitor--collapsed .ms3-monitor__open:focus-visible,
+.ms3-monitor[data-state="collapsed"] .ms3-monitor__open:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Inside the CELOWANIE screen the panel is already full size; a key that says
+   "Powiększ podgląd" there would lead back to where the user is. */
+.ms3-monitor[data-aim] .ms3-monitor__open { display: none; }
+
+.ms3-monitor--collapsed .ms3-monitor__frame,
+.ms3-monitor[data-state="collapsed"] .ms3-monitor__frame {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: 1 / 1;
+}
+
+/* =====================================================================
+   8. ms3-livebar - the live bar of every module (5.8)
+   ===================================================================== */
+
+.ms3-livebar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ms3-s-3);
+  min-height: var(--ms3-live-h);
+  padding-inline: var(--ms3-s-3);
+  background: var(--ms3-panel);
+  border-top: 1px solid var(--ms3-rule);
+}
+.ms3-livebar .ms3-shape { --ms3-shape-size: 20px; }
+.ms3-livebar__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ms3-fs-name);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ms3-livebar__value {
+  min-width: 5ch;
+  text-align: right;
+  font-size: calc(22px * var(--ms3-scale));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-livebar__unit { font-size: var(--ms3-fs-legend); color: var(--ms3-ink-2); }
+.ms3-livebar__state { font-size: var(--ms3-fs-legend); color: var(--ms3-ink-3); }
+.ms3-livebar .ms3-key { flex: none; }
+
+/* =====================================================================
+   9. ms3-screen - a module (level 2)
+   ===================================================================== */
+
+.ms3-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ms3-plate);
+}
+/* Entry animation keyed off "not hidden", so it works no matter how the shell opens it. */
+.ms3-screen:not([hidden]) {
+  animation: ms3-screen-in var(--ms3-dur-screen) var(--ms3-ease-screen) both;
+}
+@keyframes ms3-screen-in {
+  from { transform: translateY(8px); opacity: .001; }
+  to   { transform: none;            opacity: 1; }
+}
+
+.ms3-screen__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ms3-s-3);
+  min-height: calc(56px * var(--ms3-scale));
+  padding-inline: var(--ms3-s-3);
+  background: var(--ms3-panel);
+  border-bottom: 1px solid var(--ms3-rule);
+}
+.ms3-screen__back { flex: none; min-width: var(--ms3-tap); min-height: var(--ms3-tap); }
+.ms3-screen__no {
+  flex: none;
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-3);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-screen__title {
+  min-width: 0;
+  font-size: var(--ms3-fs-h1);
+  font-weight: 700;
+  line-height: var(--ms3-lh-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ms3-screen__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-5);
+  padding: var(--ms3-s-4) var(--ms3-s-4) var(--ms3-s-7);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ms3-screen__section { display: flex; flex-direction: column; gap: var(--ms3-s-3); }
+.ms3-screen__section h2, .ms3-screen__body h2 {
+  font-size: var(--ms3-fs-h2);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.ms3-screen__body p { font-size: var(--ms3-fs-body); }
+
+/* =====================================================================
+   10. ms3-menu - the list of modules
+   ===================================================================== */
+
+.ms3-menu { display: flex; flex-direction: column; border-top: 1px solid var(--ms3-rule); }
+.ms3-menu__item {
+  display: grid;
+  grid-template-columns: 3ch 1fr 14px;
+  column-gap: var(--ms3-s-3);
+  row-gap: 2px;
+  align-items: center;
+  width: 100%;
+  min-height: calc(72px * var(--ms3-scale));
+  padding: var(--ms3-s-2) var(--ms3-s-4);
+  background: var(--ms3-panel);
+  color: var(--ms3-ink);
+  border: 0;
+  border-bottom: 1px solid var(--ms3-rule);
+  text-align: left;
+  transition: background-color var(--ms3-dur-press) var(--ms3-ease);
+}
+.ms3-menu__item:active { background: var(--ms3-well); }
+.ms3-menu__no {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  color: var(--ms3-ink-3);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-menu__name { grid-column: 2; font-size: var(--ms3-fs-body); font-weight: 700; }
+.ms3-menu__desc {
+  grid-column: 2;
+  font-size: var(--ms3-fs-legend);
+  line-height: 1.35;
+  color: var(--ms3-ink-3);
+}
+.ms3-menu__chevron {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 12px;
+  height: 20px;
+  background: var(--ms3-ink-3);
+  clip-path: polygon(0 0, 100% 50%, 0 100%, 0 78%, 62% 50%, 0 22%);
+}
+
+/* =====================================================================
+   11. ms3-aim - the aiming screen
+   ===================================================================== */
+
+.ms3-aim {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ms3-plate);
+}
+/* The keys sit under the hint, at the bottom, where the thumb already is. */
+.ms3-aim__keys {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ms3-s-2);
+  padding: 0 var(--ms3-s-4) var(--ms3-s-4);
+  background: var(--ms3-panel);
+}
+.ms3-aim__keys .ms3-key {
+  flex: 1 1 auto;
+  min-width: var(--ms3-tap);
+  min-height: var(--ms3-tap);
+}
+.ms3-aim__stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--ms3-s-3);
+}
+.ms3-aim__stage .ms3-monitor, .ms3-aim__stage #ms3CameraPanel {
+  margin: 0;
+  width: 100%;
+  max-height: 100%;
+}
+.ms3-aim__stage .ms3-monitor__frame, .ms3-aim__stage #ms3MonitorFrame {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+.ms3-aim__hint {
+  flex: 0 0 auto;
+  padding: var(--ms3-s-3) var(--ms3-s-4);
+  font-size: var(--ms3-fs-name);
+  line-height: 1.4;
+  color: var(--ms3-ink-2);
+  background: var(--ms3-panel);
+  border-top: 1px solid var(--ms3-rule);
+}
+
+/* =====================================================================
+   12. ms3-sheet - modal sheet (5.10). Always below the control desk.
+   ===================================================================== */
+
+.ms3-sheet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+/* Flat scrim: 72% of the plate colour. No blur anywhere in this application.
+   It is a real <button> (rule 5), out of the tab order — the visible "Zamknij"
+   key is the keyboard way out — so ::before is only its fallback. */
+.ms3-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ms3-plate);
+  opacity: .72;
+}
+.ms3-sheet__scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.ms3-sheet__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  max-height: 85dvh;
+  margin-bottom: var(--ms3-desk-total);
+  background: var(--ms3-panel);
+  border-top: 3px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-panel) var(--ms3-r-panel) 0 0;
+}
+.ms3-sheet:not([hidden]) .ms3-sheet__panel {
+  animation: ms3-sheet-in var(--ms3-dur-camera) var(--ms3-ease-screen) both;
+}
+@keyframes ms3-sheet-in {
+  from { transform: translateY(16px); opacity: .001; }
+  to   { transform: none;             opacity: 1; }
+}
+.ms3-sheet__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ms3-s-3);
+  padding: var(--ms3-s-3) var(--ms3-s-4);
+  border-bottom: 1px solid var(--ms3-rule);
+}
+.ms3-sheet__head h2 { font-size: var(--ms3-fs-h2); font-weight: 700; line-height: 1.25; }
+.ms3-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-4);
+  padding: var(--ms3-s-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ms3-sheet__body p { font-size: var(--ms3-fs-body); }
+
+/* =====================================================================
+   13. ms3-note - notes (5.11). Variant = left bar plus overline, never a tinted field.
+   ===================================================================== */
+
+.ms3-note {
+  display: block;
+  padding: var(--ms3-s-3) var(--ms3-s-4);
+  background: var(--ms3-panel);
+  border: 1px solid var(--ms3-hairline);
+  border-left: 4px solid var(--ms3-ink-3);
+  border-radius: var(--ms3-r-panel);
+}
+.ms3-note__title {
+  display: block;
+  margin-bottom: var(--ms3-s-1);
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-2);
+}
+.ms3-note__text { font-size: var(--ms3-fs-body); line-height: var(--ms3-lh-body); color: var(--ms3-ink); }
+.ms3-note__text + .ms3-note__text { margin-top: var(--ms3-s-2); }
+
+/* A one-line legend under the notes: the approximation sign and the "out of the
+   method's range" sentence (5.11, 8.4). No panel, no border box — a left rule
+   and quiet ink are enough to tell it apart from the note above it. */
+.ms3-note__legend {
+  margin: 0;
+  padding-left: var(--ms3-s-3);
+  border-left: 4px solid var(--ms3-ink-3);
+  font-size: var(--ms3-fs-legend);
+  line-height: var(--ms3-lh-body);
+  color: var(--ms3-ink-2);
+}
+
+.ms3-note--limits  { border-left-color: var(--ms3-ink-3); }
+.ms3-note--warning { border-left-color: var(--ms3-warn); }
+.ms3-note--warning .ms3-note__title { color: var(--ms3-warn); }
+.ms3-note--demo {
+  border-left: 4px dashed var(--ms3-demo);
+  border-top-color: var(--ms3-demo);
+  border-right-color: var(--ms3-demo);
+  border-bottom-color: var(--ms3-demo);
+  border-style: dashed;
+  border-width: 2px;
+  border-left-width: 4px;
+}
+.ms3-note--demo .ms3-note__title { color: var(--ms3-demo); }
+
+#ms3Notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-3);
+  margin-inline: var(--ms3-s-3);
+}
+
+/* =====================================================================
+   14. ms3-table - the tabular print-out (5.12)
+   ===================================================================== */
+
+.ms3-tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ms3-table { width: 100%; border-collapse: collapse; font-size: var(--ms3-fs-name); }
+.ms3-table th {
+  padding: var(--ms3-s-2) var(--ms3-s-3);
+  text-align: left;
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-2);
+  border-bottom: 2px solid var(--ms3-rule);
+  white-space: nowrap;
+}
+.ms3-table td {
+  padding: var(--ms3-s-2) var(--ms3-s-3);
+  border-bottom: 1px solid var(--ms3-rule);
+  white-space: nowrap;
+}
+.ms3-num { text-align: right; font-variant-numeric: tabular-nums lining-nums; }
+.ms3-table .ms3-empty, .ms3-empty { color: var(--ms3-ink-3); }
+
+/* =====================================================================
+   15. ms3-segments - range switch (5.13)
+   ===================================================================== */
+
+.ms3-segments {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--ms3-panel);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-key);
+}
+.ms3-segments__item {
+  flex: 1 0 auto;
+  min-width: 64px;
+  min-height: var(--ms3-tap);
+  padding-inline: var(--ms3-s-3);
+  background: transparent;
+  color: var(--ms3-ink);
+  border: 0;
+  border-left: 1px solid var(--ms3-rule);
+  font-size: var(--ms3-fs-name);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color var(--ms3-dur-press) var(--ms3-ease);
+}
+.ms3-segments__item:first-child { border-left: 0; }
+/* Active state carries colour AND an underline, so it survives greyscale. */
+.ms3-segments__item[aria-pressed="true"] {
+  background: var(--ms3-accent);
+  color: var(--ms3-on-accent);
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--ms3-on-accent);
+}
+
+/* =====================================================================
+   16. ms3-errata - the error block (5.15). Slides in, never a modal.
+   ===================================================================== */
+
+.ms3-errata, #ms3Errata {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--ms3-s-1) var(--ms3-s-3);
+  padding: var(--ms3-s-3) var(--ms3-s-4);
+  background: var(--ms3-panel);
+  border-top: 3px solid var(--ms3-crit);
+  border-bottom: 1px solid var(--ms3-rule);
+}
+.ms3-errata:not([hidden]), #ms3Errata:not([hidden]) {
+  animation: ms3-errata-in 140ms var(--ms3-ease-screen) both;
+}
+@keyframes ms3-errata-in {
+  from { transform: translateY(-8px); opacity: .001; }
+  to   { transform: none;             opacity: 1; }
+}
+.ms3-errata__title {
+  grid-column: 1;
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-crit);
+}
+.ms3-errata__text, #ms3ErrataText {
+  grid-column: 1;
+  font-size: var(--ms3-fs-name);
+  line-height: 1.4;
+  color: var(--ms3-ink);
+}
+.ms3-errata > button, #ms3ErrataRetry {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+/* =====================================================================
+   17. ms3-toast - a short message above the control desk, never over it
+   ===================================================================== */
+
+.ms3-toast {
+  position: fixed;
+  left: var(--ms3-s-3);
+  right: var(--ms3-s-3);
+  bottom: calc(var(--ms3-desk-total) + var(--ms3-s-3));
+  z-index: var(--ms3-z-alert);
+  display: flex;
+  align-items: center;
+  gap: var(--ms3-s-3);
+  max-width: 640px;
+  margin-inline: auto;
+  padding: var(--ms3-s-3) var(--ms3-s-4);
+  background: var(--ms3-panel);
+  color: var(--ms3-ink);
+  border: 1px solid var(--ms3-rule);
+  border-left: 4px solid var(--ms3-accent);
+  border-radius: var(--ms3-r-panel);
+  font-size: var(--ms3-fs-name);
+}
+.ms3-toast:not([hidden]) {
+  animation: ms3-toast-in var(--ms3-dur-screen) var(--ms3-ease-screen) both;
+}
+@keyframes ms3-toast-in {
+  from { transform: translateY(8px); opacity: .001; }
+  to   { transform: none;            opacity: 1; }
+}
+.ms3-toast__text { flex: 1 1 auto; min-width: 0; }
+.ms3-toast .ms3-key { flex: none; }
+.ms3-toast__action { min-height: var(--ms3-tap); }
+
+/* =====================================================================
+   18. ms3-bars - the bar panorama for 24 h / 30 days (6.4)
+   Status is coded twice: colour and height. It reads in greyscale and on paper.
+   ===================================================================== */
+
+.ms3-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 72px;
+  padding-top: var(--ms3-s-1);
+  border-bottom: 2px solid var(--ms3-rule);
+}
+.ms3-bars__bar {
+  flex: 1 1 0;
+  min-width: 2px;
+  height: 40%;
+  background-color: var(--ms3-fill-good);
+  border-top: 2px solid var(--ms3-good);
+}
+.ms3-bars__bar--warning {
+  height: 70%;
+  background-color: var(--ms3-fill-warn);
+  background-image: repeating-linear-gradient(45deg,
+    var(--ms3-hatch-a) 0 1px, transparent 1px 6px);
+  border-top-color: var(--ms3-warn);
+}
+.ms3-bars__bar--critical {
+  height: 100%;
+  background-color: var(--ms3-fill-crit);
+  background-image:
+    repeating-linear-gradient(45deg,  var(--ms3-hatch-b) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, var(--ms3-hatch-b) 0 1px, transparent 1px 5px);
+  border-top-color: var(--ms3-crit);
+}
+/* No data is a mark on the baseline, not an empty column: absence must look like absence. */
+.ms3-bars__bar--empty {
+  height: 2px;
+  background: var(--ms3-ink-3);
+  border-top: 0;
+}
+.ms3-bars__caption {
+  margin-top: var(--ms3-s-2);
+  font-size: var(--ms3-fs-legend);
+  color: var(--ms3-ink-3);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* =====================================================================
+   19. ms3-field - sliders and inputs inside modules
+   ===================================================================== */
+
+.ms3-field { display: flex; flex-direction: column; gap: var(--ms3-s-2); }
+.ms3-field__label {
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-2);
+}
+.ms3-field__row { display: flex; align-items: center; gap: var(--ms3-s-3); }
+.ms3-field__value {
+  min-width: 5ch;
+  text-align: right;
+  font-size: var(--ms3-fs-channel);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-field__hint { font-size: var(--ms3-fs-legend); line-height: 1.4; color: var(--ms3-ink-3); }
+
+.ms3-field__range, .ms3-field input[type="range"] {
+  flex: 1 1 auto;
+  width: 100%;
+  height: var(--ms3-tap);
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ms3-field__range::-webkit-slider-runnable-track,
+.ms3-field input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  background: var(--ms3-well);
+  border: 1px solid var(--ms3-rule);
+  border-radius: 2px;
+}
+.ms3-field__range::-webkit-slider-thumb,
+.ms3-field input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -11px;
+  background: var(--ms3-accent);
+  border: 2px solid var(--ms3-panel);
+  border-radius: var(--ms3-r-key);
+}
+.ms3-field__range::-moz-range-track,
+.ms3-field input[type="range"]::-moz-range-track {
+  height: 8px;
+  background: var(--ms3-well);
+  border: 1px solid var(--ms3-rule);
+  border-radius: 2px;
+}
+.ms3-field__range::-moz-range-thumb,
+.ms3-field input[type="range"]::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  background: var(--ms3-accent);
+  border: 2px solid var(--ms3-panel);
+  border-radius: var(--ms3-r-key);
+}
+
+.ms3-field__input,
+.ms3-field input[type="text"],
+.ms3-field input[type="number"],
+.ms3-field select {
+  min-height: var(--ms3-tap);
+  padding-inline: var(--ms3-s-3);
+  background: var(--ms3-panel);
+  color: var(--ms3-ink);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-key);
+  font-size: var(--ms3-fs-body);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-field__check, .ms3-field input[type="checkbox"], .ms3-field input[type="radio"] {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  accent-color: var(--ms3-accent);
+}
+.ms3-field__option {
+  display: flex;
+  align-items: center;
+  gap: var(--ms3-s-3);
+  min-height: var(--ms3-tap);
+  font-size: var(--ms3-fs-body);
+}
+
+/* =====================================================================
+   20. ms3-stat - session numbers
+   ===================================================================== */
+
+.ms3-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--ms3-s-3);
+}
+.ms3-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-1);
+  padding: var(--ms3-s-3);
+  background: var(--ms3-well);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-panel);
+  box-shadow: var(--ms3-engrave-well);
+}
+.ms3-stat__label {
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-3);
+}
+.ms3-stat__value {
+  font-size: var(--ms3-fs-counter);
+  line-height: var(--ms3-lh-tight);
+  font-weight: 700;
+  color: var(--ms3-ink);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-stat__unit { font-size: var(--ms3-fs-legend); color: var(--ms3-ink-2); }
+.ms3-stat__row {
+  display: grid;
+  grid-template-columns: 20px 1fr 5ch;
+  align-items: center;
+  gap: var(--ms3-s-2);
+  font-size: var(--ms3-fs-name);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.ms3-stat__bar { height: 12px; background: var(--ms3-fill-good); }
+.ms3-stat__bar--warning {
+  background-color: var(--ms3-fill-warn);
+  background-image: repeating-linear-gradient(45deg,
+    var(--ms3-hatch-a) 0 1px, transparent 1px 6px);
+}
+.ms3-stat__bar--critical {
+  background-color: var(--ms3-fill-crit);
+  background-image:
+    repeating-linear-gradient(45deg,  var(--ms3-hatch-b) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, var(--ms3-hatch-b) 0 1px, transparent 1px 5px);
+}
+
+/* =====================================================================
+   21. Layout adaptations
+   ===================================================================== */
+
+/* Desktop: wider rows, a wider main key, a fixed content column inside modules (4.8). */
+@media (min-width: 900px) {
+  .ms3-channel { min-height: calc(64px * var(--ms3-scale)); }
+  .ms3-key--primary { flex: 0 0 auto; width: 260px; }
+  .ms3-screen__body > * { width: 100%; max-width: 760px; margin-inline: auto; }
+  .ms3-monitor__frame, #ms3MonitorFrame { height: auto; width: 100%; max-height: 300px; }
+}
+
+/* 200% text zoom on a phone lands here: the row breaks into two lines and grows to 88 px,
+   the micro scale narrows, and below 320 px it goes away - the mark and the value
+   already carry its information (4.9). */
+@media (max-width: 359.98px) {
+  .ms3-channel {
+    grid-template-columns: 24px 1fr auto;
+    grid-template-areas:
+      "mark  name  name"
+      "micro value unit";
+    row-gap: var(--ms3-s-1);
+    min-height: calc(88px * var(--ms3-scale));
+    padding-block: var(--ms3-s-2);
+  }
+  .ms3-channel > .ms3-shape, .ms3-channel > .ms3-lock { grid-area: mark; }
+  .ms3-channel__name  { grid-area: name; }
+  .ms3-channel .ms3-micro { grid-area: micro; width: 56px; }
+  .ms3-channel__value { grid-area: value; }
+  .ms3-channel__unit  { grid-area: unit; }
+}
+@media (max-width: 319.98px) {
+  .ms3-channel .ms3-micro { display: none; }
+}
+
+/* =====================================================================
+   22. Windows high contrast: outlines instead of fills, so no state is eaten
+   ===================================================================== */
+
+@media (forced-colors: active) {
+  .ms3-band {
+    background-color: transparent;
+    background-image: none;
+    border: 1px solid CanvasText;
+  }
+  .ms3-band--warning  { border-style: dashed; }
+  .ms3-band--critical { border-style: dotted; border-width: 2px; }
+
+  .ms3-shape { background: CanvasText; border-color: CanvasText; }
+  .ms3-shape--none { background: transparent; }
+  .ms3-lock { color: CanvasText; }
+
+  .ms3-needle::before, .ms3-needle::after,
+  #ms3Needle::before, #ms3Needle::after,
+  .ms3-micro__needle::before { background: CanvasText; }
+  .ms3-scale__base, .ms3-micro__base, .ms3-tick { background: CanvasText; }
+
+  .ms3-key { border: 1px solid ButtonText; background: ButtonFace; color: ButtonText; }
+  .ms3-key--primary, .ms3-key--stop { border-width: 2px; }
+  .ms3-key__icon { background: ButtonText; }
+  .ms3-key__icon--menu, #ms3KeyMenu .ms3-key__icon {
+    background: repeating-linear-gradient(to bottom,
+      ButtonText 0 3px, transparent 3px 8px);
+  }
+
+  .ms3-segments__item[aria-pressed="true"] {
+    background: Highlight;
+    color: HighlightText;
+    box-shadow: inset 0 -3px 0 HighlightText;
+  }
+
+  .ms3-bars__bar {
+    background-color: transparent;
+    background-image: none;
+    border: 1px solid CanvasText;
+  }
+  .ms3-bars__bar--warning  { border-style: dashed; }
+  .ms3-bars__bar--critical { border-style: dotted; border-width: 2px; }
+  .ms3-bars__bar--empty    { background: CanvasText; border: 0; }
+
+  .ms3-stat__bar { background-color: transparent; background-image: none;
+                   border: 1px solid CanvasText; }
+  .ms3-stat__bar--warning  { border-style: dashed; }
+  .ms3-stat__bar--critical { border-style: dotted; }
+
+  .ms3-reticle, #ms3Reticle { border-color: Highlight; background-image: none; }
+  .ms3-sheet::before { background: Canvas; opacity: 1; }
+  .ms3-note, .ms3-toast, .ms3-errata, .ms3-livebar, .ms3-screen__head {
+    border-color: CanvasText;
+  }
+}
+
+/* =====================================================================
+   22. Additions for offer.js, docs.js and boot.js
+
+   Chapter 5 does not name these, so they are added here rather than
+   invented inside a module: one home for ms3-* remains one home. Every
+   rule obeys the same constraints as the rest of the file - no blurred
+   shadow, no conic gradient, no radius above 3 px, nothing below 15 px.
+   ===================================================================== */
+
+/* ---- ms3-demoframe - the simulation frame (offer.js, 8.7) ------------
+   Wraps EVERYTHING modules 10 and 11 draw, so nothing they render can
+   escape the dashed border and the mandatory sentence. */
+.ms3-demoframe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-4);
+  padding: var(--ms3-s-4);
+  background: var(--ms3-panel);
+  border: 2px dashed var(--ms3-demo);
+  border-radius: var(--ms3-r-panel);
+}
+.ms3-demoframe__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ms3-s-3);
+}
+.ms3-demoframe__overline {
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-demo);
+}
+/* The sentence from 8.7. Never smaller than body text and never collapsed. */
+.ms3-demoframe__oath {
+  font-size: var(--ms3-fs-body);
+  line-height: var(--ms3-lh-body);
+  color: var(--ms3-ink);
+}
+.ms3-demoframe__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-5);
+}
+
+/* ---- ms3-plan - a simulated purchase key (offer.js) ------------------ */
+.ms3-plan {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  min-height: calc(56px * var(--ms3-scale));
+  text-align: left;
+}
+.ms3-plan .ms3-key__label { white-space: normal; overflow: visible; }
+.ms3-plan__price {
+  flex: none;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 700;
+}
+
+/* ---- ms3-keyrow - two or three keys side by side inside a sheet ------ */
+.ms3-keyrow { display: flex; flex-wrap: wrap; gap: var(--ms3-s-3); }
+.ms3-keyrow > .ms3-key { flex: 1 1 auto; min-width: 140px; }
+
+/* A destructive confirmation carries the critical colour AND the word.
+   Used once, for clearing the history (docs.js, module 13). */
+.ms3-key--danger {
+  background: var(--ms3-crit);
+  color: var(--ms3-on-crit);
+  border-color: var(--ms3-crit);
+}
+
+/* ---- ms3-list - a plain bulleted list inside a module ---------------- */
+.ms3-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-3);
+  margin: 0;
+  padding-left: var(--ms3-s-5);
+}
+.ms3-list__item {
+  font-size: var(--ms3-fs-body);
+  line-height: var(--ms3-lh-body);
+}
+
+/* ---- ms3-doc - one documented item: a metric, a formula, a feature --- */
+.ms3-doc { display: flex; flex-direction: column; gap: var(--ms3-s-4); }
+.ms3-doc__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-2);
+  padding: var(--ms3-s-3) 0;
+  border-top: 1px solid var(--ms3-rule);
+}
+.ms3-doc__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ms3-s-2);
+}
+.ms3-doc__title {
+  font-size: var(--ms3-fs-name);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.ms3-doc__text {
+  font-size: var(--ms3-fs-body);
+  line-height: var(--ms3-lh-body);
+  color: var(--ms3-ink);
+}
+/* A formula stays selectable text, never a picture. It scrolls inside its own
+   box so a long line cannot push the page sideways. */
+.ms3-doc__formula {
+  margin: 0;
+  padding: var(--ms3-s-3);
+  background: var(--ms3-well);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-panel);
+  font-family: inherit;                 /* no monospace anywhere in v3 (10.9) */
+  font-size: var(--ms3-fs-name);
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+/* ---- ms3-kv - label and value pairs under a documented metric -------- */
+.ms3-kv {
+  display: grid;
+  grid-template-columns: minmax(9ch, auto) 1fr;
+  gap: var(--ms3-s-1) var(--ms3-s-3);
+  margin: 0;
+}
+.ms3-kv__key {
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--ms3-tracking-legend);
+  color: var(--ms3-ink-2);
+}
+.ms3-kv__value {
+  margin: 0;
+  font-size: var(--ms3-fs-name);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ---- ms3-steps - the three points of "Jak mierzyć sensownie" (8.4) --- */
+.ms3-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;                     /* the <ol> keeps its semantics */
+}
+.ms3-steps__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ms3-s-3);
+  padding: var(--ms3-s-3) 0;
+  border-top: 1px solid var(--ms3-rule);
+}
+.ms3-steps__no {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--ms3-accent);
+  color: var(--ms3-on-accent);
+  border-radius: var(--ms3-r-badge);
+  font-size: var(--ms3-fs-name);
+  font-weight: 700;
+}
+.ms3-steps__body { display: flex; flex-direction: column; gap: var(--ms3-s-1); }
+.ms3-steps__title { font-size: var(--ms3-fs-name); font-weight: 700; }
+.ms3-steps__text {
+  font-size: var(--ms3-fs-body);
+  line-height: var(--ms3-lh-body);
+  color: var(--ms3-ink-2);
+}
+
+/* ---- a note that can be closed (boot.js, first-run note) ------------- */
+.ms3-note--closable {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  column-gap: var(--ms3-s-3);
+}
+.ms3-note--closable > .ms3-note__title,
+.ms3-note--closable > .ms3-note__text { grid-column: 1; }
+.ms3-note__close {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  flex: none;
+  width: var(--ms3-tap);
+  height: var(--ms3-tap);
+  min-height: var(--ms3-tap);
+  padding: 0;
+}
+/* Drawn as a shape, never as a glyph: system fonts disagree about crosses. */
+.ms3-key__icon--close {
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  clip-path: polygon(20% 0, 50% 30%, 80% 0, 100% 20%, 70% 50%, 100% 80%,
+                     80% 100%, 50% 70%, 20% 100%, 0 80%, 30% 50%, 0 20%);
+}
+
+@media (forced-colors: active) {
+  .ms3-demoframe { border-color: CanvasText; }
+  .ms3-demoframe__overline { color: CanvasText; }
+  .ms3-doc__formula, .ms3-doc__item, .ms3-steps__item { border-color: CanvasText; }
+  .ms3-steps__no { background: Highlight; color: HighlightText; }
+  .ms3-key--danger { background: Canvas; color: CanvasText; border: 2px solid CanvasText; }
+}
+
+/* =====================================================================
+   22. Module 01 - the recorder (recorder.js, P3)
+   Five surfaces chapter 5 does not name: the tape frame, the reading
+   crosshair, the value list under it, the session zone rows and the time
+   chip. Nothing outside recorder.js uses them.
+   ===================================================================== */
+
+.ms3-rec__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--ms3-s-1) var(--ms3-s-2);
+}
+.ms3-rec__lead {
+  font-size: var(--ms3-fs-name);
+  font-weight: 700;
+  color: var(--ms3-ink);
+}
+
+/* The chip and the crosshair both read --ms3-pos from this wrapper. */
+.ms3-rec__strip { display: block; }
+
+.ms3-rec__chiprow { position: relative; height: calc(var(--ms3-fs-legend) + 12px); }
+.ms3-rec__chip {
+  position: absolute;
+  bottom: 2px;
+  /* Clamped so the chip never leaves the column, while the line below it
+     stays exactly where the data is. */
+  left: clamp(48px, calc(var(--ms3-pos, 50) * 1%), calc(100% - 48px));
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  background: var(--ms3-panel);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-badge);
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+.ms3-rec__tape {
+  position: relative;
+  overflow: hidden;            /* the 48 px crosshair grip must not widen the page */
+  padding: 0;                  /* percentage positions map 1:1 onto the drawing */
+  background: var(--ms3-panel);
+  border: 1px solid var(--ms3-rule);
+  touch-action: pan-y;         /* 6.3 - a horizontal drag reads, a vertical one scrolls */
+}
+/* touch-action is read from the element under the finger, not from the one the
+   listener sits on, so the drawing surfaces repeat it. */
+.ms3-rec__canvas {
+  display: block;
+  width: 100%;
+  height: calc(220px * var(--ms3-scale));
+  max-height: 50vh;
+  touch-action: pan-y;
+}
+.ms3-rec__tape > .ms3-bars {
+  height: calc(88px * var(--ms3-scale));
+  padding: var(--ms3-s-2) 0 0;
+  border-bottom: 0;
+  touch-action: pan-y;
+}
+.ms3-rec__tape > .ms3-bars > .ms3-bars__bar { touch-action: pan-y; }
+
+.ms3-rec__cross {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--ms3-pos, 50) * 1%);
+  width: var(--ms3-tap);
+  margin-left: calc(var(--ms3-tap) / -2);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  touch-action: none;
+}
+.ms3-rec__crossline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ms3-ink);
+}
+/* The frame clips its overflow, so an outline around the grip would be cut in
+   half at both ends. The line itself carries the focus instead. */
+.ms3-rec__cross:focus-visible { outline: none; }
+.ms3-rec__cross:focus-visible .ms3-rec__crossline {
+  width: 6px;
+  margin-left: -3px;
+  background: var(--ms3-focus);
+}
+
+.ms3-rec__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ms3-s-3);
+}
+.ms3-rec__navtime {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: var(--ms3-fs-h2);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.ms3-rec__cross-list { display: flex; flex-direction: column; }
+.ms3-rec__cross-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  column-gap: var(--ms3-s-2);
+  min-height: calc(32px * var(--ms3-scale));
+  padding-block: var(--ms3-s-1);
+  border-bottom: 1px solid var(--ms3-rule);
+  font-size: var(--ms3-fs-name);
+}
+.ms3-rec__cross-row:last-child { border-bottom: 0; }
+.ms3-rec__cross-name { color: var(--ms3-ink-2); }
+.ms3-rec__cross-value { font-weight: 700; font-variant-numeric: tabular-nums lining-nums; }
+.ms3-rec__cross-unit { color: var(--ms3-ink-2); }
+
+.ms3-rec__zones { display: flex; flex-direction: column; gap: var(--ms3-s-2); }
+.ms3-rec__zone {
+  display: grid;
+  grid-template-columns: 18px minmax(88px, auto) 1fr 5ch;
+  align-items: center;
+  gap: var(--ms3-s-2);
+  font-size: var(--ms3-fs-name);
+}
+.ms3-rec__zone-word { font-weight: 600; }
+.ms3-rec__zone-track {
+  display: block;
+  height: 14px;
+  background: var(--ms3-well);
+  border: 1px solid var(--ms3-rule);
+}
+.ms3-rec__zone-track > .ms3-stat__bar { display: block; height: 100%; }
+.ms3-rec__zone-pct { text-align: right; font-variant-numeric: tabular-nums lining-nums; }
+
+@media (forced-colors: active) {
+  .ms3-rec__tape, .ms3-rec__chip, .ms3-rec__zone-track { border-color: CanvasText; }
+  .ms3-rec__crossline { background: Highlight; }
+  .ms3-rec__cross:focus-visible .ms3-rec__crossline { background: Highlight; }
+}
+
+/* =====================================================================
+   22. Classes owned by modules.js (modules 02-09)
+   Appended by P4. Nothing above this line depends on them.
+   ===================================================================== */
+
+/* A wrapped row of keys under a block of text. */
+.ms3-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ms3-s-3);
+}
+
+/* A list row: name plus sub-line on the left, keys on the right. Used by the
+   profile list (02), the schedule times (08) and the plane list (07). */
+.ms3-rows { display: flex; flex-direction: column; gap: var(--ms3-s-2); }
+.ms3-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ms3-s-2) var(--ms3-s-3);
+  min-height: calc(56px * var(--ms3-scale));
+  padding: var(--ms3-s-2) var(--ms3-s-3);
+  background: var(--ms3-panel);
+  border: 1px solid var(--ms3-rule);
+  border-radius: var(--ms3-r-panel);
+}
+.ms3-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.ms3-row__name { font-size: var(--ms3-fs-name); font-weight: 700; color: var(--ms3-ink); }
+.ms3-row__sub  { font-size: var(--ms3-fs-legend); line-height: 1.4; color: var(--ms3-ink-3); }
+.ms3-row__end  { display: flex; flex: none; gap: var(--ms3-s-2); }
+
+/* Numbered instructions (03, 07). Real <ol>, so the reader counts for us.
+   A separate class from .ms3-steps on purpose: `display: flex` on an <li>
+   removes its list marker, so the two shapes cannot share a name (9.1). */
+.ms3-ol {
+  list-style: decimal;
+  padding-left: var(--ms3-s-6);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms3-s-2);
+}
+.ms3-ol__item { font-size: var(--ms3-fs-body); line-height: var(--ms3-lh-body); }
+
+/* Two sessions, one above the other, on the same relative time axis (06). */
+.ms3-tape { display: flex; flex-direction: column; gap: var(--ms3-s-1); }
+.ms3-tape + .ms3-tape { margin-top: var(--ms3-s-3); }
+.ms3-tape__label {
+  font-size: var(--ms3-fs-legend);
+  font-weight: 700;
+  color: var(--ms3-ink-2);
+}
+
+/* The threshold preview (02) is the dashboard ruler inside a flex column;
+   without this the ruler's `margin-top: auto` would push it to the bottom. */
+.ms3-screen__section > .ms3-scale { margin-top: 0; }
+
+/* ---------------------------------------------------------------------
+   Test planes (module 07) — the one surface in v3 that leaves the theme.
+   It stops above the control desk: rule 7 of chapter 1 has no exception,
+   so STOP stays visible and reachable while a plane is on screen.
+   --------------------------------------------------------------------- */
+.ms3-plate {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--ms3-desk-total);
+  z-index: calc(var(--ms3-z-desk) - 1);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background-color: #000000;         /* replaced inline, one colour per plane */
+}
+/* White grid on black: line sharpness in the corners against the centre. */
+.ms3-plate--grid {
+  background-image:
+    repeating-linear-gradient(90deg, #FFFFFF 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(0deg,  #FFFFFF 0 1px, transparent 1px 32px);
+}
+.ms3-plate__bar {
+  padding: 0 var(--ms3-s-4) var(--ms3-s-6);
+}
+/* Literal colours: the key has to stay readable on white and on black alike,
+   and no token can be right for both. */
+.ms3-plate__exit {
+  min-height: calc(56px * var(--ms3-scale));
+  padding-inline: var(--ms3-s-6);
+  background: #101010;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  border-radius: 3px;
+  font-size: calc(17px * var(--ms3-scale));
+  font-weight: 700;
+}
+/* The focus ring lands on the plane, not on the faceplate: --ms3-focus would be
+   dark blue on black (1.99:1). White reads on both planes. */
+.ms3-plate__exit:focus-visible {
+  outline: 3px solid #FFFFFF;
+  outline-offset: 4px;
+  box-shadow: inset 0 0 0 2px #101010;
+}
+
+@media (forced-colors: active) {
+  .ms3-row { border-color: CanvasText; }
+  .ms3-plate { background-color: Canvas; background-image: none; }
+  .ms3-plate__exit { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
+}

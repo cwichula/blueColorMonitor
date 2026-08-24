@@ -1,0 +1,1022 @@
+/* ============================================================================
+   screens.css — Monitor Światła v4
+   Autor 2. Zakres: rozdziały 5.N–5.R SPEC.md (układy czterech ekranów, logowanie,
+   paywall) oraz te wiersze rozdziału 9, które są elementami ekranów: blok błędu
+   i pasek rozgrzewania POMIARU, pokrycie doby HISTORII, strzałka kafelka narzędzia,
+   podgląd skali progów, plansze testu ekranu, tabela porównania na paywallu.
+   Komponenty wielokrotnego użytku leżą w components.css, powłoka w base.css.
+   Ten plik ładuje się jako ostatni, więc wolno mu doprecyzowywać komponenty
+   w kontekście ekranu — i tylko w tym celu.
+
+   ZASADY: patrz nagłówek components.css. Zero #hex poza jednym udokumentowanym
+   miejscem: plansze testu ekranu (ms4-plate--*), które sprawdzają monitor i z
+   definicji nie mogą zależeć od motywu ani palety (SPEC rozdział 9).
+
+   PROGI I CO SIĘ NA NICH ZMIENIA
+     360 px  wszystko w jednej kolumnie; wskaźnik 260 px; kafelki 2 kolumny;
+             pasek akcji: START rozciągnięty, dwie ikony obok; plany jeden pod drugim
+     390 px  bez zmian układu — więcej powietrza wewnątrz kart
+     430 px  jw.; kafelki nadal 2 kolumny (minmax 150 px), liczba nie łamie wiersza
+     768 px  hero dwukolumnowy 1fr 1.1fr; kafelki 3 kolumny; plany 3 obok siebie;
+             statystyka sesji 4 kolumny; próbki palet w jednym rzędzie
+     1024 px hero minmax(320,420) 1fr; kafelki 4 kolumny; podgląd kamery wchodzi
+             w prawą kolumnę obok kafelków i przykleja się przy przewijaniu;
+             HISTORIA dzieli się na wykres + panel 320 px; :hover zaczyna działać
+     1440 px hero minmax(380,460) 1fr, wskaźnik 380 px; kafelki wyższe;
+             kolumna podglądu kamery szersza; treść nadal maks. 1180 px
+   ============================================================================ */
+
+
+/* ===========================================================================
+   5.N  EKRAN POMIAR
+   =========================================================================== */
+
+/* Blok błędu kamery: wsuwa się nad treść, nigdy nie jest oknem modalnym —
+   użytkownik ma widzieć, co zrobić, i dalej mieć dostęp do reszty ekranu. */
+.ms4-measure__error {
+  width: 100%;
+  border-radius: var(--r-md);
+  margin-bottom: var(--s-1);
+  animation: ms4-error-in var(--dur) var(--ease) both;
+}
+@keyframes ms4-error-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* --- hero ----------------------------------------------------------------- */
+.ms4-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--s-4) var(--s-4);
+  align-items: center;
+}
+
+.ms4-hero__gauge {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  color: var(--c-accent);      /* mikrowykresy i pierścienie dziedziczą akcent */
+}
+
+.ms4-hero__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;         /* telefon: wszystko pod wskaźnikiem, wyśrodkowane */
+  gap: var(--s-4);
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+.ms4-hero__stamp { align-self: center; }
+
+.ms4-hero__verdict {
+  margin: 0;
+  max-width: 46ch;
+  font-size: var(--t-h3);
+  font-weight: var(--fw-med);
+  line-height: var(--lh-body);
+  color: var(--c-text);
+  /* Trzy wiersze rezerwy: zmiana zdania nie ma prawa przesuwać paska akcji. */
+  min-height: calc(var(--t-h3) * var(--lh-body) * 3);
+}
+
+/* Pasek rozgrzewania — pierwsze 3 sekundy pomiaru (rozdz. 9). */
+.ms4-hero__warmup {
+  width: 100%;
+  max-width: 220px;
+  height: 4px;
+  margin-inline: auto;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+  overflow: hidden;
+}
+.ms4-hero__warmup-fill {
+  width: 0;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+  transition: width var(--dur-fast) linear;
+}
+
+.ms4-hero__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: 0;
+  font-size: var(--t-caption);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+}
+.ms4-hero__clock {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-caption);
+}
+
+/* 768 px: wskaźnik po lewej, werdykt po prawej (SPEC 3.2). */
+@media (min-width: 600px) {
+  .ms4-hero {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: var(--s-6);
+    align-items: center;
+  }
+  .ms4-hero__side {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .ms4-hero__stamp { align-self: flex-start; }
+  .ms4-hero__warmup { margin-inline: 0; }
+  .ms4-hero__meta { justify-content: flex-start; }
+}
+/* 1024 px: lewa kolumna dostaje twardą szerokość, żeby wskaźnik nie „pływał”. */
+@media (min-width: 1024px) {
+  .ms4-hero { grid-template-columns: minmax(320px, 420px) 1fr; }
+}
+@media (min-width: 1440px) {
+  .ms4-hero { grid-template-columns: minmax(380px, 460px) 1fr; }
+}
+
+/* --- pasek akcji ---------------------------------------------------------- */
+.ms4-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.ms4-actions__start { flex: 1 1 auto; }      /* telefon: START zajmuje resztę wiersza */
+.ms4-actions__flip,
+.ms4-actions__lead { flex: 0 0 auto; }
+/* Skala tekstu 1,3 na telefonie: „Start pomiaru" nie mieści się w jednym wierszu
+   obok dwóch przycisków ikonowych — CTA bierze cały wiersz, ikony schodzą pod nie. */
+@media (max-width: 599px) {
+  :root[data-text-scale="1.3"] .ms4-actions { flex-wrap: wrap; }
+  :root[data-text-scale="1.3"] .ms4-actions__start { flex: 1 1 100%; }
+}
+/* 768 px: przycisk główny przestaje się rozciągać na całą szerokość ekranu. */
+@media (min-width: 600px) {
+  .ms4-actions__start { flex: 0 0 auto; min-width: 260px; }
+}
+
+/* --- kafelki -------------------------------------------------------------- */
+.ms4-tiles { width: 100%; }
+
+/* --- arkusz wyboru kanału wiodącego --------------------------------------- */
+.ms4-leadsheet .ms4-row { min-height: var(--tap); }
+.ms4-leadsheet .ms4-row.is-selected .ms4-row__title { color: var(--c-accent-ink); }
+
+/* --- powiększony podgląd (arkusz pełnoekranowy) --------------------------- */
+.ms4-measure__aimsheet { background: var(--c-surface); }
+.ms4-measure__aimsheet .ms4-sheet__body { justify-content: center; }
+.ms4-measure__aim {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+}
+/* W powiększeniu kadr przestaje trzymać proporcję — ma wypełnić, ile się da. */
+.ms4-measure__aim .ms4-camera__stage {
+  aspect-ratio: auto;
+  max-height: 62dvh;
+  min-height: 240px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+/* --- układ ekranu POMIAR na dużym ekranie ---------------------------------
+   Kolejność w DOM (ustalona przez screen-measure.js) jest stała:
+   1 blok błędu · 2 hero · 3 pasek akcji · 4 karta kamery · 5 kafelki · 6 noty.
+   Od 1024 px podgląd kamery przenosi się na prawo od kafelków i przykleja przy
+   przewijaniu — wtedy widać obraz i liczby naraz, tak jak w SPEC 3.3.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  .ms4-view[data-view="measure"] > .ms4-view__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    align-items: start;
+    grid-template-areas:
+      "err   err"
+      "hero  hero"
+      "act   act"
+      "tiles cam"
+      "notes notes";
+  }
+  .ms4-view[data-view="measure"] > .ms4-view__inner > .ms4-measure__error { grid-area: err; }
+  .ms4-view[data-view="measure"] > .ms4-view__inner > .ms4-hero { grid-area: hero; }
+  .ms4-view[data-view="measure"] > .ms4-view__inner > .ms4-actions { grid-area: act; }
+  .ms4-view[data-view="measure"] > .ms4-view__inner > .ms4-camera {
+    grid-area: cam;
+    position: sticky;
+    top: calc(var(--h-topbar) + var(--s-4));
+  }
+  /* Dwa bloki .ms4-stack: pierwszy to sekcja kafelków, ostatni to noty. */
+  .ms4-view[data-view="measure"] > .ms4-view__inner > .ms4-stack { grid-area: tiles; }
+  .ms4-view[data-view="measure"] > .ms4-view__inner > .ms4-stack:last-child { grid-area: notes; }
+}
+@media (min-width: 1440px) {
+  .ms4-view[data-view="measure"] > .ms4-view__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  }
+}
+
+
+/* ===========================================================================
+   5.O  EKRAN HISTORIA
+   =========================================================================== */
+
+.ms4-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+.ms4-history__main { min-width: 0; }   /* bez tego wykres rozpycha siatkę */
+.ms4-history__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+/* 1024 px: wykres po lewej, panel wyboru i statystyk po prawej.
+   1440 px: kolumny zostają dwie — lista sesji siedzi w DOM w prawej kolumnie,
+   więc trzecia kolumna wymagałaby przeniesienia węzłów, a tego CSS nie robi. */
+@media (min-width: 1024px) {
+  .ms4-history {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: var(--s-5);
+    align-items: start;
+  }
+}
+@media (min-width: 1440px) {
+  .ms4-history { grid-template-columns: minmax(0, 1fr) 360px; }
+}
+
+.ms4-ranges { width: 100%; }
+
+/* --- statystyka ----------------------------------------------------------- */
+.ms4-stats { width: 100%; }
+.ms4-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  min-width: 0;
+}
+.ms4-stat__label {
+  font-size: var(--t-caption);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--c-text-3);
+}
+.ms4-stat__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-h2);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- rozkład czasu w strefach --------------------------------------------- */
+.ms4-zonebar {
+  display: flex;
+  width: 100%;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+  overflow: hidden;
+}
+.ms4-zonebar__seg {
+  min-width: 2px;              /* niezerowy udział nigdy nie znika */
+  background: var(--c-text-3);
+  transition: width var(--dur) var(--ease);
+}
+.ms4-zonebar__seg--good { background: var(--c-good); }
+.ms4-zonebar__seg--warn { background: var(--c-warn); }
+.ms4-zonebar__seg--crit { background: var(--c-crit); }
+.ms4-zonebar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  font-size: var(--t-caption);
+  color: var(--c-text-2);
+}
+
+/* --- pokrycie doby (rozdz. 9) --------------------------------------------- */
+.ms4-coverage {
+  display: flex;
+  gap: 2px;
+  width: 100%;
+}
+.ms4-coverage__seg {
+  flex: 1 1 0;
+  height: 8px;
+  background: var(--c-surface-3);
+  transition: background-color var(--dur) var(--ease);
+}
+.ms4-coverage__seg:first-child { border-radius: var(--r-xs) 0 0 var(--r-xs); }
+.ms4-coverage__seg:last-child  { border-radius: 0 var(--r-xs) var(--r-xs) 0; }
+.ms4-coverage__seg.is-active { background: var(--c-accent); }
+.ms4-coverage__caption {
+  margin-top: var(--s-2);
+  font-size: var(--t-caption);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+}
+
+/* --- lista sesji ---------------------------------------------------------- */
+.ms4-sessions { width: 100%; }
+/* Wiersz jednej sesji to ms4-row z trzema własnymi elementami; kropka strefy
+   stoi w ms4-row__icon, więc kółko ikony ma tu być przezroczyste, nie szare. */
+.ms4-session { align-items: center; }
+.ms4-session .ms4-row__icon {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+}
+.ms4-session__when {
+  font-size: var(--t-body);
+  font-weight: var(--fw-med);
+  color: var(--c-text);
+}
+.ms4-session__dur {
+  font-family: var(--font-num);
+  font-size: var(--t-body-sm);
+  color: var(--c-text-3);
+}
+.ms4-session__avg {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body);
+  font-weight: var(--fw-bold);
+  color: var(--c-text-2);
+}
+.ms4-session__avg--good { color: var(--c-good); }
+.ms4-session__avg--warn { color: var(--c-warn); }
+.ms4-session__avg--crit { color: var(--c-crit); }
+
+
+/* ===========================================================================
+   5.P  EKRAN NARZĘDZIA
+   =========================================================================== */
+
+.ms4-tools { width: 100%; }
+
+.ms4-tool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-height: 132px;
+  padding: var(--s-4);
+  padding-right: calc(var(--s-4) + var(--s-6));  /* miejsce na strzałkę */
+  border-radius: var(--r-lg);
+}
+.ms4-tool__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-ink);
+}
+.ms4-tool__icon > svg { width: 24px; height: 24px; }
+.ms4-tool__title {
+  margin: 0;
+  font-size: var(--t-h3);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+}
+.ms4-tool__desc {
+  margin: 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+}
+.ms4-tool__chevron {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  width: 20px;
+  height: 20px;
+  color: var(--c-text-3);
+  transition: transform var(--dur-fast) var(--ease);
+}
+@media (min-width: 1024px) and (hover: hover) {
+  .ms4-tool:hover .ms4-tool__chevron { transform: translateX(2px); }
+}
+
+/* --- podgląd skali pod suwakami progów (rozdz. 9) ------------------------- */
+.ms4-miniscale {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface-2);
+  overflow: hidden;
+}
+.ms4-miniscale__bands {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 14px;
+}
+.ms4-miniscale__band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  opacity: .9;
+  background: var(--c-text-3);
+}
+.ms4-miniscale__band--good { background: var(--c-good); }
+.ms4-miniscale__band--warn { background: var(--c-warn); }
+.ms4-miniscale__band--crit { background: var(--c-crit); }
+.ms4-miniscale__ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14px;
+  height: 8px;
+}
+.ms4-miniscale__tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--c-border-strong);
+  transform: translateX(-.5px);
+}
+.ms4-miniscale__labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 16px;
+}
+.ms4-miniscale__label {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-num);
+  font-size: var(--t-caption);
+  color: var(--c-text-3);
+  white-space: nowrap;
+}
+.ms4-miniscale__needle {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--c-text);
+  transform: translateX(-1px);
+  transition: left var(--dur) var(--ease);
+}
+.ms4-miniscale__needle[hidden] { display: none; }
+
+/* --- plansze testu ekranu (rozdz. 9) --------------------------------------
+   TRZECI I OSTATNI UDOKUMENTOWANY WYJĄTEK OD ZAKAZU BARW SPOZA tokens.css.
+   Plansza sprawdza monitor: gdyby brała barwy z motywu, nie testowałaby niczego.
+   Wartości są dokładnie te z rozdziału 9 i żadne inne.
+   -------------------------------------------------------------------------- */
+.ms4-plate {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-dialog) + 1);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+.ms4-plate--white  { background: #FFFFFF; }
+.ms4-plate--gray75 { background: #BFBFBF; }
+.ms4-plate--gray50 { background: #808080; }
+.ms4-plate--gray25 { background: #404040; }
+.ms4-plate--black  { background: #000000; }
+.ms4-plate--red    { background: #FF0000; }
+.ms4-plate--green  { background: #00FF00; }
+.ms4-plate--blue   { background: #0000FF; }
+.ms4-plate--grid {
+  background-color: #000000;
+  background-image:
+    repeating-linear-gradient(to right, #FFFFFF 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(to bottom, #FFFFFF 0 1px, transparent 1px 32px);
+}
+
+/* Pasek sterowania jest jedynym wyjściem z planszy — zawsze widoczny,
+   zawsze nieprzezroczysty, zawsze w barwach interfejsu. */
+.ms4-plate__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+  box-shadow: var(--e-3);
+  color: var(--c-text);
+}
+.ms4-plate__count {
+  font-family: var(--font-num);
+  font-size: var(--t-label);
+  font-weight: var(--fw-bold);
+  color: var(--c-text-2);
+  white-space: nowrap;
+}
+.ms4-plate__hint {
+  flex: 1 1 100%;             /* telefon: zdanie w osobnym wierszu nad przyciskami */
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+}
+@media (min-width: 600px) {
+  .ms4-plate__hint { flex: 1 1 auto; }
+}
+
+
+/* ===========================================================================
+   5.Q  EKRAN KONTO I LOGOWANIE
+   =========================================================================== */
+
+.ms4-profile {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  padding: var(--s-5);
+}
+.ms4-profile__avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-pill);
+  background-image: linear-gradient(135deg, var(--c-accent), var(--c-accent-2));
+  color: var(--c-on-accent);
+}
+.ms4-profile__avatar > svg { width: 28px; height: 28px; }
+.ms4-profile__initials {
+  font-size: var(--t-h2);
+  font-weight: var(--fw-black);
+  letter-spacing: .02em;
+}
+.ms4-profile__name {
+  margin: 0;
+  font-size: var(--t-h2);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+}
+.ms4-profile__badge {
+  margin-left: var(--s-2);
+  white-space: nowrap;
+}
+.ms4-profile__mail {
+  margin: 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+  overflow-wrap: anywhere;
+}
+.ms4-profile__actions {
+  display: flex;
+  gap: var(--s-2);
+  width: 100%;                 /* telefon: przyciski schodzą pod tekst */
+}
+.ms4-profile__actions > .ms4-btn { flex: 1 1 auto; }
+@media (min-width: 600px) {
+  .ms4-profile__actions {
+    width: auto;
+    margin-left: auto;
+  }
+  .ms4-profile__actions > .ms4-btn { flex: 0 0 auto; }
+}
+
+/* --- karta subskrypcji ---------------------------------------------------- */
+.ms4-subcard { border-left: 3px solid var(--c-premium); }
+.ms4-subcard.ms4-card--premium { border-left-color: transparent; }
+.ms4-subcard__state {
+  margin: 0;
+  font-size: var(--t-body);
+  font-weight: var(--fw-med);
+  color: var(--c-text);
+}
+.ms4-card--premium .ms4-subcard__state { color: var(--c-on-premium); }
+.ms4-subcard__cta { margin-top: var(--s-2); }
+/* Przycisk „Zarządzaj” na karcie z gradientem musi być czytelny na fiolecie. */
+.ms4-card--premium .ms4-btn--ghost {
+  color: var(--c-on-premium);
+  border-color: var(--c-on-premium);
+}
+
+/* --- przyciski dostawców -------------------------------------------------- */
+.ms4-providers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.ms4-provider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 52px;
+  padding-inline: var(--s-4);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--t-body);
+  font-weight: var(--fw-med);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.ms4-provider:active { transform: scale(.98); }
+@media (hover: hover) {
+  .ms4-provider:hover { background: var(--c-surface-2); }
+}
+.ms4-provider__icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+}
+.ms4-provider__label {
+  flex: 1 1 auto;
+  text-align: center;
+  /* Etykieta jest wyśrodkowana mimo ikony po lewej — kompensujemy jej szerokość. */
+  padding-right: calc(20px + var(--s-3));
+  transition: opacity var(--dur-fast) var(--ease);
+}
+/* Wariant e-mail jest cichszy: to nie jest logowanie „przez kogoś”. */
+.ms4-provider--email {
+  border-color: var(--c-border);
+  color: var(--c-text-2);
+}
+/* Google i Facebook: rysunek w ui.js niesie własne barwy (SPEC 5.Q i 6.5).
+   CSS nie ma prawa go przemalować — dlatego tu NIE ma color na ikonie, jest za to
+   pewność, że nic jej nie odziedziczy. Jabłko i koperta idą currentColor. */
+.ms4-provider--google .ms4-provider__icon,
+.ms4-provider--facebook .ms4-provider__icon { color: initial; }
+.ms4-provider--apple .ms4-provider__icon { color: var(--c-text); }
+.ms4-provider--email .ms4-provider__icon { color: var(--c-text-2); }
+.ms4-provider.is-loading {
+  pointer-events: none;
+}
+.ms4-provider.is-loading .ms4-provider__label,
+.ms4-provider.is-loading .ms4-provider__icon { opacity: 0; }
+.ms4-provider.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  box-sizing: border-box;
+  border: 2px solid var(--c-text-2);
+  border-top-color: transparent;
+  border-radius: var(--r-pill);
+  animation: ms4-spinner-rot 700ms linear infinite;
+}
+
+.ms4-authform {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+
+/* ===========================================================================
+   5.R  PAYWALL I PLANY
+   =========================================================================== */
+
+/* Paywall siedzi w ms4-sheet__body, które ma własny padding. Zdejmujemy go
+   ujemnym marginesem, żeby blok gradientowy sięgnął krawędzi arkusza, i wracamy
+   z odstępem na poszczególnych dzieciach. Dzięki temu SPEC-owe
+   „padding-inline: var(--s-4)” obowiązuje raz, a nie dwa razy. */
+.ms4-paywall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  margin: calc(var(--s-4) * -1);
+  padding-bottom: var(--s-8);
+}
+.ms4-paywall > *:not(.ms4-paywall__hero) { margin-inline: var(--s-4); }
+
+.ms4-paywall__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-7) var(--s-5);
+  border-radius: 0 0 var(--r-xl) var(--r-xl);
+  background-image: linear-gradient(160deg, var(--c-premium), var(--c-premium-2));
+  color: var(--c-on-premium);
+  text-align: center;
+}
+.ms4-paywall__crown {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-pill);
+  /* Wartość wprost z SPEC 5.R: rozjaśnienie ma leżeć NA gradiencie premium,
+     a nie zależeć od motywu — token o tej roli nie istnieje. */
+  background: rgb(255 255 255 / .16);
+}
+.ms4-paywall__crown > svg { width: 40px; height: 40px; }
+.ms4-paywall__title {
+  margin: 0;
+  font-size: var(--t-h1);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-tight);
+  color: inherit;
+}
+.ms4-paywall__lede {
+  margin: 0 auto;
+  max-width: 34ch;
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  color: inherit;
+  opacity: .92;
+}
+
+.ms4-paywall__benefits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.ms4-paywall__plans { width: auto; }
+
+.ms4-paywall__cta { width: 100%; }
+.ms4-paywall__restore { margin-top: var(--s-2); }
+.ms4-paywall__fine {
+  margin: 0 auto;
+  max-width: 46ch;
+  font-size: var(--t-caption);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+  text-align: center;
+}
+
+/* --- karta planu ---------------------------------------------------------- */
+.ms4-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-4);
+  padding-right: calc(var(--s-4) + var(--s-7));   /* miejsce na kółko wyboru */
+  border: 2px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--e-1);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+.ms4-plan.is-selected {
+  border-color: var(--c-premium);
+  background: var(--c-premium-soft);
+  box-shadow: var(--e-2);
+}
+/* Plan polecany podnosi się dopiero tam, gdzie plany stoją obok siebie. */
+@media (min-width: 600px) {
+  .ms4-plan--featured {
+    transform: translateY(-8px);
+    box-shadow: var(--e-3);
+  }
+  .ms4-plan--featured.is-selected { box-shadow: var(--e-3); }
+}
+.ms4-plan__badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.ms4-plan__name {
+  font-size: var(--t-body);
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+}
+.ms4-plan__price {
+  font-family: var(--font-num);
+  font-size: var(--t-h1);
+  font-weight: var(--fw-black);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+}
+.ms4-plan__period {
+  font-size: var(--t-body-sm);
+  color: var(--c-text-3);
+}
+.ms4-plan__note {
+  font-size: var(--t-caption);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+}
+.ms4-plan__save { align-self: flex-start; margin-top: var(--s-1); }
+.ms4-plan__radio {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--c-border-strong);
+  border-radius: var(--r-pill);
+  color: transparent;
+  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.ms4-plan__radio > svg { width: 14px; height: 14px; }
+.ms4-plan.is-selected .ms4-plan__radio {
+  background: var(--c-premium);
+  border-color: var(--c-premium);
+  color: var(--c-on-premium);
+}
+/* Kółko jest małe, ale celem dotyku jest cała karta — i to ona ma 44 px z okładem. */
+
+/* --- korzyści ------------------------------------------------------------- */
+.ms4-benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+.ms4-benefit__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  background: var(--c-premium-soft);
+  color: var(--c-premium);
+}
+.ms4-benefit__icon > svg { width: 20px; height: 20px; }
+.ms4-benefit__title {
+  margin: 0;
+  font-size: var(--t-body);
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+}
+.ms4-benefit__text {
+  margin: 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+}
+
+/* --- tabela porównania (rozdz. 9) ----------------------------------------- */
+.ms4-compare {
+  padding: var(--s-2);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  font-size: var(--t-body-sm);
+}
+.ms4-compare__head,
+.ms4-compare__row {
+  display: grid;
+  grid-template-columns: 1fr 84px 84px;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+}
+.ms4-compare__head {
+  border-bottom: 1px solid var(--c-border);
+  font-size: var(--t-caption);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--c-text-3);
+}
+.ms4-compare__head .ms4-compare__cell { text-align: center; }
+.ms4-compare__row {
+  min-height: var(--tap);
+  border-bottom: 1px solid var(--c-border);
+}
+.ms4-compare__row:last-child { border-bottom: 0; }
+.ms4-compare__label {
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text);
+}
+.ms4-compare__cell {
+  display: grid;
+  place-items: center;
+}
+.ms4-compare__mark { width: 20px; height: 20px; }
+.ms4-compare__mark--yes { color: var(--c-good); }
+.ms4-compare__mark--no  { color: var(--c-text-3); }
+/* 360 px: dwie kolumny po 84 px to za dużo przy najwęższym telefonie. */
+@media (max-width: 389px) {
+  .ms4-compare__head,
+  .ms4-compare__row { grid-template-columns: 1fr 60px 60px; }
+}
+
+/* --- ekran po zakupie ----------------------------------------------------- */
+.ms4-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-8) var(--s-5);
+  text-align: center;
+}
+.ms4-success__mark {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--r-pill);
+  background: var(--c-good-soft);
+  color: var(--c-good);
+  animation: ms4-success-pop var(--dur-slow) var(--ease) both;
+}
+.ms4-success__mark > svg { width: 48px; height: 48px; }
+@keyframes ms4-success-pop {
+  from { transform: scale(.7); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+
+/* ===========================================================================
+   5.Q  EKRAN KONTO — UKŁAD DESKTOPOWY
+   Do 1024 px trzy bloki stoją jeden pod drugim. Wyżej kolumna treści ma
+   1180 px i bez siatki przełącznik odjeżdżałby o metr od etykiety, a próbka
+   koloru pływała w pustce — czyli dokładnie „rozciągnięty telefon".
+   =========================================================================== */
+@media (min-width: 1024px) {
+  .ms4-view[data-view="account"] > .ms4-view__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    gap: var(--s-5);
+    align-items: start;
+    grid-template-areas:
+      "profile  sub"
+      "settings sub";
+  }
+  .ms4-view[data-view="account"] > .ms4-view__inner > .ms4-account__profile { grid-area: profile; }
+  .ms4-view[data-view="account"] > .ms4-view__inner > .ms4-account__sub {
+    grid-area: sub;
+    position: sticky;
+    top: calc(var(--h-topbar) + var(--s-4));
+  }
+  .ms4-view[data-view="account"] > .ms4-view__inner > .ms4-account__settings { grid-area: settings; }
+
+  /* Formanty mają swoją naturalną szerokość — rozciąganie ich na całą kolumnę
+     psuje związek etykiety z wartością. Ograniczenie dotyczy WYŁĄCZNIE ekranu
+     KONTO; te same klasy w arkuszach mają własne, węższe otoczenie. */
+  .ms4-view[data-view="account"] .ms4-providers { max-width: 420px; }
+  .ms4-view[data-view="account"] .ms4-themepick,
+  .ms4-view[data-view="account"] .ms4-swatches { max-width: 560px; }
+  .ms4-view[data-view="account"] .ms4-row { max-width: 640px; }
+}
+@media (min-width: 1440px) {
+  .ms4-view[data-view="account"] > .ms4-view__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+  }
+}
+
+
+/* ===========================================================================
+   OGRANICZONY RUCH — jedyne !important w tym pliku (SPEC 8.1).
+   Wjazdy zamieniamy na samo pojawienie się; animacje w pętli gasną.
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .ms4-measure__error { animation: none !important; }
+  .ms4-success__mark { animation: none !important; }
+  .ms4-provider.is-loading::after { animation: ms4-spinner-fade 1.4s ease-in-out infinite !important; }
+  .ms4-zonebar__seg,
+  .ms4-coverage__seg,
+  .ms4-miniscale__needle { transition: none !important; }
+}
+:root[data-motion="reduced"] .ms4-measure__error { animation: none !important; }
+:root[data-motion="reduced"] .ms4-success__mark { animation: none !important; }
+:root[data-motion="reduced"] .ms4-provider.is-loading::after {
+  animation: ms4-spinner-fade 1.4s ease-in-out infinite !important;
+}
+:root[data-motion="reduced"] .ms4-zonebar__seg,
+:root[data-motion="reduced"] .ms4-coverage__seg,
+:root[data-motion="reduced"] .ms4-miniscale__needle { transition: none !important; }

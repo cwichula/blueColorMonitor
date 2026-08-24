@@ -1,6 +1,7 @@
 # Monitoring Światła Szkodliwego — instrukcja uruchomienia
 
-Aplikacja jest w folderze `docs/`. To progresywna aplikacja webowa (PWA) —
+Witryna jest w folderze `docs/`, a poszczególne wersje interfejsu w jego
+podkatalogach `docs/v1` … `docs/v5`. To progresywna aplikacja webowa (PWA) —
 zwykła strona, którą Chrome na Androidzie potrafi „zainstalować" jak normalną
 appkę (ikona na ekranie głównym, pełny ekran, działa offline). Dzięki temu:
 
@@ -25,7 +26,9 @@ Nie trzeba niczego instalować — w repozytorium jest gotowy skrypt
    ```powershell
    powershell -ExecutionPolicy Bypass -File serve.ps1
    ```
-3. Wejdź w przeglądarce (Chrome/Edge) na `http://localhost:8000/`.
+3. Wejdź w przeglądarce (Chrome/Edge) na `http://localhost:8000/`. Ten adres
+   otwiera stronę rozgałęzienia z listą wersji — wersja 1 jest pod
+   `http://localhost:8000/v1/`.
 4. Kliknij „Start" i zezwól na dostęp do kamery.
 
 Zatrzymanie serwera: `Ctrl+C` w tym oknie PowerShell.
@@ -73,11 +76,19 @@ Pages** — nie wymaga żadnej płatnej usługi, adres zostaje na stałe.
 
 ### Krok 3 — otwórz ten adres w Chrome na telefonie
 
-1. Wpisz adres z kroku 2 w Chrome na Xiaomi/Ulefone.
+1. Wpisz adres z kroku 2 w Chrome na Xiaomi/Ulefone. Sam adres otwiera stronę
+   rozgałęzienia z listą wersji — dopisz katalog wersji, żeby wejść do
+   aplikacji: `…/blueColorMonitor/v1/` (wersja 1) albo `…/blueColorMonitor/v5/`
+   (najnowsza). Dalsze kroki dotyczą adresu **z katalogiem wersji**.
 2. Zezwól na dostęp do kamery, gdy przeglądarka o to zapyta.
 3. Sprawdź, czy wszystko działa (gałka, wykres, przełączanie kamer).
 
 ### Krok 4 — „zainstaluj" jako appkę
+
+Instalować trzeba **z adresu konkretnej wersji** (`…/v1/`, `…/v5/`) — tylko
+katalogi wersji mają własny `manifest.webmanifest` i service workera. Strona
+rozgałęzienia pod adresem głównym nie ma ani jednego, ani drugiego, więc się
+nie zainstaluje.
 
 1. W Chrome dotknij menu (⋮) w prawym górnym rogu.
 2. Wybierz **„Dodaj do ekranu głównego"** (może się też pojawić jako baner
@@ -96,8 +107,11 @@ Jeśli zamiast linku chcesz wysłać znajomemu gotowy plik do kliknięcia, z
 ikoną lądującą prosto na ekranie głównym — spakuj apkę w .apk przez darmowe
 narzędzie **[PWABuilder](https://www.pwabuilder.com/)**:
 
-1. Wejdź na pwabuilder.com, wklej adres z Kroku 2
-   (`https://<twoja-nazwa>.github.io/blueColorMonitor/`) i kliknij **Start**.
+1. Wejdź na pwabuilder.com, wklej adres **wybranej wersji** — czyli adres z
+   Kroku 2 z dopisanym katalogiem, np.
+   `https://<twoja-nazwa>.github.io/blueColorMonitor/v1/` — i kliknij **Start**.
+   Pod samym adresem głównym stoi strona rozgałęzienia, w której PWABuilder nie
+   znajdzie ani manifestu, ani service workera.
 2. Poczekaj, aż PWABuilder przeanalizuje stronę (sprawdzi manifest i service
    worker — oba już mamy gotowe).
 3. W sekcji **Android** kliknij **Generate Package**. Zostaw domyślne
@@ -170,7 +184,7 @@ Pełne wyjaśnienie jest też w aplikacji pod ikoną „i" w nagłówku.
 |---|---|
 | „Nie udało się uruchomić kamery" na telefonie | Sprawdź, czy adres zaczyna się od `https://` (nie `http://`). Sprawdź uprawnienia kamery dla Chrome w ustawieniach systemowych Androida. |
 | Kamera nie działa na PC pod `http://localhost:8000` | To nie powinno się zdarzyć — `localhost` jest zawsze bezpiecznym kontekstem. Sprawdź, czy inna aplikacja (Zoom, Teams) nie trzyma kamery zajętej. |
-| Po zmianach w kodzie telefon/przeglądarka pokazuje starą wersję | Aplikacja cache'uje pliki offline. Podnieś numer w `const CACHE_NAME` w `docs/sw.js` (np. na kolejną wersję) i odśwież stronę — wymusi to pobranie nowej wersji. Po wypchnięciu zmian przez GitHub Desktop odczekaj chwilę na przebudowanie GitHub Pages. |
+| Po zmianach w kodzie telefon/przeglądarka pokazuje starą wersję | Aplikacja cache'uje pliki offline. Podnieś numer w `const CACHE_NAME` w `docs/v1/sw.js` (np. na kolejną wersję) i odśwież stronę — wymusi to pobranie nowej wersji. Po wypchnięciu zmian przez GitHub Desktop odczekaj chwilę na przebudowanie GitHub Pages. |
 | Apka .apk od PWABuilder nie chce się zainstalować | Sprawdź w ustawieniach Androida, czy dla aplikacji, przez którą wysłano plik (WhatsApp/przeglądarka), włączona jest opcja „Zainstaluj nieznane aplikacje". |
 
 ---
@@ -207,7 +221,7 @@ płatne jest zamienianie pomiaru w dane.**
 Cennik (fikcyjny): 149,99 zł dożywotnio (plan domyślnie zaznaczony), 79,99 zł rocznie
 z 7-dniowym okresem próbnym, 19,99 zł miesięcznie, 12,99 zł za samo usunięcie reklam.
 
-Cennik jest zapisany **wyłącznie** w katalogu w `docs/billing.js`. Karty planów, blok
+Cennik jest zapisany **wyłącznie** w katalogu w `docs/v1/billing.js`. Karty planów, blok
 warunków, etykieta przycisku zakupu i podsumowanie w arkuszu płatności biorą kwoty
 z `Billing.formatPrice()`, `Billing.formatTerms()` i `Billing.formatCta()`, więc kod
 promocyjny zmienia je wszystkie naraz i nigdzie nie zostaje kwota, której silnik nie
@@ -302,7 +316,7 @@ nigdy nie schodzą poniżej 16 px i nigdy nie używają koloru `--text-muted`.
 
 ### 5.4. Gdzie dokładnie podmienić atrapę na prawdziwy Google Play Billing
 
-**Plik: `docs/billing.js`. Obiekt: `MockBillingBackend`.**
+**Plik: `docs/v1/billing.js`. Obiekt: `MockBillingBackend`.**
 
 Cała fikcja jest zamknięta w jednym obiekcie, otoczonym w pliku komentarzami
 `FICTIONAL LAYER` i `END OF FICTIONAL LAYER`. Zawiera on katalog produktów,
@@ -392,7 +406,7 @@ Wielkość liter nie ma znaczenia, spacje są obcinane, każdy kod działa tylko
    (`AppTabs.redraw()` po każdym odsłonięciu panelu).
 7. Tryb prywatny przeglądarki (rzucający `localStorage`) nie wywala aplikacji.
 8. Po wyczyszczeniu pamięci i przeładowaniu offline aplikacja startuje na nowym
-   cache — pamiętaj o podniesieniu `CACHE_NAME` w `docs/sw.js` (obecnie
+   cache — pamiętaj o podniesieniu `CACHE_NAME` w `docs/v1/sw.js` (obecnie
    `blue-monitor-v24`) przy każdej zmianie plików z `APP_SHELL`.
 9. Escape przy otwartym dialogu zamyka **tylko dialog** i zostawia użytkownika na
    tym samym ekranie; dopiero drugie Escape opuszcza ekran nakładkowy.
@@ -433,24 +447,38 @@ Scenariusz przejścia całości (od pustego `localStorage`):
 
 ```
 docs/
-  index.html            — struktura strony (panele: Kamera, Monitoring, Dokumentacja,
-                          Premium, Konto, Więcej, O aplikacji)
-  style.css             — wygląd, motyw jasny/ciemny, strefy kolorów
-  monetization.css      — style warstwy monetyzacji i dolnego menu; korzysta wyłącznie
-                          z tokenów kolorów zdefiniowanych w style.css
-  app.js                — obsługa kamery, próbkowanie koloru, wykres, gałka;
-                          publikuje window.AppTabs i window.AppData
-  billing.js            — silnik uprawnień i ATRAPA sklepu (window.Billing).
-                          TO JEST PLIK DO PODMIANY NA PRAWDZIWY GOOGLE PLAY BILLING
-  monetization-ui.js    — ekrany Premium/Konto, dialogi płatności, zgody i reklam,
-                          atrapy banerów, upselle (window.MonetizationUI)
-  menu.js               — dolny pasek nawigacji, ekrany „Więcej" i „O aplikacji",
-                          routing, obsługa klawiatury (window.AppNav)
-  manifest.webmanifest  — metadane instalacji PWA (nazwa, ikony, kolory)
-  sw.js                 — service worker (działanie offline po instalacji)
+  index.html            — strona rozgałęzienia: lista wersji interfejsu (v1 … v5)
+  sw.js                 — service worker w korzeniu; sprząta po starej rejestracji
+                          z czasów, gdy wersja 1 leżała bezpośrednio w docs/
   serve.ps1             — lokalny serwer testowy (Windows, bez instalacji)
-  icons/                — ikony aplikacji (192px, 512px, wersja maskowalna)
+  icons/                — ikony aplikacji (192px, 512px, wersja maskowalna),
+                          wspólne dla wszystkich wersji
+  v1/
+    index.html            — struktura strony (panele: Kamera, Monitoring, Dokumentacja,
+                            Premium, Konto, Więcej, O aplikacji)
+    style.css             — wygląd, motyw jasny/ciemny, strefy kolorów
+    monetization.css      — style warstwy monetyzacji i dolnego menu; korzysta wyłącznie
+                            z tokenów kolorów zdefiniowanych w style.css
+    app.js                — obsługa kamery, próbkowanie koloru, wykres, gałka;
+                            publikuje window.AppTabs i window.AppData
+    billing.js            — silnik uprawnień i ATRAPA sklepu (window.Billing).
+                            TO JEST PLIK DO PODMIANY NA PRAWDZIWY GOOGLE PLAY BILLING
+    monetization-ui.js    — ekrany Premium/Konto, dialogi płatności, zgody i reklam,
+                            atrapy banerów, upselle (window.MonetizationUI)
+    menu.js               — dolny pasek nawigacji, ekrany „Więcej" i „O aplikacji",
+                            routing, obsługa klawiatury (window.AppNav)
+    manifest.webmanifest  — metadane instalacji PWA (nazwa, ikony, kolory)
+    sw.js                 — service worker (działanie offline po instalacji)
+  v2/                   — kolejna, niezależna wersja interfejsu
+  v3/                   — j.w.
+  v4/                   — j.w.
+  v5/                   — najnowsza wersja; moduły ES, katalogi css/ i js/,
+                          kontrakt implementacyjny w CONTRACT.md
 ```
+
+Każda wersja (`v1` … `v5`) jest samodzielna: ma własny `index.html`, własny
+`manifest.webmanifest` i własnego service workera o zasięgu swojego katalogu,
+a ikony bierze ze wspólnego `../icons/`.
 
 Kolejność wczytywania skryptów w `index.html` jest ISTOTNA i nie wolno jej zmieniać:
 

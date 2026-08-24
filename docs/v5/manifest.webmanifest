@@ -1,0 +1,44 @@
+{
+  "name": "Monitor Światła",
+  "short_name": "Monitor Światła",
+  "description": "Mierzy kamerą siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Liczy wszystko na urządzeniu, działa offline i niczego nie wysyła do sieci. Konto i płatności są symulacją interfejsu.",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "lang": "pl",
+  "dir": "ltr",
+  "categories": ["utilities", "health", "productivity"],
+  "background_color": "#eff2f8",
+  "theme_color": "#eff2f8",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pomiar",
+      "short_name": "Pomiar",
+      "description": "Wskaźnik wielkości wiodącej i kafelki pozostałych sześciu.",
+      "url": "./index.html#/measure",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Historia",
+      "short_name": "Historia",
+      "description": "Przebieg pomiaru w czasie, od minuty do trzydziestu dni.",
+      "url": "./index.html#/history",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Narzędzia",
+      "short_name": "Narzędzia",
+      "description": "Wygląd, progi stref, kalibracja i eksport danych.",
+      "url": "./index.html#/tools",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

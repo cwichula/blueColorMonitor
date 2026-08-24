@@ -89,7 +89,10 @@ while ($listener.IsListening) {
   $response = $context.Response
   try {
     $path = $request.Url.AbsolutePath
-    if ($path -eq '/') { $path = '/index.html' }
+    # Serve index.html for ANY directory path, not just the root. Without this
+    # a subdirectory app (docs/v2/) 404s locally while working fine on GitHub
+    # Pages, which sends the developer hunting a bug that only exists here.
+    if ($path.EndsWith('/')) { $path = $path + 'index.html' }
     $filePath = Join-Path $root ($path.TrimStart('/'))
 
     Write-Output ("{0}  {1}" -f (Get-Date -Format 'HH:mm:ss'), $path)

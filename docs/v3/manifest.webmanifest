@@ -1,0 +1,37 @@
+{
+  "name": "Monitor Światła",
+  "short_name": "Monitor Światła",
+  "description": "Mierzy kamerą telefonu siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Działa offline i niczego nie wysyła do sieci. Konto i płatności są symulacją interfejsu.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "lang": "pl",
+  "dir": "ltr",
+  "categories": ["utilities", "productivity"],
+  "background_color": "#DCE0E6",
+  "theme_color": "#DCE0E6",
+  "icons": [
+    { "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Rejestrator",
+      "short_name": "Rejestrator",
+      "description": "Przebieg pomiaru w czasie, od minuty do trzydziestu dni.",
+      "url": "./?modul=01",
+      "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Dokumentacja",
+      "short_name": "Dokumentacja",
+      "description": "Czym ten pomiar jest, a czym na pewno nie jest.",
+      "url": "./?modul=12",
+      "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

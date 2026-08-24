@@ -1,0 +1,366 @@
+/* tokens.css — jedyne źródło wartości wizualnych Monitora Światła v5.
+   JĘZYK WIZUALNY: "spokojny przyrząd". Aplikacja ma wyglądać jak precyzyjne
+   narzędzie pomiarowe, nie jak kolorowa zabawka i nie jak panel administracyjny.
+   1. Warstwowość zamiast ramek: karty odróżnia jasność powierzchni i miękki
+      cień; obwódka to ostateczność (w ciemnym motywie zastępuje cień).
+   2. Geometria spójna i obła: promienie 10–28 px, kafelek metryki ma ten sam
+      promień co karta, w której leży.
+   3. Motyw jasny: tło prawie białe z chłodnym podbiciem, karty czysto białe —
+      uniesienie niosą cienie, nie jaśniejszy odcień. Motyw ciemny nigdy nie jest
+      czarny: głęboki granatowoszary, karty o stopień jaśniejsze.
+   4. Kolor jest sygnałem: akcent tylko na elementach interaktywnych i na
+      wielkości wiodącej, barwy stref tylko na wskaźnikach. Reszta neutralna.
+   5. Typografia niesie hierarchię: odczyt-bohater do ~64 px, cyfry tabularne
+      wszędzie, żeby liczba nie skakała przy aktualizacji 10 razy na sekundę.
+   6. Ruch krótki (≤ 320 ms), wyłącznie na opacity i transform.
+
+   BUDOWA PLIKU (ważne dla tych, którzy dopisują kolory):
+   surowe barwy żyją w paletach --p-* (jasna) i --pd-* (ciemna) w gołym :root.
+   Motywy tylko *przypisują* je do tokenów semantycznych, więc żaden kolor nie
+   ma jedynej definicji w media query, a przełącznik motywu działa w obie
+   strony. Ciemna paleta jest przypisana dwukrotnie: w
+   @media (prefers-color-scheme: dark) :root:not([data-theme="light"])
+   oraz w :root[data-theme="dark"]. Te dwie listy muszą pozostać identyczne. */
+
+/* ---------------------------------------------------------------- palety */
+:root {
+  /* Paleta jasna. Zmierzony kontrast: --text-1 ≥ 15:1, --text-2 ≥ 6,8:1,
+     --text-3 ≥ 4,7:1 na --surface-0 i --surface-1. */
+  --p-surface-0: #eff2f8;
+  --p-surface-1: #ffffff;
+  --p-surface-2: #ffffff;
+  --p-surface-3: #ffffff;
+  --p-surface-sunken: #e4e9f1;
+  --p-surface-scrim: rgba(13, 20, 33, .46);
+  --p-text-1: #111a2b;
+  --p-text-2: #48566d;
+  --p-text-3: #616e85;
+  --p-line-1: #e6eaf1;
+  --p-line-2: #d3dae5;
+  --p-line-strong: #7e8ca2;
+
+  /* Strefy: zieleń przesunięta w morski, ostrzeżenie w czyste złoto, alarm
+     w karminową czerwień — trzy różne jasności i trzy różne odcienie, więc
+     przy deuteranopii nadal się rozchodzą. Kolor i tak nigdy nie stoi sam:
+     każdy element strefowy ma etykietę słowną. */
+  --p-zone-good: #0e7355;
+  --p-zone-good-soft: rgba(14, 115, 85, .13);
+  --p-zone-good-on: #ffffff;
+  --p-zone-warn: #8f5d00;
+  --p-zone-warn-soft: rgba(143, 93, 0, .14);
+  --p-zone-warn-on: #ffffff;
+  --p-zone-crit: #c02640;
+  --p-zone-crit-soft: rgba(192, 38, 64, .13);
+  --p-zone-crit-on: #ffffff;
+  --p-zone-none: #5f6b84;
+  --p-zone-none-soft: rgba(95, 107, 132, .13);
+
+  /* Paleta ciemna: granatowoszary, nie czarny. */
+  --pd-surface-0: #0f1622;
+  --pd-surface-1: #18202f;
+  --pd-surface-2: #212a3b;
+  --pd-surface-3: #293346;
+  --pd-surface-sunken: #0b111b;
+  --pd-surface-scrim: rgba(4, 8, 14, .64);
+  --pd-text-1: #eef2f8;
+  --pd-text-2: #aab6c9;
+  --pd-text-3: #8e9cb1;
+  --pd-line-1: #27303f;
+  --pd-line-2: #333e50;
+  --pd-line-strong: #6d7b91;
+
+  /* W ciemnym motywie strefy są jaśniejsze od tła, więc tekst NA nich jest
+     atramentowy — stąd inne wartości --*-on niż w palecie jasnej. */
+  --pd-zone-good: #41d3a7;
+  --pd-zone-good-soft: rgba(65, 211, 167, .16);
+  --pd-zone-good-on: #04160f;
+  --pd-zone-warn: #f0b93f;
+  --pd-zone-warn-soft: rgba(240, 185, 63, .16);
+  --pd-zone-warn-on: #1c1302;
+  --pd-zone-crit: #ff6d84;
+  --pd-zone-crit-soft: rgba(255, 109, 132, .16);
+  --pd-zone-crit-on: #2b0710;
+  --pd-zone-none: #8998ae;
+  --pd-zone-none-soft: rgba(137, 152, 174, .15);
+}
+
+/* ------------------------------------------------- akcenty (data-accent)
+   Każdy wariant wnosi dwa komplety: --al-* dla motywu jasnego i --ad-* dla
+   ciemnego. W jasnym akcent jest ciemniejszy od tła i ma biały tekst, w
+   ciemnym jaśniejszy i tekst atramentowy. "ocean" siedzi także w gołym
+   :root, bo jest domyślny i musi działać bez atrybutu. */
+:root,
+:root[data-accent="ocean"] {
+  --al-accent: #0b5fd0;
+  --al-accent-hover: #0a52b4;
+  --al-accent-press: #084697;
+  --al-accent-soft: rgba(11, 95, 208, .12);
+  --al-accent-on: #ffffff;
+  --al-accent-ring: rgba(11, 95, 208, .40);
+  --ad-accent: #79b4ff;
+  --ad-accent-hover: #96c5ff;
+  --ad-accent-press: #b2d5ff;
+  --ad-accent-soft: rgba(121, 180, 255, .16);
+  --ad-accent-on: #06172d;
+  --ad-accent-ring: rgba(121, 180, 255, .48);
+}
+:root[data-accent="violet"] {
+  --al-accent: #6636cf;
+  --al-accent-hover: #5a2eb8;
+  --al-accent-press: #4d279e;
+  --al-accent-soft: rgba(102, 54, 207, .12);
+  --al-accent-on: #ffffff;
+  --al-accent-ring: rgba(102, 54, 207, .40);
+  --ad-accent: #b39bff;
+  --ad-accent-hover: #c4b1ff;
+  --ad-accent-press: #d4c6ff;
+  --ad-accent-soft: rgba(179, 155, 255, .16);
+  --ad-accent-on: #150a2e;
+  --ad-accent-ring: rgba(179, 155, 255, .48);
+}
+:root[data-accent="amber"] {
+  --al-accent: #8a5a06;
+  --al-accent-hover: #774d04;
+  --al-accent-press: #654003;
+  --al-accent-soft: rgba(138, 90, 6, .13);
+  --al-accent-on: #ffffff;
+  --al-accent-ring: rgba(138, 90, 6, .40);
+  --ad-accent: #e9b45c;
+  --ad-accent-hover: #f0c377;
+  --ad-accent-press: #f5d091;
+  --ad-accent-soft: rgba(233, 180, 92, .16);
+  --ad-accent-on: #1e1503;
+  --ad-accent-ring: rgba(233, 180, 92, .46);
+}
+:root[data-accent="mint"] {
+  --al-accent: #0a6f5c;
+  --al-accent-hover: #085e4e;
+  --al-accent-press: #064e41;
+  --al-accent-soft: rgba(10, 111, 92, .13);
+  --al-accent-on: #ffffff;
+  --al-accent-ring: rgba(10, 111, 92, .40);
+  --ad-accent: #4fd3ae;
+  --ad-accent-hover: #6fdcbe;
+  --ad-accent-press: #8ee5cd;
+  --ad-accent-soft: rgba(79, 211, 174, .16);
+  --ad-accent-on: #031914;
+  --ad-accent-ring: rgba(79, 211, 174, .46);
+}
+:root[data-accent="rose"] {
+  --al-accent: #b31552;
+  --al-accent-hover: #9b1146;
+  --al-accent-press: #840d3a;
+  --al-accent-soft: rgba(179, 21, 82, .12);
+  --al-accent-on: #ffffff;
+  --al-accent-ring: rgba(179, 21, 82, .40);
+  --ad-accent: #ff8aa6;
+  --ad-accent-hover: #ffa1b8;
+  --ad-accent-press: #ffb8c9;
+  --ad-accent-soft: rgba(255, 138, 166, .16);
+  --ad-accent-on: #2b0712;
+  --ad-accent-ring: rgba(255, 138, 166, .48);
+}
+
+/* ----------------------------------------------- motyw jasny (domyślny) */
+:root {
+  --surface-0: var(--p-surface-0);
+  --surface-1: var(--p-surface-1);
+  --surface-2: var(--p-surface-2);
+  --surface-3: var(--p-surface-3);
+  --surface-sunken: var(--p-surface-sunken);
+  --surface-scrim: var(--p-surface-scrim);
+  --text-1: var(--p-text-1);
+  --text-2: var(--p-text-2);
+  --text-3: var(--p-text-3);
+  --line-1: var(--p-line-1);
+  --line-2: var(--p-line-2);
+  --line-strong: var(--p-line-strong);
+
+  --accent: var(--al-accent);
+  --accent-hover: var(--al-accent-hover);
+  --accent-press: var(--al-accent-press);
+  --accent-soft: var(--al-accent-soft);
+  --accent-on: var(--al-accent-on);
+  --accent-ring: var(--al-accent-ring);
+
+  --zone-good: var(--p-zone-good);
+  --zone-good-soft: var(--p-zone-good-soft);
+  --zone-good-on: var(--p-zone-good-on);
+  --zone-warn: var(--p-zone-warn);
+  --zone-warn-soft: var(--p-zone-warn-soft);
+  --zone-warn-on: var(--p-zone-warn-on);
+  --zone-crit: var(--p-zone-crit);
+  --zone-crit-soft: var(--p-zone-crit-soft);
+  --zone-crit-on: var(--p-zone-crit-on);
+  --zone-none: var(--p-zone-none);
+  --zone-none-soft: var(--p-zone-none-soft);
+
+  /* Uniesienie w jasnym motywie niosą wyłącznie cienie — bielej niż biel
+     powierzchni już nie będzie. */
+  --shadow-1: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .06);
+  --shadow-2: 0 2px 6px rgba(16, 24, 40, .07), 0 10px 24px rgba(16, 24, 40, .08);
+  --shadow-3: 0 6px 16px rgba(16, 24, 40, .10), 0 28px 60px rgba(16, 24, 40, .16);
+  --shadow-inset-line: none;
+}
+
+/* -------------------------------------------- motyw ciemny (systemowy) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-0: var(--pd-surface-0);
+    --surface-1: var(--pd-surface-1);
+    --surface-2: var(--pd-surface-2);
+    --surface-3: var(--pd-surface-3);
+    --surface-sunken: var(--pd-surface-sunken);
+    --surface-scrim: var(--pd-surface-scrim);
+    --text-1: var(--pd-text-1);
+    --text-2: var(--pd-text-2);
+    --text-3: var(--pd-text-3);
+    --line-1: var(--pd-line-1);
+    --line-2: var(--pd-line-2);
+    --line-strong: var(--pd-line-strong);
+
+    --accent: var(--ad-accent);
+    --accent-hover: var(--ad-accent-hover);
+    --accent-press: var(--ad-accent-press);
+    --accent-soft: var(--ad-accent-soft);
+    --accent-on: var(--ad-accent-on);
+    --accent-ring: var(--ad-accent-ring);
+
+    --zone-good: var(--pd-zone-good);
+    --zone-good-soft: var(--pd-zone-good-soft);
+    --zone-good-on: var(--pd-zone-good-on);
+    --zone-warn: var(--pd-zone-warn);
+    --zone-warn-soft: var(--pd-zone-warn-soft);
+    --zone-warn-on: var(--pd-zone-warn-on);
+    --zone-crit: var(--pd-zone-crit);
+    --zone-crit-soft: var(--pd-zone-crit-soft);
+    --zone-crit-on: var(--pd-zone-crit-on);
+    --zone-none: var(--pd-zone-none);
+    --zone-none-soft: var(--pd-zone-none-soft);
+
+    /* W ciemności cień prawie nie pracuje — uniesienie znaczy włosowa obwódka. */
+    --shadow-1: 0 0 0 1px rgba(255, 255, 255, .05), 0 1px 2px rgba(0, 0, 0, .45);
+    --shadow-2: 0 0 0 1px rgba(255, 255, 255, .06), 0 8px 20px rgba(0, 0, 0, .50);
+    --shadow-3: 0 0 0 1px rgba(255, 255, 255, .08), 0 24px 56px rgba(0, 0, 0, .62);
+    --shadow-inset-line: inset 0 0 0 1px rgba(255, 255, 255, .05);
+  }
+}
+
+/* ------------------------------------- motyw ciemny (wybór użytkownika) */
+:root[data-theme="dark"] {
+  --surface-0: var(--pd-surface-0);
+  --surface-1: var(--pd-surface-1);
+  --surface-2: var(--pd-surface-2);
+  --surface-3: var(--pd-surface-3);
+  --surface-sunken: var(--pd-surface-sunken);
+  --surface-scrim: var(--pd-surface-scrim);
+  --text-1: var(--pd-text-1);
+  --text-2: var(--pd-text-2);
+  --text-3: var(--pd-text-3);
+  --line-1: var(--pd-line-1);
+  --line-2: var(--pd-line-2);
+  --line-strong: var(--pd-line-strong);
+
+  --accent: var(--ad-accent);
+  --accent-hover: var(--ad-accent-hover);
+  --accent-press: var(--ad-accent-press);
+  --accent-soft: var(--ad-accent-soft);
+  --accent-on: var(--ad-accent-on);
+  --accent-ring: var(--ad-accent-ring);
+
+  --zone-good: var(--pd-zone-good);
+  --zone-good-soft: var(--pd-zone-good-soft);
+  --zone-good-on: var(--pd-zone-good-on);
+  --zone-warn: var(--pd-zone-warn);
+  --zone-warn-soft: var(--pd-zone-warn-soft);
+  --zone-warn-on: var(--pd-zone-warn-on);
+  --zone-crit: var(--pd-zone-crit);
+  --zone-crit-soft: var(--pd-zone-crit-soft);
+  --zone-crit-on: var(--pd-zone-crit-on);
+  --zone-none: var(--pd-zone-none);
+  --zone-none-soft: var(--pd-zone-none-soft);
+
+  --shadow-1: 0 0 0 1px rgba(255, 255, 255, .05), 0 1px 2px rgba(0, 0, 0, .45);
+  --shadow-2: 0 0 0 1px rgba(255, 255, 255, .06), 0 8px 20px rgba(0, 0, 0, .50);
+  --shadow-3: 0 0 0 1px rgba(255, 255, 255, .08), 0 24px 56px rgba(0, 0, 0, .62);
+  --shadow-inset-line: inset 0 0 0 1px rgba(255, 255, 255, .05);
+}
+
+/* ----------------------------------------------------- rytm i geometria */
+:root {
+  /* --density mnoży cały rytm; "compact" ściska go o 25 %. */
+  --density: 1;
+
+  --sp-1: calc(4px * var(--density));
+  --sp-2: calc(8px * var(--density));
+  --sp-3: calc(12px * var(--density));
+  --sp-4: calc(16px * var(--density));
+  --sp-5: calc(20px * var(--density));
+  --sp-6: calc(24px * var(--density));
+  --sp-7: calc(32px * var(--density));
+  --sp-8: calc(48px * var(--density));
+
+  /* Promienie zostają stałe także w trybie zwartym — geometria przyrządu nie
+     zmienia charakteru od tego, że interfejs się zagęszcza. */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+}
+:root[data-density="compact"] { --density: .75; }
+
+/* ---------------------------------------------------------- typografia */
+:root {
+  /* --text-scale mnoży każdy rozmiar; jednostki rem zostawiają w grze
+     ustawienie rozmiaru czcionki w przeglądarce. */
+  --text-scale: 1;
+
+  --ff-sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --ff-num: ui-monospace, "SF Mono", "Segoe UI Mono", Menlo, monospace;
+
+  --fs-display: calc(clamp(2.5rem, 4.5vw + 1.5rem, 4rem) * var(--text-scale));
+  --fs-h1: calc(clamp(1.5rem, 1.2vw + 1.2rem, 1.875rem) * var(--text-scale));
+  --fs-h2: calc(clamp(1.25rem, .8vw + 1.05rem, 1.5rem) * var(--text-scale));
+  --fs-h3: calc(clamp(1.0625rem, .4vw + .95rem, 1.1875rem) * var(--text-scale));
+  --fs-body: calc(1rem * var(--text-scale));
+  --fs-sm: calc(.875rem * var(--text-scale));
+  --fs-xs: calc(.75rem * var(--text-scale));
+
+  --lh-tight: 1.15;
+  --lh-normal: 1.55;
+}
+:root[data-text-scale="1.15"] { --text-scale: 1.15; }
+:root[data-text-scale="1.3"] { --text-scale: 1.3; }
+
+/* ---------------------------------------------------------------- ruch */
+:root {
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --ease-out: cubic-bezier(.2, .8, .3, 1);
+  --ease-in-out: cubic-bezier(.4, 0, .2, 1);
+}
+/* Wygaszamy czasy trwania, a nie same przejścia: cały interfejs animuje przez
+   --dur-*, więc jedno miejsce wystarczy i nigdzie nie trzeba !important. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1: 1ms; --dur-2: 1ms; --dur-3: 1ms; }
+}
+:root[data-motion="reduced"] { --dur-1: 1ms; --dur-2: 1ms; --dur-3: 1ms; }
+
+/* -------------------------------------------------------------- layout */
+:root {
+  --tap: 44px;
+  --content-max: min(760px, 100%);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+
+  /* Wysokości powłoki trzymamy w tokenach, bo arkusze i przyklejone paski
+     z components.css muszą się o nie opierać. */
+  --topbar-h: 56px;
+  --tabbar-h: 60px;
+  --sidenav-w: 232px;
+  --bp-wide: 900px;
+}

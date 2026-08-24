@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<!-- viewport-fit=cover so env(safe-area-inset-*) has something to read on a
+     notched phone. user-scalable is deliberately NOT disabled: the audience of
+     this application zooms, and chapter 4.9 designs for 200%. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Monitor Światła — pomiar siedmiu wielkości światła kamerą telefonu. Działa offline, bez wysyłania czegokolwiek do sieci.">
+<meta name="color-scheme" content="light dark">
+<!-- Painted by the browser behind the page before the stylesheet applies, so
+     the flash on launch matches the faceplate the user is about to get.
+     Values are --ms3-plate from tokens.css, light and dark. -->
+<meta name="theme-color" content="#DCE0E6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0B0E13" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Monitor Światła">
+<title>Monitor Światła</title>
+
+<link rel="manifest" href="manifest.webmanifest">
+<!-- The icons live one level up and are shared with the earlier versions; this
+     version does not duplicate binary files. -->
+<link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="components.css">
+
+<script>
+/* The only inline script in the application. It writes three attributes before
+   the first paint — without it a user who chose the dark faceplate gets a white
+   flash on every launch. It reads, it never writes: shell.js owns the key. */
+(function () {
+  try {
+    var raw = localStorage.getItem('ms3.settings.v1');
+    var s = raw ? JSON.parse(raw) : null;
+    var d = document.documentElement;
+    if (!s) return;
+    if (s.theme === 'light' || s.theme === 'dark') d.setAttribute('data-theme', s.theme);
+    if (s.textScale === 1.15 || s.textScale === 1.3) d.setAttribute('data-text-scale', String(s.textScale));
+    if (s.motion === 'reduced') d.setAttribute('data-motion', 'reduced');
+  } catch (e) { /* private mode throws on read too: the media queries decide, which is also correct */ }
+}());
+</script>
+</head>
+<body>
+
+<noscript>Monitor Światła wymaga włączonej obsługi JavaScriptu — bez niej kamera nie ruszy i żadna liczba się nie pojawi.</noscript>
+
+<!-- ===================================================================
+     POWŁOKA — kolejność z rozdziału 4.7 specyfikacji, wiążąca.
+     ===================================================================
+     This file owns the static skeleton and nothing else. Every value, every
+     band and every sentence that changes is written by dash.js; the modules
+     and sheets are built into #ms3Screens and #ms3Sheets by shell.js. Two
+     owners of one node was the mistake of version 1 and is not repeated here.
+
+     #ms3Desk is the LAST child of #ms3App. That is not a preference: it is what
+     makes the STOP key impossible to cover (chapter 1, rule 7).
+     =================================================================== -->
+
+<div class="ms3-app" id="ms3App">
+
+  <!-- BLOK A — LISTWA STANU (4.2). Children stay flat: the ID contract lists
+       them as direct children of the rail. -->
+  <header class="ms3-rail" id="ms3Rail">
+    <span class="ms3-rail__name" id="ms3RailName">Monitor Światła</span>
+    <span class="ms3-rail__dot" id="ms3StateDot" data-state="idle" aria-hidden="true"></span>
+    <span class="ms3-rail__state" id="ms3StateText">Gotowy</span>
+    <span class="ms3-rail__hz" id="ms3Hz">5,0 Hz</span>
+    <!-- Warm-up progress line: visible only through the first 3 s of a
+         measurement, driven by dash.js through a custom property. -->
+    <div class="ms3-rail__warmup" id="ms3Warmup" aria-hidden="true" hidden></div>
+  </header>
+
+  <main class="ms3-dash" id="ms3Dash">
+
+    <!-- BLOK BŁĘDU (5.15). Slides in above the well, never a modal: a modal
+         would cover the measurement and demand dismissal before it is read.
+         The text comes verbatim from engine:error.messagePL. -->
+    <div class="ms3-errata" id="ms3Errata" role="alert" hidden>
+      <span class="ms3-errata__title">Błąd kamery</span>
+      <p class="ms3-errata__text" id="ms3ErrataText"></p>
+      <button class="ms3-key ms3-key--ghost ms3-errata__retry" type="button" id="ms3ErrataRetry">Spróbuj ponownie</button>
+    </div>
+
+    <!-- BLOK B — STUDNIA ODCZYTU (4.3, 5.1). Fixed height, never scrolls. -->
+    <!-- dash.js jest jedynym właścicielem nazwy dostępnej tej sekcji: wpisuje w
+         aria-label liczbę, jednostkę i słowo strefy. aria-labelledby miałoby
+         pierwszeństwo i skasowałoby ten komunikat. -->
+    <section class="ms3-readout" id="ms3Readout">
+      <div class="ms3-readout__head">
+        <span class="ms3-legend">Kanał główny</span>
+        <span class="ms3-legend ms3-legend--strong" id="ms3ReadoutName">Udział niebieskiego</span>
+        <button class="ms3-help" type="button" id="ms3Help" aria-label="Co oznacza: Udział niebieskiego">?</button>
+      </div>
+
+      <!-- The comment padding between the spans removes the whitespace between
+           inline boxes: "27" and "%" must sit flush, and a space here would be
+           a real, visible one. -->
+      <p class="ms3-readout__value" id="ms3ReadoutValue">
+        <span class="ms3-readout__approx" id="ms3Approx" aria-hidden="true" hidden>≈</span><!--
+     --><span class="ms3-readout__num" id="ms3Num" data-empty="true">—</span><!--
+     --><span class="ms3-readout__unit" id="ms3Unit">%</span>
+      </p>
+
+      <p class="ms3-stamp ms3-stamp--none" id="ms3Stamp">
+        <span class="ms3-shape ms3-shape--none" id="ms3StampShape" aria-hidden="true"></span>
+        <span class="ms3-stamp__word" id="ms3StampWord">Brak danych</span>
+        <span class="ms3-stamp__threshold" id="ms3StampThreshold"></span>
+      </p>
+
+      <p class="ms3-verdict" id="ms3Verdict">Naciśnij „Start pomiaru”, skieruj telefon na oświetloną powierzchnię i trzymaj nieruchomo kilka sekund.</p>
+
+      <!-- SKALA (5.3, 6.1). Empty containers on purpose: bands, ticks and
+           labels depend on the metric and on the user's thresholds, so dash.js
+           fills them once per channel change, not on every sample. In the 5 Hz
+           loop only --ms3-pos on the needle track changes. -->
+      <div class="ms3-scale" id="ms3Scale" role="img" aria-label="Skala kanału głównego. Brak danych">
+        <div class="ms3-scale__bands" id="ms3Bands"></div>
+        <div class="ms3-scale__base" id="ms3Base"></div>
+        <div class="ms3-scale__ticks" id="ms3Ticks"></div>
+        <div class="ms3-scale__trace" id="ms3Trace" hidden></div>
+        <div class="ms3-needle-track" id="ms3NeedleTrack"><span class="ms3-needle" id="ms3Needle"></span></div>
+        <div class="ms3-scale__labels" id="ms3Labels"></div>
+      </div>
+
+      <p class="ms3-context" id="ms3Context">brak danych z ostatnich 60 s</p>
+    </section>
+
+    <!-- Jedyny obszar przewijany (4.1). -->
+    <div class="ms3-scroll" id="ms3Scroll">
+
+      <!-- BLOK C — LISTWA KANAŁÓW (4.4, 5.2). Rows are built by dash.js: the
+           set depends on which channel is currently in the well. -->
+      <div class="ms3-channels" id="ms3Channels" role="group" aria-label="Kanały pomiarowe"></div>
+
+      <!-- BLOK D — MONITOR KAMERY (4.5, 5.7). #cameraVideo, #cameraPlaceholder
+           and #cameraPlaceholderText are written here, in the markup, because
+           engine.js looks for them at DOMContentLoaded (9.2). There is exactly
+           one <video> in this application; the CELOWANIE screen moves this whole
+           panel with appendChild and hands it back. -->
+      <div class="ms3-monitor" id="ms3CameraPanel" data-state="expanded">
+        <span class="ms3-legend">Podgląd kontrolny</span>
+        <div class="ms3-monitor__frame" id="ms3MonitorFrame" style="aspect-ratio: 4 / 3">
+          <video id="cameraVideo" playsinline muted></video>
+          <!-- inset: 20% — exactly the rectangle engine.js samples (CROP_FRACTION 0.6),
+               true only while the frame keeps the stream's aspect ratio. -->
+          <div class="ms3-reticle" id="ms3Reticle" aria-hidden="true"></div>
+          <!-- Zwinięty monitor traci celownik, a plakietka mówi, że obraz jest
+               żywy, a nie zamrożoną miniaturą (4.5, 5.7). -->
+          <span class="ms3-badge ms3-badge--live ms3-monitor__badge" id="ms3MonitorBadge" hidden>Na żywo</span>
+          <!-- Only engine.js ever writes the text below. -->
+          <div class="ms3-monitor__placeholder" id="cameraPlaceholder"><p id="cameraPlaceholderText"></p></div>
+        </div>
+        <!-- Zwinięty do 96×96 px ten klawisz nakłada się na kadr i sam staje się
+             celem dotyku — nadal jest prawdziwym <button> z nazwą dostępną. -->
+        <button class="ms3-key ms3-key--ghost ms3-monitor__open" type="button" id="ms3MonitorOpen" aria-label="Powiększ podgląd">Powiększ podgląd</button>
+      </div>
+
+      <!-- NOTY (5.11, 8.4). The note about the limits of the method is never
+           collapsed and never hidden. -->
+      <div class="ms3-notes" id="ms3Notes">
+        <aside class="ms3-note ms3-note--limits">
+          <span class="ms3-note__title">Czym ten pomiar nie jest</span>
+          <p class="ms3-note__text">Aparat telefonu ma trzy szerokie kanały barwne i automatyczny balans bieli — nie mierzy widma. Temperatura barwowa i wpływ na rytm dobowy są przybliżeniami wyliczonymi z barw sRGB. Aplikacja dobrze pokazuje różnice i zmiany w czasie, nie zastępuje miernika i nie stawia żadnej diagnozy. Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.</p>
+        </aside>
+
+        <!-- Shown by dash.js when the lead channel is kelvin or melanopic. -->
+        <p class="ms3-note__legend" id="ms3ApproxNote" hidden>≈ wartość przybliżona — wyliczona z barw sRGB, nie z pomiaru widma.</p>
+        <!-- Shown by dash.js when kelvinReliable or flickerWithinRange is false;
+             it writes one of the two sentences from 8.4. -->
+        <p class="ms3-note__legend" id="ms3RangeNote" hidden></p>
+
+        <aside class="ms3-note ms3-note--warning" id="ms3FirstRun" hidden>
+          <span class="ms3-note__title">Uwaga</span>
+          <p class="ms3-note__text">Zacznij od klawisza „Start pomiaru” na dole ekranu. Kamera włączy się dopiero po naciśnięciu.</p>
+        </aside>
+      </div>
+
+    </div><!-- /#ms3Scroll -->
+  </main>
+
+  <!-- Moduły poziomu 2 i ekrany pełnoekranowe (SPIS MODUŁÓW, CELOWANIE). -->
+  <div class="ms3-screens" id="ms3Screens"></div>
+  <!-- Arkusze modalne. z-index niższy niż pulpit sterowania — zawsze. -->
+  <div class="ms3-sheets" id="ms3Sheets"></div>
+
+  <!-- Region live: najwyżej jeden komunikat na 2 sekundy, nigdy strumień liczb. -->
+  <p class="ms3-sr" id="ms3Live" aria-live="polite" aria-atomic="true"></p>
+
+  <!-- BLOK E — PULPIT STEROWANIA (4.6, 5.6). OSTATNIE dziecko powłoki. -->
+  <footer class="ms3-desk" id="ms3Desk">
+    <button class="ms3-key ms3-key--primary" type="button" id="ms3KeyMain">
+      <span class="ms3-key__icon" aria-hidden="true"></span>
+      <span class="ms3-key__label">Start pomiaru</span>
+    </button>
+    <button class="ms3-key ms3-key--square" type="button" id="ms3KeyFlip" aria-label="Przełącz kamerę przód/tył">
+      <span class="ms3-key__icon ms3-key__icon--flip" aria-hidden="true"></span>
+      <span class="ms3-key__label">Obróć</span>
+    </button>
+    <button class="ms3-key ms3-key--square" type="button" id="ms3KeyMenu" aria-label="Spis modułów">
+      <span class="ms3-key__icon ms3-key__icon--menu" aria-hidden="true"></span>
+      <span class="ms3-key__label">Menu</span>
+    </button>
+    <!-- 96×96 px reserved for the collapsed camera monitor, so it can never
+         land on top of a key (4.6). dash.js moves #ms3CameraPanel in here. -->
+    <div class="ms3-desk__monitor" id="ms3DeskMonitorSlot"></div>
+  </footer>
+
+</div><!-- /#ms3App -->
+
+<!-- Kolejność wiążąca (9.2). Bez defer: shell.js musi mieć powłokę i musi
+     skończyć przed engine.js, a boot.js jest zawsze ostatni. -->
+<script src="bus.js"></script>
+<script src="metrics.js"></script>
+<script src="scale.js"></script>
+<script src="shell.js"></script>
+<script src="engine.js"></script>
+<script src="dash.js"></script>
+<script src="recorder.js"></script>
+<script src="modules.js"></script>
+<script src="offer.js"></script>
+<script src="docs.js"></script>
+<script src="boot.js"></script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+/* screens.css — układy ekranów historii, narzędzi i konta Monitora Światła v5.
+   Ostatnia warstwa kaskady: tokens.css → base.css → components.css → ten plik.
+   Ani jednej wartości koloru wprost: wszystko z tokenów, więc oba motywy, pięć
+   akcentów, tryb zwarty (data-density) i skala tekstu (data-text-scale)
+   działają bez powtórek.
+
+   ROZSTRZYGNIĘCIE WŁASNOŚCI — EKRAN POMIARU NALEŻY DO js/screens/measure.js.
+   Ten arkusz powstał, zanim measure.js istniał, i opisywał zgadywany markup:
+   14 klas .m5-measure__*, z których ekran używa siedmiu, a jego własne reguły
+   siedzą w :where() (swoistość 0) i przegrywały tu z każdym zwykłym selektorem.
+   Skutek był widoczny: podgląd z kamery rozdymał się do połowy ekranu, kolumna
+   statusu wypadała poza kadr, a tarcza wskaźnika kurczyła się w dwukolumnowej
+   siatce, której measure.js nigdy nie budował.
+   Dlatego CAŁY układ ekranu pomiaru — kafelek podglądu z celownikiem, kolumna
+   statusu obok niego, wskaźnik max 26rem, siatka kafelków 2/3/4 kolumny
+   i przyklejony pasek akcji — mieszka w bloku STYLE w measure.js, razem ze
+   stałą CROP_INSET, której ten arkusz nie zna. Tutaj zostaje wyłącznie to,
+   czego measure.js nie ustawia i ustawić nie może, bo dotyczy wszystkich
+   czterech ekranów naraz: rytm stosu sekcji, zapas pod paskiem zakładek,
+   siatka bezpieczeństwa max-width i oddanie kolumny przy data-text-scale=1.3.
+   Nowa reguła .m5-measure__* w tym pliku to znak, że coś poszło źle — jej
+   miejsce jest w measure.js.
+
+   Tak samo dopełnienia kafelka i wskaźnika (.m5-tile__*, .m5-gauge) zostają
+   tutaj, bo brakuje ich w components.css, a ui/gauge.js buduje je inaczej,
+   niż components.css zakładał.
+
+   DWIE ZASADY UKŁADU, KTÓRE TRZYMAJĄ TE EKRANY RAZEM:
+   1. Ekran jest pionowym stosem sekcji z jednym odstępem (--sp-5). Sekcja to
+      karta albo siatka — nigdy luźny zestaw akapitów bez oprawy.
+   2. Nic nie ma stałej szerokości. Każdy element siatki i flexa dostaje
+      min-width: 0, bo domyślne min-width: auto rozpycha kolumnę do szerokości
+      najdłuższej liczby i to ono, a nie treść, robi poziome przewijanie.
+
+   KONTRAKT MARKUPU (czego te style oczekują od js/screens/*.js) — sprawdzony
+   grepem po docs/v5/js i docs/v5/index.html, klas-widm tu nie ma:
+
+   historia <div class="m5-history">
+              <div class="m5-history__chart">…chart().el…</div>
+              <div class="m5-history__stats">…m5-stat ×3…</div>
+              <ul class="m5-history__sessions">
+                <li data-session="…"><button class="m5-row m5-row--action">…
+                  <div class="m5-history__session-details" hidden>…
+   narzędzia<div class="m5-tools">…m5-card z m5-card__body--flush i m5-row…
+              <div class="m5-tools__limits">  (reszta klas .m5-tools__* ma
+              własne reguły w bloku STYLE tools.js)
+   konto    <div class="m5-account">
+              <div class="m5-account__profile">
+                <span class="m5-account__avatar" aria-hidden="true">TW</span>
+                <span class="m5-account__identity">…__name, __email…
+              <div class="m5-account__plans">…m5-btn m5-paywall__plan…
+              <div class="m5-account__providers">…m5-btn…
+
+   Elementy chowane atrybutem [hidden] mają tu jawne display:none — bez tego
+   własne display z tych reguł pokonałoby ukrycie z UA. */
+
+/* ═══════════════════════════════════════════════ wspólny szkielet ekranu ══ */
+
+/* Korzeń ekranu jest kolumną; base.css dał mu już szerokość --content-max,
+   wyśrodkowanie i wcięcia boczne z safe-area. Tu dokładamy tylko rytm. */
+.m5-screen,
+.m5-measure,
+.m5-history,
+.m5-tools,
+.m5-account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* Zapas na dole kolumny treści. Nad ostatnim elementem potrafi stanąć
+   przyklejony pasek akcji ekranu pomiaru albo komunikat (toast), a dolny
+   pasek zakładek zjada --tabbar-h wysokości okna — dlatego liczymy go wprost
+   razem z safe-area. Od 900 px pasek znika i zostaje sam margines. */
+.m5-main > .m5-screen,
+.m5-main > .m5-measure,
+.m5-main > .m5-history,
+.m5-main > .m5-tools,
+.m5-main > .m5-account {
+  padding-bottom: calc(var(--sp-7) + var(--tabbar-h) + var(--safe-b));
+}
+@media (min-width: 900px) {
+  .m5-main > .m5-screen,
+  .m5-main > .m5-measure,
+  .m5-main > .m5-history,
+  .m5-main > .m5-tools,
+  .m5-main > .m5-account {
+    padding-bottom: calc(var(--sp-8) + var(--safe-b));
+  }
+}
+
+/* Zdanie wprowadzające ekranu: pełny kontrast, ale krótka miara wiersza. */
+.m5-screen__lead {
+  max-width: 60ch;
+  color: var(--text-2);
+  font-size: var(--fs-body);
+}
+
+/* Dopisek drobnym drukiem (prywatność, ograniczenia metody). --text-3 trzyma
+   4,5:1 na --surface-0 i --surface-1, więc wolno mu zejść do --fs-xs. */
+.m5-screen__note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  max-width: 62ch;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+.m5-screen__note .m5-icon { margin-top: 2px; }
+
+/* Plakietka „to symulacja”. Ostrzegawcze tło niesie sygnał, ale tekst zostaje
+   --text-1, więc czytelność nie zależy od rozróżniania barw. */
+.m5-screen__demo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--zone-warn-soft);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+}
+
+/* ═══════════════════════════════════════════════════ ekran historii ═══════ */
+
+/* Wykres zajmuje pełną szerokość kolumny. position: relative daje układ
+   odniesienia wszystkiemu, co chart.js pozycjonuje nad płótnem (krzyżyk
+   przeciągnięcia, odczyt w punkcie). Świadomie BEZ overflow: hidden: płótno
+   jest sterowane klawiaturą, a przycięcie zjadłoby jego pierścień fokusu. */
+.m5-history__chart {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--r-lg);
+}
+.m5-history__chart > .m5-chart { min-width: 0; }
+
+/* Lista sesji siedzi w karcie z .m5-card__body--flush: wiersze dotykają
+   krawędzi, wcięcie dokłada sam wiersz. Ekran znaczy wiersz sesji samym
+   atrybutem data-session na <li> (klasy nie nadaje), więc tak go tu szukamy —
+   bez tego wiersze dotykają krawędzi karty i znika kreska między sesjami. */
+.m5-history__sessions > li[data-session] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-inline: var(--sp-2);
+}
+.m5-history__sessions > li[data-session] + li[data-session] { border-top: 1px solid var(--line-1); }
+/* Nagłówek wiersza i jego rozwinięcie mają wspólną krawędź tekstu: sp-2 z
+   wiersza plus sp-3 stąd daje wcięcie karty (sp-5), takie samo jak w
+   .m5-card__body--flush > .m5-row. */
+.m5-history__sessions > li[data-session] > .m5-row {
+  width: 100%;
+  padding-inline: var(--sp-3);
+}
+.m5-history__session-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-inline: var(--sp-3);
+  padding-bottom: var(--sp-4);
+}
+/* Rozwinięcie chowamy atrybutem — display z reguły wyżej musi mu ustąpić. */
+.m5-history__session-details[hidden] { display: none; }
+
+/* ══════════════════════════════════════════════════ ekran narzędzi ════════ */
+
+/* Sekcje to karty, wiersze ustawień biorą .m5-row z components.css, a resztę
+   klas .m5-tools__* stawia blok STYLE w tools.js. Tutaj został jeden blok. */
+
+/* Ograniczenia metody — wgłębiony blok na końcu sekcji „O pomiarze”. To jest
+   miejsce, w którym aplikacja mówi wprost, czego NIE mierzy. */
+.m5-tools__limits {
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+.m5-tools__limits > * + * { margin-top: var(--sp-2); }
+
+/* ═════════════════════════════════════════════════════ ekran konta ════════ */
+
+.m5-account__profile {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+/* Awatar to inicjały, nie zdjęcie — nic nie wychodzi poza urządzenie. */
+.m5-account__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.m5-account__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.m5-account__name {
+  font-size: var(--fs-h3);
+  font-weight: 650;
+  line-height: var(--lh-tight);
+  overflow-wrap: anywhere;
+}
+/* Adres bywa dłuższy niż kolumna na 320 px — łamiemy go, zamiast wypychać
+   całą stronę w bok. */
+.m5-account__email {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+/* Karta planu: nazwa planu jest wielkością wiodącą tej karty, więc dostaje
+   największy stopień pisma i akcent. */
+.m5-account__plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+.m5-account__plan-name {
+  color: var(--accent);
+  font-size: var(--fs-h2);
+  font-weight: 650;
+  line-height: var(--lh-tight);
+  letter-spacing: -.012em;
+}
+.m5-account__plan-meta {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+
+/* Siatka planów. Wiersz planu to ten sam element co w arkuszu sprzedażowym
+   (.m5-btn.m5-paywall__plan), więc ceny i plakietki wyglądają identycznie
+   w obu miejscach — bez drugiego kompletu stylów. */
+.m5-account__plans {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+@media (min-width: 600px) {
+  .m5-account__plans {
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    align-items: stretch;
+  }
+  .m5-account__plans > .m5-paywall__plan { align-content: flex-start; }
+}
+
+/* Przyciski dostawców logowania: na telefonie pełna szerokość jeden pod
+   drugim, od 480 px dwa w rzędzie. Każdy ma pełne 44 px wysokości. */
+.m5-account__providers {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+@media (min-width: 480px) {
+  .m5-account__providers { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+}
+.m5-account__providers > .m5-btn {
+  width: 100%;
+  min-height: var(--tap);
+}
+
+.m5-account__benefits { min-width: 0; }
+
+/* Akcje nieodwracalne stoją osobno i na końcu — nie sąsiadują z „Przywróć
+   zakup”, żeby pomyłka kosztowała jeden ruch więcej. */
+.m5-account__danger {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* ═══════════════════════ dopełnienia kafelka z ui/gauge.js ════════════════
+   ui/gauge.js buduje kafelek nieco inaczej, niż zakłada components.css:
+   odczyt nosi klasę .m5-tile__reading (nie __readout), zamiast osobnej kłódki
+   jest plakietka .m5-tile__badge, a wielkość wiodąca zaznaczana jest
+   atrybutem data-selected. Te trzy braki domykamy tutaj — bez nich kafelki
+   w siatce mają odczyty na różnych wysokościach, a wielkość wiodąca niczym
+   się nie wyróżnia. */
+
+.m5-tile__reading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  min-width: 0;
+  /* Odczyty wyrównują się do dolnej krawędzi kafelka, więc rząd czyta się jak
+     jedna linia liczb także wtedy, gdy jedna nazwa zajęła dwa wiersze. */
+  margin-top: auto;
+  padding-top: var(--sp-1);
+}
+
+/* Plakietka „Premium” nie ma prawa zwęzić nazwy poniżej czytelności. Przy
+   czterech kolumnach na kafelek zostaje ~140 px, a nierozrywalne „Premium”
+   zabierało z tego 90 px — „Migotanie” łamało się wtedy po jednej literze
+   w wierszu. Nagłówek zawija, więc plakietka schodzi do własnego wiersza. */
+.m5-tile__head { flex-wrap: wrap; }
+.m5-tile__name { flex: 1 1 6rem; }
+
+.m5-tile__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.m5-tile__badge[hidden] { display: none; }
+
+/* Wielkość wiodąca: obwódka akcentu i akcentowa nazwa — dokładnie ten sam
+   wygląd, jaki components.css daje wariantom data-state / aria-pressed. */
+.m5-tile[data-selected="true"] { box-shadow: var(--shadow-1), inset 0 0 0 2px var(--accent); }
+.m5-tile[data-selected="true"] .m5-tile__head { color: var(--accent); }
+.m5-tile[data-selected="true"]:focus-visible {
+  box-shadow: 0 0 0 4px var(--accent-ring), var(--shadow-2), inset 0 0 0 2px var(--accent);
+}
+
+/* Kafelek zablokowany też jest klikalny (otwiera arkusz sprzedażowy), więc
+   plakietka gaśnie do neutralnej — akcent zostaje przy tym, co odblokowane. */
+.m5-tile[data-locked="true"] .m5-tile__badge {
+  background: var(--zone-none-soft);
+  color: var(--text-2);
+}
+
+.m5-gauge { min-width: 0; }
+
+/* ═════════════════════════ duża skala tekstu i wąskie ekrany ══════════════
+   Przy data-text-scale="1.3" wszystkie stopnie pisma rosną o 30 %, więc do
+   kolumny mieści się o jedną kolumnę mniej. Zamiast łamać liczby w środku
+   albo pozwolić stronie jechać w bok, siatka kafelków oddaje jedną kolumnę.
+   To jedyny wyjątek od reguły „ekran pomiaru należy do measure.js”: measure.js
+   nie zna data-text-scale, a progi kolumn są tu, przy pozostałych siatkach.
+   Progi 560/900 px są celowo te same co w measure.js — inne dałyby pas
+   szerokości, w którym obie reguły mówią co innego. Sekcja stoi na końcu
+   pliku, bo musi wygrać z regułami breakpointów wyżej. */
+
+@media (max-width: 559px) {
+  :root[data-text-scale="1.3"] .m5-measure__grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 560px) {
+  :root[data-text-scale="1.3"] .m5-measure__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  :root[data-text-scale="1.3"] .m5-measure__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Ostatnia siatka bezpieczeństwa dla 320 px: nic w kolumnie treści nie ma
+   prawa być szersze niż ta kolumna. Reguła jest celowo na końcu, bo dotyczy
+   każdej sekcji każdego ekranu — także tej, która powstanie później. */
+.m5-screen > *,
+.m5-measure > *,
+.m5-history > *,
+.m5-tools > *,
+.m5-account > * {
+  min-width: 0;
+  max-width: 100%;
+}

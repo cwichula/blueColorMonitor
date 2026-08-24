@@ -1,0 +1,2411 @@
+/* Monitor Światła v2 — design system.
+ *
+ * One stylesheet, no build step, no network. Every class starts with `ms-`
+ * (Monitor Światła) so nothing here can collide with the v1 stylesheet if the
+ * two ever end up on the same page.
+ *
+ * Three rules shaped almost every decision below and are worth stating once
+ * instead of repeating in twenty comments:
+ *
+ * 1. The audience has eyesight problems. That is why the base font size is 17px
+ *    rather than the usual 14-15px of a Material app, why every interactive
+ *    element is at least 48x48 CSS px even when it looks smaller, and why no
+ *    piece of information is carried by hue alone — every status also carries a
+ *    distinct SHAPE (circle / triangle / diamond) and a distinct icon.
+ * 2. Measurement outranks monetisation. The ad slots here are physically unable
+ *    to sit on top of the camera controls: the anchored slot docks ABOVE the
+ *    navigation bar and reserves its own space via --ms-ad-h, so the layout
+ *    shrinks instead of the buttons being covered.
+ * 3. Everything fake must look fake. The demo palette (magenta, hazard stripes,
+ *    dashed borders) is deliberately ugly and deliberately unlike every other
+ *    surface in the app, so a sign-in or payment screen can never be mistaken
+ *    for the real thing.
+ *
+ * Colour contrast was computed, not guessed. The ratios are recorded next to
+ * the tokens; all body/label pairs clear 4.5:1 in BOTH themes.
+ */
+
+/* ==================================================================
+   1. TOKENS — light theme on bare :root
+   ==================================================================
+   Every colour is defined here first. The dark blocks further down only
+   REDEFINE these names; no colour exists solely inside a media query, so a
+   viewer whose browser ignores prefers-color-scheme still gets a full palette.
+   ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+
+  /* --- Surfaces (light) --- */
+  --ms-bg:            #f3f5f9;  /* page plane */
+  --ms-surface:       #ffffff;  /* cards, sheets */
+  --ms-surface-2:     #eef1f6;  /* inset areas, chips, table head */
+  --ms-surface-3:     #e3e8f0;  /* pressed / hovered fill */
+  --ms-track:         #dde3ec;  /* progress + gauge tracks */
+  --ms-border:        #d6dce6;
+  --ms-border-strong: #b6c0ce;
+  --ms-scrim:         rgba(12, 16, 24, 0.46);
+
+  /* --- Text (light) ---
+     Contrast measured against --ms-surface (#ffffff) / --ms-bg (#f3f5f9):
+       --ms-text    #10131a  ->  18.6:1 / 17.0:1
+       --ms-text-2  #4a505e  ->   8.1:1 /  7.4:1
+       --ms-text-3  #656c7c  ->   5.3:1 /  4.8:1   (lowest tier still > 4.5:1) */
+  --ms-text:    #10131a;
+  --ms-text-2:  #4a505e;
+  --ms-text-3:  #656c7c;
+
+  /* --- Accent (light) ---
+     #1558d6 on white 6.4:1, on --ms-bg 5.8:1; white on #1558d6 6.4:1. */
+  --ms-accent:         #1558d6;
+  --ms-accent-hover:   #1149b0;
+  --ms-on-accent:      #ffffff;
+  --ms-accent-soft:    #dee9fd;   /* accent text on it: 5.2:1 */
+  --ms-on-accent-soft: #123f97;
+
+  /* --- Status (light) ---
+     Each tone doubles as text AND as bar fill, so each one had to clear 4.5:1
+     on both the card and the page plane. That is why the amber is a burnt
+     #9a5400 and not the usual bright yellow — bright yellow cannot be read.
+       good #146c2e  -> 6.5:1 on white, 6.0:1 on bg
+       warn #9a5400  -> 5.8:1 on white, 5.3:1 on bg
+       crit #b3261e  -> 6.5:1 on white, 6.0:1 on bg
+     White on each of the three: 6.5 / 5.8 / 6.5:1. */
+  --ms-good:         #146c2e;
+  --ms-good-soft:    #dff3e4;   /* --ms-good on it: 5.6:1 */
+  --ms-warn:         #9a5400;
+  --ms-warn-soft:    #fdeeda;   /* --ms-warn on it: 5.1:1 */
+  --ms-crit:         #b3261e;
+  --ms-crit-soft:    #fbe2e0;   /* --ms-crit on it: 5.3:1 */
+  --ms-on-crit:      #ffffff;   /* on --ms-crit: 6.5:1 */
+  --ms-neutral:      #4a505e;
+  --ms-neutral-soft: #e7ebf2;
+
+  /* --- Premium (light) ---
+     Violet, not gold: gold sits next to the warning amber and colour-blind
+     users would have to tell two warm tones apart. Violet is unambiguous.
+     #6a3fbe -> 6.9:1 on white, 6.3:1 on bg; on --ms-premium-soft 5.5:1. */
+  --ms-premium:      #6a3fbe;
+  --ms-premium-soft: #eae2fb;
+  --ms-on-premium:   #ffffff;
+
+  /* --- Demo marker (light) ---
+     Reserved exclusively for simulated sign-in, simulated payment and ad
+     placeholders. Nothing real in the app is ever this colour.
+     #a3117a -> 7.2:1 on white, 6.6:1 on bg; on --ms-demo-soft 5.9:1. */
+  --ms-demo:      #a3117a;
+  --ms-demo-soft: #fbe1f2;
+  --ms-on-demo:   #ffffff;
+
+  /* --- Focus ring --- */
+  --ms-focus: #0b3fa8;
+
+  /* --- Elevation ---
+     Soft and wide rather than dark and tight; a heavy shadow on a light plane
+     reads as dirt at low vision. */
+  --ms-sh-1: 0 1px 2px rgba(16, 20, 30, 0.06), 0 1px 3px rgba(16, 20, 30, 0.05);
+  --ms-sh-2: 0 2px 6px rgba(16, 20, 30, 0.08), 0 8px 20px rgba(16, 20, 30, 0.07);
+  --ms-sh-3: 0 -2px 10px rgba(16, 20, 30, 0.08), 0 -12px 40px rgba(16, 20, 30, 0.12);
+
+  /* --- Radii (Material 3 in spirit: generous, never uniform) --- */
+  --ms-r-xs:   8px;
+  --ms-r-sm:  12px;
+  --ms-r-md:  16px;
+  --ms-r-lg:  22px;
+  --ms-r-xl:  28px;
+  --ms-r-full: 999px;
+
+  /* --- Spacing scale (4px base) --- */
+  --ms-s-1:  4px;
+  --ms-s-2:  8px;
+  --ms-s-3: 12px;
+  --ms-s-4: 16px;
+  --ms-s-5: 20px;
+  --ms-s-6: 24px;
+  --ms-s-7: 32px;
+  --ms-s-8: 40px;
+
+  /* --- Typography ---
+     System stack only. No webfont may be requested: the app must render
+     identically with the network switched off. */
+  --ms-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Deliberately the SAME stack as --ms-font, not a monospace one. Digits are
+     kept in column by font-variant-numeric: tabular-nums at every use site,
+     which is what changing readouts need; a monospace comma, however, gets a
+     full character cell and at 28-44px "1,18" read as "1, 18" — a typo, in a
+     locale where the comma IS the decimal point. */
+  --ms-font-num: var(--ms-font);
+
+  --ms-t-display: 44px;  /* the one huge number on a gauge */
+  --ms-t-h1:      28px;
+  --ms-t-h2:      22px;
+  --ms-t-h3:      18px;
+  --ms-t-body:    17px;  /* deliberately larger than the 15-16px norm */
+  --ms-t-label:   15px;
+  --ms-t-cap:     13px;  /* the floor — nothing smaller exists in this app */
+
+  --ms-lh-tight: 1.15;
+  --ms-lh:       1.5;
+
+  /* --- Motion --- */
+  --ms-dur-fast: 110ms;
+  --ms-dur:      200ms;
+  --ms-dur-slow: 320ms;
+  --ms-ease:     cubic-bezier(0.2, 0, 0, 1);
+  --ms-ease-out: cubic-bezier(0.05, 0.7, 0.1, 1);
+
+  /* --- Layout --- */
+  --ms-tap:     48px;   /* minimum touch target, no exceptions */
+  --ms-nav-h:   72px;   /* bottom navigation height, without safe area */
+  --ms-max-w:  760px;   /* content column */
+  --ms-ad-h:     0px;   /* set by JS to the anchored ad height, 0 when absent */
+  --ms-safe-b: env(safe-area-inset-bottom, 0px);
+  --ms-safe-t: env(safe-area-inset-top, 0px);
+}
+
+/* ------------------------------------------------------------------
+   Dark theme — system preference, unless the user forced light.
+   The guard matters: data-theme="light" must beat the OS setting.
+   ------------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ms-bg:            #0e1116;
+    --ms-surface:       #171b22;
+    --ms-surface-2:     #1f242d;
+    --ms-surface-3:     #29303b;
+    --ms-track:         #2c333e;
+    --ms-border:        #2b323d;
+    --ms-border-strong: #414a58;
+    --ms-scrim:         rgba(0, 0, 0, 0.62);
+
+    /* Contrast on --ms-surface (#171b22) / --ms-bg (#0e1116):
+         --ms-text    #f2f5f9 -> 15.8:1 / 17.3:1
+         --ms-text-2  #b3bcca ->  9.0:1 /  9.9:1
+         --ms-text-3  #8b95a6 ->  5.7:1 /  6.3:1 */
+    --ms-text:    #f2f5f9;
+    --ms-text-2:  #b3bcca;
+    --ms-text-3:  #8b95a6;
+
+    /* #8ab4ff on surface 8.3:1; near-black on it 8.2:1. */
+    --ms-accent:         #8ab4ff;
+    --ms-accent-hover:   #a8c7ff;
+    --ms-on-accent:      #0b1b3a;
+    --ms-accent-soft:    #1b2b48;   /* accent on it: 6.8:1 */
+    --ms-on-accent-soft: #8ab4ff;
+
+    /* good 10.1:1, warn 9.3:1, crit 7.6:1 on the card surface;
+       each on its own soft container: 8.4 / 8.1 / 6.8:1. */
+    --ms-good:         #6fdc8c;
+    --ms-good-soft:    #14301f;
+    --ms-warn:         #f2b25c;
+    --ms-warn-soft:    #33240f;
+    --ms-crit:         #ff8a80;
+    --ms-crit-soft:    #3a1c1a;
+    /* NOT white. White on this salmon is 2.28:1 — under the 3:1 floor even for
+       large text — and it sat on the confirm button of "delete my account".
+       Near-black on it is 8.1:1. */
+    --ms-on-crit:      #3a0d0a;
+    --ms-neutral:      #b3bcca;
+    --ms-neutral-soft: #232a34;
+
+    /* #c4a7ff on surface 8.5:1, on its container 7.6:1. */
+    --ms-premium:      #c4a7ff;
+    --ms-premium-soft: #271f3d;
+    --ms-on-premium:   #241344;
+
+    /* #ff8fd4 on surface 8.3:1, on its container 7.5:1. */
+    --ms-demo:      #ff8fd4;
+    --ms-demo-soft: #3a1830;
+    --ms-on-demo:   #3d0a2c;
+
+    --ms-focus: #9cc0ff;
+
+    --ms-sh-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --ms-sh-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 26px rgba(0, 0, 0, 0.4);
+    --ms-sh-3: 0 -2px 10px rgba(0, 0, 0, 0.45), 0 -14px 44px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Dark theme — explicit user choice. Same values as the block above; the
+   duplication is intentional, because a colour that lives only inside a media
+   query cannot be switched on by an attribute.
+   ------------------------------------------------------------------ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ms-bg:            #0e1116;
+  --ms-surface:       #171b22;
+  --ms-surface-2:     #1f242d;
+  --ms-surface-3:     #29303b;
+  --ms-track:         #2c333e;
+  --ms-border:        #2b323d;
+  --ms-border-strong: #414a58;
+  --ms-scrim:         rgba(0, 0, 0, 0.62);
+
+  --ms-text:    #f2f5f9;
+  --ms-text-2:  #b3bcca;
+  --ms-text-3:  #8b95a6;
+
+  --ms-accent:         #8ab4ff;
+  --ms-accent-hover:   #a8c7ff;
+  --ms-on-accent:      #0b1b3a;
+  --ms-accent-soft:    #1b2b48;
+  --ms-on-accent-soft: #8ab4ff;
+
+  --ms-good:         #6fdc8c;
+  --ms-good-soft:    #14301f;
+  --ms-warn:         #f2b25c;
+  --ms-warn-soft:    #33240f;
+  --ms-crit:         #ff8a80;
+  --ms-crit-soft:    #3a1c1a;
+  --ms-on-crit:      #3a0d0a;   /* 8.1:1; white would be 2.28:1 */
+  --ms-neutral:      #b3bcca;
+  --ms-neutral-soft: #232a34;
+
+  --ms-premium:      #c4a7ff;
+  --ms-premium-soft: #271f3d;
+  --ms-on-premium:   #241344;
+
+  --ms-demo:      #ff8fd4;
+  --ms-demo-soft: #3a1830;
+  --ms-on-demo:   #3d0a2c;
+
+  --ms-focus: #9cc0ff;
+
+  --ms-sh-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --ms-sh-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 10px 26px rgba(0, 0, 0, 0.4);
+  --ms-sh-3: 0 -2px 10px rgba(0, 0, 0, 0.45), 0 -14px 44px rgba(0, 0, 0, 0.55);
+}
+
+/* Explicit light choice needs nothing beyond :root, but restating the scheme
+   keeps form controls in the right mode when the OS says dark. */
+:root[data-theme="light"] { color-scheme: light; }
+
+/* ==================================================================
+   2. ICON SET — inline SVG as CSS masks
+   ==================================================================
+   Masks rather than <img>: the glyph then inherits `currentColor`, so one icon
+   works on an accent button, a danger chip and a muted list row without three
+   files. Every path is written here; nothing is fetched.
+   ------------------------------------------------------------------ */
+
+:root {
+  --ms-i-monitor:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1'/%3E%3C/svg%3E");
+  --ms-i-chart:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 20h18'/%3E%3Cpath d='M6 20V11M11 20V5M16 20v-6M21 20v-9'/%3E%3C/svg%3E");
+  --ms-i-history:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7L3 8'/%3E%3Cpath d='M3 4v4h4'/%3E%3Cpath d='M12 7v5l3.5 2'/%3E%3C/svg%3E");
+  --ms-i-tune:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h9M17 7h3M4 17h3M11 17h9'/%3E%3Ccircle cx='15' cy='7' r='2.4'/%3E%3Ccircle cx='9' cy='17' r='2.4'/%3E%3C/svg%3E");
+  --ms-i-person:    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M4.5 20a7.5 7.5 0 0 1 15 0'/%3E%3C/svg%3E");
+  --ms-i-crown:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8l4.5 4L12 5l4.5 7L21 8l-1.7 10H4.7L3 8z'/%3E%3C/svg%3E");
+  --ms-i-lock:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10V7.5a4 4 0 0 1 8 0V10'/%3E%3C/svg%3E");
+  --ms-i-unlock:    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10V7.5a4 4 0 0 1 7.6-1.7'/%3E%3C/svg%3E");
+  --ms-i-info:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5.5'/%3E%3Ccircle cx='12' cy='7.8' r='1.1' fill='%23000' stroke='none'/%3E%3C/svg%3E");
+  --ms-i-help:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.4 9.2a2.7 2.7 0 1 1 3.6 2.5c-.7.3-1 .9-1 1.7v.3'/%3E%3Ccircle cx='12' cy='17' r='1.1' fill='%23000' stroke='none'/%3E%3C/svg%3E");
+  --ms-i-play:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M8 5.5v13l11-6.5z'/%3E%3C/svg%3E");
+  --ms-i-stop:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Crect x='6.5' y='6.5' width='11' height='11' rx='2'/%3E%3C/svg%3E");
+  --ms-i-close:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+  --ms-i-check:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5l5 5 10-11'/%3E%3C/svg%3E");
+  --ms-i-good:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M8 12.3l2.8 2.8L16 9.6'/%3E%3C/svg%3E");
+  --ms-i-warning:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5L21.5 20H2.5L12 3.5z'/%3E%3Cpath d='M12 10v4.2'/%3E%3Ccircle cx='12' cy='17.3' r='1.05' fill='%23000' stroke='none'/%3E%3C/svg%3E");
+  --ms-i-critical:  url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.6l9.4 9.4-9.4 9.4L2.6 12z'/%3E%3Cpath d='M12 7.8v5'/%3E%3Ccircle cx='12' cy='16.2' r='1.05' fill='%23000' stroke='none'/%3E%3C/svg%3E");
+  --ms-i-chevron:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E");
+  --ms-i-camera:    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8.5h3.2l1.6-2.4h8.4l1.6 2.4H21v11H3z'/%3E%3Ccircle cx='12' cy='13.5' r='3.6'/%3E%3C/svg%3E");
+  --ms-i-flip:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9a8 8 0 0 1 13.5-3.5L20 8'/%3E%3Cpath d='M20 4v4h-4'/%3E%3Cpath d='M20 15a8 8 0 0 1-13.5 3.5L4 16'/%3E%3Cpath d='M4 20v-4h4'/%3E%3C/svg%3E");
+  --ms-i-download:  url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5v11'/%3E%3Cpath d='M7.5 10L12 14.5 16.5 10'/%3E%3Cpath d='M4 19h16'/%3E%3C/svg%3E");
+  --ms-i-share:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='18' cy='5.5' r='2.6'/%3E%3Ccircle cx='6' cy='12' r='2.6'/%3E%3Ccircle cx='18' cy='18.5' r='2.6'/%3E%3Cpath d='M8.3 10.8l7.4-4M8.3 13.2l7.4 4'/%3E%3C/svg%3E");
+  --ms-i-moon:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z'/%3E%3C/svg%3E");
+  --ms-i-sun:       url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Cpath d='M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6'/%3E%3C/svg%3E");
+  --ms-i-bell:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 10a6 6 0 1 1 12 0c0 4 1.4 5.5 1.4 5.5H4.6S6 14 6 10z'/%3E%3Cpath d='M10 19a2 2 0 0 0 4 0'/%3E%3C/svg%3E");
+  --ms-i-timer:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='13.5' r='7.5'/%3E%3Cpath d='M12 9.5v4l2.5 1.8M9.5 2.5h5'/%3E%3C/svg%3E");
+  --ms-i-trash:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 6.5h15M9.5 6.5V4h5v2.5'/%3E%3Cpath d='M6.5 6.5l1 13h9l1-13'/%3E%3Cpath d='M10.5 10v6M13.5 10v6'/%3E%3C/svg%3E");
+  --ms-i-sparkle:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 2l2 6.2 6.2 2-6.2 2-2 6.2-2-6.2L3.8 10.2 10 8.2z'/%3E%3Cpath d='M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z'/%3E%3C/svg%3E");
+  --ms-i-google:    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.2c0 5-3.6 8.3-8.7 8.3A8.5 8.5 0 1 1 12.3 3.5c2.3 0 4.2.85 5.6 2.2l-2.4 2.3a4.9 4.9 0 0 0-3.2-1.2 5.2 5.2 0 1 0 5 6.1h-5V9.9H21z'/%3E%3C/svg%3E");
+  --ms-i-facebook:  url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M13.6 21v-7.9h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.8V3.7c-.3-.04-1.3-.13-2.5-.13-2.5 0-4.2 1.5-4.2 4.3v2.1H7.4v3.1h2.7V21z'/%3E%3C/svg%3E");
+  --ms-i-menu:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16'/%3E%3C/svg%3E");
+  --ms-i-grid:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3.5' y='3.5' width='7' height='7' rx='1.6'/%3E%3Crect x='13.5' y='3.5' width='7' height='7' rx='1.6'/%3E%3Crect x='3.5' y='13.5' width='7' height='7' rx='1.6'/%3E%3Crect x='13.5' y='13.5' width='7' height='7' rx='1.6'/%3E%3C/svg%3E");
+  --ms-i-eye:       url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z'/%3E%3Ccircle cx='12' cy='12' r='3.2'/%3E%3C/svg%3E");
+  --ms-i-doc:       url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h7.5L19 8.5V21H6z'/%3E%3Cpath d='M13.5 3v5.5H19M9 13h6M9 16.5h6'/%3E%3C/svg%3E");
+  --ms-i-refresh:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 12a8 8 0 1 1-2.3-5.6'/%3E%3Cpath d='M20 3.5V8h-4.5'/%3E%3C/svg%3E");
+}
+
+.ms-icon {
+  --ms-icon-size: 24px;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--ms-icon-size);
+  height: var(--ms-icon-size);
+  background-color: currentColor;
+  -webkit-mask: var(--ms-icon-img, none) center / contain no-repeat;
+          mask: var(--ms-icon-img, none) center / contain no-repeat;
+}
+.ms-icon--sm { --ms-icon-size: 18px; }
+.ms-icon--lg { --ms-icon-size: 32px; }
+.ms-icon--xl { --ms-icon-size: 48px; }
+
+.ms-icon--monitor  { --ms-icon-img: var(--ms-i-monitor); }
+.ms-icon--chart    { --ms-icon-img: var(--ms-i-chart); }
+.ms-icon--history  { --ms-icon-img: var(--ms-i-history); }
+.ms-icon--tune     { --ms-icon-img: var(--ms-i-tune); }
+.ms-icon--person   { --ms-icon-img: var(--ms-i-person); }
+.ms-icon--crown    { --ms-icon-img: var(--ms-i-crown); }
+.ms-icon--lock     { --ms-icon-img: var(--ms-i-lock); }
+.ms-icon--unlock   { --ms-icon-img: var(--ms-i-unlock); }
+.ms-icon--info     { --ms-icon-img: var(--ms-i-info); }
+.ms-icon--help     { --ms-icon-img: var(--ms-i-help); }
+.ms-icon--play     { --ms-icon-img: var(--ms-i-play); }
+.ms-icon--stop     { --ms-icon-img: var(--ms-i-stop); }
+.ms-icon--close    { --ms-icon-img: var(--ms-i-close); }
+.ms-icon--check    { --ms-icon-img: var(--ms-i-check); }
+.ms-icon--good     { --ms-icon-img: var(--ms-i-good); }
+.ms-icon--warning  { --ms-icon-img: var(--ms-i-warning); }
+.ms-icon--critical { --ms-icon-img: var(--ms-i-critical); }
+.ms-icon--chevron  { --ms-icon-img: var(--ms-i-chevron); }
+.ms-icon--camera   { --ms-icon-img: var(--ms-i-camera); }
+.ms-icon--flip     { --ms-icon-img: var(--ms-i-flip); }
+.ms-icon--download { --ms-icon-img: var(--ms-i-download); }
+.ms-icon--share    { --ms-icon-img: var(--ms-i-share); }
+.ms-icon--moon     { --ms-icon-img: var(--ms-i-moon); }
+.ms-icon--sun      { --ms-icon-img: var(--ms-i-sun); }
+.ms-icon--bell     { --ms-icon-img: var(--ms-i-bell); }
+.ms-icon--timer    { --ms-icon-img: var(--ms-i-timer); }
+.ms-icon--trash    { --ms-icon-img: var(--ms-i-trash); }
+.ms-icon--sparkle  { --ms-icon-img: var(--ms-i-sparkle); }
+.ms-icon--google   { --ms-icon-img: var(--ms-i-google); }
+.ms-icon--facebook { --ms-icon-img: var(--ms-i-facebook); }
+.ms-icon--menu     { --ms-icon-img: var(--ms-i-menu); }
+.ms-icon--grid     { --ms-icon-img: var(--ms-i-grid); }
+.ms-icon--eye      { --ms-icon-img: var(--ms-i-eye); }
+.ms-icon--doc      { --ms-icon-img: var(--ms-i-doc); }
+.ms-icon--refresh  { --ms-icon-img: var(--ms-i-refresh); }
+
+/* ==================================================================
+   3. RESET AND BASE
+   ================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* The `hidden` attribute is the ONE mechanism this application uses to hide an
+   element (chapter 3 of the architecture: one writer, one mechanism). Every
+   component below sets `display` from a class, and a class beats the user-agent
+   [hidden] rule, so without this line `hidden` silently does nothing on most of
+   them. Found during integration: all seven metric tiles were wearing the
+   Premium veil and the header claimed a measurement was running. Enforced once,
+   here, instead of asking every component to remember its own guard. */
+[hidden] { display: none !important; }
+
+html {
+  /* The horizontal-scroll guarantee starts here. Anything genuinely wider than
+     the viewport must live inside .ms-scroll-x or .ms-tablewrap. */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  min-height: 100vh;   /* fallback for WebView older than Chrome 108 */
+  min-height: 100dvh;
+  background: var(--ms-bg);
+  color: var(--ms-text);
+  font-family: var(--ms-font);
+  font-size: var(--ms-t-body);
+  line-height: var(--ms-lh);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, p, figure, ul, ol, dl, dd { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+img, svg, video, canvas { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+table { border-collapse: collapse; }
+
+a { color: var(--ms-accent); text-underline-offset: 3px; }
+
+/* One focus treatment for the whole app. It is thick and offset because a 1px
+   ring is invisible to the people this app is built for. */
+:focus-visible {
+  outline: 3px solid var(--ms-focus);
+  outline-offset: 2px;
+  border-radius: var(--ms-r-xs);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+::selection { background: var(--ms-accent-soft); color: var(--ms-on-accent-soft); }
+
+.ms-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+  overflow: hidden; white-space: nowrap;
+}
+
+/* Skip link — first focusable element in the document. */
+.ms-skip {
+  position: absolute;
+  left: var(--ms-s-4);
+  top: -100px;
+  z-index: 100;
+  padding: var(--ms-s-3) var(--ms-s-5);
+  min-height: var(--ms-tap);
+  display: inline-flex; align-items: center;
+  background: var(--ms-accent);
+  color: var(--ms-on-accent);
+  border-radius: var(--ms-r-full);
+  font-weight: 700;
+  text-decoration: none;
+}
+.ms-skip:focus { top: calc(var(--ms-safe-t) + var(--ms-s-2)); }
+
+/* ==================================================================
+   4. APP SHELL
+   ================================================================== */
+
+.ms-app {
+  min-height: 100vh;   /* fallback for WebView older than Chrome 108 */
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Top app bar --- */
+.ms-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--ms-bg);
+  padding: max(var(--ms-s-3), var(--ms-safe-t)) var(--ms-s-4) var(--ms-s-3);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--ms-dur) var(--ms-ease), background var(--ms-dur) var(--ms-ease);
+}
+/* JS adds .is-scrolled once the content region has scrolled, so the bar only
+   grows a separator when there is actually something underneath it. */
+.ms-header.is-scrolled { border-bottom-color: var(--ms-border); }
+
+.ms-header__inner {
+  max-width: var(--ms-max-w);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ms-s-2);
+  min-height: var(--ms-tap);
+}
+.ms-header__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ms-t-h1);
+  line-height: var(--ms-lh-tight);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ms-header__sub {
+  max-width: var(--ms-max-w);
+  margin: var(--ms-s-1) auto 0;
+  color: var(--ms-text-3);
+  font-size: var(--ms-t-label);
+}
+.ms-header__actions { display: flex; align-items: center; gap: var(--ms-s-1); }
+
+/* --- Content region --- */
+.ms-main {
+  flex: 1 1 auto;
+  width: 100%;
+  padding: var(--ms-s-4) var(--ms-s-4) 0;
+  /* Reserve room for the nav bar AND for an anchored ad, so neither can ever
+     cover the last card or the Start/Stop controls. */
+  padding-bottom: calc(var(--ms-nav-h) + var(--ms-ad-h) + var(--ms-safe-b) + var(--ms-s-6));
+}
+.ms-main__inner {
+  max-width: var(--ms-max-w);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-4);
+}
+
+/* One screen. Hide with the `hidden` attribute; the extra specificity beats the
+   display:flex below without !important. */
+.ms-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-4);
+  animation: ms-view-in var(--ms-dur) var(--ms-ease-out) both;
+}
+.ms-view[hidden] { display: none; }
+
+@keyframes ms-view-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ms-section { display: flex; flex-direction: column; gap: var(--ms-s-3); }
+.ms-section__head {
+  display: flex; align-items: baseline; gap: var(--ms-s-3);
+  padding: 0 var(--ms-s-1);
+  flex-wrap: wrap;
+}
+/* An action parked next to a section heading keeps its whole word; the heading
+   is the flexible half of the row, not the button. */
+.ms-section__head > .ms-btn { flex: 0 0 auto; }
+.ms-section__head > .ms-btn .ms-btn__label { overflow: visible; text-overflow: clip; }
+.ms-section__title {
+  flex: 1 1 auto;
+  font-size: var(--ms-t-h3);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.ms-section__sub { color: var(--ms-text-3); font-size: var(--ms-t-cap); }
+
+.ms-stack { display: flex; flex-direction: column; gap: var(--ms-s-3); }
+.ms-row   { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ms-s-2); }
+.ms-row--end { justify-content: flex-end; }
+.ms-spacer { flex: 1 1 auto; }
+.ms-divider { height: 1px; background: var(--ms-border); border: 0; margin: var(--ms-s-2) 0; }
+
+/* Horizontal escape hatch: the ONLY sanctioned way to be wider than the page. */
+.ms-scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: var(--ms-s-1);
+}
+
+/* ==================================================================
+   5. BOTTOM NAVIGATION
+   ==================================================================
+   Icon + label, always both. Labels are never hidden on the inactive items:
+   an icon-only bar forces the user to decode pictograms, which is exactly the
+   wrong trade for this audience.
+   ------------------------------------------------------------------ */
+
+.ms-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  gap: var(--ms-s-1);
+  padding: var(--ms-s-2) var(--ms-s-2) calc(var(--ms-s-2) + var(--ms-safe-b));
+  background: var(--ms-surface);
+  border-top: 1px solid var(--ms-border);
+  box-shadow: var(--ms-sh-1);
+}
+.ms-nav__list {
+  display: flex;
+  width: 100%;
+  max-width: var(--ms-max-w);
+  gap: var(--ms-s-1);
+}
+.ms-nav__item {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--ms-tap);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--ms-text-3);
+  font-size: var(--ms-t-cap);
+  font-weight: 600;
+  border-radius: var(--ms-r-md);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--ms-dur) var(--ms-ease);
+}
+/* The active pill is a pseudo-element behind the icon, the Material 3 way. */
+.ms-nav__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  max-width: 100%;
+  height: 32px;
+}
+.ms-nav__icon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-accent-soft);
+  transform: scaleX(0.35);
+  opacity: 0;
+  transition: transform var(--ms-dur) var(--ms-ease), opacity var(--ms-dur) var(--ms-ease);
+}
+.ms-nav__icon > .ms-icon { position: relative; }
+/* The stated accessibility decision of this bar is that every item keeps its
+   word. An ellipsis breaks that promise precisely at the largest text setting,
+   i.e. for the readers the setting exists for — so the label wraps to two lines
+   and its size is capped independently of --ms-t-cap, which the text scale
+   moves. Navigation is furniture, not content: it does not scale with it. */
+.ms-nav__label {
+  max-width: 100%;
+  font-size: min(var(--ms-t-cap), 13px);
+  white-space: normal;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.ms-nav__item[aria-selected="true"],
+.ms-nav__item[aria-current="page"] { color: var(--ms-on-accent-soft); }
+.ms-nav__item[aria-selected="true"] .ms-nav__label,
+.ms-nav__item[aria-current="page"] .ms-nav__label { font-weight: 800; }
+.ms-nav__item[aria-selected="true"] .ms-nav__icon::before,
+.ms-nav__item[aria-current="page"] .ms-nav__icon::before { transform: none; opacity: 1; }
+.ms-nav__item:hover { color: var(--ms-text); }
+.ms-nav__item:active { transform: scale(0.96); }
+
+/* Small count/dot on a nav item — used for "premium" or "nowość". */
+.ms-nav__badge {
+  position: absolute;
+  top: -2px;
+  right: 8px;
+  min-width: 10px;
+  height: 10px;
+  padding: 0 3px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-premium);
+  border: 2px solid var(--ms-surface);
+}
+
+/* On a wide screen the bar becomes a floating capsule rather than a full-width
+   strip, which is what the good Play Store apps do on tablets. */
+@media (min-width: 901px) {
+  .ms-nav {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(var(--ms-s-4) + var(--ms-safe-b));
+    width: min(var(--ms-max-w), calc(100% - 2 * var(--ms-s-4)));
+    padding: var(--ms-s-2);
+    border: 1px solid var(--ms-border);
+    border-radius: var(--ms-r-xl);
+    box-shadow: var(--ms-sh-2);
+  }
+}
+
+/* ==================================================================
+   6. CARDS
+   ================================================================== */
+
+.ms-card {
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-r-lg);
+  padding: var(--ms-s-4);
+  box-shadow: var(--ms-sh-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-3);
+}
+.ms-card--flat  { box-shadow: none; background: var(--ms-surface-2); }
+.ms-card--bare  { padding: 0; overflow: hidden; }
+.ms-card--hero  { border-radius: var(--ms-r-xl); padding: var(--ms-s-5); }
+.ms-card--accent   { border-color: var(--ms-accent); background: var(--ms-accent-soft); }
+.ms-card--premium  { border-color: var(--ms-premium); background: var(--ms-premium-soft); }
+
+.ms-card__head { display: flex; align-items: flex-start; gap: var(--ms-s-3); }
+.ms-card__title { flex: 1 1 auto; font-size: var(--ms-t-h3); font-weight: 700; line-height: var(--ms-lh-tight); }
+.ms-card__sub   { color: var(--ms-text-2); font-size: var(--ms-t-label); }
+.ms-card__body  { display: flex; flex-direction: column; gap: var(--ms-s-3); }
+.ms-card__foot  { display: flex; flex-wrap: wrap; gap: var(--ms-s-2); align-items: center; }
+.ms-card__actions { display: flex; flex-wrap: wrap; gap: var(--ms-s-2); }
+
+/* A card the whole surface of which is a button (settings entry points). */
+.ms-card--button {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: transform var(--ms-dur-fast) var(--ms-ease), background var(--ms-dur-fast) var(--ms-ease);
+}
+.ms-card--button:hover  { background: var(--ms-surface-2); }
+.ms-card--button:active { transform: scale(0.985); }
+
+/* ==================================================================
+   7. METRIC TILES AND THE GRID
+   ==================================================================
+   Seven metrics, not two. The grid reflows 1 -> 2 -> 3 columns; the breakpoints
+   are exactly where a tile stops being readable at the base font size.
+   ------------------------------------------------------------------ */
+
+.ms-grid {
+  display: grid;
+  gap: var(--ms-s-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 381px) { .ms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 901px) { .ms-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* A tile that must occupy the full row — the lead metric at the top of the
+   grid. It also keeps the count even: 1 wide + 6 normal fills both the
+   two-column and the three-column grid with no orphan cell. */
+.ms-tile--wide { grid-column: 1 / -1; }
+/* Above the narrow breakpoint the lead tile reads as a row, not as a stack:
+   the big dial on the left, its name and status beside it. */
+@media (min-width: 481px) {
+  .ms-tile--wide { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--ms-s-5); align-items: center; }
+  .ms-tile--wide > .ms-gauge { grid-row: 1 / span 4; }
+}
+/* Unlock buttons line up along the bottom edge instead of floating wherever
+   the description above them happened to end. */
+.ms-tile > .ms-btn--premium { margin-top: auto; }
+
+/* Overlay header: the back circle and the screen title share a centre line and
+   a little breathing room, instead of the title being wedged against a 48px
+   button with no common baseline. */
+.ms-panel-head {
+  align-items: center;
+  gap: var(--ms-s-2);
+  margin-bottom: var(--ms-s-2);
+  flex-wrap: nowrap;
+}
+.ms-panel-head > .ms-section__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ms-t-h2);
+  line-height: var(--ms-lh-tight);
+}
+
+.ms-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-2);
+  min-width: 0;
+  padding: var(--ms-s-4);
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-r-lg);
+  box-shadow: var(--ms-sh-1);
+  /* Per-zone colour, resolved once and reused by the band, bar and mark.
+     The default is the border colour, not --ms-neutral: before the first
+     sample the band carries no information, and drawing it in a high-contrast
+     grey made "nothing measured yet" the loudest thing on the card. */
+  --ms-zone: var(--ms-border);
+  --ms-zone-soft: var(--ms-neutral-soft);
+  /* The neutral "no reading yet" state paints its strip and arc in the border
+     colour, which is correct - a hairline should be quiet. But the status pill
+     also prints TEXT in --ms-zone, and border grey on the soft grey behind it
+     measured 1.15:1 in light and 1.12:1 in dark, against the 4.5:1 this app
+     owes an audience with impaired sight. Text gets its own token: readable by
+     default, and only tinted where a zone colour has been checked against its
+     own background (see the ratios noted next to --ms-good and friends). */
+  --ms-zone-text: var(--ms-text-2);
+}
+/* The status band. It is a 5px bar along the top edge, but colour alone never
+   carries the message — .ms-tile__mark adds the shape and the icon. */
+.ms-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--ms-zone);
+}
+.ms-tile[data-zone="good"]     { --ms-zone: var(--ms-good); --ms-zone-soft: var(--ms-good-soft); --ms-zone-text: var(--ms-good); }
+.ms-tile[data-zone="warning"]  { --ms-zone: var(--ms-warn); --ms-zone-soft: var(--ms-warn-soft); --ms-zone-text: var(--ms-warn); }
+.ms-tile[data-zone="critical"] { --ms-zone: var(--ms-crit); --ms-zone-soft: var(--ms-crit-soft); --ms-zone-text: var(--ms-crit); }
+
+.ms-tile__head { display: flex; align-items: flex-start; gap: var(--ms-s-2); padding-top: var(--ms-s-1); }
+.ms-tile__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ms-t-label);
+  font-weight: 700;
+  color: var(--ms-text-2);
+  line-height: var(--ms-lh-tight);
+  /* "Równomierność" is one unbreakable word wider than a 177px tile head, and
+     it used to spill over the "?" button beside it. */
+  overflow-wrap: anywhere;
+}
+/* The "?" button. It looks 24px but its hit area is a full 48px square. */
+.ms-tile__info {
+  flex: 0 0 auto;
+  width: var(--ms-tap);
+  height: var(--ms-tap);
+  margin: calc(-1 * var(--ms-s-3)) calc(-1 * var(--ms-s-3)) 0 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: var(--ms-text-3);
+  border-radius: var(--ms-r-full);
+  cursor: pointer;
+}
+.ms-tile__info:hover { background: var(--ms-surface-2); color: var(--ms-text); }
+
+.ms-tile__value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--ms-font-num);
+  font-size: var(--ms-t-h1);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  /* Digits must not jitter as the value updates five times a second. */
+  font-variant-numeric: tabular-nums;
+}
+.ms-tile--wide .ms-tile__value { font-size: var(--ms-t-display); }
+.ms-tile__unit {
+  font-family: var(--ms-font);
+  font-size: var(--ms-t-label);
+  font-weight: 600;
+  color: var(--ms-text-3);
+  letter-spacing: 0;
+}
+.ms-tile__hint { font-size: var(--ms-t-cap); color: var(--ms-text-3); }
+
+/* Range bar: where this reading sits between the metric's min and max.
+   JS sets --ms-fill (0-100) and, optionally, --ms-warn-at / --ms-crit-at so the
+   threshold ticks land in the right place. */
+.ms-tile__bar {
+  position: relative;
+  height: 10px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-track);
+  overflow: hidden;
+}
+.ms-tile__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--ms-fill, 0) * 1%);
+  background: var(--ms-zone);
+  border-radius: inherit;
+  transition: width var(--ms-dur) var(--ms-ease-out), background var(--ms-dur) var(--ms-ease);
+}
+.ms-tile__tick {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: calc(var(--ms-at, 0) * 1%);
+  width: 2px;
+  background: var(--ms-surface);
+  opacity: 0.85;
+}
+
+/* Status pill inside a tile. Shape + icon + word, so it survives greyscale. */
+.ms-tile__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-zone-soft);
+  color: var(--ms-zone-text);
+  font-size: var(--ms-t-cap);
+  font-weight: 700;
+}
+
+/* ==================================================================
+   8. STATUS MARKS — shape carries the meaning, not only colour
+   ==================================================================
+   good     = circle       critical = diamond
+   warning  = triangle     unknown  = hollow square
+   The three shapes are distinguishable at 12px and in full greyscale, which is
+   the actual accessibility requirement; the colours are a bonus channel.
+   ------------------------------------------------------------------ */
+
+.ms-mark {
+  --ms-mark-size: 14px;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--ms-mark-size);
+  height: var(--ms-mark-size);
+  background: var(--ms-neutral);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 2px var(--ms-surface);
+}
+.ms-mark--lg { --ms-mark-size: 20px; }
+.ms-mark[data-zone="good"] {
+  background: var(--ms-good);
+  border-radius: var(--ms-r-full);
+  box-shadow: none;
+}
+.ms-mark[data-zone="warning"] {
+  background: var(--ms-warn);
+  border-radius: 2px;
+  box-shadow: none;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+.ms-mark[data-zone="critical"] {
+  background: var(--ms-crit);
+  border-radius: 2px;
+  box-shadow: none;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+/* Standalone status chip usable anywhere (rows, headers, toasts). */
+.ms-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 3px 12px 3px 8px;
+  border-radius: var(--ms-r-full);
+  font-size: var(--ms-t-cap);
+  font-weight: 700;
+  background: var(--ms-neutral-soft);
+  color: var(--ms-neutral);
+}
+.ms-status--good     { background: var(--ms-good-soft); color: var(--ms-good); }
+.ms-status--warning  { background: var(--ms-warn-soft); color: var(--ms-warn); }
+.ms-status--critical { background: var(--ms-crit-soft); color: var(--ms-crit); }
+.ms-status--premium  { background: var(--ms-premium-soft); color: var(--ms-premium); }
+.ms-status--accent   { background: var(--ms-accent-soft); color: var(--ms-on-accent-soft); }
+
+/* ==================================================================
+   9. GAUGE (CSS-only arc)
+   ==================================================================
+   No canvas needed for the dial itself: a conic gradient masked into a ring
+   draws a 270-degree arc, and JS only has to set one custom property.
+       el.style.setProperty('--ms-gauge-pct', 63.4);
+   Keeping the dial in CSS means it repaints with the theme for free.
+   ------------------------------------------------------------------ */
+
+.ms-gauge {
+  --ms-gauge-pct: 0;      /* 0-100 along the arc */
+  --ms-gauge-size: 168px;
+  --ms-gauge-thick: 16px;
+  --ms-zone: var(--ms-accent);
+  position: relative;
+  width: var(--ms-gauge-size);
+  height: var(--ms-gauge-size);   /* floor for engines without aspect-ratio */
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+}
+.ms-gauge--lg { --ms-gauge-size: 216px; --ms-gauge-thick: 20px; }
+.ms-gauge--sm { --ms-gauge-size: 120px; --ms-gauge-thick: 12px; }
+.ms-gauge[data-zone="good"]     { --ms-zone: var(--ms-good); }
+.ms-gauge[data-zone="warning"]  { --ms-zone: var(--ms-warn); }
+.ms-gauge[data-zone="critical"] { --ms-zone: var(--ms-crit); }
+
+.ms-gauge__dial {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  /* Arc starts at 135deg and spans 270deg, so the gap sits at the bottom where
+     the scale labels go. 2.7deg of sweep per percentage point. */
+  background:
+    conic-gradient(from 135deg,
+      var(--ms-zone) 0deg calc(var(--ms-gauge-pct) * 2.7deg),
+      var(--ms-track) calc(var(--ms-gauge-pct) * 2.7deg) 270deg,
+      transparent 270deg 360deg);
+  -webkit-mask: radial-gradient(farthest-side,
+      transparent calc(100% - var(--ms-gauge-thick) - 1px),
+      #000 calc(100% - var(--ms-gauge-thick)));
+          mask: radial-gradient(farthest-side,
+      transparent calc(100% - var(--ms-gauge-thick) - 1px),
+      #000 calc(100% - var(--ms-gauge-thick)));
+  transition: background var(--ms-dur-slow) var(--ms-ease-out);
+}
+.ms-gauge__readout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  padding: 0 18%;
+}
+.ms-gauge__value {
+  font-family: var(--ms-font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--ms-t-display);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+.ms-gauge--sm .ms-gauge__value { font-size: var(--ms-t-h1); }
+.ms-gauge__unit  { font-size: var(--ms-t-label); font-weight: 600; color: var(--ms-text-3); }
+.ms-gauge__name  { font-size: var(--ms-t-cap); font-weight: 700; color: var(--ms-text-2); }
+.ms-gauge__scale {
+  position: absolute;
+  left: 0; right: 0; bottom: 2%;
+  display: flex; justify-content: space-between;
+  padding: 0 6%;
+  font-size: var(--ms-t-cap);
+  color: var(--ms-text-3);
+  font-variant-numeric: tabular-nums;
+}
+/* Two gauges side by side once there is room, stacked below. */
+.ms-gauges {
+  display: grid;
+  gap: var(--ms-s-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 381px) { .ms-gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ==================================================================
+   10. CAMERA
+   ================================================================== */
+
+.ms-camera {
+  position: relative;
+  width: 100%;
+  min-height: 200px;   /* engines without aspect-ratio must not collapse to 0 */
+  aspect-ratio: 4 / 3;
+  background: #000;
+  border-radius: var(--ms-r-lg);
+  overflow: hidden;
+}
+/* Inside a card the card already draws the edge. Two nested 1px borders put
+   the preview a pixel inside the line every other element in the column sits
+   on, which on a wide screen reads as the preview being slightly inset. */
+.ms-card--bare > .ms-camera { border-radius: inherit; }
+
+/* SERIOUS: with no signal this was a 272px (412px screen) — 570px (desktop) —
+   black rectangle holding one icon, and on desktop not one indicator reached
+   the fold. Idle, the box drops to a 16:9 strip capped at 220px; the moment
+   the picture arrives it goes back to the sampler's own 4:3. */
+.ms-camera:has(> .ms-camera__placeholder:not([hidden])) {
+  aspect-ratio: 16 / 9;
+  max-height: 220px;
+}
+.ms-camera__video { width: 100%; height: 100%; object-fit: cover; }
+.ms-camera__video.is-mirrored { transform: scaleX(-1); }
+
+/* The reticle marks the crop the sampler actually reads, so the user can aim.
+   Drawn in CSS rather than on a canvas: it must stay crisp at any DPI.
+
+   ONE owner of position and size, and it is drawOverlay() in ui-core.js, which
+   writes `inset` inline. The stylesheet supplies only the starting value for
+   the frame before the video reports its dimensions. Centring it here as well
+   (left/top/transform/width) fought the inline inset and threw the frame out of
+   the picture entirely — the app was drawing a box over a part of the scene it
+   was not reading, which is the one lie this element must never tell. */
+.ms-camera__reticle {
+  position: absolute;
+  inset: 20%;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: var(--ms-r-sm);
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+.ms-camera__placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ms-s-3);
+  padding: var(--ms-s-5);
+  text-align: center;
+  background: var(--ms-surface-2);
+  color: var(--ms-text-2);
+  font-size: var(--ms-t-label);
+}
+.ms-camera__badge {
+  position: absolute;
+  top: var(--ms-s-3);
+  left: var(--ms-s-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--ms-r-full);
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: var(--ms-t-cap);
+  font-weight: 700;
+}
+.ms-camera__badge::before {
+  content: "";
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #ff5a4e;
+  animation: ms-pulse 1.6s var(--ms-ease) infinite;
+}
+@keyframes ms-pulse { 50% { opacity: 0.25; } }
+
+/* Controls sit BELOW the preview, never floating over it, and never under an
+   ad — this row is the one thing monetisation may not touch. */
+.ms-camera__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ms-s-2);
+  align-items: center;
+}
+/* `flex: 1 1 0` split the row evenly regardless of content, so at 360px with
+   the largest text setting "Start" rendered as "S…". A control that runs the
+   measurement may not be abbreviated: it grows from its own content width and
+   the row wraps before any label is cut. */
+.ms-camera__controls > .ms-btn--filled,
+.ms-camera__controls > .ms-btn--tonal { flex: 1 1 auto; min-width: max-content; }
+.ms-camera__controls > .ms-btn--outline { flex: 0 0 auto; }
+.ms-camera__controls .ms-btn__label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+/* ==================================================================
+   11. BUTTONS
+   ================================================================== */
+
+.ms-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ms-s-2);
+  min-height: var(--ms-tap);
+  min-width: var(--ms-tap);
+  padding: 0 var(--ms-s-5);
+  border: 1px solid transparent;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-surface-2);
+  color: var(--ms-text);
+  font-size: var(--ms-t-body);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+  transition: transform var(--ms-dur-fast) var(--ms-ease),
+              background var(--ms-dur-fast) var(--ms-ease),
+              border-color var(--ms-dur-fast) var(--ms-ease),
+              box-shadow var(--ms-dur-fast) var(--ms-ease);
+}
+/* Press feedback. A real ripple needs JS and a stacking context per button;
+   a 3% scale-down reads the same at a glance and costs nothing. */
+.ms-btn:active { transform: scale(0.97); }
+.ms-btn:disabled,
+.ms-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ms-btn--filled {
+  background: var(--ms-accent);
+  color: var(--ms-on-accent);
+  box-shadow: var(--ms-sh-1);
+}
+.ms-btn--filled:hover { background: var(--ms-accent-hover); }
+
+.ms-btn--tonal { background: var(--ms-accent-soft); color: var(--ms-on-accent-soft); }
+.ms-btn--tonal:hover { filter: brightness(0.97); }
+
+.ms-btn--outline {
+  background: transparent;
+  border-color: var(--ms-border-strong);
+  color: var(--ms-text);
+}
+.ms-btn--outline:hover { background: var(--ms-surface-2); }
+
+.ms-btn--text {
+  background: transparent;
+  color: var(--ms-accent);
+  padding: 0 var(--ms-s-3);
+}
+.ms-btn--text:hover { background: var(--ms-accent-soft); }
+
+.ms-btn--danger  { background: var(--ms-crit); color: var(--ms-on-crit); }
+.ms-btn--premium { background: var(--ms-premium); color: var(--ms-on-premium); box-shadow: var(--ms-sh-1); }
+.ms-btn--demo    { background: var(--ms-demo); color: var(--ms-on-demo); }
+
+.ms-btn--lg    { min-height: 56px; font-size: var(--ms-t-h3); padding: 0 var(--ms-s-6); }
+.ms-btn--block { display: flex; width: 100%; }
+.ms-btn--icon  { padding: 0; width: var(--ms-tap); height: var(--ms-tap); border-radius: var(--ms-r-full); }
+/* A button label WRAPS. It does not get an ellipsis.
+
+   The ellipsis was the single most damaging line in this stylesheet: at 360px
+   it turned "Start" into "St…", at 130% text into "S…", it cut the renewal
+   amount off the purchase button — the one figure the terms require to be in
+   view — and it clipped "Przywróć domyślne" and "Wyczyść stan demonstracyjny".
+   Every one of those is a control whose whole job is to say what it will do.
+   A button that is one line taller costs nothing; a button that lies about
+   what it does costs everything. Polish compounds are long and often have no
+   break opportunity, hence overflow-wrap. */
+.ms-btn__label {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+  text-align: center;
+}
+.ms-btn { height: auto; padding-block: var(--ms-s-2); }
+
+/* Toolbar icon button in the header. */
+.ms-iconbtn {
+  /* A flex item with a width still shrinks. As the back button of an overlay
+     next to a long title it was squeezed to 39px — under the touch floor this
+     application sets for itself, on the control that leaves the screen. */
+  flex: 0 0 auto;
+  width: var(--ms-tap);
+  height: var(--ms-tap);
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--ms-r-full);
+  background: none;
+  color: var(--ms-text-2);
+  cursor: pointer;
+  transition: background var(--ms-dur-fast) var(--ms-ease), color var(--ms-dur-fast) var(--ms-ease);
+}
+.ms-iconbtn:hover  { background: var(--ms-surface-2); color: var(--ms-text); }
+.ms-iconbtn:active { transform: scale(0.94); }
+.ms-iconbtn[aria-pressed="true"] { background: var(--ms-accent-soft); color: var(--ms-on-accent-soft); }
+
+/* Floating action button — used for "zapisz pomiar" on the history screen. */
+.ms-fab {
+  position: fixed;
+  right: var(--ms-s-4);
+  bottom: calc(var(--ms-nav-h) + var(--ms-ad-h) + var(--ms-safe-b) + var(--ms-s-4));
+  z-index: 35;
+  min-height: 56px;
+  padding: 0 var(--ms-s-5);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ms-s-2);
+  border: 0;
+  border-radius: var(--ms-r-md);
+  background: var(--ms-accent);
+  color: var(--ms-on-accent);
+  font-weight: 700;
+  box-shadow: var(--ms-sh-2);
+  cursor: pointer;
+}
+.ms-fab:active { transform: scale(0.96); }
+
+/* ==================================================================
+   12. CHIPS, SEGMENTS, SWITCHES
+   ================================================================== */
+
+.ms-chipbar {
+  display: flex;
+  gap: var(--ms-s-2);
+  overflow-x: auto;
+  padding: 2px var(--ms-s-1) var(--ms-s-2);
+  scrollbar-width: none;
+}
+.ms-chipbar::-webkit-scrollbar { display: none; }
+
+.ms-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--ms-tap);
+  padding: 0 var(--ms-s-4);
+  border: 1px solid var(--ms-border-strong);
+  border-radius: var(--ms-r-full);
+  background: transparent;
+  color: var(--ms-text-2);
+  font-size: var(--ms-t-label);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--ms-dur-fast) var(--ms-ease), color var(--ms-dur-fast) var(--ms-ease);
+}
+.ms-chip:hover { background: var(--ms-surface-2); }
+.ms-chip[aria-pressed="true"],
+.ms-chip[aria-selected="true"] {
+  background: var(--ms-accent-soft);
+  border-color: transparent;
+  color: var(--ms-on-accent-soft);
+  font-weight: 800;
+}
+/* A chip that describes a column rather than a filter: filled columns read as
+   selected, locked ones stay outlined. Driven by data-locked, never by ARIA
+   that a <span> cannot carry. */
+.ms-chip[data-locked="false"] {
+  background: var(--ms-accent-soft);
+  border-color: transparent;
+  color: var(--ms-on-accent-soft);
+  font-weight: 800;
+}
+.ms-chip[data-locked="true"] { color: var(--ms-text-3); border-style: dashed; }
+
+/* The checkmark is what tells a colour-blind user which chip is on. */
+.ms-chip[aria-pressed="true"]::before,
+.ms-chip[aria-selected="true"]::before,
+.ms-chip[data-locked="false"]::before {
+  content: "";
+  width: 18px; height: 18px;
+  background: currentColor;
+  -webkit-mask: var(--ms-i-check) center / contain no-repeat;
+          mask: var(--ms-i-check) center / contain no-repeat;
+}
+
+/* Five ranges, each able to carry a padlock, do not fit across a 320px screen
+   at any font size — sharing the width equally forced two-line labels and, once
+   those were forbidden, ran the words into each other. The row scrolls instead:
+   the same behaviour .ms-chipbar has, which the visual system provides for
+   exactly this kind of row. */
+.ms-segment {
+  display: flex;
+  padding: 2px;
+  gap: 4px;
+  background: var(--ms-surface-2);
+  border-radius: var(--ms-r-full);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.ms-segment::-webkit-scrollbar { display: none; }
+.ms-segment__item {
+  flex: 0 0 auto;
+  min-height: var(--ms-tap);   /* the parent's padding is not part of the target */
+  padding: 0 var(--ms-s-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: var(--ms-r-full);
+  background: transparent;
+  color: var(--ms-text-2);
+  font-size: var(--ms-t-label);
+  font-weight: 700;
+  /* One line per segment. Wrapped labels turned the row into a set of
+     mismatched boxes and pushed the padlocks into the text. */
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--ms-dur-fast) var(--ms-ease), color var(--ms-dur-fast) var(--ms-ease);
+}
+.ms-segment__item[aria-selected="true"],
+.ms-segment__item[aria-pressed="true"] {
+  background: var(--ms-surface);
+  color: var(--ms-text);
+  box-shadow: var(--ms-sh-1);
+}
+
+.ms-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--ms-s-3);
+  min-height: var(--ms-tap);
+  cursor: pointer;
+}
+.ms-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 52px; height: 32px;
+  margin: 0;
+  cursor: pointer;
+}
+.ms-switch__track {
+  position: relative;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 32px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-track);
+  border: 2px solid var(--ms-border-strong);
+  transition: background var(--ms-dur) var(--ms-ease), border-color var(--ms-dur) var(--ms-ease);
+}
+.ms-switch__thumb {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--ms-text-3);
+  transition: transform var(--ms-dur) var(--ms-ease), background var(--ms-dur) var(--ms-ease), width var(--ms-dur) var(--ms-ease);
+}
+.ms-switch__input:checked ~ .ms-switch__track {
+  background: var(--ms-accent);
+  border-color: var(--ms-accent);
+}
+.ms-switch__input:checked ~ .ms-switch__track .ms-switch__thumb {
+  transform: translate(20px, -50%);
+  width: 24px; height: 24px;
+  background: var(--ms-on-accent);
+}
+.ms-switch__input:focus-visible ~ .ms-switch__track {
+  outline: 3px solid var(--ms-focus);
+  outline-offset: 2px;
+}
+.ms-switch__input:disabled ~ .ms-switch__track { opacity: 0.45; }
+/* Material 3 puts the control in the trailing slot. The DOM order stays
+   input -> track -> text because the `~` sibling selectors above depend on it;
+   `order` moves the track visually without touching that contract. */
+.ms-switch__track { order: 2; }
+.ms-switch__text  { order: 1; flex: 1 1 auto; min-width: 0; }
+.ms-switch__label { font-weight: 600; }
+.ms-switch__sub   { font-size: var(--ms-t-cap); color: var(--ms-text-3); }
+
+/* ==================================================================
+   13. LISTS AND MENUS
+   ================================================================== */
+
+.ms-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-r-lg);
+  overflow: hidden;
+}
+.ms-list--plain { background: none; border: 0; border-radius: 0; }
+
+.ms-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--ms-s-3);
+  width: 100%;
+  min-height: 60px;
+  padding: var(--ms-s-3) var(--ms-s-4);
+  border: 0;
+  border-bottom: 1px solid var(--ms-border);
+  background: none;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  font-size: var(--ms-t-body);
+}
+.ms-list__item { flex-wrap: wrap; }
+.ms-list__item:last-child { border-bottom: 0; }
+.ms-list__item--button { cursor: pointer; }
+.ms-list__item--button:hover  { background: var(--ms-surface-2); }
+/* surface-2, not surface-3: --ms-text-3 on surface-3 is 4.28:1, and that is
+   the colour of .ms-list__sub sitting inside the row being pressed. */
+.ms-list__item--button:active { background: var(--ms-surface-2); }
+.ms-list__item--danger { color: var(--ms-crit); }
+
+.ms-list__icon {
+  flex: 0 0 auto;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: var(--ms-r-sm);
+  background: var(--ms-surface-2);
+  color: var(--ms-text-2);
+}
+.ms-list__icon--accent  { background: var(--ms-accent-soft);  color: var(--ms-on-accent-soft); }
+.ms-list__icon--premium { background: var(--ms-premium-soft); color: var(--ms-premium); }
+.ms-list__icon--demo    { background: var(--ms-demo-soft);    color: var(--ms-demo); }
+
+/* The trailing slot may hold a "Premium" pill, which does not wrap — at 320px
+   with the largest text it kept its full 128px and squeezed the row title down
+   to 47px of "Porównywar…". The title now claims a floor instead, and the row
+   wraps the trailing slot onto its own line rather than cutting the name of the
+   tool the row leads to. */
+.ms-list__text  { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; }
+.ms-list__title { font-weight: 600; }
+.ms-list__sub   { font-size: var(--ms-t-cap); color: var(--ms-text-3); }
+.ms-list__end   { flex: 0 0 auto; display: flex; align-items: center; gap: var(--ms-s-2); color: var(--ms-text-3); }
+.ms-list__value { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ms-text-2); }
+
+/* Definition-style key/value rows (session summary, metric details). */
+.ms-kv { display: flex; flex-direction: column; gap: var(--ms-s-2); }
+.ms-kv__row {
+  display: flex; align-items: baseline; gap: var(--ms-s-3);
+  padding-bottom: var(--ms-s-2);
+  border-bottom: 1px dashed var(--ms-border);
+}
+.ms-kv__row:last-child { border-bottom: 0; padding-bottom: 0; }
+.ms-kv__key { flex: 1 1 auto; color: var(--ms-text-2); font-size: var(--ms-t-label); }
+.ms-kv__val { flex: 0 0 auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ==================================================================
+   14. BOTTOM SHEETS AND DIALOGS
+   ==================================================================
+   Usage from JS (the animation needs two frames):
+       el.hidden = false;
+       requestAnimationFrame(() => el.classList.add('is-open'));
+   and on close, remove .is-open, then set hidden after the transition ends.
+   ------------------------------------------------------------------ */
+
+.ms-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--ms-scrim);
+  opacity: 0;
+  transition: opacity var(--ms-dur) var(--ms-ease);
+}
+.ms-scrim.is-open { opacity: 1; }
+.ms-scrim[hidden] { display: none; }
+
+.ms-sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  max-height: min(88dvh, 760px);
+  background: var(--ms-surface);
+  border-radius: var(--ms-r-xl) var(--ms-r-xl) 0 0;
+  box-shadow: var(--ms-sh-3);
+  transform: translateY(100%);
+  transition: transform var(--ms-dur-slow) var(--ms-ease-out);
+  overscroll-behavior: contain;
+}
+.ms-sheet.is-open { transform: none; }
+.ms-sheet[hidden] { display: none; }
+
+/* The drag handle. Purely affordance — nothing here implements dragging, and
+   the close button is the accessible path, so the handle is aria-hidden. */
+.ms-sheet__grabber {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 5px;
+  margin: var(--ms-s-3) auto var(--ms-s-1);
+  border-radius: var(--ms-r-full);
+  background: var(--ms-border-strong);
+}
+.ms-sheet__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ms-s-3);
+  padding: var(--ms-s-3) var(--ms-s-4) var(--ms-s-3);
+}
+.ms-sheet__titles { flex: 1 1 auto; min-width: 0; }
+.ms-sheet__title  { font-size: var(--ms-t-h2); font-weight: 800; line-height: var(--ms-lh-tight); }
+.ms-sheet__sub    { margin-top: 4px; color: var(--ms-text-2); font-size: var(--ms-t-label); }
+.ms-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--ms-s-4) var(--ms-s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-4);
+}
+.ms-sheet__foot {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ms-s-2);
+  padding: var(--ms-s-3) var(--ms-s-4) calc(var(--ms-s-4) + var(--ms-safe-b));
+  border-top: 1px solid var(--ms-border);
+  background: var(--ms-surface);
+}
+.ms-sheet__foot > .ms-btn { flex: 1 1 200px; }
+
+/* Above a phone, a sheet stuck to the bottom edge looks wrong; centre it. */
+@media (min-width: 901px) {
+  .ms-sheet {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    width: min(560px, calc(100% - 2 * var(--ms-s-6)));
+    max-height: min(84dvh, 800px);
+    border-radius: var(--ms-r-xl);
+    transform: translate(-50%, -46%) scale(0.96);
+    opacity: 0;
+    transition: transform var(--ms-dur) var(--ms-ease-out), opacity var(--ms-dur) var(--ms-ease);
+  }
+  .ms-sheet.is-open { transform: translate(-50%, -50%); opacity: 1; }
+  .ms-sheet__grabber { display: none; }
+  .ms-sheet__foot { padding-bottom: var(--ms-s-4); }
+}
+
+/* ==================================================================
+   15. TOAST / SNACKBAR
+   ================================================================== */
+
+.ms-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--ms-nav-h) + var(--ms-ad-h) + var(--ms-safe-b) + var(--ms-s-4));
+  z-index: 70;
+  transform: translate(-50%, 16px);
+  opacity: 0;
+  pointer-events: none;
+  width: min(560px, calc(100% - 2 * var(--ms-s-4)));
+  display: flex;
+  align-items: center;
+  gap: var(--ms-s-3);
+  padding: var(--ms-s-3) var(--ms-s-3) var(--ms-s-3) var(--ms-s-4);
+  border-radius: var(--ms-r-md);
+  background: var(--ms-text);
+  color: var(--ms-bg);
+  box-shadow: var(--ms-sh-2);
+  transition: transform var(--ms-dur) var(--ms-ease-out), opacity var(--ms-dur) var(--ms-ease);
+}
+.ms-toast.is-open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+.ms-toast[hidden] { display: none; }
+.ms-toast__text   { flex: 1 1 auto; min-width: 0; font-size: var(--ms-t-label); font-weight: 600; }
+.ms-toast__action {
+  flex: 0 0 auto;
+  min-height: var(--ms-tap);
+  padding: 0 var(--ms-s-3);
+  border: 0;
+  border-radius: var(--ms-r-full);
+  background: transparent;
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ==================================================================
+   16. ADS — always visibly fake, never in the way
+   ==================================================================
+   Every ad surface carries .ms-demo-badge as a hard requirement of the markup.
+   The dashed magenta border makes the placeholder impossible to confuse with
+   app content even at a glance, which is the whole point.
+   ------------------------------------------------------------------ */
+
+/* min-height is 64px, the number the specification names, not 72: the DEMO
+   pill hangs off the top edge (.ms-demo-badge--corner) instead of standing in
+   the flex row, where it was taking 153 of the 380 available pixels and
+   crushing the text column to 42px of one-word-per-line wrapping. */
+.ms-ad {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ms-s-3);
+  padding: var(--ms-s-4) var(--ms-s-4) var(--ms-s-3);
+  min-height: 64px;
+  border: 2px dashed var(--ms-demo);
+  border-radius: var(--ms-r-md);
+  background: var(--ms-demo-soft);
+  color: var(--ms-text);
+}
+/* Should a badge ever be placed inline anyway, it must not consume the row. */
+.ms-ad > .ms-demo-badge { flex: 0 0 auto; }
+.ms-ad__body  { flex: 1 1 12ch; min-width: 0; padding-right: var(--ms-tap); }
+.ms-ad__title { font-weight: 800; font-size: var(--ms-t-label); }
+/* Belt and braces for a 320px screen: a long word breaks rather than escaping
+   from under the button next to it. */
+.ms-ad__text  { font-size: var(--ms-t-cap); color: var(--ms-text-2); overflow-wrap: anywhere; }
+.ms-ad__cta   { flex: 0 0 auto; }
+.ms-ad__close {
+  /* Pinned to the corner rather than standing in the row: as a flex item it
+     took 48px plus a gap from the text column on a 360px screen. */
+  position: absolute;
+  top: 2px; right: 2px;
+  width: var(--ms-tap); height: var(--ms-tap);
+  display: grid; place-items: center;
+  border: 0; background: none;
+  color: var(--ms-demo);
+  border-radius: var(--ms-r-full);
+  cursor: pointer;
+}
+.ms-ad__close:hover { background: rgba(163, 17, 122, 0.12); }
+
+/* Docked slot. It sits ABOVE the navigation bar and its height is fed back to
+   the layout through --ms-ad-h (set by JS), so content is never hidden behind
+   it. It physically cannot cover the Start/Stop row, which lives in .ms-main. */
+.ms-ad--anchored {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--ms-nav-h) + var(--ms-safe-b));
+  z-index: 25;
+  width: min(var(--ms-max-w), calc(100% - 2 * var(--ms-s-3)));
+  margin-bottom: var(--ms-s-2);
+  box-shadow: var(--ms-sh-2);
+  background: var(--ms-surface);
+}
+.ms-ad--inline { width: 100%; }
+
+/* Rewarded / interstitial demo. Full screen, but it can only ever appear while
+   no measurement is running — the rule lives in JS; the style just makes the
+   skip control large and immediate. */
+.ms-ad-full {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-5);
+  align-items: center;
+  justify-content: center;
+  padding: var(--ms-s-6);
+  text-align: center;
+  background: var(--ms-bg);
+}
+.ms-ad-full[hidden] { display: none; }
+.ms-ad-full__box {
+  width: min(420px, 100%);
+  padding: var(--ms-s-6);
+  border: 3px dashed var(--ms-demo);
+  border-radius: var(--ms-r-xl);
+  background: var(--ms-demo-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ms-s-3);
+}
+.ms-ad-full__title { font-size: var(--ms-t-h2); font-weight: 800; }
+.ms-ad-full__text  { color: var(--ms-text-2); font-size: var(--ms-t-label); }
+.ms-ad-full__skip  { min-width: 200px; }
+
+/* ==================================================================
+   17. DEMO MARKING — the honesty layer
+   ==================================================================
+   Anything simulated (sign-in, payment, subscription state, ads) must wear one
+   of these. They are intentionally loud.
+   ------------------------------------------------------------------ */
+
+.ms-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  min-height: 26px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-demo);
+  color: var(--ms-on-demo);
+  font-size: var(--ms-t-cap);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ms-demo-badge--corner {
+  position: absolute;
+  top: -12px;
+  left: var(--ms-s-3);
+  z-index: 2;
+}
+
+/* Hazard strip. Used as the top edge of any simulated payment or account panel.
+   The stripes are a repeating gradient, not an image. */
+.ms-demo-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--ms-s-2);
+  padding: var(--ms-s-2) var(--ms-s-4);
+  font-size: var(--ms-t-cap);
+  font-weight: 800;
+  color: var(--ms-on-demo);
+  background:
+    repeating-linear-gradient(135deg,
+      var(--ms-demo) 0 12px,
+      color-mix(in srgb, var(--ms-demo) 72%, #000) 12px 24px);
+}
+/* The sentence rides on a flat chip, not on the stripes: over the dark stripe
+   the label was 4.25:1, and this is the single most important sentence in the
+   application. On the flat token it is 7.2:1 / 7.9:1. */
+.ms-demo-strip > span {
+  background: var(--ms-demo);
+  color: var(--ms-on-demo);
+  padding: 2px 8px;
+  border-radius: var(--ms-r-xs);
+}
+/* color-mix is widely supported, but a flat fallback must exist for old
+   engines: declared first so it wins when the mix cannot be parsed. */
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .ms-demo-strip {
+    background: repeating-linear-gradient(135deg,
+      var(--ms-demo) 0 12px, var(--ms-on-demo) 12px 24px);
+  }
+}
+
+/* Wraps an entire simulated screen. */
+.ms-demo-frame {
+  position: relative;
+  border: 3px dashed var(--ms-demo);
+  border-radius: var(--ms-r-lg);
+  padding: var(--ms-s-4);
+  background: var(--ms-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-3);
+}
+.ms-demo-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ms-s-2);
+  padding: var(--ms-s-3);
+  border-radius: var(--ms-r-sm);
+  background: var(--ms-demo-soft);
+  color: var(--ms-text);
+  border-left: 5px solid var(--ms-demo);
+  font-size: var(--ms-t-label);
+}
+
+/* ==================================================================
+   18. PREMIUM, LOCKS AND THE PAYWALL
+   ==================================================================
+   A locked tile still SHOWS its name, its unit and its explanation. Only the
+   number is withheld. Hiding the whole card would make the app feel smaller
+   than it is and would teach the user nothing about what they are missing.
+   ------------------------------------------------------------------ */
+
+.ms-tile--locked .ms-tile__value { color: var(--ms-text-3); }
+.ms-tile--locked .ms-tile__bar   { opacity: 0.4; }
+
+.ms-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  min-height: 26px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-premium-soft);
+  color: var(--ms-premium);
+  font-size: var(--ms-t-cap);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Blur veil over a locked value. `filter` on the parent would blur the label
+   too, so the veil is a sibling overlay with a soft-tinted backdrop. */
+.ms-tile__veil {
+  position: absolute;
+  inset: 5px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ms-s-2);
+  padding: var(--ms-s-3);
+  text-align: center;
+  background: color-mix(in srgb, var(--ms-surface) 52%, transparent);
+  -webkit-backdrop-filter: blur(5px);
+          backdrop-filter: blur(5px);
+}
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .ms-tile__veil { background: var(--ms-surface-2); }
+}
+.ms-tile__veil-text { font-size: var(--ms-t-cap); font-weight: 700; color: var(--ms-text-2); }
+/* A locked dial must look deliberate. At 82% opacity the veil was an opaque
+   slab and the ring vanished underneath, which reads as "failed to load". The
+   dial below now shows through, and the ring is redrawn as a dashed violet
+   outline so the tile says "paid", not "broken". */
+.ms-gauge:has(> .ms-tile__veil:not([hidden])) .ms-gauge__dial {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+.ms-tile__veil::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 2px dashed var(--ms-premium);
+  border-radius: 50%;
+  opacity: 0.75;
+  pointer-events: none;
+}
+.ms-tile__veil > .ms-icon { color: var(--ms-premium); }
+
+.ms-pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-premium);
+  color: var(--ms-on-premium);
+  font-size: var(--ms-t-cap);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.ms-paywall__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ms-s-3);
+  padding: var(--ms-s-6) var(--ms-s-4);
+  text-align: center;
+  border-radius: var(--ms-r-xl);
+  background: var(--ms-premium-soft);
+  border: 1px solid var(--ms-premium);
+}
+.ms-paywall__title { font-size: var(--ms-t-h1); font-weight: 800; line-height: var(--ms-lh-tight); }
+.ms-paywall__lead  { color: var(--ms-text-2); font-size: var(--ms-t-label); max-width: 42ch; }
+
+.ms-plans { display: grid; gap: var(--ms-s-3); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 561px) { .ms-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.ms-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ms-s-2);
+  padding: var(--ms-s-4);
+  border: 2px solid var(--ms-border);
+  border-radius: var(--ms-r-lg);
+  background: var(--ms-surface);
+  text-align: left;
+  width: 100%;
+  min-height: var(--ms-tap);
+}
+/* Only when the plan really IS a control. As a <div> it offered a pointer
+   cursor and a hover border for a click that did nothing. */
+button.ms-plan, [role="radio"].ms-plan { cursor: pointer; }
+button.ms-plan:hover,
+[role="radio"].ms-plan:hover { border-color: var(--ms-border-strong); }
+.ms-plan[aria-pressed="true"],
+.ms-plan[aria-checked="true"],
+.ms-plan--featured { border-color: var(--ms-premium); background: var(--ms-premium-soft); }
+.ms-plan__badge {
+  position: absolute;
+  top: -13px; right: var(--ms-s-4);
+  padding: 2px 10px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-premium);
+  color: var(--ms-on-premium);
+  font-size: var(--ms-t-cap);
+  font-weight: 800;
+}
+.ms-plan__name  { font-weight: 700; font-size: var(--ms-t-h3); }
+/* The price is what the card is for. At 22px it was four pixels bigger than
+   the plan name and lost the comparison between the three cards. */
+.ms-plan__price { font-size: var(--ms-t-h1); font-weight: 800; font-variant-numeric: tabular-nums; line-height: var(--ms-lh-tight); }
+
+/* Full terms behind a disclosure; the renewal line stays on the card face. */
+.ms-plan__details { font-size: var(--ms-t-cap); }
+.ms-plan__summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--ms-tap);
+  color: var(--ms-accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+.ms-plan__summary:focus-visible { outline: 3px solid var(--ms-focus); outline-offset: 2px; border-radius: var(--ms-r-xs); }
+.ms-plan__note  { font-size: var(--ms-t-cap); color: var(--ms-text-2); }
+
+.ms-feature-list { display: flex; flex-direction: column; gap: var(--ms-s-3); }
+.ms-feature { display: flex; align-items: flex-start; gap: var(--ms-s-3); }
+.ms-feature__icon {
+  flex: 0 0 auto;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: var(--ms-r-sm);
+  background: var(--ms-premium-soft);
+  color: var(--ms-premium);
+}
+.ms-feature__text  { flex: 1 1 auto; min-width: 0; }
+.ms-feature__title { font-weight: 700; }
+.ms-feature__desc  { font-size: var(--ms-t-cap); color: var(--ms-text-2); }
+
+/* ==================================================================
+   19. ACCOUNT
+   ================================================================== */
+
+.ms-account {
+  display: flex;
+  align-items: center;
+  gap: var(--ms-s-4);
+}
+.ms-avatar {
+  flex: 0 0 auto;
+  width: 48px; height: 48px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--ms-accent-soft);
+  color: var(--ms-on-accent-soft);
+  font-weight: 800;
+  font-size: var(--ms-t-h3);
+  overflow: hidden;
+}
+.ms-avatar--lg { width: 72px; height: 72px; font-size: var(--ms-t-h1); }
+.ms-avatar--premium { background: var(--ms-premium-soft); color: var(--ms-premium); }
+
+.ms-account__text  { flex: 1 1 auto; min-width: 0; }
+.ms-account__name  { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-account__meta  { font-size: var(--ms-t-cap); color: var(--ms-text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Simulated identity providers. They are NOT styled in Google/Facebook brand
+   colours on purpose: brand-accurate buttons would be the most convincing lie
+   in the app. Neutral surface + a permanent DEMO badge instead. */
+.ms-provider {
+  display: flex;
+  align-items: center;
+  gap: var(--ms-s-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 0 var(--ms-s-4);
+  border: 2px solid var(--ms-border-strong);
+  border-radius: var(--ms-r-full);
+  background: var(--ms-surface);
+  color: var(--ms-text);
+  font-size: var(--ms-t-body);
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+.ms-provider:hover  { background: var(--ms-surface-2); }
+.ms-provider:active { transform: scale(0.98); }
+.ms-provider__icon  { flex: 0 0 auto; color: var(--ms-text-2); }
+.ms-provider__label { flex: 1 1 auto; min-width: 0; }
+.ms-provider__tag   { flex: 0 0 auto; }
+
+/* ==================================================================
+   20. CHARTS, TABLES, EMPTY STATES
+   ================================================================== */
+
+.ms-chart {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 180px;
+  border-radius: var(--ms-r-md);
+  background: var(--ms-surface-2);
+  overflow: hidden;
+}
+.ms-chart--tall { aspect-ratio: 4 / 3; }
+.ms-chart__canvas { width: 100%; height: 100%; display: block; }
+
+.ms-legend { display: flex; flex-wrap: wrap; gap: var(--ms-s-3); }
+.ms-legend__item {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--ms-t-cap); color: var(--ms-text-2);
+}
+.ms-legend__swatch {
+  width: 14px; height: 14px; border-radius: 4px;
+  background: var(--ms-accent);
+  flex: 0 0 auto;
+}
+
+/* The only sanctioned horizontal scroller besides .ms-scroll-x. A wide readings
+   table must scroll inside this box; the page itself never does. */
+.ms-tablewrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-r-md);
+  background: var(--ms-surface);
+}
+.ms-table {
+  width: 100%;
+  min-width: 480px;      /* below this the columns collide; scroll instead */
+  font-size: var(--ms-t-label);
+  font-variant-numeric: tabular-nums;
+}
+.ms-table th,
+.ms-table td {
+  padding: var(--ms-s-3);
+  text-align: right;
+  border-bottom: 1px solid var(--ms-border);
+  white-space: nowrap;
+}
+.ms-table th:first-child,
+.ms-table td:first-child { text-align: left; }
+.ms-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--ms-surface-2);
+  color: var(--ms-text-2);
+  font-size: var(--ms-t-cap);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ms-table tbody tr:last-child td { border-bottom: 0; }
+/* Zone tinting on a cell keeps a bold weight so it stays legible without the
+   background: the same rule the tiles follow. */
+.ms-table td[data-zone="good"]     { color: var(--ms-good); font-weight: 700; }
+.ms-table td[data-zone="warning"]  { color: var(--ms-warn); font-weight: 700; }
+.ms-table td[data-zone="critical"] { color: var(--ms-crit); font-weight: 700; }
+
+.ms-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ms-s-3);
+  padding: var(--ms-s-7) var(--ms-s-4);
+  text-align: center;
+  color: var(--ms-text-2);
+}
+.ms-empty__icon {
+  width: 64px; height: 64px;
+  display: grid; place-items: center;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-surface-2);
+  color: var(--ms-text-3);
+}
+.ms-empty__title { font-size: var(--ms-t-h3); font-weight: 700; color: var(--ms-text); }
+.ms-empty__text  { font-size: var(--ms-t-label); max-width: 40ch; }
+
+/* ==================================================================
+   21. FORMS
+   ================================================================== */
+
+.ms-field { display: flex; flex-direction: column; gap: 6px; }
+.ms-field__label { font-size: var(--ms-t-label); font-weight: 700; color: var(--ms-text-2); }
+
+.ms-input, .ms-select {
+  width: 100%;
+  min-height: var(--ms-tap);
+  padding: 0 var(--ms-s-3);
+  border: 2px solid var(--ms-border-strong);
+  border-radius: var(--ms-r-sm);
+  background: var(--ms-surface);
+  color: var(--ms-text);
+}
+.ms-input:focus, .ms-select:focus { border-color: var(--ms-accent); }
+
+/* The dropdown arrow is drawn by the wrapper, not as a background-image on the
+   select: a background SVG carries a baked-in colour and would go invisible in
+   the opposite theme. As a mask on a pseudo-element it inherits currentColor
+   and follows the theme for free. */
+.ms-selectwrap { position: relative; display: block; }
+.ms-selectwrap::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 18px; height: 18px;
+  transform: translateY(-50%) rotate(90deg);
+  background-color: var(--ms-text-2);
+  -webkit-mask: var(--ms-i-chevron) center / contain no-repeat;
+          mask: var(--ms-i-chevron) center / contain no-repeat;
+  pointer-events: none;
+}
+.ms-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 48px;
+}
+.ms-select::-ms-expand { display: none; }
+
+/* Range slider. Both vendor tracks/thumbs need explicit rules; the thumb is
+   28px so it can actually be grabbed. */
+.ms-range {
+  appearance: none;
+  width: 100%;
+  height: var(--ms-tap);
+  background: transparent;
+  cursor: pointer;
+}
+.ms-range::-webkit-slider-runnable-track {
+  height: 8px; border-radius: var(--ms-r-full); background: var(--ms-track);
+}
+.ms-range::-moz-range-track {
+  height: 8px; border-radius: var(--ms-r-full); background: var(--ms-track);
+}
+.ms-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px; height: 28px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: var(--ms-accent);
+  border: 3px solid var(--ms-surface);
+  box-shadow: var(--ms-sh-1);
+}
+.ms-range::-moz-range-thumb {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--ms-accent);
+  border: 3px solid var(--ms-surface);
+}
+
+.ms-help { font-size: var(--ms-t-cap); color: var(--ms-text-3); }
+
+/* ==================================================================
+   22. NOTES, BADGES, PROGRESS
+   ==================================================================
+   .ms-note is where the app admits what it cannot measure. It appears often on
+   purpose: a phone camera has no spectrometer and the interface says so.
+   ------------------------------------------------------------------ */
+
+.ms-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ms-s-3);
+  padding: var(--ms-s-3) var(--ms-s-4);
+  border-radius: var(--ms-r-md);
+  background: var(--ms-surface-2);
+  border-left: 5px solid var(--ms-border-strong);
+  color: var(--ms-text-2);
+  font-size: var(--ms-t-label);
+}
+.ms-note__icon  { flex: 0 0 auto; color: var(--ms-text-3); margin-top: 1px; }
+.ms-note__text  { flex: 1 1 auto; min-width: 0; }
+.ms-note__title { display: block; font-weight: 700; color: var(--ms-text); }
+.ms-note--info     { background: var(--ms-accent-soft);  border-left-color: var(--ms-accent);  color: var(--ms-on-accent-soft); }
+.ms-note--info .ms-note__icon,
+.ms-note--info .ms-note__title { color: inherit; }
+.ms-note--warning  { background: var(--ms-warn-soft); border-left-color: var(--ms-warn); color: var(--ms-warn); }
+.ms-note--warning .ms-note__icon,
+.ms-note--warning .ms-note__title { color: inherit; }
+.ms-note--critical { background: var(--ms-crit-soft); border-left-color: var(--ms-crit); color: var(--ms-crit); }
+.ms-note--critical .ms-note__icon,
+.ms-note--critical .ms-note__title { color: inherit; }
+.ms-note--premium  { background: var(--ms-premium-soft); border-left-color: var(--ms-premium); color: var(--ms-premium); }
+.ms-note--premium .ms-note__icon,
+.ms-note--premium .ms-note__title { color: inherit; }
+
+.ms-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-surface-3);
+  color: var(--ms-text-2);
+  font-size: var(--ms-t-cap);
+  font-weight: 700;
+}
+
+.ms-progress {
+  width: 100%;
+  height: 8px;
+  border-radius: var(--ms-r-full);
+  background: var(--ms-track);
+  overflow: hidden;
+}
+.ms-progress__fill {
+  height: 100%;
+  width: calc(var(--ms-fill, 0) * 1%);
+  border-radius: inherit;
+  background: var(--ms-accent);
+  transition: width var(--ms-dur) var(--ms-ease-out);
+}
+
+.ms-spinner {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--ms-track);
+  border-top-color: var(--ms-accent);
+  animation: ms-spin 900ms linear infinite;
+}
+@keyframes ms-spin { to { transform: rotate(360deg); } }
+
+.ms-skeleton {
+  border-radius: var(--ms-r-sm);
+  background: linear-gradient(90deg, var(--ms-surface-2) 25%, var(--ms-surface-3) 37%, var(--ms-surface-2) 63%);
+  background-size: 400% 100%;
+  animation: ms-shimmer 1.4s ease-in-out infinite;
+  min-height: 16px;
+}
+@keyframes ms-shimmer { to { background-position: -135% 0; } }
+
+/* ==================================================================
+   23. UTILITIES
+   ================================================================== */
+
+.ms-t-h2      { font-size: var(--ms-t-h2); font-weight: 800; line-height: var(--ms-lh-tight); }
+.ms-t-h3      { font-size: var(--ms-t-h3); font-weight: 700; line-height: var(--ms-lh-tight); }
+.ms-t-body    { font-size: var(--ms-t-body); }
+.ms-t-label   { font-size: var(--ms-t-label); }
+.ms-t-cap     { font-size: var(--ms-t-cap); }
+.ms-t-muted   { color: var(--ms-text-3); }
+.ms-t-soft    { color: var(--ms-text-2); }
+.ms-t-num     { font-family: var(--ms-font-num); font-variant-numeric: tabular-nums; }
+.ms-t-center  { text-align: center; }
+.ms-t-good     { color: var(--ms-good); }
+.ms-t-warning  { color: var(--ms-warn); }
+.ms-t-critical { color: var(--ms-crit); }
+.ms-t-premium  { color: var(--ms-premium); }
+.ms-t-demo     { color: var(--ms-demo); }
+
+.ms-hide { display: none !important; }
+@media (max-width: 700px) { .ms-only-wide   { display: none !important; } }
+@media (min-width: 701px) { .ms-only-narrow { display: none !important; } }
+
+/* ==================================================================
+   24. MOTION PREFERENCE
+   ==================================================================
+   A blanket switch-off. Transitions are removed rather than shortened: for a
+   user who asked for no motion, a 1ms slide is still a slide.
+   ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ms-view { animation: none; }
+  /* Sheets must still be usable: with no transition they simply appear. */
+  .ms-sheet { transition: none; }
+  .ms-btn:active, .ms-iconbtn:active, .ms-nav__item:active, .ms-card--button:active { transform: none; }
+}
+
+/* ==================================================================
+   25. FORCED COLOURS / HIGH CONTRAST
+   ==================================================================
+   Windows high-contrast mode drops author colours. Masked icons would vanish
+   entirely, so they are forced back to the system text colour, and every
+   surface gets a real border so the layout survives.
+   ------------------------------------------------------------------ */
+
+@media (forced-colors: active) {
+  .ms-icon { background-color: CanvasText; }
+  .ms-card, .ms-tile, .ms-list, .ms-sheet, .ms-nav, .ms-ad, .ms-tablewrap {
+    border: 1px solid CanvasText;
+  }
+  .ms-tile::before, .ms-tile__fill, .ms-progress__fill, .ms-mark { forced-color-adjust: none; }
+  .ms-nav__item[aria-selected="true"] { forced-color-adjust: none; }
+}
+
+/* ==================================================================
+   26. PRINT
+   ==================================================================
+   Exporting a session as a printed page is a genuine use case (showing it to
+   an optician), so the chrome is dropped and the cards flatten.
+   ------------------------------------------------------------------ */
+
+/* ==================================================================
+   INTEGRACJA — poprawki znalezione przy składaniu modułów
+   ==================================================================
+   Two families of bug showed up only once all four modules were on one page,
+   and both are stylesheet omissions rather than module mistakes. They are
+   collected here, at the end, so it is obvious what was added after the fact
+   and what the original system said.
+
+   1. Stacked text blocks. Every `__title` / `__sub` / `__name` / `__meta` pair
+      below is designed as two lines — the stylesheet gives them two different
+      sizes and two different colours — but it only ever set typography, never
+      `display`. All three modules build them as <span>, so every pair ran into
+      one sentence ("MigotanieProcent migotania i…"). One rule fixes thirty
+      call sites, and `.ms-note__title` above already did exactly this.
+
+   2. Pills stretched to full width. A chip in a flex COLUMN stretches unless it
+      is told not to, which turned every "DEMO" badge into something that looked
+      like a button. `.ms-tile__status` already carried `align-self: flex-start`
+      for this reason; the other chips simply never got it.
+   ------------------------------------------------------------------ */
+
+.ms-list__text,
+.ms-account__text,
+.ms-switch__text,
+.ms-feature__text,
+.ms-note__text,
+.ms-ad__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ms-list__title, .ms-list__sub,
+.ms-account__name, .ms-account__meta,
+.ms-switch__label, .ms-switch__sub,
+.ms-feature__title, .ms-feature__desc,
+.ms-ad__title, .ms-ad__text,
+.ms-tile__veil-text { display: block; }
+
+/* Only ever a flex item's own alignment; on a chip that is not in a flex
+   container this property does nothing at all. */
+.ms-demo-badge, .ms-lock, .ms-pro-badge, .ms-status, .ms-badge { align-self: flex-start; }
+
+/* A note that ends with a call to action gives it a little air and its own
+   line, rather than letting it sit tight against the last sentence. */
+.ms-note__text > .ms-btn { align-self: flex-start; margin-top: var(--ms-s-2); }
+
+/* The demo strip and the demo note are full-width bands by design, so they
+   opt back out of the line above through their own children. */
+.ms-demo-strip .ms-demo-badge { align-self: center; }
+
+@media print {
+  .ms-nav, .ms-fab, .ms-ad, .ms-ad--anchored, .ms-toast, .ms-scrim, .ms-sheet, .ms-skip { display: none !important; }
+  body { background: #fff; color: #000; }
+  .ms-main { padding-bottom: 0; }
+  .ms-card, .ms-tile, .ms-tablewrap { box-shadow: none; border: 1px solid #999; break-inside: avoid; }
+}

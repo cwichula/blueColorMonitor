@@ -1,0 +1,513 @@
+@charset "utf-8";
+/* ============================================================================
+   tokens.css — Monitor Światła v4
+   ----------------------------------------------------------------------------
+   ROLA PLIKU: jedyne miejsce w aplikacji, w którym powstaje WARTOŚĆ. Kolory,
+   cienie, promienie, odstępy, kroje, czasy, warstwy i wymiary rodzą się tutaj
+   i nigdzie indziej. Pozostałe arkusze (base.css, components.css, screens.css)
+   wyłącznie ich UŻYWAJĄ przez var(--…) i nie mają prawa żadnego z nich
+   przedefiniować.
+
+   W pliku nie ma ani jednego selektora elementu, klasy czy identyfikatora.
+   Dopuszczone są wyłącznie:
+     :root
+     :root[data-accent="…"]
+     :root[data-theme="…"]
+     :root[data-text-scale="…"]
+     :root[data-motion="…"]
+     @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) … }
+     @media (prefers-reduced-motion: reduce) / (prefers-contrast: more)
+
+   KOLEJNOŚĆ BLOKÓW jest wiążąca (SPEC 2.7):
+     1. :root                               — pełna paleta JASNA + akcent ocean
+     2. :root[data-accent=…] ×5             — akcenty jasne
+     3. @media (prefers-color-scheme: dark) — pełna paleta CIEMNA + 6 akcentów,
+        tylko dla :root:not([data-theme="light"]), bo jawny wybór „jasny”
+        musi wygrać z ciemnym ustawieniem systemu
+     4. :root[data-theme="dark"]            — ta sama paleta CIEMNA, wymuszona,
+        + 6 akcentów; stoi PO bloku @media, więc ręczny wybór wygrywa w obie strony
+     5. skala tekstu, ograniczenie ruchu, podwyższony kontrast
+
+   KONTRAST: przy każdym kolorze tekstu stoi wyliczony współczynnik kontrastu
+   względem kolejnych teł. Liczby policzone wzorem WCAG 2.1 (luminancja
+   względna, sRGB). Podłoga: 4,5:1 dla tekstu, 3:1 dla krawędzi niosących
+   znaczenie i dla tekstu ≥ 24 px.
+   ============================================================================ */
+
+
+/* ============================================================================
+   1. MOTYW JASNY — powierzchnie, krawędzie, tekst, strefy + paleta „ocean”
+   Kolejność teł w komentarzach kontrastu:
+   --c-surface (#FFFFFF) / --c-bg (#F4F6F9) / --c-surface-2 (#F0F3F7) / --c-surface-3 (#E4E9F0)
+   ============================================================================ */
+:root {
+  color-scheme: light dark;
+
+  /* ---- Powierzchnie ---------------------------------------------------- */
+  --c-bg: #F4F6F9;                     /* tło strony pod kartami */
+  --c-surface: #FFFFFF;                /* karta, arkusz, górna belka */
+  --c-surface-2: #F0F3F7;              /* wgłębienie w karcie, pole wykresu, wiersz po najechaniu */
+  --c-surface-3: #E4E9F0;              /* tor suwaka, tło segmentów, szkielet ładowania */
+  --c-scrim: rgba(11, 16, 24, .48);    /* przyciemnienie pod arkuszem */
+
+  /* ---- Krawędzie ------------------------------------------------------- */
+  --c-border: #DCE2EA;                 /* kontrast 1,30 — DEKORACJA, nigdy nie niesie znaczenia */
+  --c-border-strong: #8A93A0;          /* kontrast 3,11 — obrys pola, wybrany plan, oś tabeli */
+
+  /* ---- Tekst ----------------------------------------------------------- */
+  --c-text: #0C1116;                   /* 18,96 / 17,52 / 17,04 / 15,54 — tekst główny, duże liczby */
+  --c-text-2: #48525F;                 /*  7,93 /  7,33 /  7,13 /  6,50 — tekst pomocniczy, podtytuły */
+  --c-text-3: #5C6673;                 /*  5,83 /  5,38 /  5,24 /  4,78 — etykiety, jednostki, osie (PODŁOGA) */
+
+  /* ---- Strefy oceny — NIE zmieniają się razem z paletą akcentu ---------- */
+  --c-good: #0F7A3D;                   /* 5,42 na --c-surface; 5,01 na --c-bg */
+  --c-warn: #8A4B00;                   /* 6,80 / 6,28 */
+  --c-crit: #B3261E;                   /* 6,54 / 6,04 */
+  --c-good-soft: #E3F3E9;              /* --c-good na nim: 4,72 */
+  --c-warn-soft: #FCEEDD;              /* --c-warn na nim: 5,96 */
+  --c-crit-soft: #FCE8E6;              /* --c-crit na nim: 5,55 */
+  --c-on-good: #FFFFFF;                /* 5,42 na --c-good */
+  --c-on-warn: #FFFFFF;                /* 6,80 na --c-warn */
+  --c-on-crit: #FFFFFF;                /* 6,54 na --c-crit */
+
+  /* ---- Premium, informacja, tryb demonstracyjny ------------------------ */
+  --c-premium: #6D3BD1;                /* 6,57 / 6,07 */
+  --c-premium-2: #A32BB0;              /* 5,95 na białym — drugi kolor gradientu premium */
+  --c-premium-soft: #EFE8FD;           /* --c-premium na nim: 5,52 */
+  --c-on-premium: #FFFFFF;             /* 6,57 na --c-premium */
+  --c-info: #0B63C5;                   /* 5,82 / 5,38 */
+  --c-info-soft: #E4EEFB;              /* --c-info na nim: 4,97 */
+  --c-demo: #A5117E;                   /* 7,04 / 6,51 */
+  --c-demo-soft: #FBE6F4;              /* --c-demo na nim: 5,95 */
+
+  /* ---- Fokus ----------------------------------------------------------- */
+  --c-focus: #0B3FA8;                  /* 9,17 na białym — obrys :focus-visible */
+
+  /* ---- Akcent: paleta „ocean” (domyślna), motyw jasny ------------------ */
+  --c-accent: #0F6E86;                 /* 5,84 na --c-surface */
+  --c-accent-2: #175E9E;               /* 6,71 — biały tekst na gradiencie akcentu */
+  --c-accent-ink: #0A5265;             /* 7,49 na --c-accent-soft */
+  --c-accent-soft: #DFF1F5;
+  --c-on-accent: #FFFFFF;              /* 5,84 na --c-accent */
+
+  /* Alias wymagany kontraktem. Nie ma własnej wartości — zawsze podąża za
+     --c-on-accent bieżącej palety, więc jest poprawny w każdym motywie. */
+  --c-text-on-accent: var(--c-on-accent);
+
+  /* ---- Cienie (motyw jasny) --------------------------------------------
+     Kolor rgba(13,20,32, α) — nigdy czysta czerń, bo czerń brudzi barwę tła. */
+  --e-0: none;
+  --e-1: 0 1px 2px rgba(13, 20, 32, .06), 0 2px 6px rgba(13, 20, 32, .05);
+  --e-2: 0 2px 4px rgba(13, 20, 32, .06), 0 8px 20px rgba(13, 20, 32, .08);
+  --e-3: 0 8px 16px rgba(13, 20, 32, .10), 0 24px 48px rgba(13, 20, 32, .14);
+
+  /* ---- Promienie ------------------------------------------------------- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* ---- Odstępy --------------------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 56px;
+
+  /* ---- Kroje pisma ------------------------------------------------------
+     Wyłącznie kroje systemowe: żadnego webfonta, żadnego żądania do sieci. */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-num: ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* ---- Skala tekstu i rozmiary -----------------------------------------
+     --text-scale mnoży WSZYSTKIE rozmiary; zmienia go data-text-scale niżej.
+     12 px to podłoga — poniżej niej w tej aplikacji nie ma tekstu. */
+  --text-scale: 1;
+  --t-display: calc(64px * var(--text-scale));   /* wielka liczba wskaźnika, waga 700, lh 1.0 */
+  --t-h1: calc(28px * var(--text-scale));        /* tytuł ekranu, waga 700 */
+  --t-h2: calc(22px * var(--text-scale));        /* tytuł karty, waga 600 */
+  --t-h3: calc(18px * var(--text-scale));        /* tytuł wiersza, waga 600 */
+  --t-body: calc(16px * var(--text-scale));      /* tekst czytany, waga 400, lh 1.55 */
+  --t-body-sm: calc(15px * var(--text-scale));   /* tekst drugorzędny */
+  --t-label: calc(13px * var(--text-scale));     /* etykieta nawigacji, chip, jednostka; waga 500 */
+  --t-caption: calc(12px * var(--text-scale));   /* podpis osi, drobny druk; waga 400 */
+
+  --lh-tight: 1.1;
+  --lh-body: 1.55;
+  --fw-med: 500;
+  --fw-bold: 600;
+  --fw-black: 700;
+
+  /* ---- Ruch ------------------------------------------------------------ */
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+  --ease: cubic-bezier(.2, 0, 0, 1);
+
+  /* ---- Warstwy --------------------------------------------------------- */
+  --z-nav: 30;
+  --z-sheet: 60;
+  --z-dialog: 70;
+  --z-toast: 80;
+
+  /* ---- Wymiary powłoki -------------------------------------------------- */
+  --h-topbar: 56px;
+  --h-tabbar: 64px;
+  --w-sidenav: 260px;
+  --w-content: 1180px;
+  --tap: 44px;
+}
+
+
+/* ============================================================================
+   2. AKCENTY — motyw JASNY
+   Każda paleta podmienia dokładnie pięć tokenów. Kolory stref, premium, info
+   i demo zostają nietknięte: „W normie” ma znaczyć to samo w każdej palecie.
+   ============================================================================ */
+
+/* violet — elektryczny fiolet przechodzący w magentę */
+:root[data-accent="violet"] {
+  --c-accent: #6A35D9;                 /* 6,72 na --c-surface */
+  --c-accent-2: #A32BB0;               /* 5,95 */
+  --c-accent-ink: #55279E;             /* 7,94 na --c-accent-soft */
+  --c-accent-soft: #EDE5FD;
+  --c-on-accent: #FFFFFF;              /* 6,72 na --c-accent */
+}
+
+/* sunset — przypalona pomarańcz przechodząca w karmazyn */
+:root[data-accent="sunset"] {
+  --c-accent: #C2410C;                 /* 5,18 na --c-surface */
+  --c-accent-2: #C21E63;               /* 5,74 */
+  --c-accent-ink: #8F300A;             /* 6,94 na --c-accent-soft */
+  --c-accent-soft: #FDEAE0;
+  --c-on-accent: #FFFFFF;              /* 5,18 na --c-accent */
+}
+
+/* forest — głęboka zieleń przechodząca w zieleń morską.
+   UWAGA: jedyna paleta, w której akcent leży blisko --c-good. Dlatego plakietka
+   strefy nigdy nie używa --c-accent, a przycisk główny nie stoi bezpośrednio
+   obok znacznika „W normie” (SPEC 2.4). */
+:root[data-accent="forest"] {
+  --c-accent: #146B3A;                 /* 6,57 na --c-surface */
+  --c-accent-2: #0D6E63;               /* 6,13 */
+  --c-accent-ink: #0F5230;             /* 7,97 na --c-accent-soft */
+  --c-accent-soft: #E2F2E7;
+  --c-on-accent: #FFFFFF;              /* 6,57 na --c-accent */
+}
+
+/* graphite — stal, bez barwy; dla tych, którzy nie chcą koloru */
+:root[data-accent="graphite"] {
+  --c-accent: #3E4956;                 /* 9,16 na --c-surface */
+  --c-accent-2: #2B3A4A;               /* 11,62 */
+  --c-accent-ink: #2C3542;             /* 10,44 na --c-accent-soft */
+  --c-accent-soft: #E8ECF1;
+  --c-on-accent: #FFFFFF;              /* 9,16 na --c-accent */
+}
+
+/* rose — malina przechodząca w purpurę */
+:root[data-accent="rose"] {
+  --c-accent: #BE1F62;                 /* 5,90 na --c-surface */
+  --c-accent-2: #8E2AA8;               /* 6,89 */
+  --c-accent-ink: #911048;             /* 7,37 na --c-accent-soft */
+  --c-accent-soft: #FCE4EE;
+  --c-on-accent: #FFFFFF;              /* 5,90 na --c-accent */
+}
+
+
+/* ============================================================================
+   3. MOTYW CIEMNY Z USTAWIENIA SYSTEMU
+   Warunek :not([data-theme="light"]) sprawia, że jawny wybór „jasny” wygrywa
+   z ciemnym motywem systemu. Blok jest PEŁNY — nie polega na kaskadzie z :root
+   ani na tym, że cokolwiek zostanie „odziedziczone”.
+   Kolejność teł w komentarzach kontrastu:
+   --c-bg (#0E1116) / --c-surface (#171B22) / --c-surface-2 (#1E232B) / --c-surface-3 (#262C35)
+   ============================================================================ */
+@media (prefers-color-scheme: dark) {
+
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    /* ---- Powierzchnie -------------------------------------------------- */
+    --c-bg: #0E1116;
+    --c-surface: #171B22;
+    --c-surface-2: #1E232B;
+    --c-surface-3: #262C35;
+    --c-scrim: rgba(0, 0, 0, .62);
+
+    /* ---- Krawędzie ----------------------------------------------------- */
+    --c-border: #2C333D;               /* 1,35 — dekoracja */
+    --c-border-strong: #646E7B;        /* 3,34 na --c-surface */
+
+    /* ---- Tekst --------------------------------------------------------- */
+    --c-text: #F2F5F9;                 /* 17,29 / 15,79 / 14,43 / 12,85 */
+    --c-text-2: #B4BDC8;               /*  9,95 /  9,09 /  8,31 /  7,40 */
+    --c-text-3: #8E98A5;               /*  6,47 /  5,91 /  5,40 /  4,81 — podłoga */
+
+    /* ---- Strefy oceny -------------------------------------------------- */
+    --c-good: #4ED384;                 /* 9,02 na --c-surface; 9,88 na --c-bg */
+    --c-warn: #F0B45F;                 /* 9,37 / 10,27 */
+    --c-crit: #FF7B72;                 /* 6,85 / 7,50 */
+    --c-good-soft: #12291C;            /* --c-good na nim: 8,07 */
+    --c-warn-soft: #2E2211;            /* --c-warn na nim: 8,42 */
+    --c-crit-soft: #3A1A18;            /* --c-crit na nim: 6,21 */
+    --c-on-good: #08150D;              /* 12,3 na --c-good */
+    --c-on-warn: #1B1206;              /* 12,9 na --c-warn */
+    --c-on-crit: #2A0B09;              /*  8,4 na --c-crit */
+
+    /* ---- Premium, informacja, demo ------------------------------------- */
+    --c-premium: #BFA3FF;              /* 8,14 / 8,91 */
+    --c-premium-2: #D69BFF;            /* 9,09 na #0B1015 — drugi kolor gradientu */
+    --c-premium-soft: #231C40;         /* --c-premium na nim: 7,55 */
+    --c-on-premium: #150C2E;           /* 10,6 na --c-premium */
+    --c-info: #7FB6FF;                 /* 8,25 / 9,04 */
+    --c-info-soft: #122438;            /* --c-info na nim: 7,52 */
+    --c-demo: #FF86D2;                 /* 7,89 / 8,64 */
+    --c-demo-soft: #331333;            /* --c-demo na nim: 7,48 */
+
+    /* ---- Fokus --------------------------------------------------------- */
+    --c-focus: #8AB4FF;                /* 8,5 na --c-surface */
+
+    /* ---- Akcent „ocean”, motyw ciemny ---------------------------------- */
+    --c-accent: #35C0DA;               /* 7,98 na --c-surface */
+    --c-accent-2: #6BE3D2;             /* 12,32 na #0B1015 */
+    --c-accent-ink: #35C0DA;           /* 6,65 na --c-accent-soft */
+    --c-accent-soft: #0C2E36;
+    --c-on-accent: #0B1015;            /* 8,83 na --c-accent */
+
+    /* ---- Cienie (motyw ciemny) -----------------------------------------
+       Słabsze niż w jasnym — nie ma czego przyciemniać. Głębię niesie
+       jaśniejsza krawędź górna, wpisana w cień jako inset. */
+    --e-0: none;
+    --e-1: 0 1px 2px rgba(0, 0, 0, .40), inset 0 1px 0 rgba(255, 255, 255, .04);
+    --e-2: 0 4px 12px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255, 255, 255, .05);
+    --e-3: 0 12px 32px rgba(0, 0, 0, .60), inset 0 1px 0 rgba(255, 255, 255, .06);
+  }
+
+  :root:not([data-theme="light"])[data-accent="violet"] {
+    --c-accent: #A98BFF;               /* 6,43 na --c-surface */
+    --c-accent-2: #D69BFF;             /* 9,09 na #0B1015 */
+    --c-accent-ink: #A98BFF;           /* 5,94 na --c-accent-soft */
+    --c-accent-soft: #241B45;
+    --c-on-accent: #0B1015;            /* 7,12 na --c-accent */
+  }
+
+  :root:not([data-theme="light"])[data-accent="sunset"] {
+    --c-accent: #FF9457;               /* 7,91 na --c-surface */
+    --c-accent-2: #FFC46B;             /* 12,15 na #0B1015 */
+    --c-accent-ink: #FF9457;           /* 7,33 na --c-accent-soft */
+    --c-accent-soft: #331C0F;
+    --c-on-accent: #0B1015;            /* 8,76 na --c-accent */
+  }
+
+  :root:not([data-theme="light"])[data-accent="forest"] {
+    --c-accent: #4FC97A;               /* 8,20 na --c-surface */
+    --c-accent-2: #9BE07A;             /* 12,13 na #0B1015 */
+    --c-accent-ink: #4FC97A;           /* 6,81 na --c-accent-soft */
+    --c-accent-soft: #10301E;
+    --c-on-accent: #0B1015;            /* 9,07 na --c-accent */
+  }
+
+  :root:not([data-theme="light"])[data-accent="graphite"] {
+    --c-accent: #A7B4C4;               /* 8,20 na --c-surface */
+    --c-accent-2: #CBD5E1;             /* 12,87 na #0B1015 */
+    --c-accent-ink: #A7B4C4;           /* 6,87 na --c-accent-soft */
+    --c-accent-soft: #232A33;
+    --c-on-accent: #0B1015;            /* 9,07 na --c-accent */
+  }
+
+  :root:not([data-theme="light"])[data-accent="rose"] {
+    --c-accent: #FF7AAE;               /* 7,11 na --c-surface */
+    --c-accent-2: #FFA9C6;             /* 10,68 na #0B1015 */
+    --c-accent-ink: #FF7AAE;           /* 6,68 na --c-accent-soft */
+    --c-accent-soft: #34162A;
+    --c-on-accent: #0B1015;            /* 7,87 na --c-accent */
+  }
+}
+
+
+/* ============================================================================
+   4. MOTYW CIEMNY WYMUSZONY WYBOREM UŻYTKOWNIKA
+   Ten sam zestaw wartości, ale poza @media — dlatego działa także wtedy, gdy
+   system stoi na jasnym. Blok stoi w pliku PO @media, więc ręczny wybór
+   wygrywa z ustawieniem systemu w obie strony:
+     system ciemny + wybór „jasny”  → :root (jasny), bo @media ma :not([data-theme="light"])
+     system jasny  + wybór „ciemny” → ten blok (ciemny), bo stoi później
+   ============================================================================ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --c-bg: #0E1116;
+  --c-surface: #171B22;
+  --c-surface-2: #1E232B;
+  --c-surface-3: #262C35;
+  --c-scrim: rgba(0, 0, 0, .62);
+
+  --c-border: #2C333D;                 /* 1,35 — dekoracja */
+  --c-border-strong: #646E7B;          /* 3,34 na --c-surface */
+
+  --c-text: #F2F5F9;                   /* 17,29 / 15,79 / 14,43 / 12,85 */
+  --c-text-2: #B4BDC8;                 /*  9,95 /  9,09 /  8,31 /  7,40 */
+  --c-text-3: #8E98A5;                 /*  6,47 /  5,91 /  5,40 /  4,81 — podłoga */
+
+  --c-good: #4ED384;                   /* 9,02 na --c-surface; 9,88 na --c-bg */
+  --c-warn: #F0B45F;                   /* 9,37 / 10,27 */
+  --c-crit: #FF7B72;                   /* 6,85 / 7,50 */
+  --c-good-soft: #12291C;              /* --c-good na nim: 8,07 */
+  --c-warn-soft: #2E2211;              /* --c-warn na nim: 8,42 */
+  --c-crit-soft: #3A1A18;              /* --c-crit na nim: 6,21 */
+  --c-on-good: #08150D;                /* 12,3 na --c-good */
+  --c-on-warn: #1B1206;                /* 12,9 na --c-warn */
+  --c-on-crit: #2A0B09;                /*  8,4 na --c-crit */
+
+  --c-premium: #BFA3FF;                /* 8,14 / 8,91 */
+  --c-premium-2: #D69BFF;              /* 9,09 na #0B1015 */
+  --c-premium-soft: #231C40;           /* --c-premium na nim: 7,55 */
+  --c-on-premium: #150C2E;             /* 10,6 na --c-premium */
+  --c-info: #7FB6FF;                   /* 8,25 / 9,04 */
+  --c-info-soft: #122438;              /* --c-info na nim: 7,52 */
+  --c-demo: #FF86D2;                   /* 7,89 / 8,64 */
+  --c-demo-soft: #331333;              /* --c-demo na nim: 7,48 */
+
+  --c-focus: #8AB4FF;                  /* 8,5 na --c-surface */
+
+  --c-accent: #35C0DA;                 /* 7,98 na --c-surface */
+  --c-accent-2: #6BE3D2;               /* 12,32 na #0B1015 */
+  --c-accent-ink: #35C0DA;             /* 6,65 na --c-accent-soft */
+  --c-accent-soft: #0C2E36;
+  --c-on-accent: #0B1015;              /* 8,83 na --c-accent */
+
+  --e-0: none;
+  --e-1: 0 1px 2px rgba(0, 0, 0, .40), inset 0 1px 0 rgba(255, 255, 255, .04);
+  --e-2: 0 4px 12px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255, 255, 255, .05);
+  --e-3: 0 12px 32px rgba(0, 0, 0, .60), inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+:root[data-theme="dark"][data-accent="violet"] {
+  --c-accent: #A98BFF;                 /* 6,43 na --c-surface */
+  --c-accent-2: #D69BFF;               /* 9,09 na #0B1015 */
+  --c-accent-ink: #A98BFF;             /* 5,94 na --c-accent-soft */
+  --c-accent-soft: #241B45;
+  --c-on-accent: #0B1015;              /* 7,12 na --c-accent */
+}
+
+:root[data-theme="dark"][data-accent="sunset"] {
+  --c-accent: #FF9457;                 /* 7,91 na --c-surface */
+  --c-accent-2: #FFC46B;               /* 12,15 na #0B1015 */
+  --c-accent-ink: #FF9457;             /* 7,33 na --c-accent-soft */
+  --c-accent-soft: #331C0F;
+  --c-on-accent: #0B1015;              /* 8,76 na --c-accent */
+}
+
+:root[data-theme="dark"][data-accent="forest"] {
+  --c-accent: #4FC97A;                 /* 8,20 na --c-surface */
+  --c-accent-2: #9BE07A;               /* 12,13 na #0B1015 */
+  --c-accent-ink: #4FC97A;             /* 6,81 na --c-accent-soft */
+  --c-accent-soft: #10301E;
+  --c-on-accent: #0B1015;              /* 9,07 na --c-accent */
+}
+
+:root[data-theme="dark"][data-accent="graphite"] {
+  --c-accent: #A7B4C4;                 /* 8,20 na --c-surface */
+  --c-accent-2: #CBD5E1;               /* 12,87 na #0B1015 */
+  --c-accent-ink: #A7B4C4;             /* 6,87 na --c-accent-soft */
+  --c-accent-soft: #232A33;
+  --c-on-accent: #0B1015;              /* 9,07 na --c-accent */
+}
+
+:root[data-theme="dark"][data-accent="rose"] {
+  --c-accent: #FF7AAE;                 /* 7,11 na --c-surface */
+  --c-accent-2: #FFA9C6;               /* 10,68 na #0B1015 */
+  --c-accent-ink: #FF7AAE;             /* 6,68 na --c-accent-soft */
+  --c-accent-soft: #34162A;
+  --c-on-accent: #0B1015;              /* 7,87 na --c-accent */
+}
+
+
+/* ============================================================================
+   5. MOTYW JASNY WYMUSZONY WYBOREM
+   Wartości :root są już jasne, więc blok podaje tylko color-scheme. Istnieje po
+   to, żeby przeglądarka w systemie ciemnym malowała paski przewijania, pola
+   formularzy i tło poza dokumentem na jasno — inaczej wybór „jasny” dawałby
+   jasną treść w ciemnej ramie.
+   ============================================================================ */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+
+/* ============================================================================
+   6. SKALA TEKSTU
+   Jeden mnożnik przechodzi przez wszystkie osiem rozmiarów z bloku :root.
+   Brak atrybutu = 1. Wartości pochodzą ze Store (textScale: 1 | 1,15 | 1,3).
+   ============================================================================ */
+:root[data-text-scale="1.15"] { --text-scale: 1.15; }
+:root[data-text-scale="1.3"]  { --text-scale: 1.3; }
+
+
+/* ============================================================================
+   7. OGRANICZENIE RUCHU
+   Tu skracamy WYŁĄCZNIE czasy. Reguły „co przestaje się ruszać” (znikające
+   przesunięcia wejść, wyłączony puls kropek, zatrzymany spinner) należą do
+   base.css i components.css — SPEC 8.1.
+   ============================================================================ */
+:root[data-motion="reduced"] {
+  --dur-fast: 1ms;
+  --dur: 1ms;
+  --dur-slow: 1ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+  }
+}
+
+
+/* ============================================================================
+   8. PODWYŻSZONY KONTRAST (prefers-contrast: more)
+   Wzmacniamy tylko to, co da się wzmocnić bez psucia semantyki: krawędź
+   dekoracyjna dostaje siłę krawędzi znaczącej, a oba wyciszone stopnie tekstu
+   idą w górę. Kolorów stref i akcentu NIE ruszamy — są policzone z zapasem,
+   a ich zmiana rozjechałaby wyliczenia na tłach --*-soft.
+   Cztery bloki, bo kombinacja „system X + wybór Y” musi trafić w swój motyw.
+   ============================================================================ */
+@media (prefers-contrast: more) {
+  :root {
+    --c-border: #8A93A0;               /* 3,11 na --c-surface — krawędź staje się widoczna */
+    --c-text-2: #2F3743;               /* 12,01 / 11,09 / 10,79 / 9,84 */
+    --c-text-3: #333C48;               /* 11,17 / 10,31 / 10,03 / 9,15 */
+  }
+
+  :root:not([data-theme="light"]) {
+    --c-border: #646E7B;               /* 3,34 na --c-surface */
+    --c-text-2: #DCE3EB;               /* 14,62 / 13,34 / 12,20 / 10,86 */
+    --c-text-3: #C9D3DF;               /* 12,49 / 11,40 / 10,42 /  9,28 */
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: light) {
+  /* System jasny, użytkownik wymusił ciemny: blok :not([data-theme="light"])
+     powyżej trafiłby wtedy w wartości jasne, bo paleta jest jasna. */
+  :root[data-theme="dark"] {
+    --c-border: #646E7B;               /* 3,34 na --c-surface */
+    --c-text-2: #DCE3EB;               /* 14,62 / 13,34 / 12,20 / 10,86 */
+    --c-text-3: #C9D3DF;               /* 12,49 / 11,40 / 10,42 /  9,28 */
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  /* Odwrotnie: system ciemny, wybór jasny. */
+  :root[data-theme="light"] {
+    --c-border: #8A93A0;               /* 3,11 na --c-surface */
+    --c-text-2: #2F3743;               /* 12,01 / 11,09 / 10,79 / 9,84 */
+    --c-text-3: #333C48;               /* 11,17 / 10,31 / 10,03 / 9,15 */
+  }
+}

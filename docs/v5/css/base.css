@@ -1,0 +1,392 @@
+/* base.css — fundament wizualny v5: reset, typografia, dostępność, powłoka.
+   Wszystko stoi na tokenach z tokens.css (ten plik nie zawiera ani jednej
+   wartości koloru wprost). Odpowiada za trzy rzeczy:
+   - zerowanie różnic między przeglądarkami i oparcie dokumentu na tokenach,
+   - jedno miejsce z obsługą fokusu i narzędziami dostępności,
+   - siatkę powłoki: górny pasek, treść, dolne zakładki (telefon) albo lewy
+     pasek boczny (od 900 px).
+   Komponentów, kart i ekranów tu nie ma — mieszkają w components.css i
+   screens.css. */
+
+/* ---------------------------------------------------------------- reset */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+/* Marginesy zdejmujemy globalnie, żeby rytm pionowy wynikał z odstępów
+   nadanych przez układ, a nie z domyślnych marginesów przeglądarki. */
+* { margin: 0; }
+
+html {
+  /* Blokada powiększania tekstu przy obrocie ekranu w iOS — skalę tekstu
+     kontroluje data-text-scale, nie orientacja urządzenia. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) { color-scheme: dark; }
+}
+html[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--surface-0);
+  color: var(--text-1);
+  font-family: var(--ff-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  /* Cyfry tabularne w całym interfejsie: liczba odświeżana 10 razy na sekundę
+     nie może zmieniać szerokości, bo rozjeżdża układ i męczy wzrok. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Gumowe odbicie strony psuje wrażenie przyrządu i odsłania tło pod powłoką. */
+  overscroll-behavior-y: none;
+}
+
+img,
+svg,
+video,
+canvas,
+picture { display: block; max-width: 100%; }
+img,
+video { height: auto; }
+
+/* Formularze dziedziczą typografię i kolor; wygląd kontrolek dokłada
+   components.css. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button[disabled] { cursor: not-allowed; }
+textarea { resize: vertical; }
+fieldset { padding: 0; border: 0; }
+legend { padding: 0; }
+
+/* Listy używane jako nawigacja czy siatka tracą punktory; lista w treści
+   (bez klasy) zostaje listą. */
+ul[class],
+ol[class] { padding: 0; list-style: none; }
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+a:hover { color: var(--accent-hover); }
+
+hr {
+  height: 1px;
+  border: 0;
+  background: var(--line-1);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-1);
+}
+
+/* ------------------------------------------------------ typografia bazowa */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 650;
+  line-height: var(--lh-tight);
+  letter-spacing: -.012em;
+  text-wrap: balance;
+}
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); }
+h4, h5, h6 { font-size: var(--fs-body); }
+
+p { text-wrap: pretty; }
+small { font-size: var(--fs-sm); }
+
+strong, b { font-weight: 650; }
+
+code, kbd, samp, pre { font-family: var(--ff-num); font-size: .95em; }
+
+/* Każda liczba pomiarowa nosi tę klasę: jedna szerokość znaku i lekko ciaśniej,
+   żeby wielki odczyt nie rozjeżdżał się na wąskim telefonie. */
+.m5-num {
+  font-family: var(--ff-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+
+/* --------------------------------------------------------- dostępność */
+/* Jedyne dozwolone !important w projekcie: klasa musi ukryć element
+   niezależnie od tego, co dołoży komponent. */
+.m5-sronly {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Skok do treści — niewidoczny, dopóki nie dostanie fokusu z klawiatury. */
+.m5-skip {
+  position: fixed;
+  top: calc(var(--safe-t) + var(--sp-2));
+  left: 50%;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--sp-5);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--text-1);
+  box-shadow: var(--shadow-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translate(-50%, -220%);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.m5-skip:focus-visible { transform: translate(-50%, 0); }
+
+/* Jedno miejsce z pierścieniem fokusu dla całej aplikacji: dwie warstwy, więc
+   jest widoczny i na jasnym, i na ciemnym tle, i na kolorowym przycisku. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+/* Fokus nadany z kodu (np. <main> po zmianie ekranu) nie ma rysować obwódki —
+   użytkownik myszy jej nie oczekuje, a czytnik ekranu i tak przeczyta tytuł. */
+:focus:not(:focus-visible) { outline: none; }
+[tabindex="-1"]:focus { outline: none; box-shadow: none; }
+
+/* Każdy cel dotykowy w powłoce ma co najmniej 44 px. */
+.m5-tab,
+.m5-navitem { min-height: var(--tap); }
+
+/* --------------------------------------------------------- powłoka */
+.m5-app {
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-areas:
+    "topbar"
+    "main"
+    "tabbar";
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--surface-0);
+  /* Własny kontekst nakładania, żeby arkusze i toasty miały przewidywalne z-index. */
+  isolation: isolate;
+}
+
+.m5-topbar {
+  grid-area: topbar;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding-top: var(--safe-t);
+  padding-left: var(--safe-l);
+  padding-right: var(--safe-r);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line-1);
+}
+.m5-topbar__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  max-width: var(--content-max);
+  min-height: var(--topbar-h);
+  padding-inline: var(--sp-4);
+}
+.m5-topbar__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-h3);
+  font-weight: 650;
+  letter-spacing: -.012em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m5-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+}
+
+.m5-main {
+  grid-area: main;
+  /* To główny obszar przewijania aplikacji — dzięki temu app.js zapamiętuje
+     pozycję przewijania ekranu, a paski powłoki nigdy nie uciekają. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-padding-block: var(--sp-6);
+}
+/* Kolumna treści: jedna szerokość dla wszystkich ekranów, wyśrodkowana. */
+.m5-main > * {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--sp-5) max(var(--sp-4), var(--safe-l)) var(--sp-8) max(var(--sp-4), var(--safe-r));
+}
+
+.m5-tabbar {
+  grid-area: tabbar;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--safe-b);
+  padding-left: var(--safe-l);
+  padding-right: var(--safe-r);
+  background: var(--surface-2);
+  border-top: 1px solid var(--line-1);
+}
+.m5-tabbar__list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  width: 100%;
+  max-width: var(--content-max);
+  min-height: var(--tabbar-h);
+}
+.m5-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-1);
+  border-radius: var(--r-md);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--dur-1) var(--ease-out);
+}
+.m5-tab__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m5-tab[aria-current="page"] { color: var(--accent); }
+/* Zakładka aktywna dostaje też kropkę — sam kolor nie jest wystarczającym
+   sygnałem dla osób nierozróżniających barw. */
+.m5-tab[aria-current="page"]::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+}
+.m5-tab:active { transform: scale(.97); }
+@media (hover: hover) {
+  .m5-tab:hover { color: var(--text-1); }
+  .m5-tab[aria-current="page"]:hover { color: var(--accent-hover); }
+}
+
+/* Pasek boczny istnieje w DOM zawsze, pokazuje się dopiero od 900 px. */
+.m5-sidenav { display: none; }
+
+.m5-noscroll {
+  /* Blokada przewijania tła pod arkuszem/dialogiem. Pozycję przewijania
+     odtwarza overlays.js — tu tylko zatrzymujemy oba obszary przewijania.
+     Świadomie bez touch-action: none — zablokowałoby też przewijanie treści
+     wewnątrz samego arkusza. */
+  overflow: hidden;
+}
+.m5-noscroll .m5-main { overflow: hidden; }
+
+/* ---------------------------------------- układ szeroki (od 900 px) ----
+   Zakładki znikają, ich rolę przejmuje lewy pasek boczny; treść zostaje
+   w tej samej kolumnie --content-max, żeby wiersze nie robiły się za długie. */
+@media (min-width: 900px) {
+  .m5-app {
+    grid-template-areas:
+      "nav topbar"
+      "nav main";
+    grid-template-columns: var(--sidenav-w) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .m5-tabbar { display: none; }
+
+  .m5-sidenav {
+    grid-area: nav;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: var(--sp-4) var(--sp-3) calc(var(--sp-4) + var(--safe-b));
+    padding-left: max(var(--sp-3), var(--safe-l));
+    padding-top: calc(var(--sp-4) + var(--safe-t));
+    background: var(--surface-1);
+    border-right: 1px solid var(--line-1);
+    overflow-y: auto;
+  }
+  .m5-sidenav__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-height: var(--topbar-h);
+    padding-inline: var(--sp-3);
+    font-size: var(--fs-body);
+    font-weight: 650;
+    letter-spacing: -.012em;
+    color: var(--text-1);
+  }
+  .m5-sidenav__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+  }
+  .m5-navitem {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-md);
+    color: var(--text-2);
+    font-size: var(--fs-body);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color var(--dur-1) var(--ease-out),
+                color var(--dur-1) var(--ease-out);
+  }
+  .m5-navitem__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .m5-navitem[aria-current="page"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  @media (hover: hover) {
+    .m5-navitem:hover { background: var(--accent-soft); color: var(--text-1); }
+    .m5-navitem[aria-current="page"]:hover { color: var(--accent-hover); }
+  }
+
+  .m5-topbar__inner { padding-inline: var(--sp-5); }
+  .m5-main > * { padding-block: var(--sp-6) var(--sp-8); }
+}

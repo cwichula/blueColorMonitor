@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monitoring Światła Szkodliwego</title>
+<meta name="description" content="Mierzy kamerą natężenie koloru niebieskiego na ekranie i pokazuje je na czytelnym wykresie ze strefami: bezpieczna, umiarkowana, szkodliwa.">
+<meta name="theme-color" content="#1a1a19">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+<!-- Must load AFTER style.css: its global [hidden]{display:none!important} and
+     .btn-large need to win on source order, not on specificity hacks. -->
+<link rel="stylesheet" href="monetization.css">
+</head>
+<body class="viz-root">
+
+<header class="app-header">
+  <h1>Monitoring Światła Szkodliwego</h1>
+  <div class="header-actions">
+    <!-- Second permanent entry point to Premium. monetization-ui.js owns the
+         label and aria-label; menu.js only wires the click. -->
+    <button id="premiumPill" class="mz-pill" type="button" aria-label="Przejdź na Premium — wersja demonstracyjna"><span id="premiumPillLabel">PRO</span></button>
+    <button id="infoBtn" class="icon-btn" type="button" aria-label="Przejdź do dokumentacji">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="11" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Kept in the DOM (app.js still owns selectTab) but hidden by menu.js, so the
+     screen reader never hears the same navigation twice. -->
+<div class="tabs" id="legacyTabs" role="tablist" aria-label="Widoki aplikacji">
+  <button id="tabCamera" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelCamera">Kamera</button>
+  <button id="tabMonitoring" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelMonitoring" tabindex="-1">Monitoring</button>
+</div>
+
+<main>
+<!-- role="region", not "tabpanel": menu.js hides #legacyTabs, so there is no
+     role="tablist" and no role="tab" left in the accessibility tree and a
+     tabpanel here would be orphaned. app.js only toggles .hidden and
+     aria-selected, so it is unaffected. -->
+<div id="panelCamera" role="region" aria-label="Kamera">
+
+  <section class="card camera-card" aria-label="Podgląd kamery">
+    <div class="video-wrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="sampleOverlay" class="sample-overlay"></canvas>
+      <div id="cameraPlaceholder" class="camera-placeholder">
+        <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M4 7h3l1.5-2h7L17 7h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+        <p>Naciśnij „Start”.</p>
+      </div>
+    </div>
+    <div class="camera-controls">
+      <button id="startBtn" class="btn btn-primary" type="button">Start</button>
+      <button id="stopBtn" class="btn" type="button" disabled>Stop</button>
+      <button id="switchBtn" class="btn" type="button" disabled>Zmień kamerę</button>
+    </div>
+  </section>
+</div>
+
+<div id="panelMonitoring" role="region" aria-label="Monitoring" hidden>
+
+  <section class="card reading-card" aria-label="Aktualne odczyty">
+    <div class="reading-grid">
+
+      <div class="reading-block">
+        <h3 class="reading-title">Jasność kanału B</h3>
+        <div class="gauge-wrap">
+          <svg id="gaugeRaw" viewBox="0 0 200 130" class="gauge">
+            <path class="gauge-band gauge-good" d="" />
+            <path class="gauge-band gauge-warning" d="" />
+            <path class="gauge-band gauge-critical" d="" />
+            <line class="gauge-needle" x1="100" y1="95" x2="100" y2="32" />
+            <circle cx="100" cy="95" r="6" class="gauge-hub" />
+          </svg>
+          <div class="gauge-readout">
+            <div id="gaugeValueRaw" class="gauge-value">--</div>
+            <div class="gauge-unit">% jasności kanału B</div>
+            <div id="statusBadgeRaw" class="status-badge status-idle">
+              <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"></svg>
+              <span class="status-label">Brak danych</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reading-block">
+        <h3 class="reading-title">Udział niebieskiego</h3>
+        <div class="gauge-wrap">
+          <svg id="gaugeShare" viewBox="0 0 200 130" class="gauge">
+            <path class="gauge-band gauge-good" d="" />
+            <path class="gauge-band gauge-warning" d="" />
+            <path class="gauge-band gauge-critical" d="" />
+            <line class="gauge-needle" x1="100" y1="95" x2="100" y2="32" />
+            <circle cx="100" cy="95" r="6" class="gauge-hub" />
+          </svg>
+          <div class="gauge-readout">
+            <div id="gaugeValueShare" class="gauge-value">--</div>
+            <div class="gauge-unit">% udziału niebieskiego</div>
+            <div id="statusBadgeShare" class="status-badge status-idle">
+              <svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"></svg>
+              <span class="status-label">Brak danych</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="secondary-stats">
+      <div class="stat"><span class="stat-label">Jasność ogólna sceny</span><span id="overallBrightness" class="stat-value">--%</span></div>
+    </div>
+    <p id="medicalDisclaimerShort" class="mz-disclaimer-short">Wynik orientacyjny. To nie jest wyrób medyczny. <a id="medicalDisclaimerLink" href="#">Więcej</a></p>
+  </section>
+
+  <section class="card chart-card" aria-label="Wykresy w czasie">
+    <div class="chart-header">
+      <h2>Wykresy w czasie (ostatnie 60 s)</h2>
+      <button id="tableToggle" class="btn btn-small" type="button" aria-pressed="false">Pokaż jako tabelę</button>
+      <!-- No onclick here on purpose: monetization-ui.js wires the handler and
+           adds the padlock (it marks the button with data-mz-wired). -->
+      <button id="exportCsvBtn" class="btn" type="button">Eksport CSV</button>
+    </div>
+
+    <div class="chart-block">
+      <h3 class="chart-title">Jasność kanału B</h3>
+      <canvas id="chartRaw" class="chart-canvas" role="img" aria-label="Wykres jasności kanału B w czasie, z oznaczonymi strefami bezpieczną, umiarkowaną i szkodliwą"></canvas>
+    </div>
+
+    <div class="chart-block">
+      <h3 class="chart-title">Udział niebieskiego w świetle</h3>
+      <canvas id="chartShare" class="chart-canvas" role="img" aria-label="Wykres udziału niebieskiego w świetle w czasie, z oznaczonymi strefami bezpieczną, umiarkowaną i szkodliwą"></canvas>
+    </div>
+
+    <div class="legend" aria-hidden="false">
+      <div class="legend-item">
+        <span class="legend-swatch legend-good"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+        <span>Bezpieczna</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch legend-warning"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <span>Umiarkowana</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch legend-critical"></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 1 12l11 10 11-10L12 2zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z"/></svg>
+        <span>Szkodliwa</span>
+      </div>
+    </div>
+
+    <!-- Filled by monetization-ui.js: locked-history upsell for the free tier,
+         the real history browser once the entitlement exists. -->
+    <div id="historyUpsell"></div>
+
+    <div id="tableWrap" class="table-wrap" hidden>
+      <table class="readings-table">
+        <caption>Ostatnie odczyty (najnowszy na górze)</caption>
+        <thead><tr>
+          <th scope="col">Czas</th>
+          <th scope="col">Jasność kanału B</th>
+          <th scope="col">Udział niebieskiego</th>
+          <th scope="col">Strefa</th>
+        </tr></thead>
+        <tbody id="readingsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="card settings-card" id="settingsCard">
+    <summary>Ustawienia progów stref</summary>
+    <div class="settings-body">
+      <div class="settings-group">
+        <h4 class="settings-group-title">Jasność kanału B</h4>
+        <label class="slider-row">
+          <span>Granica żółty / czerwony: <b id="rawCritLabel">66%</b></span>
+          <input id="rawCritSlider" type="range" min="10" max="95" value="66">
+        </label>
+        <label class="slider-row">
+          <span>Granica zielony / żółty: <b id="rawWarnLabel">33%</b></span>
+          <input id="rawWarnSlider" type="range" min="5" max="90" value="33">
+        </label>
+      </div>
+
+      <div class="settings-group">
+        <h4 class="settings-group-title">Udział niebieskiego</h4>
+        <label class="slider-row">
+          <span>Granica żółty / czerwony: <b id="shareCritLabel">33%</b></span>
+          <input id="shareCritSlider" type="range" min="10" max="95" value="33">
+        </label>
+        <label class="slider-row">
+          <span>Granica zielony / żółty: <b id="shareWarnLabel">26%</b></span>
+          <input id="shareWarnSlider" type="range" min="5" max="90" value="26">
+        </label>
+      </div>
+
+      <!-- Filled by monetization-ui.js: threshold-profile upsell / manager. -->
+      <div id="profilesUpsell"></div>
+    </div>
+  </details>
+
+  <!-- Ad slot, deliberately the LAST element of the panel and far away from
+       Start/Stop (those live in panelCamera). Height is reserved so nothing
+       ever jumps under the user's finger. -->
+  <div id="adSlotMonitoring" class="ad-slot ad-slot-reserved" hidden></div>
+
+</div>
+
+<div id="panelMethodology" role="region" aria-label="Dokumentacja" class="methodology" hidden>
+
+  <!-- data-nav-back is menu.js's delegated back handler; no per-screen wiring. -->
+  <div class="mz-row">
+    <button type="button" class="mz-back-btn" data-nav-back aria-label="Wróć do poprzedniego ekranu">← Wróć</button>
+  </div>
+
+  <section class="card mz-disclaimer" role="note">
+    <h3>To nie jest wyrób medyczny</h3>
+    <p>Ta aplikacja nie jest wyrobem medycznym. Nie służy do diagnozowania,
+    leczenia ani zapobiegania jakimkolwiek chorobom. Wyniki pomiaru kamerą
+    telefonu mają charakter orientacyjny i nie zastępują badania ani porady
+    lekarza. W sprawach zdrowia wzroku skonsultuj się z lekarzem lub
+    optometrystą. Progi stref w tej aplikacji nie odwzorowują żadnej normy
+    bezpieczeństwa — szczegóły w rozdziale 3.</p>
+  </section>
+
+  <nav class="doc-toc card" aria-label="Spis treści dokumentacji">
+    <h2>Spis treści</h2>
+    <ol>
+      <li><a href="#doc-start">Szybki start</a></li>
+      <li><a href="#doc-metodologia">Jak działa pomiar</a></li>
+      <li><a href="#doc-jednostki">Jednostki i normy</a></li>
+      <li><a href="#doc-strefy">Strefy i progi</a></li>
+      <li><a href="#doc-urzadzenia">Różnice między urządzeniami</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="doc-start" class="doc-chapter">1. Szybki start</h2>
+
+  <section class="card">
+    <h3>Jak mierzyć trafniej</h3>
+    <ul>
+      <li>Na ekranie „Kamera” (pierwszy przycisk na dolnym pasku) naciśnij „Start” i skieruj tylny aparat na ekran lub źródło światła, które chcesz sprawdzić.</li>
+      <li>Przejdź na ekran „Monitoring” (drugi przycisk dolnego paska) — u góry zobaczysz obie gałki naraz, a niżej (przewiń) wykresy zmian w czasie. Pomiar działa w tle niezależnie od tego, który ekran akurat oglądasz.</li>
+      <li>Ustaw telefon w stałej odległości od ekranu (np. 15–20 cm), bez zmiany oświetlenia otoczenia w trakcie pomiaru.</li>
+      <li>Użyj tylnego aparatu — ma mniej agresywne korekcje automatyczne niż przedni.</li>
+      <li>Traktuj wyniki jako wskaźniki względne (%), nie bezwzględne jednostki fizyczne — porównuj je względem siebie (np. tryb nocny włączony/wyłączony).</li>
+      <li>Dostosuj progi stref w ustawieniach do jasności własnego ekranu (rozdział 4).</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h3>Duże czcionki i gałki — zawsze</h3>
+    <p>Cała aplikacja używa dużych, czytelnych czcionek i pełnowymiarowych
+    gałek, tak żeby osoby niedowidzące (i wszyscy inni) mogli odczytać dane
+    bez dodatkowych ustawień. Na ekranie „Monitoring” obie gałki mieszczą się
+    razem na jednym ekranie, bez przewijania — wykresy zmian w czasie są
+    zaraz pod nimi, o przewinięcie dalej.</p>
+  </section>
+
+  <h2 id="doc-metodologia" class="doc-chapter">2. Jak działa pomiar</h2>
+
+  <section class="card">
+    <h3>Kamera telefonu a spektrometr</h3>
+    <p>Prawdziwy pomiar „ile jest szkodliwego niebieskiego światła” wymaga rozłożenia
+    światła na długości fal — to robi <b>spektrometr</b>: pryzmat lub siatka
+    dyfrakcyjna rozszczepia światło na dziesiątki/setki wąskich pasm (np. co
+    1–5 nm) i mierzy moc optyczną w każdym z osobna. Dopiero z takiego pełnego
+    rozkładu widmowego liczy się jednostki takie jak luks, lumen czy
+    napromienienie ważone funkcją zagrożenia niebieskim światłem.</p>
+    <p><b>Kamera telefonu nie robi nic z tego.</b> Ma trzy szerokie filtry
+    (Bayer: R/G/B), z których każdy zbiera światło z szerokiego,
+    nakładającego się zakresu długości fal — „kanał niebieski” to nie wąskie
+    pasmo ok. 435–440 nm (szczyt zagrożenia dla siatkówki), tylko z grubsza
+    400–570 nm zmieszane z zielenią. Po drodze dochodzi demozaikowanie,
+    automatyczna ekspozycja, automatyczny balans bieli i kompresja gamma
+    sRGB — żadnego z tych kroków przeglądarka nie pozwala w pełni wyłączyć.
+    W efekcie wartość piksela, którą widzi JavaScript, nie jest liniowo
+    związana z rzeczywistą mocą optyczną padającą na sensor. To fundamentalne
+    ograniczenie sprzętowe, nie błąd tej aplikacji.</p>
+  </section>
+
+  <section class="card">
+    <h3>Wykres 1 — Jasność kanału B</h3>
+    <p><b>Co pokazuje:</b> średnią jasność samego kanału niebieskiego (B) z
+    próbkowanego fragmentu obrazu, w skali 0–255 przeliczonej na %.</p>
+    <p><b>Algorytm:</b></p>
+    <ol>
+      <li>5 razy na sekundę pobieramy klatkę z kamery.</li>
+      <li>Wycinamy środkowe 60% kadru (unika krawędzi obrazu i poświaty z boków).</li>
+      <li>Skalujemy wycięty fragment do siatki 32×32 piksele (wystarczająco
+        dokładnie, dużo szybciej niż liczenie pełnej rozdzielczości — ważne
+        na słabszym sprzęcie jak Xiaomi/Ulefone budżetowej klasy).</li>
+      <li>Uśredniamy wartość B wszystkich 1024 pikseli tej siatki.</li>
+      <li><code>wynik = średnia_B ÷ 255 × 100</code></li>
+    </ol>
+    <p><b>Po co ją zostawiliśmy:</b> to najprostszy, bezpośredni odczyt „ile
+    sygnału niebieskiego w ogóle rejestruje sensor”. Wadą jest to, że miesza
+    jasność z barwą — bardzo jasna, ale neutralnie biała scena też da wysoki
+    wynik, mimo że nie jest szczególnie „niebieska”. Dlatego obok niej
+    pokazujemy wykres 2.</p>
+  </section>
+
+  <section class="card">
+    <h3>Wykres 2 — Udział niebieskiego w świetle</h3>
+    <p><b>Co pokazuje:</b> jaki procent całego zarejestrowanego światła (R+G+B)
+    stanowi składowa niebieska — czyli przesunięcie koloru w stronę zimnego,
+    niezależnie od tego, jak jasna jest scena.</p>
+    <p><b>Algorytm:</b> te same kroki 1–4 co wyżej, ale zamiast samego B liczymy:</p>
+    <p class="formula-block"><code>wynik = B ÷ (R + G + B) × 100</code></p>
+    <p>Neutralna biel (R≈G≈B) daje ok. <b>33%</b>. Światło cieplejsze/bardziej
+    czerwone — mniej. Mocno niebieskie — więcej, aż do granicy ~100% dla
+    światła niemal czysto niebieskiego.</p>
+    <p><b>Dlaczego to dokładniejsza miara „szkodliwego niebieskiego”:</b> to ta
+    sama zasada, na której działają filtry typu tryb nocny / Night Shift —
+    liczy się <b>barwa</b>, nie jasność. Bardzo jasny, ale neutralny ekran nie
+    zostanie fałszywie oznaczony jako szkodliwy; przygaszony, ale mocno
+    niebieski — owszem. Dlatego to ta metryka steruje kolorem strefy w
+    tabeli odczytów.</p>
+  </section>
+
+  <h2 id="doc-jednostki" class="doc-chapter">3. Jednostki i normy</h2>
+
+  <section class="card">
+    <h3>Dlaczego nie luksy ani lumeny</h3>
+    <p><b>Lumen (lm)</b> opisuje całkowity strumień światła emitowany przez
+    źródło — to właściwość samego źródła, nie tego, co pada na dany punkt.
+    <b>Luks (lx)</b> to już natężenie oświetlenia w punkcie (lm/m²) — bliższe
+    temu, o co chodzi, ale nadal jednostka <b>fotometryczna</b>: waży widmo
+    krzywą czułości ludzkiego oka na jasność (V(λ)), nie krzywą zagrożenia
+    niebieskim światłem. Do prawdziwego pomiaru zagrożenia potrzebna jest
+    trzecia, węższa jednostka: napromienienie ważone widmowo w
+    <b>W/m²</b> (norma IEC 62471, szczyt czułości ok. 435–440 nm), a to
+    wymaga spektrometru — patrz sekcja wyżej.</p>
+    <p>Nawet gdyby poprzestać na luksach: telefon bez zewnętrznego,
+    skalibrowanego czujnika światła nie jest w stanie ich wiarygodnie
+    wyznaczyć. Wbudowany czujnik światła telefonu (tam gdzie istnieje) mierzy
+    zresztą światło z <b>przeciwnej strony</b> obudowy niż ta, którą celujesz
+    w ekran tylnym aparatem — mierzyłby więc światło za Twoimi plecami, nie
+    to z ekranu. Dlatego zamiast zgadywać liczbę w jednostce, która i tak
+    byłaby niewiarygodna, pokazujemy uczciwie opisany <b>wskaźnik względny
+    (%)</b> — sensowny do porównań na tym samym telefonie w tych samych
+    warunkach (np. tryb nocny włączony/wyłączony), nie jako wartość
+    bezwzględna.</p>
+  </section>
+
+  <section class="card">
+    <h3>Czy istnieją globalne normy dla progów bezpieczeństwa?</h3>
+    <p>Krótko: <b>nie ma normy wyrażonej w procentach kanału kamery</b> — to w
+    ogóle nie jest jednostka, w której cokolwiek się reguluje. Realne normy
+    dotyczące niebieskiego światła istnieją, ale mierzą inne wielkości, w
+    innych jednostkach, i dotyczą innego zjawiska niż zwykle mamy na myśli,
+    mówiąc „niebieskie światło męczy oczy”.</p>
+
+    <p><b>Ostre uszkodzenie fotochemiczne siatkówki — IEC 62471 / ICNIRP.</b>
+    Jedyna faktycznie regulowana „szkodliwość niebieskiego światła” — norma
+    dla lamp i systemów oświetleniowych, wspierana wytycznymi ICNIRP
+    (International Commission on Non-Ionizing Radiation Protection). Klasyfikuje
+    źródła do grup ryzyka RG0–RG3 na podstawie radiancji ważonej funkcją
+    zagrożenia B(λ), w <b>W·m⁻²·sr⁻¹</b>, z limitem czasu ekspozycji
+    (<code>t_max = 100 / L_B</code> sekund). Ekrany telefonów i monitorów —
+    nawet przy maksymalnej jasności — praktycznie zawsze mieszczą się w
+    <b>RG0 (zwolnione, bez ograniczeń)</b>. Ta norma dotyczy źródeł dużo
+    intensywniejszych (łuki spawalnicze, niektóre projektory, przemysłowe
+    LED-y), nie ekranów konsumenckich.</p>
+
+    <p><b>Wpływ na rytm dobowy / sen — CIE S 026.</b> To zjawisko, o które
+    zwykle chodzi (ekran wieczorem „rozbudza”) — ale to nie uszkodzenie oka,
+    tylko wpływ na zegar biologiczny przez komórki zwojowe siatkówki (ipRGC),
+    najczulsze ok. 480 nm. Norma CIE S 026:2018 definiuje jednostkę
+    <b>luks melanopiczny (melanopic EDI)</b>. Najbliższy „oficjalny” konsensus
+    naukowy to publikacja Browna i współautorów (<i>PLOS Biology</i>, 2022),
+    rekomendująca orientacyjnie: wieczorem &lt; 10 luksów melanopicznych, w
+    dzień &gt; 250. To rekomendacje badaczy snu, nie przepis prawny.</p>
+
+    <p><b>WHO.</b> Światowa Organizacja Zdrowia nie publikuje własnych,
+    niezależnych limitów ekspozycji na niebieskie światło — dla bezpieczeństwa
+    promieniowania optycznego odsyła do ICNIRP (wyżej). Jedyny konkretny,
+    autorski dokument WHO w temacie ekranów to <i>Guidelines on physical
+    activity, sedentary behaviour and sleep for children under 5 years of
+    age</i> (2019) — dotyczy jednak <b>czasu</b> spędzanego przy ekranie, nie
+    koloru czy natężenia światła: brak ekranu poniżej 1. roku życia, maks. do
+    1 godziny dla 2–4 lat. Dla dorosłych WHO nie ma równie skonkretyzowanych
+    wytycznych liczbowych.</p>
+
+    <p><b>Dlaczego to i tak nie pomaga skalibrować aplikacji:</b> obie normy
+    (IEC/ICNIRP i CIE) wymagają pełnego rozkładu widmowego i skalibrowanej
+    radiancji w znanej geometrii pomiaru — dokładnie tego, czego telefon przez
+    przeglądarkę nie potrafi dostarczyć (patrz sekcja „Kamera telefonu a
+    spektrometr” wyżej). Nie istnieje przelicznik „33% udziału niebieskiego =
+    X luksów melanopicznych”, więc progi w tej aplikacji <b>nie odwzorowują
+    żadnej normy bezpieczeństwa</b> (WHO, IEC, ICNIRP czy CIE — dla tego
+    wskaźnika po prostu nie istnieje). Domyślne wartości progu udziału
+    niebieskiego są za to wyprowadzone z realnych temperatur barwowych
+    światła i powszechnie powtarzanej, praktycznej rekomendacji ciepłego
+    światła wieczorem — solidniejsza podstawa niż zwykłe zaokrąglenie, ale
+    wciąż nie formalna norma (pełne wyprowadzenie: rozdział 4). Zawsze
+    możesz je zmienić na własne w ustawieniach.</p>
+  </section>
+
+  <h2 id="doc-strefy" class="doc-chapter">4. Strefy i progi</h2>
+
+  <section class="card">
+    <h3>Strefy kolorów i skąd biorą się progi</h3>
+    <p>Obie metryki mają własne, niezależnie ustawiane progi (ekran
+    „Monitoring” → „Ustawienia progów stref”, na dole strony) — 33%/66% na jednej nie znaczy tego
+    samego, co na drugiej (patrz rozdział 2 wyżej). To <b>udział niebieskiego</b>
+    decyduje o kolorze w legendzie pod wykresami i w tabeli odczytów:</p>
+    <ul>
+      <li><b>Zielona — bezpieczna:</b> światło ciepłe lub neutralne, oczy odpoczywają.</li>
+      <li><b>Żółta — umiarkowana:</b> zauważalne przesunięcie w stronę niebieskiego, warto robić przerwy.</li>
+      <li><b>Czerwona — szkodliwa:</b> silnie niebieskie światło, mocno męczy oczy przy dłuższej ekspozycji (zwłaszcza wieczorem).</li>
+    </ul>
+
+    <p><b>Skąd te konkretne liczby.</b> <b>Jasność kanału B</b> nie ma
+    naturalnego punktu odniesienia — sensowna wartość progu zależy wyłącznie
+    od tego, jak jasna jest scena, którą filmujesz (to miara jasności, nie
+    koloru). Domyślne 33%/66% to tu wciąż umowny punkt wyjścia — dostosuj go
+    metodą prób do typowej jasności swojego ekranu/otoczenia.</p>
+    <p><b>Udział niebieskiego</b> ma domyślne progi wyprowadzone z realnych
+    temperatur barwowych światła (fizyka, nie zaokrąglenie), nie z żadnej
+    normy bezpieczeństwa — takiej normy dla tej wielkości nie ma (rozdział 3).
+    Punkty odniesienia:</p>
+    <ul>
+      <li><b>~4000K</b> („ciepła biel", typowa żarówka LED) → ok. <b>26%</b>
+        udziału niebieskiego. Światło cieplejsze od tego (niższa temperatura
+        barwowa) to zakres szeroko rekomendowany wieczorem przez narzędzia
+        typu f.lux czy Night Shift — stąd dolny próg.</li>
+      <li><b>6500K (D65)</b>, standardowy punkt bieli dla większości ekranów
+        telefonów i monitorów fabrycznie — ok. <b>33%</b>. Od tej wartości w
+        górę zaczyna się zakres, w którym typowo stosuje się zalecenia
+        ograniczenia niebieskiego światła — stąd górny próg.</li>
+    </ul>
+    <p><b>Ważne zastrzeżenie:</b> to, jak bardzo „niebieskie" jest światło, nie
+    zależy od pory dnia, ale zalecenia ograniczania niebieskiego światła
+    dotyczą właściwie tylko <b>wieczora/nocy</b> — w dzień ekspozycja na
+    chłodne, niebieskie światło (także słoneczne) jest normalna, a nawet
+    korzystna dla rytmu dobowego. Czerwona strefa w środku dnia patrząc w
+    zwykły, niezmieniony ekran nie oznacza realnego zagrożenia — to samo
+    światło wieczorem jest już warte ograniczenia.</p>
+    <p>Progi obu metryk są całkowicie niezależne — zmiana jednej nie wpływa
+    na drugą. Zmienione progi są <b>zapamiętywane w tym urządzeniu i
+    przeglądarce</b> między kolejnymi otwarciami aplikacji (lokalnie, nic
+    nigdzie nie jest wysyłane) — przycisk „Start" nie resetuje ich do
+    domyślnych.</p>
+  </section>
+
+  <h2 id="doc-urzadzenia" class="doc-chapter">5. Różnice między urządzeniami</h2>
+
+  <section class="card">
+    <h3>Dlaczego podgląd wygląda inaczej na różnych urządzeniach</h3>
+    <p><b>Przeglądarka vs natywna aplikacja aparatu.</b> Gdy otwierasz aparat
+    fabrycznie zainstalowany na telefonie, producent (np. Xiaomi) dokłada do
+    podglądu na żywo własne, zastrzeżone algorytmy — HDR w czasie
+    rzeczywistym, cyfrowe wzmacnianie jasności w słabym świetle, wygładzanie.
+    Strona internetowa dostaje przez przeglądarkę dużo bardziej „surowy”
+    strumień z kamery (funkcja <code>getUserMedia</code>), bez żadnego z tych
+    ulepszeń — więc z zasady będzie wyglądać płasko/ciemniej niż natywny
+    aparat, niezależnie od telefonu.</p>
+    <p><b>Różne możliwości sterowania kamerą.</b> To, jak dużo kontroli nad
+    ekspozycją i balansem bieli przeglądarka w ogóle dostaje od systemu,
+    zależy od konkretnego telefonu, sterownika kamery i wersji
+    Chrome/WebView — jedne urządzenia (typowo komputery z kamerą USB) zgłaszają
+    tylko pełną automatykę, inne (część telefonów z Androidem) zgłaszają
+    dodatkowe, bardziej zaawansowane tryby. Wcześniejsza wersja tej aplikacji
+    próbowała przełączać się na tryb ręcznej ekspozycji tam, gdzie telefon na
+    to pozwalał, bez ustawienia konkretnej wartości — co na części telefonów
+    zamrażało obraz na przypadkowej, ciemnej ekspozycji z chwili startu
+    kamery. To był błąd w kodzie (już poprawiony), nie różnica jednostek —
+    ale dobrze pokazuje, jak łatwo zachowanie potrafi się różnić między
+    urządzeniami, skoro nawet ta sama linijka kodu włącza się tylko na
+    części z nich.</p>
+    <p><b>Różne sensory i przetwarzanie obrazu (ISP).</b> Nawet przy identycznym
+    kodzie i tej samej scenie różne modele telefonów mają różnej jakości
+    sensory i różnie strojoną automatykę producenta — jeden szybciej i
+    celniej dobierze ekspozycję w słabym świetle niż drugi. To, w połączeniu
+    z faktem, że wskaźniki w tej aplikacji są <b>względne</b> (patrz rozdział 3),
+    oznacza: wyniki (i wygląd podglądu) sensownie porównuj na tym samym
+    telefonie w czasie, nie między różnymi modelami/urządzeniami.</p>
+  </section>
+
+</div>
+
+<!-- Overlay screens. Deliberately plain <div>s, NOT role="tabpanel" — they sit
+     outside the tablist, exactly like #panelMethodology. Content is injected by
+     monetization-ui.js (premium, account) and menu.js (more, about). -->
+<div id="panelPremium" class="mz-screen" role="region" aria-labelledby="premiumTitle" hidden></div>
+<div id="panelAccount" class="mz-screen" role="region" aria-labelledby="accountTitle" hidden></div>
+<div id="panelMore" class="mz-screen" role="region" aria-labelledby="moreTitle" hidden></div>
+<div id="panelAbout" class="mz-screen" role="region" aria-labelledby="aboutTitle" hidden></div>
+</main>
+
+<!-- Global layers, all filled at runtime. -->
+<nav id="appNav" class="nav-bar" aria-label="Menu główne"></nav>
+<div id="navLive" class="mz-visually-hidden" aria-live="polite"></div>
+<div id="mzLayer"></div>
+<div id="mzToastRegion" class="mz-toast-region" role="status" aria-live="polite"></div>
+
+<!-- Load order is a hard contract: billing defines the engine, monetization-ui
+     and menu define the surfaces, app.js publishes AppTabs/AppData last and
+     fires 'app:ready', which boots the other three. No defer/async, no modules. -->
+<script src="billing.js"></script>
+<script src="monetization-ui.js"></script>
+<script src="menu.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

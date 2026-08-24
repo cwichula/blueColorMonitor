@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pl" data-accent="ocean">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F4F6F9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Monitor Światła — pomiar światła kamerą telefonu.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Monitor Światła">
+  <title>Monitor Światła</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="icon" href="../icons/icon-512.png" sizes="512x512" type="image/png">
+  <link rel="apple-touch-icon" href="../icons/icon-192.png">
+
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="screens.css">
+
+  <script>
+  /* Jedyny skrypt wpisany w stronę i jedyny, który wykonuje się przed pierwszym
+     malowaniem. Czyta zapisane ustawienia i ustawia atrybuty na <html>, żeby
+     ktoś, kto wybrał motyw ciemny albo większy tekst, nie zobaczył błysku
+     ustawień domyślnych. Ten skrypt TYLKO CZYTA — zapis i cała reszta logiki
+     ustawień należy wyłącznie do store.js. */
+  (function () {
+    'use strict';
+    var root = document.documentElement;
+    var raw = null;
+    try { raw = window.localStorage ? window.localStorage.getItem('ms4.settings.v1') : null; }
+    catch (e) { raw = null; }              /* tryb prywatny: zostają wartości domyślne */
+    if (!raw) return;
+    var s = null;
+    try { s = JSON.parse(raw); } catch (e) { return; }
+    if (!s || typeof s !== 'object') return;
+
+    if (s.theme === 'light' || s.theme === 'dark') root.setAttribute('data-theme', s.theme);
+    if (typeof s.accent === 'string' && /^[a-z]+$/.test(s.accent)) root.setAttribute('data-accent', s.accent);
+    if (s.textScale === 1.15 || s.textScale === 1.3) root.setAttribute('data-text-scale', String(s.textScale));
+    if (s.motion === 'reduced') root.setAttribute('data-motion', 'reduced');
+  }());
+  </script>
+</head>
+<body>
+
+  <!-- 1. Skok do treści: pierwszy element w kolejności tabulacji -->
+  <a class="ms4-skip" href="#viewRoot">Przejdź do treści</a>
+
+  <noscript>
+    <div class="ms4-noscript">
+      <p class="ms4-note__title">Ta aplikacja potrzebuje JavaScriptu</p>
+      <p class="ms4-note__text">Pomiar odbywa się w całości na tym urządzeniu, w tej karcie
+      przeglądarki — bez JavaScriptu nie ma czym liczyć obrazu z kamery. Włącz obsługę
+      JavaScriptu dla tej strony i otwórz ją ponownie. Nic nie jest wysyłane do sieci.</p>
+    </div>
+  </noscript>
+
+  <!-- 2. Powłoka. app.js wypełnia topbar, sidenav, tabbar i viewRoot. -->
+  <div class="ms4-app" id="appRoot">
+
+    <aside class="ms4-sidenav" id="sideNav" aria-label="Nawigacja główna" hidden></aside>
+
+    <header class="ms4-topbar" id="topBar">
+      <div class="ms4-topbar__inner">
+        <h1 class="ms4-topbar__title" id="topBarTitle">Pomiar</h1>
+        <div class="ms4-topbar__status" id="topBarStatus" aria-live="off"></div>
+        <div class="ms4-topbar__actions" id="topBarActions"></div>
+      </div>
+    </header>
+
+    <main class="ms4-app__main" id="viewRoot" tabindex="-1"></main>
+
+    <nav class="ms4-tabbar" id="tabBar" aria-label="Nawigacja główna"></nav>
+  </div>
+
+  <!-- 3. Kamera. MUSI istnieć przed DOMContentLoaded — engine.js szuka tych trzech ID.
+          screen-measure.js przenosi #cameraStage do swojej karty przez appendChild. -->
+  <div class="ms4-camera__stage" id="cameraStage" hidden>
+    <video class="ms4-camera__video" id="cameraVideo" playsinline muted
+           aria-label="Podgląd z kamery"></video>
+    <div class="ms4-camera__placeholder" id="cameraPlaceholder">
+      <p class="ms4-camera__placeholder-text" id="cameraPlaceholderText"></p>
+    </div>
+    <div class="ms4-camera__reticle" aria-hidden="true"></div>
+  </div>
+
+  <!-- 4. Warstwy modalne. ui.js wstawia do nich i tylko do nich. -->
+  <div class="ms4-scrim" id="scrim" hidden></div>
+  <div class="ms4-sheet-host" id="sheetHost"></div>
+  <div class="ms4-dialog-host" id="dialogHost"></div>
+  <div class="ms4-toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- 5. Komunikat dla czytnika ekranu. Jedyny element o tej roli w aplikacji. -->
+  <p class="ms4-sronly" id="live" role="status" aria-live="polite"></p>
+
+  <script src="metrics.js"></script>
+  <script src="bus.js"></script>
+  <script src="engine.js"></script>
+  <script src="scale.js"></script>
+  <script src="store.js"></script>
+  <script src="ui.js"></script>
+  <script src="gauge.js"></script>
+  <script src="auth.js"></script>
+  <script src="billing.js"></script>
+  <script src="screen-measure.js"></script>
+  <script src="screen-history.js"></script>
+  <script src="screen-tools.js"></script>
+  <script src="screen-account.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

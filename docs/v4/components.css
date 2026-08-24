@@ -1,0 +1,2407 @@
+/* ============================================================================
+   components.css — Monitor Światła v4
+   Autor 2. Zakres: rozdziały 5.D–5.M i 5.S SPEC.md oraz te wiersze rozdziału 9,
+   które są wariantami komponentów (noty, tabela, kroki, select, znaczniki).
+   Układy czterech ekranów, paywall i arkusze narzędziowe leżą w screens.css.
+   Powłoka, nawigacja, siatka strony i klasy pomijalne (5.A–5.C) należą do base.css
+   i tego pliku nie dotyczą — nie ma tu ani jednej reguły dla ms4-app, ms4-topbar,
+   ms4-tabbar, ms4-sidenav, ms4-view, ms4-skip, ms4-sronly, ms4-scroll-x, is-hidden.
+
+   ZASADY, KTÓRE TEN PLIK RESPEKTUJE
+   * Ani jednego #hex, rgb(), hsl() — wszystkie barwy przez var(--c-*) z tokens.css.
+     Jedyny udokumentowany wyjątek w tym pliku: miniatury motywu
+     (ms4-themepick__preview--light/--dark/--system), bo miniatura musi pokazać
+     motyw, którego akurat NIE ma na ekranie. Wyjątek dopuszczony w SPEC 0.3 i 5.K.
+   * Zero !important poza blokiem ograniczonego ruchu na końcu pliku.
+   * Animujemy wyłącznie transform, opacity, background-color, border-color,
+     box-shadow (SPEC 8.1). Jedyny wyjątek: ms4-tile__bar-fill animuje width.
+   * :focus-visible → outline 2px var(--c-focus), offset 2px. Nigdy outline: none.
+   * Cel dotyku >= 44 px (var(--tap)); tam, gdzie element jest wizualnie mniejszy,
+     powiększa go przezroczysty ::after.
+   * Wszystko, co zawiera tekst, ma min-height, nigdy height (SPEC 8.2, tekst 200%).
+
+   PROGI (te same w całym pliku; co się zmienia — opisano przy każdej regule)
+     360 / 390 / 430 px  telefon: układ referencyjny, jedna kolumna, arkusz od dołu
+     768 px  (>=600) tablet: karty luźniejsze, arkusz wyśrodkowany 640 px, plany w 3 kol.
+     1024 px desktop: :hover żyje, arkusz staje się oknem 720/880 px, uchwyt znika
+     1440 px szeroki: bez zmian w komponentach (rośnie tylko margines strony w base.css)
+   ============================================================================ */
+
+
+/* ---------------------------------------------------------------------------
+   0. Wspólny reset dla komponentów rysowanych na <button>
+   ui.js, screen-measure.js, screen-history.js, screen-tools.js i screen-account.js
+   budują kafelki, wiersze, chipy, plany i próbki jako prawdziwe <button> — inaczej
+   nie działałaby klawiatura (SPEC 8.2). Przeglądarka nadaje im własną czcionkę,
+   ramkę i wyśrodkowanie; zdejmujemy to w jednym miejscu.
+   --------------------------------------------------------------------------- */
+.ms4-btn,
+.ms4-chip,
+.ms4-row,
+.ms4-tile,
+.ms4-switch,
+.ms4-segmented__option,
+.ms4-swatch,
+.ms4-themepick__option,
+.ms4-section__action,
+.ms4-toast__action,
+.ms4-card--interactive,
+.ms4-plan,
+.ms4-provider,
+.ms4-tool {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+}
+
+button.ms4-card,
+button.ms4-tile,
+button.ms4-row,
+button.ms4-plan,
+button.ms4-swatch,
+button.ms4-themepick__option,
+button.ms4-tool {
+  text-align: left;
+  width: 100%;
+}
+
+/* Jednolity fokus dla wszystkiego, co da się kliknąć albo stabulować. */
+.ms4-btn:focus-visible,
+.ms4-chip:focus-visible,
+.ms4-row:focus-visible,
+.ms4-tile:focus-visible,
+.ms4-switch:focus-visible,
+.ms4-segmented__option:focus-visible,
+.ms4-swatch:focus-visible,
+.ms4-themepick__option:focus-visible,
+.ms4-section__action:focus-visible,
+.ms4-toast__action:focus-visible,
+.ms4-card--interactive:focus-visible,
+.ms4-sheet__close:focus-visible,
+.ms4-field:focus-visible,
+.ms4-select:focus-visible,
+.ms4-slider__input:focus-visible,
+.ms4-plan:focus-visible,
+.ms4-provider:focus-visible,
+.ms4-tool:focus-visible,
+.ms4-tile__cta:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+
+/* ===========================================================================
+   5.D  SEKCJE, KARTY, SIATKI
+   =========================================================================== */
+
+.ms4-section {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin: var(--s-5) 0 var(--s-2);
+}
+/* Pierwsza sekcja w karcie albo w arkuszu nie odpycha się od jego górnej krawędzi. */
+.ms4-card__body > .ms4-section:first-child,
+.ms4-sheet__body > .ms4-section:first-child,
+.ms4-view__inner > .ms4-section:first-child {
+  margin-top: 0;
+}
+
+.ms4-section__title {
+  margin: 0;
+  font-size: var(--t-h3);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+}
+
+.ms4-section__sub {
+  margin: 0 auto 0 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+}
+
+.ms4-section__action {
+  margin-left: auto;
+  padding: 0;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  color: var(--c-accent);
+  text-decoration: none;
+  cursor: pointer;
+}
+.ms4-section__action:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* --- karta ---------------------------------------------------------------- */
+.ms4-card {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  padding: var(--s-4);
+  border: 1px solid transparent;   /* krawędź zapala się dopiero w motywie ciemnym */
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--e-1);
+  color: var(--c-text);
+}
+/* 768 px: karta oddycha — 20 px zamiast 16 px. */
+@media (min-width: 600px) {
+  .ms4-card { padding: var(--s-5); }
+}
+
+.ms4-card--flat {
+  background: var(--c-surface-2);
+  border-color: var(--c-border);
+  box-shadow: var(--e-0);
+}
+
+.ms4-card--accent {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-ink);
+  border-color: transparent;
+  border-left: 3px solid var(--c-accent);
+  box-shadow: var(--e-0);
+}
+.ms4-card--accent .ms4-card__title,
+.ms4-card--accent .ms4-card__subtitle,
+.ms4-card--accent .ms4-stat__value,
+.ms4-card--accent .ms4-stat__label {
+  color: inherit;
+}
+
+.ms4-card--premium {
+  background-image: linear-gradient(135deg, var(--c-premium), var(--c-premium-2));
+  color: var(--c-on-premium);
+  border-color: transparent;
+  box-shadow: var(--e-2);
+}
+.ms4-card--premium .ms4-card__title,
+.ms4-card--premium .ms4-card__subtitle,
+.ms4-card--premium .ms4-subcard__state {
+  color: inherit;
+}
+
+.ms4-card--interactive {
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+.ms4-card--interactive:active { transform: scale(.99); }
+/* 1024 px: :hover ma sens dopiero tam, gdzie jest wskaźnik myszy. */
+@media (min-width: 1024px) and (hover: hover) {
+  .ms4-card--interactive:hover {
+    box-shadow: var(--e-2);
+    transform: translateY(-2px);
+  }
+}
+
+.ms4-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+
+/* rozdz. 9, screen-history.js: kolumna tytułu i podtytułu obok przycisków */
+.ms4-card__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.ms4-card__title {
+  margin: 0;
+  font-size: var(--t-h2);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+}
+
+.ms4-card__subtitle {
+  margin: 2px 0 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+}
+
+.ms4-card__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.ms4-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.ms4-card__footer {
+  margin-top: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--c-border);
+  font-size: var(--t-body-sm);
+  color: var(--c-text-3);
+}
+
+/* --- siatki --------------------------------------------------------------- */
+.ms4-grid {
+  display: grid;
+  gap: var(--s-3);
+  min-width: 0;
+}
+/* Liczba kolumn wynika z minimum, nie z media query: przy --text-scale 1,3
+   siatka sama spada o kolumnę (SPEC 3.5). 360 px → 2 kafelki, 768 px → 3,
+   1024 px → 4, 1440 px → 4 z zapasem. */
+.ms4-grid--metrics { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.ms4-grid--tools   { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.ms4-grid--stats   { grid-template-columns: repeat(2, 1fr); }
+.ms4-grid--plans   { grid-template-columns: 1fr; }
+
+@media (min-width: 600px) {
+  .ms4-grid--stats { grid-template-columns: repeat(4, 1fr); }
+  .ms4-grid--plans {
+    grid-template-columns: repeat(3, 1fr);
+    align-items: stretch;
+    gap: var(--s-4);
+  }
+}
+
+.ms4-divider {
+  height: 1px;
+  margin: var(--s-3) 0;
+  border: 0;
+  background: var(--c-border);
+}
+
+
+/* ===========================================================================
+   5.E  PRZYCISKI — 5 wariantów x 3 rozmiary
+   =========================================================================== */
+
+.ms4-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  /* --md jest domyślny, dlatego jego wymiary siedzą w bazie (SPEC 5.E). */
+  min-height: var(--tap);
+  padding: 0 var(--s-5);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--c-text);
+  font-family: var(--font);
+  font-size: var(--t-body-sm);
+  font-weight: var(--fw-bold);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    filter var(--dur-fast) var(--ease);
+}
+.ms4-btn:active { transform: scale(.96); }
+
+.ms4-btn[disabled],
+.ms4-btn.is-disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--e-0);
+  filter: none;
+}
+
+/* warianty */
+.ms4-btn--primary {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  box-shadow: var(--e-1);
+}
+.ms4-btn--tonal {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-ink);
+  box-shadow: var(--e-0);
+}
+.ms4-btn--ghost {
+  background: transparent;
+  color: var(--c-text-2);
+  border: 1px solid var(--c-border);
+}
+.ms4-btn--danger {
+  background: transparent;
+  color: var(--c-crit);
+  border: 1px solid var(--c-crit);
+}
+.ms4-btn--premium {
+  background-image: linear-gradient(120deg, var(--c-premium), var(--c-premium-2));
+  color: var(--c-on-premium);
+  box-shadow: var(--e-2);
+}
+/* Okno potwierdzenia akcji niszczącej: przycisk pełny, nie obrysowany (SPEC 5.L). */
+.ms4-dialog--danger .ms4-btn--danger {
+  background: var(--c-crit);
+  color: var(--c-on-crit);
+  border-color: var(--c-crit);
+}
+
+@media (hover: hover) {
+  .ms4-btn--primary:hover:not([disabled]):not(.is-disabled) {
+    box-shadow: var(--e-2);
+    filter: brightness(1.06);
+  }
+  .ms4-btn--tonal:hover:not([disabled]):not(.is-disabled) { filter: brightness(.96); }
+  .ms4-btn--ghost:hover:not([disabled]):not(.is-disabled) {
+    background: var(--c-surface-2);
+    color: var(--c-text);
+  }
+  .ms4-btn--danger:hover:not([disabled]):not(.is-disabled) { background: var(--c-crit-soft); }
+  .ms4-btn--premium:hover:not([disabled]):not(.is-disabled) {
+    box-shadow: var(--e-3);
+    filter: brightness(1.06);
+  }
+  .ms4-dialog--danger .ms4-btn--danger:hover:not([disabled]) {
+    background: var(--c-crit);
+    filter: brightness(1.06);
+  }
+}
+
+/* rozmiary */
+.ms4-btn--sm {
+  min-height: 36px;
+  padding-inline: var(--s-4);
+  font-size: var(--t-label);
+}
+/* Cel dotyku 44 px bez powiekszania pigulki - ta sama sztuczka co
+   w .ms4-segmented__option: 36 px + 4 px z gory i z dolu domyka 44 px.
+   Bez tego kazdy maly klawisz ("Eksportuj", "Przywroc zakupy", zwijanie
+   podgladu kamery) jest o 8 px za niski dla palca. */
+.ms4-btn--sm::after {
+  content: "";
+  position: absolute;
+  inset: -4px 0;
+}
+.ms4-btn--md {
+  min-height: var(--tap);
+  padding-inline: var(--s-5);
+  font-size: var(--t-body-sm);
+}
+.ms4-btn--lg {
+  min-height: 56px;
+  padding-inline: var(--s-7);
+  font-size: var(--t-body);
+  font-weight: var(--fw-black);
+}
+
+.ms4-btn--icon {
+  padding: 0;
+  min-width: var(--tap);
+  width: var(--tap);
+}
+.ms4-btn--icon.ms4-btn--sm { min-width: 36px; width: 36px; }
+.ms4-btn--icon.ms4-btn--md { min-width: var(--tap); width: var(--tap); }
+.ms4-btn--icon.ms4-btn--lg { min-width: 56px; width: 56px; }
+
+.ms4-btn--full { width: 100%; }
+/* Przycisk pełnej szerokości nigdy nie może zostać kwadratem ikonowym — nawet gdy
+   etykieta dojedzie dopiero z setLabel(). Trzy klasy, żeby wygrać także
+   z zawężeniem rozmiarów przy 360 px poniżej. */
+.ms4-btn.ms4-btn--full.ms4-btn--icon {
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--s-5);
+}
+
+/* 360 px: pasek akcji ekranu POMIAR. Dwa przyciski ikonowe --lg (2×56 px) plus
+   dwa odstępy zabierały 136 px z 328 px dostępnych, a „Start pomiaru" przy
+   padding-inline var(--s-7) potrzebuje ~210 px i wyświetlał się jako
+   „Start pomia…". Po zwężeniu: 328 − 120 = 208 px przy zapotrzebowaniu ~178 px. */
+@media (max-width: 389px) {
+  .ms4-btn--lg { padding-inline: var(--s-4); }
+  .ms4-btn--icon.ms4-btn--lg { min-width: 48px; width: 48px; }
+}
+
+.ms4-btn__icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+}
+.ms4-btn--sm .ms4-btn__icon { width: 20px; height: 20px; }
+
+.ms4-btn__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+/* Stan ładowania. ui.js dokłada <span class="ms4-spinner">; ekran POMIAR zamiast
+   spinnera zostawia czytelne słowo („Uruchamiam…”), dlatego etykietę gasimy
+   wyłącznie wtedy, gdy naprawdę jest czym ją zastąpić. */
+.ms4-btn.is-loading {
+  pointer-events: none;
+  cursor: default;
+}
+.ms4-btn.is-loading .ms4-btn__icon { opacity: 0; }
+.ms4-btn.is-loading:has(.ms4-spinner) .ms4-btn__label { opacity: 0; }
+.ms4-btn.is-loading .ms4-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -10px 0 0 -10px;
+}
+
+.ms4-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--r-pill);
+  animation: ms4-spinner-rot 700ms linear infinite;
+}
+@keyframes ms4-spinner-rot { to { transform: rotate(360deg); } }
+@keyframes ms4-spinner-fade { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+
+/* ===========================================================================
+   5.F  CHIPY, PLAKIETKI, ZNACZNIKI STREF
+   =========================================================================== */
+
+.ms4-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  line-height: 1.2;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+/* Chip klikalny musi mieć 44 px celu dotyku, choć rysuje się na 32 px. */
+.ms4-chip--selectable {
+  position: relative;
+  cursor: pointer;
+}
+.ms4-chip--selectable::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+@media (hover: hover) {
+  .ms4-chip--selectable:hover { background: var(--c-surface-3); }
+}
+.ms4-chip.is-selected {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-ink);
+  border-color: var(--c-accent);
+}
+.ms4-chip.is-disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+.ms4-chip--good { background: var(--c-good-soft); color: var(--c-good); border-color: transparent; }
+.ms4-chip--warn { background: var(--c-warn-soft); color: var(--c-warn); border-color: transparent; }
+.ms4-chip--crit { background: var(--c-crit-soft); color: var(--c-crit); border-color: transparent; }
+.ms4-chip--info { background: var(--c-info-soft); color: var(--c-info); border-color: transparent; }
+.ms4-chip--premium { background: var(--c-premium-soft); color: var(--c-premium); border-color: transparent; }
+.ms4-chip--demo { background: var(--c-demo-soft); color: var(--c-demo); border-color: transparent; }
+/* Chip premium zamknięty kłódką (wybór wielkości w HISTORII). */
+.ms4-chip--premium.is-locked { border-color: var(--c-premium); border-style: dashed; }
+
+.ms4-chip__icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+}
+.ms4-chip__label {
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+}
+
+/* --- plakietka ------------------------------------------------------------ */
+.ms4-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+  font-size: var(--t-caption);
+  font-weight: var(--fw-bold);
+  letter-spacing: .02em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.ms4-badge--good    { background: var(--c-good); color: var(--c-on-good); }
+.ms4-badge--warn    { background: var(--c-warn); color: var(--c-on-warn); }
+.ms4-badge--crit    { background: var(--c-crit); color: var(--c-on-crit); }
+.ms4-badge--info    { background: var(--c-info); color: var(--c-on-accent); }
+.ms4-badge--premium { background: var(--c-premium); color: var(--c-on-premium); }
+.ms4-badge--demo    {
+  background: var(--c-demo);
+  color: var(--c-surface);
+  text-transform: uppercase;   /* wersaliki tylko tutaj (SPEC 5.F) */
+  letter-spacing: .06em;
+}
+
+.ms4-badge__icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+/* Wariant z kropką: tło znika, ton niesie kółko przed tekstem. Legenda stref
+   w HISTORII używa go też z pustym tekstem — wtedy zostaje sama kropka. */
+.ms4-badge--dot {
+  background: transparent;
+  color: var(--c-text-2);
+  padding-inline: 0;
+  gap: 6px;
+}
+.ms4-badge--dot::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+}
+.ms4-badge--dot.ms4-badge--good { color: var(--c-text-2); }
+.ms4-badge--dot.ms4-badge--good::before { background: var(--c-good); }
+.ms4-badge--dot.ms4-badge--warn { color: var(--c-text-2); }
+.ms4-badge--dot.ms4-badge--warn::before { background: var(--c-warn); }
+.ms4-badge--dot.ms4-badge--crit { color: var(--c-text-2); }
+.ms4-badge--dot.ms4-badge--crit::before { background: var(--c-crit); }
+.ms4-badge--dot.ms4-badge--premium { color: var(--c-text-2); }
+.ms4-badge--dot.ms4-badge--premium::before { background: var(--c-premium); }
+.ms4-badge--dot.ms4-badge--info { color: var(--c-text-2); }
+.ms4-badge--dot.ms4-badge--info::before { background: var(--c-info); }
+.ms4-badge--dot.ms4-badge--demo {
+  color: var(--c-text-2);
+  text-transform: none;
+  letter-spacing: .02em;
+}
+.ms4-badge--dot.ms4-badge--demo::before { background: var(--c-demo); }
+
+/* --- znacznik strefy: kolor + słowo + kształt (SPEC 1.7) ------------------- */
+.ms4-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  font-size: var(--t-label);
+  font-weight: var(--fw-bold);
+  line-height: 1.2;
+}
+.ms4-stamp--good { background: var(--c-good-soft); color: var(--c-good); }
+.ms4-stamp--warn { background: var(--c-warn-soft); color: var(--c-warn); }
+.ms4-stamp--crit { background: var(--c-crit-soft); color: var(--c-crit); }
+.ms4-stamp--none { background: var(--c-surface-2); color: var(--c-text-3); }
+
+.ms4-stamp__word {
+  font-size: var(--t-label);
+  font-weight: var(--fw-bold);
+  color: inherit;
+  white-space: nowrap;
+}
+
+/* Kształt jest drugim nośnikiem znaczenia — musi się różnić także po wydruku
+   w skali szarości: koło pełne, obwódka, trójkąt, przekreślony kwadrat. */
+.ms4-stamp__shape {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  position: relative;
+  background: currentColor;
+  border-radius: var(--r-pill);
+}
+.ms4-stamp__shape--good {
+  background: currentColor;
+  border-radius: var(--r-pill);
+}
+.ms4-stamp__shape--warn {
+  background: transparent;
+  border: 2px solid currentColor;
+  border-radius: var(--r-pill);
+}
+.ms4-stamp__shape--crit {
+  background: transparent;
+  border-radius: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 11px solid currentColor;
+  width: 0;
+  height: 0;
+}
+.ms4-stamp__shape--none {
+  background: transparent;
+  border: 2px solid currentColor;
+  border-radius: 2px;
+}
+.ms4-stamp__shape--none::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: 3px;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+}
+
+/* --- kłódka --------------------------------------------------------------- */
+.ms4-lock {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: var(--c-premium-soft);
+  color: var(--c-premium);
+}
+.ms4-lock > svg { width: 16px; height: 16px; }
+
+
+/* ===========================================================================
+   5.G  WSKAŹNIK I WYKRESY  (węzły rysuje gauge.js, barwy nadaje ten plik)
+   Reguła nadrzędna: gauge.js nie zna ani jednego koloru. Zmiana motywu albo
+   palety nie wymaga przerysowania SVG — wystarczy, że zmienią się tokeny.
+   =========================================================================== */
+
+.ms4-gauge {
+  position: relative;
+  box-sizing: border-box;
+  width: 260px;              /* 360–430 px: koło 260 px, wyśrodkowane */
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  color: var(--c-accent);
+}
+/* 768 px: 300 px, 1024 px: 340 px, 1440 px: 380 px (SPEC 3.2–3.4) */
+@media (min-width: 600px)  { .ms4-gauge { width: 300px; } }
+@media (min-width: 1024px) { .ms4-gauge { width: 340px; } }
+@media (min-width: 1440px) { .ms4-gauge { width: 380px; } }
+
+/* Degradacja w niskim albo bardzo szerokim kontenerze (rozdz. 9, gauge.js). */
+.ms4-gauge--linear {
+  width: 100%;
+  aspect-ratio: auto;
+  min-height: 72px;
+  margin-inline: 0;
+}
+
+.ms4-gauge__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ms4-gauge__track {
+  fill: none;
+  stroke: var(--c-surface-3);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.ms4-gauge__band {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: butt;
+  opacity: .9;
+}
+.ms4-gauge__band--good { stroke: var(--c-good); }
+.ms4-gauge__band--warn { stroke: var(--c-warn); }
+.ms4-gauge__band--crit { stroke: var(--c-crit); }
+
+.ms4-gauge__needle {
+  stroke: var(--c-text);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+/* Igła to odczyt, nie ozdoba: obraca się także przy ograniczonym ruchu (SPEC 8.1).
+   gauge.js trzyma ją w bezklasowej grupie i obraca atrybutem transform — stąd
+   selektor po braku klasy, żeby nie ruszać grupy kresek ani osi. */
+.ms4-gauge__svg > g:not([class]) {
+  transition: transform var(--dur-fast) linear;
+}
+.ms4-gauge__cap {
+  fill: var(--c-surface);
+  stroke: var(--c-text);
+  stroke-width: 3;
+}
+.ms4-gauge.is-good .ms4-gauge__cap { stroke: var(--c-good); }
+.ms4-gauge.is-warn .ms4-gauge__cap { stroke: var(--c-warn); }
+.ms4-gauge.is-crit .ms4-gauge__cap { stroke: var(--c-crit); }
+
+.ms4-gauge__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-display);
+  font-weight: var(--fw-black);
+  fill: var(--c-text);
+  text-anchor: middle;
+}
+.ms4-gauge--linear .ms4-gauge__value { font-size: var(--t-h1); }
+
+.ms4-gauge__unit {
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  fill: var(--c-text-3);
+  text-anchor: middle;
+}
+.ms4-gauge__name {
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  fill: var(--c-text-2);
+  text-anchor: middle;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.ms4-gauge__ticks {
+  stroke: var(--c-border-strong);
+  stroke-width: 1.5;
+}
+.ms4-gauge__tick { stroke-width: 2; }
+.ms4-gauge__ticklabel {
+  font-family: var(--font-num);
+  font-size: var(--t-caption);
+  fill: var(--c-text-3);
+  stroke: none;
+  text-anchor: middle;
+}
+.ms4-gauge.is-stale .ms4-gauge__band { opacity: .35; }
+.ms4-gauge.is-stale .ms4-gauge__value { fill: var(--c-text-3); }
+
+/* svg wewnątrz wskaźnika i wykresów nie może być celem myszy — poza taśmą,
+   gdzie palec przeciąga krzyż odczytu. */
+.ms4-gauge__svg,
+.ms4-spark,
+.ms4-bars__svg { pointer-events: none; }
+
+/* --- mikrowykres ---------------------------------------------------------- */
+/* gauge.js nadaje klasę ms4-spark samemu <svg>, nie kontenerowi. */
+.ms4-spark {
+  display: block;
+  width: 100%;
+  height: 28px;
+  overflow: hidden;
+  color: inherit;             /* barwę niesie kafelek: is-good / is-warn / is-crit */
+}
+.ms4-spark__area { fill: currentColor; opacity: .14; stroke: none; }
+.ms4-spark__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.ms4-spark__dot { fill: currentColor; stroke: none; }
+
+/* --- taśma historii ------------------------------------------------------- */
+.ms4-tape {
+  position: relative;         /* stan pusty leży na niej absolutnie */
+  box-sizing: border-box;
+  width: 100%;
+  height: 220px;              /* 360–768 px */
+  padding: var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+}
+/* 1024 px: wykres dostaje 300 px wysokości — na monitorze jest miejsce. */
+@media (min-width: 1024px) { .ms4-tape { height: 300px; } }
+
+.ms4-tape__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  touch-action: none;         /* przeciąganie krzyża nie przewija strony */
+}
+.ms4-tape__zone { opacity: .7; stroke: none; }
+.ms4-tape__zone--good { fill: var(--c-good-soft); }
+.ms4-tape__zone--warn { fill: var(--c-warn-soft); }
+.ms4-tape__zone--crit { fill: var(--c-crit-soft); }
+.ms4-tape__band { fill: var(--c-accent); opacity: .16; stroke: none; }
+.ms4-tape__grid {
+  stroke: var(--c-border);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+.ms4-tape__line {
+  fill: none;
+  stroke: var(--c-accent);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.ms4-tape__gap { stroke-dasharray: 3 5; opacity: .45; }
+.ms4-tape__cursor line { stroke: var(--c-text); stroke-width: 1.5; }
+.ms4-tape__cursor circle { fill: var(--c-accent); stroke: none; }
+.ms4-tape__axis,
+.ms4-tape__axislabel {
+  font-size: var(--t-caption);
+  fill: var(--c-text-3);
+  stroke: none;
+}
+.ms4-tape__axislabel { font-family: var(--font-num); }
+.ms4-tape__readout rect {
+  fill: var(--c-surface);
+  stroke: var(--c-border);
+}
+.ms4-tape__readout text {
+  font-family: var(--font-num);
+  font-size: var(--t-caption);
+  fill: var(--c-text);
+  stroke: none;
+}
+.ms4-tape__empty,
+.ms4-bars__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--s-4);
+  margin-inline: auto;
+  max-width: 34ch;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+  text-align: center;
+}
+
+/* --- panorama słupków ----------------------------------------------------- */
+.ms4-bars {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 180px;
+  padding: var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+}
+.ms4-bars__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.ms4-bars__bar { fill: var(--c-text-3); rx: 4; }
+.ms4-bars__bar--good { fill: var(--c-good); }
+.ms4-bars__bar--warn { fill: var(--c-warn); }
+.ms4-bars__bar--crit { fill: var(--c-crit); }
+.ms4-bars__range {
+  stroke: var(--c-text-3);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: .35;
+}
+.ms4-bars__range--good { stroke: var(--c-good); }
+.ms4-bars__range--warn { stroke: var(--c-warn); }
+.ms4-bars__range--crit { stroke: var(--c-crit); }
+.ms4-bars__axis {
+  font-size: var(--t-caption);
+  fill: var(--c-text-3);
+  stroke: none;
+}
+
+/* --- pierścień ------------------------------------------------------------ */
+/* gauge.js nadaje ms4-ring samemu <svg> (viewBox 0 0 64 64). */
+.ms4-ring {
+  display: block;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  color: var(--c-accent);
+}
+.ms4-ring__track { fill: none; stroke: var(--c-surface-3); stroke-width: 8; }
+.ms4-ring__fill {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--dur) var(--ease);
+}
+.ms4-ring__label {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-h3);
+  font-weight: var(--fw-bold);
+  fill: var(--c-text);
+  text-anchor: middle;
+  stroke: none;
+}
+
+
+/* ===========================================================================
+   5.H  KARTA PODGLĄDU KAMERY
+   #cameraStage żyje w index.html od pierwszej chwili (kontrakt engine.js);
+   ekran POMIAR tylko przenosi go do swojej karty.
+   =========================================================================== */
+
+.ms4-camera {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ms4-camera__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 48px;
+  padding-inline: var(--s-4);
+}
+
+.ms4-camera__title {
+  margin: 0 auto 0 0;
+  font-size: var(--t-body-sm);
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+}
+
+/* rozdz. 9 (screen-measure.js): powiększenie podglądu stoi po lewej od zwijania */
+.ms4-camera__expand { flex: 0 0 auto; }
+.ms4-camera__toggle { flex: 0 0 auto; }
+
+.ms4-camera__toggle > .ms4-btn__icon,
+.ms4-camera__toggle > svg {
+  transition: transform var(--dur) var(--ease);
+}
+.ms4-camera.is-collapsed .ms4-camera__toggle > .ms4-btn__icon,
+.ms4-camera.is-collapsed .ms4-camera__toggle > svg {
+  transform: rotate(180deg);
+}
+
+.ms4-camera__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;        /* 360–430 px */
+  overflow: hidden;
+  background: var(--c-surface-3);
+  transition: opacity var(--dur) var(--ease);
+}
+/* 768 px i wyżej: kadr 16:9 — na szerokim ekranie 4:3 zjada pół widoku. */
+@media (min-width: 600px) {
+  .ms4-camera__stage { aspect-ratio: 16 / 9; }
+}
+
+.ms4-camera__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--c-surface-3);
+}
+.ms4-camera__video.is-mirrored { transform: scaleX(-1); }
+
+.ms4-camera__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+  background: var(--c-surface-3);
+}
+.ms4-camera__placeholder-text {
+  margin: 0;
+  max-width: 34ch;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+  text-align: center;
+}
+/* engine.js chowa warstwę atrybutem [hidden]; nasze display: grid wygrałoby
+   z domyślnym display: none przeglądarki, więc trzeba to napisać wprost. */
+.ms4-camera__placeholder[hidden],
+.ms4-camera__stage[hidden] { display: none; }
+
+/* Postój podglądu poza widokiem POMIAR (screen-measure.js parkStage).
+   Nieaktywne widoki mają display: none, a wideo w takim poddrzewie potrafi
+   przestać dostarczać klatki — silnik próbkowałby zamrożony obraz. Dlatego
+   węzeł jedzie do <body> i chowamy go WYŁĄCZNIE wizualnie. */
+.ms4-camera__stage.ms4-camera__stage--parked {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 2px;
+  aspect-ratio: auto;
+  pointer-events: none;
+  clip-path: inset(50%);
+  z-index: -1;
+}
+
+/* Celownik pokrywa dokładnie te 60% kadru, które mierzy engine.js. */
+.ms4-camera__reticle {
+  position: absolute;
+  left: 20%;
+  top: 20%;
+  width: 60%;
+  height: 60%;
+  pointer-events: none;
+  /* Celownik leży na obrazie z kamery, nie na powierzchni motywu, więc NIE bierze
+     barwy z tokenów: w ciemnych paletach --c-on-accent jest prawie czarne i osiem
+     narożników znikało na ciemnym kadrze. Biel + czarny drop-shadow czyta się na
+     obu. Czwarty udokumentowany wyjątek od tokenów, obok plansz testu ekranu
+     i miniatur motywu. */
+  background:
+    linear-gradient(#FFFFFF, #FFFFFF) left top,
+    linear-gradient(#FFFFFF, #FFFFFF) left top,
+    linear-gradient(#FFFFFF, #FFFFFF) right top,
+    linear-gradient(#FFFFFF, #FFFFFF) right top,
+    linear-gradient(#FFFFFF, #FFFFFF) left bottom,
+    linear-gradient(#FFFFFF, #FFFFFF) left bottom,
+    linear-gradient(#FFFFFF, #FFFFFF) right bottom,
+    linear-gradient(#FFFFFF, #FFFFFF) right bottom;
+  background-repeat: no-repeat;
+  background-size:
+    24px 2px, 2px 24px,
+    24px 2px, 2px 24px,
+    24px 2px, 2px 24px,
+    24px 2px, 2px 24px;
+  filter: drop-shadow(0 0 1px rgb(0 0 0 / .35));
+}
+
+.ms4-camera__badge {
+  position: absolute;
+  left: var(--s-3);
+  top: var(--s-3);
+  z-index: 1;
+}
+.ms4-camera__badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  animation: ms4-livedot 2s var(--ease) infinite;
+}
+@keyframes ms4-livedot { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+.ms4-camera__hint {
+  margin: 0;
+  padding: var(--s-2) var(--s-4) var(--s-3);
+  font-size: var(--t-caption);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+}
+
+/* Zwinięcie: kadr znika, pasek zostaje. Animujemy grid-template-rows zamiast
+   height, żeby nie mierzyć zawartości w JS. */
+.ms4-camera.is-collapsed .ms4-camera__stage {
+  height: 0;
+  opacity: 0;
+}
+.ms4-camera.is-collapsed .ms4-camera__hint { display: none; }
+
+
+/* ===========================================================================
+   5.I  KAFELKI WIELKOŚCI
+   =========================================================================== */
+
+.ms4-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-height: 140px;
+  padding: var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  box-shadow: var(--e-1);
+  color: var(--c-text);
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+.ms4-tile:active { transform: scale(.98); }
+@media (min-width: 1024px) and (hover: hover) {
+  .ms4-tile:hover { box-shadow: var(--e-2); transform: translateY(-2px); }
+}
+/* 1440 px: więcej miejsca na mikrowykres (SPEC 3.4). */
+@media (min-width: 1440px) {
+  .ms4-tile { min-height: 168px; }
+  .ms4-tile .ms4-spark { height: 40px; }
+}
+
+.ms4-tile__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+.ms4-tile__icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--c-text-3);
+}
+.ms4-tile__name {
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  line-height: 1.25;
+  color: var(--c-text-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ms4-tile__badge {
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  font-size: var(--t-caption);
+  color: var(--c-text-3);
+}
+.ms4-tile__badge > svg { width: 16px; height: 16px; color: var(--c-premium); }
+
+.ms4-tile__valuerow {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  min-width: 0;
+}
+.ms4-tile__approx {
+  margin-right: 2px;
+  color: var(--c-text-3);
+  font-size: var(--t-body-sm);
+}
+.ms4-tile__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-h1);
+  font-weight: var(--fw-black);
+  line-height: 1;
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ms4-tile__unit {
+  margin-left: 4px;
+  font-size: var(--t-body-sm);
+  font-weight: var(--fw-med);
+  color: var(--c-text-3);
+}
+
+.ms4-tile__spark {
+  margin-top: auto;
+  min-height: 28px;
+  color: var(--c-text-3);
+}
+/* Strefa kafelka — jedyna klasa zdejmowana i zakładana w pętli 5 Hz (SPEC 8.3).
+   Zmienia barwę mikrowykresu i paska, nigdy tła kafelka. */
+.ms4-tile.is-good .ms4-tile__spark { color: var(--c-good); }
+.ms4-tile.is-warn .ms4-tile__spark { color: var(--c-warn); }
+.ms4-tile.is-crit .ms4-tile__spark { color: var(--c-crit); }
+.ms4-tile.is-good .ms4-tile__bar-fill { background: var(--c-good); }
+.ms4-tile.is-warn .ms4-tile__bar-fill { background: var(--c-warn); }
+.ms4-tile.is-crit .ms4-tile__bar-fill { background: var(--c-crit); }
+
+.ms4-tile__bar {
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+  overflow: hidden;
+}
+.ms4-tile__bar-fill {
+  height: 4px;
+  width: 0;
+  border-radius: var(--r-pill);
+  background: var(--c-text-3);
+  /* Jedyne miejsce w aplikacji, gdzie animuje się width (SPEC 8.1). */
+  transition: width var(--dur-fast) linear;
+}
+
+.ms4-tile.is-selected {
+  border: 2px solid var(--c-accent);
+  padding: calc(var(--s-3) - 1px);
+  background: var(--c-surface);
+}
+.ms4-tile.is-selected .ms4-tile__name { color: var(--c-accent-ink); }
+
+.ms4-tile.is-locked {
+  background: var(--c-surface);
+  border: 1px dashed var(--c-premium);
+}
+.ms4-tile.is-locked .ms4-tile__spark {
+  filter: blur(4px);
+  opacity: .5;
+}
+.ms4-tile__lock {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-h3);
+  font-weight: var(--fw-bold);
+  color: var(--c-premium);
+}
+.ms4-tile__cta {
+  font-size: var(--t-caption);
+  font-weight: var(--fw-med);
+  color: var(--c-premium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Słowo strefy: dla czytnika ekranu zawsze, dla oka dopiero przy 130% tekstu,
+   kiedy różnice barw bywają najmniej czytelne (SPEC 5.I). */
+.ms4-tile__zone {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+:root[data-text-scale="1.3"] .ms4-tile__zone {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  font-size: var(--t-caption);
+  color: var(--c-text-2);
+}
+
+
+/* ===========================================================================
+   5.J  NOTY  (+ ms4-noscript z rozdziału 9 — ta sama forma)
+   =========================================================================== */
+
+.ms4-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+}
+.ms4-note--limits {
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+  border-left: 3px solid var(--c-border-strong);
+}
+.ms4-note--warning { background: var(--c-warn-soft); color: var(--c-warn); }
+.ms4-note--info    { background: var(--c-info-soft); color: var(--c-info); }
+.ms4-note--demo    { background: var(--c-demo-soft); color: var(--c-demo); }
+
+.ms4-note__icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: inherit;
+}
+/* rozdz. 9 (screen-measure.js, screen-tools.js): kolumna treści obok ikony */
+.ms4-note__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.ms4-note__title {
+  margin: 0 0 2px;
+  font-size: var(--t-body-sm);
+  font-weight: var(--fw-bold);
+  color: inherit;
+}
+.ms4-note__text {
+  margin: 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: inherit;
+  opacity: .92;
+}
+.ms4-note__action {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  flex-wrap: wrap;
+}
+
+/* Komunikat dla przeglądarki bez JavaScriptu (rozdz. 9, index.html). */
+.ms4-noscript {
+  max-width: 46ch;
+  margin: var(--s-4) auto;
+  padding: var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--c-warn-soft);
+  color: var(--c-warn);
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+}
+
+
+/* ===========================================================================
+   5.K  LISTY USTAWIEŃ I FORMANTY
+   =========================================================================== */
+
+.ms4-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--e-1);
+  overflow: hidden;
+}
+.ms4-list > *:not(:last-child) {
+  border-bottom: 1px solid var(--c-border);
+}
+.ms4-list--inset {
+  background: transparent;
+  box-shadow: var(--e-0);
+  border-radius: var(--r-md);
+}
+
+.ms4-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--s-3) var(--s-4);
+  border: 0;
+  background: transparent;
+  color: var(--c-text);
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+button.ms4-row,
+a.ms4-row { cursor: pointer; }
+@media (hover: hover) {
+  button.ms4-row:hover,
+  a.ms4-row:hover { background: var(--c-surface-2); }
+}
+button.ms4-row:active,
+a.ms4-row:active { background: var(--c-surface-3); }
+.ms4-row.is-disabled { opacity: .45; pointer-events: none; }
+.ms4-row.is-selected { background: var(--c-accent-soft); }
+
+.ms4-row__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
+}
+.ms4-row__icon > svg { width: 24px; height: 24px; }
+.ms4-row__icon--danger { background: var(--c-crit-soft); color: var(--c-crit); }
+
+.ms4-row__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ms4-row__title {
+  margin: 0;
+  font-size: var(--t-body);
+  font-weight: var(--fw-med);
+  line-height: 1.3;
+  color: var(--c-text);
+}
+.ms4-row__subtitle {
+  margin: 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ms4-row__value {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body-sm);
+  color: var(--c-text-2);
+  text-align: right;
+  white-space: nowrap;
+}
+.ms4-row__control { flex: 0 0 auto; }
+/* Telefon: trzystopniowy przelacznik ("Zwykly / Wiekszy / Najwiekszy") nie miesci
+   sie obok etykiety - przy 345 px ostatni segment wychodzil poza ekran. Wiersz
+   uklada sie wtedy pionowo, a przelacznik bierze cala szerokosc pod tytulem.
+   Dotyczy wylacznie wierszy z segmentami; przelaczniki i wartosci zostaja w linii. */
+@media (max-width: 479px) {
+  .ms4-row:has(.ms4-row__control .ms4-segmented) { flex-wrap: wrap; }
+  .ms4-row:has(.ms4-row__control .ms4-segmented) .ms4-row__text { flex: 1 1 auto; }
+  .ms4-row:has(.ms4-row__control .ms4-segmented) .ms4-row__control {
+    flex: 1 0 100%;
+    margin-top: var(--s-2);
+  }
+  .ms4-row:has(.ms4-row__control .ms4-segmented) .ms4-segmented { width: 100%; }
+  .ms4-row:has(.ms4-row__control .ms4-segmented) .ms4-segmented__option {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+.ms4-row__chevron {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--c-text-3);
+  transition: transform var(--dur-fast) var(--ease);
+}
+@media (hover: hover) {
+  button.ms4-row:hover .ms4-row__chevron { transform: translateX(2px); }
+}
+/* rozdz. 9 (ui.js): znacznik wyboru stoi w miejscu strzałki i nigdy z nią naraz */
+.ms4-row__check {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-left: var(--s-1);
+  color: var(--c-accent);
+}
+.ms4-row--danger .ms4-row__title { color: var(--c-crit); }
+.ms4-row.is-locked .ms4-row__title { color: var(--c-text-2); }
+
+/* --- przełącznik ---------------------------------------------------------- */
+.ms4-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.ms4-switch__label {
+  font-size: var(--t-body);
+  color: var(--c-text);
+}
+.ms4-switch__track {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  width: 52px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+  transition: background-color var(--dur-fast) var(--ease);
+}
+.ms4-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  box-shadow: var(--e-1);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.ms4-switch.is-checked .ms4-switch__track { background: var(--c-accent); }
+.ms4-switch.is-checked .ms4-switch__thumb { transform: translateX(20px); }
+.ms4-switch[disabled],
+.ms4-switch.is-disabled { opacity: .45; cursor: not-allowed; }
+.ms4-switch:focus-visible { outline: none; }
+.ms4-switch:focus-visible .ms4-switch__track {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+/* --- segmenty ------------------------------------------------------------- */
+.ms4-segmented {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+  max-width: 100%;
+}
+.ms4-segmented--full { display: flex; width: 100%; }
+.ms4-segmented--full .ms4-segmented__option { flex: 1 1 0; min-width: 0; }
+
+.ms4-segmented__option {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding-inline: var(--s-4);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease);
+}
+/* Nawet po zwężeniu odstępu napis nie ma prawa wyjść na sąsiedni segment:
+   white-space: nowrap bez overflow nachodziło na kolejną pigułkę. */
+.ms4-segmented--full .ms4-segmented__option { overflow: hidden; }
+
+/* Cel dotyku 44 px bez powiększania pigułki — tak samo jak w .ms4-chip--selectable.
+   Pigułka ma 38 px + 3 px paddingu z góry i z dołu, więc inset -3px domyka 44 px. */
+.ms4-segmented__option::after {
+  content: "";
+  position: absolute;
+  inset: -3px 0;
+}
+
+/* 360 px: pięć zakresów HISTORII musi się zmieścić — zwężamy odstęp i stopień
+   pisma, bo „24 godz" przy 13 px nie wchodzi w 42 px. */
+@media (max-width: 389px) {
+  .ms4-segmented--full .ms4-segmented__option {
+    padding-inline: var(--s-1);
+    font-size: var(--t-caption);
+  }
+}
+.ms4-segmented__option.is-active {
+  color: var(--c-text);
+  font-weight: var(--fw-bold);
+}
+.ms4-segmented__option.is-disabled { opacity: .45; pointer-events: none; }
+.ms4-segmented__icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+  color: currentColor;
+}
+.ms4-segmented__option:empty .ms4-segmented__icon,
+.ms4-segmented__icon:only-child { margin-right: 0; }
+
+.ms4-segmented__thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  z-index: 0;
+  width: 0;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  box-shadow: var(--e-1);
+  transition:
+    transform var(--dur-fast) var(--ease),
+    width var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease);
+}
+
+/* --- suwak ---------------------------------------------------------------- */
+.ms4-slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.ms4-slider__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+.ms4-slider__label {
+  font-size: var(--t-body-sm);
+  color: var(--c-text-2);
+}
+.ms4-slider__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--t-body);
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+  white-space: nowrap;
+}
+.ms4-slider__input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 32px;               /* obszar dotyku; sam tor ma 6 px */
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.ms4-slider__input::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+}
+.ms4-slider__input::-moz-range-track {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-3);
+}
+.ms4-slider__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -9px;
+  border: 3px solid var(--c-surface);
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+  box-shadow: var(--e-1);
+}
+.ms4-slider__input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--c-surface);
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+  box-shadow: var(--e-1);
+}
+.ms4-slider__input:focus { outline: none; }
+.ms4-slider__input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+.ms4-slider__input:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+.ms4-slider__input[disabled] { opacity: .45; cursor: not-allowed; }
+
+
+/* --- pola formularza (5.Q, tu bo to formant) ------------------------------- */
+.ms4-field {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--tap);
+  padding-inline: var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  font-family: var(--font);
+  font-size: var(--t-body);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.ms4-field::placeholder { color: var(--c-text-3); }
+.ms4-field:focus-visible { border-color: var(--c-accent); border-width: 2px; }
+.ms4-field[disabled] { opacity: .45; cursor: not-allowed; }
+.ms4-field__label {
+  display: block;
+  margin-bottom: var(--s-1);
+  font-size: var(--t-label);
+  font-weight: var(--fw-med);
+  color: var(--c-text-2);
+}
+.ms4-field__hint {
+  margin: var(--s-1) 0 0;
+  font-size: var(--t-caption);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+}
+.ms4-field__hint[role="alert"] { color: var(--c-crit); }
+
+/* Natywny <select> (rozdz. 9, screen-tools.js) — strzałka zostaje systemowa. */
+.ms4-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--tap);
+  padding-inline: var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  font-family: var(--font);
+  font-size: var(--t-body);
+  cursor: pointer;
+}
+
+/* --- tabela w arkuszu narzędzia (rozdz. 9, screen-tools.js) ---------------- */
+.ms4-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-body-sm);
+}
+.ms4-table th {
+  padding: 10px var(--s-3);
+  border-bottom: 1px solid var(--c-border-strong);
+  font-size: var(--t-caption);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--c-text-3);
+  text-align: left;
+  white-space: nowrap;
+}
+.ms4-table td {
+  padding: 10px var(--s-3);
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text-2);
+  vertical-align: top;
+}
+.ms4-table th[scope="row"] {
+  text-align: left;
+  font-size: var(--t-body-sm);
+  font-weight: var(--fw-med);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--c-text);
+  border-bottom: 1px solid var(--c-border);
+}
+.ms4-table td .ms4-num,
+.ms4-table td.ms4-num { text-align: right; white-space: nowrap; }
+.ms4-table tr:last-child td,
+.ms4-table tr:last-child th[scope="row"] { border-bottom: 0; }
+
+/* --- lista kroków (rozdz. 9, screen-tools.js) ------------------------------ */
+.ms4-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  counter-reset: ms4-steps-counter;
+}
+.ms4-steps__item {
+  position: relative;
+  padding-left: var(--s-7);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  color: var(--c-text);
+  counter-increment: ms4-steps-counter;
+}
+.ms4-steps__item::before {
+  content: counter(ms4-steps-counter);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-ink);
+  font-size: var(--t-label);
+  font-weight: var(--fw-bold);
+}
+
+/* --- próbki palet --------------------------------------------------------- */
+.ms4-swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);   /* 360–430 px: 3 x 2 */
+  gap: var(--s-3);
+}
+/* 768 px: sześć palet w jednym rzędzie. */
+@media (min-width: 600px) {
+  .ms4-swatches { grid-template-columns: repeat(6, 1fr); }
+}
+
+.ms4-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: var(--tap);
+  padding: var(--s-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+@media (hover: hover) {
+  .ms4-swatch:hover { background: var(--c-surface-2); }
+}
+.ms4-swatch__disc {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  /* Gradient wstawia JS ze Store.ACCENTS — to jedyny sposób pokazania palety,
+     której akurat nie ma na ekranie. Obwódka musi być widoczna na każdej barwie. */
+  border: 1px solid var(--c-border-strong);
+  transition: outline-color var(--dur-fast) var(--ease);
+}
+.ms4-swatch__check {
+  width: 20px;
+  height: 20px;
+  color: var(--c-on-accent);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+.ms4-swatch.is-selected .ms4-swatch__disc {
+  outline: 3px solid var(--c-text);
+  outline-offset: 2px;
+}
+.ms4-swatch.is-selected .ms4-swatch__check { opacity: 1; }
+.ms4-swatch__label {
+  font-size: var(--t-caption);
+  color: var(--c-text-2);
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* --- wybór motywu --------------------------------------------------------- */
+.ms4-themepick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-3);
+}
+.ms4-themepick__option {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--tap);
+  padding: var(--s-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+.ms4-themepick__option.is-selected {
+  border: 2px solid var(--c-accent);
+  padding: calc(var(--s-2) - 1px);
+  background: var(--c-accent-soft);
+}
+.ms4-themepick__label {
+  margin-top: var(--s-1);
+  font-size: var(--t-caption);
+  color: var(--c-text-2);
+  text-align: center;
+}
+
+/* WYJĄTEK OD ZAKAZU BARW SPOZA tokens.css (SPEC 0.3 i 5.K, wyjątek pierwszy):
+   miniatura ma pokazać motyw, którego w tej chwili NIE ma na ekranie, więc nie
+   może brać barw z tokenów. Wartości są dosłownie te z rozdziału 2.1 i 2.2. */
+.ms4-themepick__preview {
+  display: block;
+  width: 100%;
+  height: 64px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--c-border);
+  background-repeat: no-repeat;
+}
+.ms4-themepick__preview--light {
+  background-color: #F4F6F9;
+  background-image: linear-gradient(#FFFFFF, #FFFFFF);
+  background-size: 60% 46%;
+  background-position: center;
+}
+.ms4-themepick__preview--dark {
+  background-color: #0E1116;
+  background-image: linear-gradient(#171B22, #171B22);
+  background-size: 60% 46%;
+  background-position: center;
+}
+.ms4-themepick__preview--system {
+  background-color: #0E1116;
+  background-image:
+    linear-gradient(#171B22, #171B22),
+    linear-gradient(to bottom right, #F4F6F9 0 50%, transparent 50% 100%);
+  background-size: 60% 46%, 100% 100%;
+  background-position: center, center;
+}
+
+
+/* ===========================================================================
+   5.L  ARKUSZE, OKNA DIALOGOWE, TOASTY
+   =========================================================================== */
+
+.ms4-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-sheet) - 1);
+  background: var(--c-scrim);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+.ms4-scrim.is-open { opacity: 1; }
+
+.ms4-sheet-host,
+.ms4-dialog-host {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+.ms4-sheet-host { z-index: var(--z-sheet); }
+.ms4-dialog-host { z-index: var(--z-dialog); }
+.ms4-sheet-host > *,
+.ms4-dialog-host > * { pointer-events: auto; }
+
+/* --- arkusz --------------------------------------------------------------- */
+.ms4-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: 92dvh;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  background: var(--c-surface);
+  box-shadow: var(--e-3);
+  color: var(--c-text);
+  transform: translateY(100%);
+  transition: transform var(--dur-slow) var(--ease), opacity var(--dur-slow) var(--ease);
+}
+.ms4-sheet.is-open { transform: translateY(0); }
+.ms4-sheet--auto { height: auto; }
+.ms4-sheet--full {
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;           /* telefon: pełny ekran ma proste rogi */
+}
+
+/* 768 px: arkusz odkleja się od krawędzi i staje się kartą 640 px. */
+@media (min-width: 600px) {
+  .ms4-sheet {
+    left: 50%;
+    right: auto;
+    bottom: var(--s-4);
+    width: min(100% - var(--s-6), 640px);
+    transform: translateX(-50%) translateY(100%);
+    border-radius: var(--r-xl);
+  }
+  .ms4-sheet.is-open { transform: translateX(-50%) translateY(0); }
+  .ms4-sheet--full {
+    height: calc(100dvh - var(--s-8));
+    max-height: calc(100dvh - var(--s-8));
+    border-radius: var(--r-xl);
+  }
+}
+
+/* 1024 px: arkusz przestaje być arkuszem — jest oknem, wjeżdża skalowaniem. */
+@media (min-width: 1024px) {
+  .ms4-sheet {
+    top: 50%;
+    bottom: auto;
+    width: min(100% - var(--s-8), 720px);
+    max-height: 88vh;
+    border-radius: var(--r-xl);
+    transform: translate(-50%, -50%) scale(.96);
+    opacity: 0;
+  }
+  .ms4-sheet.is-open { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  .ms4-sheet--full {
+    width: min(100% - var(--s-8), 880px);
+    height: auto;
+    max-height: 88vh;
+  }
+  .ms4-sheet__grip { display: none; }
+}
+
+.ms4-sheet__grip {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 4px;
+  margin: var(--s-2) auto;
+  border-radius: var(--r-pill);
+  background: var(--c-border-strong);
+  cursor: grab;
+}
+
+.ms4-sheet__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+/* rozdz. 9 (ui.js): tytuł nad podtytułem, przycisk zamknięcia po prawej */
+.ms4-sheet__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin-right: auto;
+}
+.ms4-sheet__title {
+  margin: 0;
+  font-size: var(--t-h2);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+}
+.ms4-sheet__subtitle {
+  margin: 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-3);
+}
+.ms4-sheet__close { flex: 0 0 auto; }
+
+.ms4-sheet__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-height: 0;
+  padding: var(--s-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ms4-sheet__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;      /* telefon: przyciski jeden pod drugim */
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4) calc(var(--s-3) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+.ms4-sheet__actions > .ms4-btn { width: 100%; }
+/* 768 px: przyciski wracają do rzędu, główny po prawej. */
+@media (min-width: 600px) {
+  .ms4-sheet__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ms4-sheet__actions > .ms4-btn { width: auto; }
+  .ms4-sheet__actions > .ms4-btn--full { width: 100%; }
+}
+
+/* --- okno dialogowe ------------------------------------------------------- */
+.ms4-dialog {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  width: calc(100vw - var(--s-8));
+  max-width: 400px;
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-5);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--e-3);
+  color: var(--c-text);
+  transform: translate(-50%, -50%) scale(.94);
+  opacity: 0;
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.ms4-dialog.is-open { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+
+.ms4-dialog__title {
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-h2);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--c-text);
+}
+.ms4-dialog--danger .ms4-dialog__title { color: var(--c-crit); }
+.ms4-dialog__text {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+}
+.ms4-dialog__actions {
+  display: flex;
+  flex-direction: column-reverse;  /* telefon: potwierdzenie NA GÓRZE (SPEC 5.L) */
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+}
+.ms4-dialog__actions > .ms4-btn { width: 100%; }
+@media (min-width: 600px) {
+  .ms4-dialog__actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  .ms4-dialog__actions > .ms4-btn { width: auto; }
+}
+
+/* --- toasty --------------------------------------------------------------- */
+.ms4-toasts {
+  position: fixed;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  left: var(--s-4);
+  right: var(--s-4);
+  bottom: calc(var(--h-tabbar) + var(--s-4) + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+.ms4-toasts > * { pointer-events: auto; }
+/* 1024 px: dolna nawigacja znika, toast idzie w prawy dolny róg. */
+@media (min-width: 1024px) {
+  .ms4-toasts {
+    left: auto;
+    right: var(--s-6);
+    bottom: var(--s-6);
+    align-items: flex-end;
+  }
+}
+
+.ms4-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  max-width: 92vw;
+  padding: 12px 18px;
+  border-radius: var(--r-pill);
+  background: var(--c-text);     /* odwrócenie: ciemna pigułka w jasnym motywie */
+  color: var(--c-bg);
+  box-shadow: var(--e-3);
+  font-size: var(--t-body-sm);
+  transform: translateY(12px);
+  opacity: 0;
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.ms4-toast.is-open { transform: translateY(0); opacity: 1; }
+.ms4-toast--good { border-left: 4px solid var(--c-good); }
+.ms4-toast--warn { border-left: 4px solid var(--c-warn); }
+.ms4-toast--crit { border-left: 4px solid var(--c-crit); }
+.ms4-toast--info { border-left: 4px solid var(--c-info); }
+.ms4-toast__icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+}
+.ms4-toast--good .ms4-toast__icon { color: var(--c-good); }
+.ms4-toast--warn .ms4-toast__icon { color: var(--c-warn); }
+.ms4-toast--crit .ms4-toast__icon { color: var(--c-crit); }
+.ms4-toast--info .ms4-toast__icon { color: var(--c-info); }
+.ms4-toast__text {
+  margin: 0;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ms4-toast__action {
+  flex: 0 0 auto;
+  margin-left: var(--s-3);
+  padding: 12px 4px;           /* cel dotyku 44 px bez powiększania pigułki */
+  border: 0;
+  background: transparent;
+  color: var(--c-bg);
+  font-size: var(--t-label);
+  font-weight: var(--fw-bold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+
+/* ===========================================================================
+   5.M  STANY PUSTE I ŁADOWANIE
+   =========================================================================== */
+
+.ms4-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-8) var(--s-5);
+  text-align: center;
+}
+.ms4-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-2);
+  color: var(--c-text-3);
+}
+.ms4-empty__icon > svg {
+  width: 56px;
+  height: 56px;
+  stroke-width: 1.5;
+}
+.ms4-empty__title {
+  margin: 0;
+  font-size: var(--t-h3);
+  font-weight: var(--fw-bold);
+  color: var(--c-text);
+}
+.ms4-empty__text {
+  margin: 0;
+  max-width: 40ch;
+  font-size: var(--t-body-sm);
+  line-height: var(--lh-body);
+  color: var(--c-text-2);
+}
+.ms4-empty__action { margin-top: var(--s-2); }
+
+
+
+/* ===========================================================================
+   5.S  KLASY POMOCNICZE
+   =========================================================================== */
+
+.ms4-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.ms4-row-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.ms4-clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ms4-num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+.ms4-muted { color: var(--c-text-3); }
+.ms4-center { text-align: center; }
+
+
+/* ===========================================================================
+   MOTYW CIEMNY — jedyne miejsce w tym pliku z selektorem motywu.
+   W ciemnym motywie cień nie ma czego przyciemniać, więc głębię niesie
+   jaśniejsza krawędź (SPEC 2.5). Żaden token nie jest tu przedefiniowany.
+   Kolejność zgodna z 2.7: blok @media stoi przed blokiem [data-theme="dark"].
+   =========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ms4-card,
+  :root:not([data-theme="light"]) .ms4-tile,
+  :root:not([data-theme="light"]) .ms4-list,
+  :root:not([data-theme="light"]) .ms4-sheet,
+  :root:not([data-theme="light"]) .ms4-dialog { border-color: var(--c-border); }
+  :root:not([data-theme="light"]) .ms4-card--premium,
+  :root:not([data-theme="light"]) .ms4-card--accent { border-color: transparent; }
+}
+:root[data-theme="dark"] .ms4-card,
+:root[data-theme="dark"] .ms4-tile,
+:root[data-theme="dark"] .ms4-list,
+:root[data-theme="dark"] .ms4-sheet,
+:root[data-theme="dark"] .ms4-dialog { border-color: var(--c-border); }
+:root[data-theme="dark"] .ms4-card--premium,
+:root[data-theme="dark"] .ms4-card--accent { border-color: transparent; }
+
+
+/* ===========================================================================
+   PASKI PRZEWIJANIA — dyskretne, w barwach tokenów, nigdy nachalne.
+   =========================================================================== */
+.ms4-sheet__body,
+.ms4-dialog,
+.ms4-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border-strong) transparent;
+}
+.ms4-sheet__body::-webkit-scrollbar,
+.ms4-dialog::-webkit-scrollbar { width: 10px; height: 10px; }
+.ms4-sheet__body::-webkit-scrollbar-track,
+.ms4-dialog::-webkit-scrollbar-track { background: transparent; }
+.ms4-sheet__body::-webkit-scrollbar-thumb,
+.ms4-dialog::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background-clip: content-box;
+  background-color: var(--c-border-strong);
+}
+
+
+/* ===========================================================================
+   OGRANICZONY RUCH — jedyne !important w tym pliku (SPEC 8.1).
+   Czasy zeruje tokens.css; tutaj gasimy to, czego czas nie dosięga:
+   animacje w pętli, przesunięcia wejść i obrót spinnera. Igła wskaźnika
+   obraca się nadal, bo to odczyt, a nie ozdoba.
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .ms4-spinner {
+    animation: ms4-spinner-fade 1.4s ease-in-out infinite !important;
+  }
+  .ms4-camera__badge::before { animation: none !important; }
+  .ms4-switch__thumb { transition: none !important; }
+  /* Przesunięcia wejść nie są tu zerowane transformacją: arkusz i okno są
+     wyśrodkowane WŁAŚNIE transformacją, a czas przejścia i tak spada do 1 ms
+     (tokens.css), więc ruch jest niedostrzegalny, a układ pozostaje cały. */
+}
+:root[data-motion="reduced"] .ms4-spinner {
+  animation: ms4-spinner-fade 1.4s ease-in-out infinite !important;
+}
+:root[data-motion="reduced"] .ms4-camera__badge::before { animation: none !important; }
+:root[data-motion="reduced"] .ms4-switch__thumb { transition: none !important; }

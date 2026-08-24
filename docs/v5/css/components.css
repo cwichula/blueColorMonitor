@@ -1,0 +1,1736 @@
+/* components.css — biblioteka kontrolek Monitora Światła v5.
+   Wszystko stoi na tokenach z tokens.css; w tym pliku nie ma ani jednej
+   wartości koloru wpisanej wprost. Reset, typografia i powłoka są w base.css,
+   układy ekranów w screens.css — tutaj mieszkają wyłącznie elementy, które
+   ekran bierze gotowe i składa: przyciski, karty, kafelki, kontrolki
+   formularza, warstwy (arkusz/dialog/toast) i stany (pusty, ładowania,
+   zablokowany).
+
+   TRZY REGUŁY GEOMETRII, KTÓRE TRZYMAJĄ TO W JEDNEJ CAŁOŚCI:
+   1. Rzecz, która ZAWIERA TREŚĆ, jest zaokrąglonym prostokątem ze skali
+      --r-sm/--r-md/--r-lg/--r-xl. Kafelek metryki ma ten sam promień co karta
+      (--r-lg), bo kafelek to mała karta, a nie inny gatunek.
+   2. Rzecz MAŁA I PODŁUŻNA jest kapsułą (--r-pill): żeton, plakietka,
+      przełącznik, tor suwaka, pasek strefowy, kreska szkieletu.
+   3. Element zagnieżdżony ma promień zewnętrznego minus odstęp — stąd --r-sm
+      w środku --r-md (przełącznik segmentowy) i --r-md w środku --r-lg.
+
+   RUCH: przemieszczenie wyłącznie na transform i opacity, czas zawsze
+   z --dur-* (przy „mniej ruchu” tokeny schodzą do 1 ms, więc nie ma tu ani
+   jednego osobnego wyjątku). Animacje ciągłe — szkielet ładowania i pasek
+   zajętości — nie chodzą przez --dur-*, więc wygasza je jawne @media na końcu
+   pliku.
+
+   KONTRAKT MARKUPU (czego te style oczekują; ui/dom.js i ui/overlays.js już
+   tak generują — autorzy ui/gauge.js i ekranów niech trzymają się tego samego):
+
+   przycisk    <button class="m5-btn m5-btn--primary" data-tone="primary">
+               modyfikatory: --primary --ghost --quiet --danger --icon
+                             --lg --sm --block; ten sam zestaw działa przez
+                             data-tone="…", bo tak buduje przyciski overlays.js
+               stany: [disabled], [data-state="busy"] / [aria-busy="true"]
+   ikona sama  <button class="m5-iconbtn" aria-label="…">   (kwadrat 44 px)
+   karta       <section class="m5-card">
+                 <header class="m5-card__head">
+                   <h2 class="m5-card__title">…</h2></header>
+                 <div class="m5-card__body">…</div>
+                 <div class="m5-card__foot">…</div></section>          (+ --flat)
+   kafelek     <button class="m5-tile" data-zone="good" data-state="active"
+                       data-locked="true" aria-pressed="true">
+                 <span class="m5-tile__head"><svg class="m5-icon">…</svg>
+                   <span class="m5-tile__name">Udział niebieskiego</span></span>
+                 <span class="m5-tile__reading">
+                   <span class="m5-tile__value m5-num">27</span>
+                   <span class="m5-tile__unit">%</span></span>
+                 <span class="m5-zone" data-zone="good">bezpiecznie</span>
+                 <span class="m5-zonebar" data-zone="good">
+                   <svg class="m5-zonebar__svg">…</svg></span>
+                 <span class="m5-tile__badge"><svg class="m5-icon">…</svg></span>
+   żeton       <button class="m5-chip" aria-pressed="true">
+   segmenty    <div class="m5-seg" role="tablist">
+                 <button class="m5-seg__item" role="tab" aria-selected="true">
+   przełącznik <input type="checkbox" class="m5-switch">   (sam natywny input)
+   suwak       <input type="range" class="m5-slider" style="--fill:62%">
+               WebKit nie umie sam pokolorować przebytej części toru, więc
+               ekran ustawia --fill przy każdym zdarzeniu „input”. Firefox
+               maluje ją samodzielnie (::-moz-range-progress).
+   próbka      <button class="m5-swatch" style="--swatch:#0b5fd0" aria-pressed="true">
+   wiersz      <div class="m5-row"><div class="m5-row__main">
+                 <span class="m5-row__title">…</span>
+                 <span class="m5-row__desc">…</span></div>
+                 <div class="m5-row__control">…</div></div>           (+ --stack)
+   statystyka  <div class="m5-stat"><span class="m5-stat__label">…</span>
+                 <span class="m5-stat__readout">
+                   <span class="m5-stat__value m5-num">…</span>
+                   <span class="m5-stat__unit">…</span></span>
+                 <span class="m5-stat__trend" data-trend="1">…</span></div>
+
+   Wartość niezmierzona to „—” w kolorze --text-3; klasa m5-num zostaje, żeby
+   pauza zajmowała tę samą kolumnę co cyfry. Nigdy zero, nigdy pusty kafelek. */
+
+/* ═════════════════════════════════════════════════ wspólne: język stref ═══
+   Element ze strefą dostaje trzy lokalne zmienne i dalej maluje się już tylko
+   nimi — dzięki temu kafelek, pasek, plakietka, toast i statystyka mówią
+   dokładnie jednym językiem koloru. Blok stoi na samym początku pliku, a
+   miejsca użycia i tak sięgają po var(--zone, var(--zone-none)), więc element
+   bez atrybutu wygląda jak „brak danych”, a nie jak błąd. */
+[data-zone] {
+  --zone: var(--zone-none);
+  --zone-soft: var(--zone-none-soft);
+  --zone-on: var(--surface-1);
+}
+[data-zone="good"] {
+  --zone: var(--zone-good);
+  --zone-soft: var(--zone-good-soft);
+  --zone-on: var(--zone-good-on);
+}
+[data-zone="warn"] {
+  --zone: var(--zone-warn);
+  --zone-soft: var(--zone-warn-soft);
+  --zone-on: var(--zone-warn-on);
+}
+[data-zone="crit"] {
+  --zone: var(--zone-crit);
+  --zone-soft: var(--zone-crit-soft);
+  --zone-on: var(--zone-crit-on);
+}
+
+/* Ikony z ui/dom.js mają rozmiar wpisany w atrybuty — tu pilnujemy tylko, by
+   nie dały się ścisnąć we flexie i by szły kolorem tekstu rodzica. */
+.m5-icon {
+  flex: 0 0 auto;
+  color: currentColor;
+}
+
+/* Polskie słowa bywają dłuższe niż kolumna, w której stoją: „Współczynnik”
+   czy „umiarkowanie” przy data-text-scale="1.3" na 320 px nie mieszczą się
+   w kafelku. „anywhere” (a nie „break-word”) jest tu konieczne, bo tylko ono
+   zmniejsza także szerokość min-content — dzięki temu kafelek flexowy naprawdę
+   pozwala się ścisnąć, zamiast wypychać cały ekran w bok. Właściwość jest
+   dziedziczona, więc jedna deklaracja na komponent obsługuje jego wnętrze. */
+.m5-card,
+.m5-tile,
+.m5-row,
+.m5-stat,
+.m5-zone,
+.m5-empty,
+.m5-sheet,
+.m5-toast,
+.m5-paywall { overflow-wrap: anywhere; }
+
+/* ───────────────────────────────────────────── etykieta strefy (słowna) ───
+   Kolor nigdy nie niesie znaczenia sam: obok słowa stoi znacznik o innym
+   KSZTAŁCIE dla każdej strefy (koło / romb / trójkąt / kreska). Przy
+   deuteranopii i na monochromatycznym ekranie strefa zostaje rozpoznawalna. */
+.m5-zone {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: .01em;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+.m5-zone::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  background: var(--zone, var(--zone-none));
+  clip-path: circle(50%);
+}
+.m5-zone[data-zone="warn"]::before {
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.m5-zone[data-zone="crit"]::before {
+  clip-path: polygon(50% 2%, 100% 100%, 0 100%);
+}
+.m5-zone[data-zone="none"]::before {
+  height: 3px;
+  border-radius: var(--r-pill);
+  clip-path: none;
+}
+/* ───────────────────────────────────────────────────────── separatory ──── */
+.m5-sep {
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--line-1);
+}
+
+/* ────────────────────────────────────────────────────────── plakietki ──── */
+.m5-badge,
+.m5-paywall__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+/* „Demo” to jedyna plakietka, która ma prawo być głośna: mówi, że konto
+   i płatności są udawane, a tego użytkownik nie może przeoczyć. */
+.m5-badge--demo,
+.m5-paywall__badge {
+  background: var(--zone-warn-soft);
+  color: var(--zone-warn);
+}
+.m5-badge--premium {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.m5-badge[data-zone] {
+  background: var(--zone-soft, var(--zone-none-soft));
+  color: var(--zone, var(--zone-none));
+}
+.m5-badge--solid[data-zone] {
+  background: var(--zone, var(--zone-none));
+  color: var(--zone-on, var(--surface-1));
+}
+
+/* ══════════════════════════════════════════════════════════ przyciski ═════
+   Baza wygląda jak przycisk drugorzędny (powierzchnia karty + włosowa
+   obwódka). Modyfikatory zmieniają wyłącznie skórę, nigdy geometrię — dzięki
+   temu wszystkie warianty stoją w jednej linii bazowej i mają ten sam cel
+   dotyku. data-tone="…" działa równolegle z klasą --…, bo overlays.js buduje
+   przyciski atrybutem, a nie klasą. */
+.m5-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap);
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-5);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  text-align: center;
+  text-decoration: none;
+  /* Zawijanie zamiast wypychania układu: przy data-text-scale="1.3" na 320 px
+     „Rozpocznij 7 dni próbnych” musi się złamać, a nie wyjechać poza ekran. */
+  white-space: normal;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  /* Świadomie bez overflow:hidden — przycięłoby niewidoczne nakładki, które
+     powiększają cel dotyku małych przycisków do 44 px. Pasek zajętości
+     obcinamy dopiero w stanie „busy”, czyli wtedy, gdy naprawdę istnieje. */
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out),
+              box-shadow var(--dur-1) var(--ease-out),
+              opacity var(--dur-1) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
+}
+.m5-btn:active { transform: scale(.98); }
+@media (hover: hover) {
+  .m5-btn:hover { background: var(--surface-sunken); }
+}
+
+/* — pełny: jedyne miejsce, w którym akcent zajmuje całą płaszczyznę */
+.m5-btn--primary,
+.m5-btn[data-tone="primary"] {
+  background: var(--accent);
+  color: var(--accent-on);
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .m5-btn--primary:hover,
+  .m5-btn[data-tone="primary"]:hover { background: var(--accent-hover); }
+}
+.m5-btn--primary:active,
+.m5-btn[data-tone="primary"]:active { background: var(--accent-press); }
+
+/* — obrysowy (drugorzędny); to zarazem wygląd bazowy */
+.m5-btn--ghost,
+.m5-btn[data-tone="ghost"] {
+  background: var(--surface-1);
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+@media (hover: hover) {
+  .m5-btn--ghost:hover,
+  .m5-btn[data-tone="ghost"]:hover {
+    background: var(--surface-sunken);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+  }
+}
+
+/* — cichy (trzeciorzędny, np. w nagłówku karty): bez tła i bez obwódki */
+.m5-btn--quiet,
+.m5-btn[data-tone="quiet"] {
+  background: transparent;
+  color: var(--text-2);
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .m5-btn--quiet:hover,
+  .m5-btn[data-tone="quiet"]:hover {
+    background: var(--accent-soft);
+    color: var(--text-1);
+  }
+}
+
+/* — niebezpieczny: czerwień strefy krytycznej, a nie szósty kolor sygnału */
+.m5-btn--danger,
+.m5-btn[data-tone="danger"] {
+  background: var(--zone-crit);
+  color: var(--zone-crit-on);
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .m5-btn--danger:hover,
+  .m5-btn[data-tone="danger"]:hover { filter: brightness(1.08); }
+}
+.m5-btn--danger:active,
+.m5-btn[data-tone="danger"]:active { filter: brightness(.93); }
+/* Pierścień fokusu z base.css jest akcentowy; na czerwonym przycisku
+   zamieniamy go na czerwony, żeby nie zderzać dwóch sygnałów naraz. */
+.m5-btn--danger:focus-visible,
+.m5-btn[data-tone="danger"]:focus-visible {
+  outline-color: var(--zone-crit);
+  box-shadow: 0 0 0 4px var(--zone-crit-soft);
+}
+
+/* — rozmiary */
+.m5-btn--lg {
+  min-height: calc(var(--tap) + var(--sp-3));
+  padding-inline: var(--sp-6);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-h3);
+}
+.m5-btn--sm {
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+}
+/* Mały przycisk wygląda na 36 px, ale palec trafia w 44 px: niewidoczna
+   nakładka powiększa cel dotyku, nie ruszając rytmu układu. */
+.m5-btn--sm::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--tap) - 36px) / -2) 0;
+}
+.m5-btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* — przycisk-ikona wewnątrz rodziny m5-btn (tak robi go overlays.js) */
+.m5-btn--icon {
+  width: var(--tap);
+  min-width: var(--tap);
+  padding: 0;
+  background: transparent;
+  color: var(--text-2);
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .m5-btn--icon:hover {
+    background: var(--accent-soft);
+    color: var(--text-1);
+  }
+}
+
+/* — stany wspólne
+   Wyłączony przycisk nie jest wyblakłą wersją siebie: przygaszenie samą
+   przezroczystością zostawiało pełną płachtę akcentu w bladym kolorze
+   („Wybierz plan” w paywallu wyglądał na zepsuty, nie na nieaktywny).
+   Stan wyłączony schodzi więc na spokojną powierzchnię z czytelnym napisem. */
+.m5-btn:disabled,
+.m5-btn[aria-disabled="true"] {
+  background: var(--surface-sunken);
+  color: var(--text-3);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  filter: none;
+  transform: none;
+  cursor: not-allowed;
+}
+/* Warianty bez własnej płaszczyzny zostają bez płaszczyzny także wyłączone. */
+.m5-btn--quiet:disabled,
+.m5-btn--icon:disabled,
+.m5-btn[data-tone="quiet"]:disabled {
+  background: transparent;
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .m5-btn:disabled:hover,
+  .m5-btn[aria-disabled="true"]:hover { background: var(--surface-sunken); }
+  .m5-btn--quiet:disabled:hover,
+  .m5-btn--icon:disabled:hover,
+  .m5-btn[data-tone="quiet"]:disabled:hover { background: transparent; }
+}
+
+/* Zajętość: cienki pasek pełznący dolną krawędzią. Świadomie bez kręcącego
+   się kółka w treści — kółko przesuwałoby etykietę, a pasek jest poza
+   układem (position:absolute), więc zachowuje się tak samo w przycisku
+   flexowym, jak i w siatkowym wierszu planu w paywallu. */
+.m5-btn[data-state="busy"],
+.m5-btn[aria-busy="true"] {
+  cursor: progress;
+  color: var(--text-2);
+  overflow: hidden;
+}
+.m5-btn--primary[data-state="busy"],
+.m5-btn[data-tone="primary"][data-state="busy"] { color: var(--accent-on); }
+.m5-btn[data-state="busy"]::after,
+.m5-btn[aria-busy="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 45%;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  opacity: .7;
+  animation: m5-crawl 1100ms var(--ease-in-out) infinite;
+}
+@keyframes m5-crawl {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(222%); }
+}
+
+/* ────────────────────────────────── samodzielny przycisk-ikona (44 px) ──── */
+.m5-iconbtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--tap);
+  height: var(--tap);
+  min-width: var(--tap);
+  padding: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-2);
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out),
+              transform var(--dur-1) var(--ease-out),
+              opacity var(--dur-1) var(--ease-out);
+}
+@media (hover: hover) {
+  .m5-iconbtn:hover {
+    background: var(--accent-soft);
+    color: var(--text-1);
+  }
+}
+.m5-iconbtn:active { transform: scale(.94); }
+.m5-iconbtn[aria-pressed="true"],
+.m5-iconbtn[aria-expanded="true"],
+.m5-iconbtn[data-state="active"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.m5-iconbtn:disabled,
+.m5-iconbtn[aria-disabled="true"] {
+  opacity: .4;
+  background: transparent;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* ══════════════════════════════════════════════════════════════ żetony ════ */
+.m5-chips {
+  display: flex;
+  gap: var(--sp-2);
+  /* Pasek żetonów przewija się w poziomie, a nie zawija — dzięki temu wybór
+     wielkości zostaje jednym wierszem także na 320 px. Odstęp pionowy jest
+     po to, żeby pierścień fokusu nie został przycięty przez overflow. */
+  padding-block: var(--sp-1);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.m5-chips::-webkit-scrollbar { display: none; }
+
+.m5-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-4);
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+  color: var(--text-2);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out),
+              box-shadow var(--dur-1) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
+}
+.m5-chip::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--tap) - 36px) / -2) 0;
+}
+@media (hover: hover) {
+  .m5-chip:hover {
+    background: var(--surface-sunken);
+    color: var(--text-1);
+  }
+}
+.m5-chip:active { transform: scale(.97); }
+/* Wybrany żeton różni się nie tylko barwą: obwódka gęstnieje do 2 px, a tekst
+   do 700 — dwa sygnały niezależne od rozróżniania kolorów. */
+.m5-chip[aria-pressed="true"],
+.m5-chip[aria-selected="true"],
+.m5-chip[data-state="active"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+  font-weight: 700;
+}
+/* Pierścień fokusu z base.css jedzie tą samą właściwością co obwódka wyboru,
+   więc w stanie wybranym składamy oba cienie — inaczej użytkownik klawiatury
+   przestawałby widzieć, który żeton jest włączony. */
+.m5-chip[aria-pressed="true"]:focus-visible,
+.m5-chip[aria-selected="true"]:focus-visible,
+.m5-chip[data-state="active"]:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 4px var(--accent-ring);
+}
+.m5-chip:disabled,
+.m5-chip[aria-disabled="true"] {
+  opacity: .45;
+  transform: none;
+  cursor: not-allowed;
+}
+.m5-chip[data-zone] { color: var(--zone, var(--zone-none)); }
+
+/* ══════════════════════════════════════════ przełącznik segmentowy ════════
+   Rola tablist albo radiogroup — stan czytamy z aria-selected, aria-checked
+   albo data-state, żeby ten sam wygląd obsłużył oba warianty ARIA. */
+.m5-seg {
+  display: flex;
+  gap: var(--sp-1);
+  padding: 4px;
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  box-shadow: var(--shadow-inset-line);
+  /* Sześć zakresów historii nie mieści się w jednym rzędzie już na 390 px.
+     Przewijanie w poziomie było tu złym wyborem: przy równym podziale
+     szerokości ostatni widoczny segment kończył się dokładnie na krawędzi
+     przycięcia, więc pasek wyglądał na kompletny, a „7 dni” i „30 dni” nie
+     istniały dla użytkownika. Zawijanie do drugiego rzędu nie ukrywa niczego.
+     Przewijanie zostaje wyłącznie jako zabezpieczenie dla pojedynczego
+     segmentu szerszego niż cały pasek. */
+  flex-wrap: wrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.m5-seg::-webkit-scrollbar { display: none; }
+.m5-seg--block { width: 100%; }
+
+.m5-seg__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  /* flex-basis 0 dzieli szerokość po równo, min-width max-content nie pozwala
+     ścisnąć etykiety poniżej jej treści — nadmiar przechodzi w przewijanie. */
+  flex: 1 1 0;
+  min-width: max-content;
+  min-height: calc(var(--tap) - 8px);
+  padding-inline: var(--sp-4);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out),
+              box-shadow var(--dur-1) var(--ease-out);
+}
+/* Segment rysuje się na 36 px, żeby zmieścić się w pasku o wysokości celu
+   dotyku — palec trafia jednak w pełne 44 px dzięki niewidocznej nakładce.
+   Rozszerzenie mieści się w 4 px wyściółki paska, więc jego overflow go nie
+   przycina, a układ nie drgnie. */
+.m5-seg__item::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--tap) - 36px) / -2) 0;
+}
+@media (hover: hover) {
+  .m5-seg__item:hover { color: var(--text-1); }
+}
+.m5-seg__item[aria-selected="true"],
+.m5-seg__item[aria-checked="true"],
+.m5-seg__item[data-state="active"] {
+  background: var(--surface-1);
+  color: var(--text-1);
+  box-shadow: var(--shadow-1);
+  font-weight: 700;
+}
+.m5-seg__item:disabled,
+.m5-seg__item[aria-disabled="true"] {
+  opacity: .45;
+  cursor: not-allowed;
+}
+/* Pierścień na zewnątrz elementu zostałby przycięty przez overflow paska, więc
+   w segmentach rysujemy go do środka — jest równie widoczny i nigdy nie ginie. */
+.m5-seg__item:focus-visible {
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 4px var(--accent-ring);
+}
+
+/* ════════════════════════════════════════════════ przełącznik on/off ══════
+   Klasę nosi sam natywny <input type="checkbox">: zero dodatkowych elementów,
+   pełna obsługa klawiaturą i czytnikiem ekranu za darmo. Etykietę daje
+   sąsiedni <label for> albo .m5-row__title. */
+.m5-switch {
+  position: relative;
+  flex: 0 0 auto;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 52px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  cursor: pointer;
+  transition: background-color var(--dur-2) var(--ease-out),
+              box-shadow var(--dur-2) var(--ease-out);
+}
+/* Ślizgacz ma 32 px wysokości, ale palec trafia w 44 px. */
+.m5-switch::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--tap) - 32px) / -2) 0;
+}
+.m5-switch::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.m5-switch:checked {
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+/* Położenie gałki, nie sama barwa, mówi o stanie — to działa też bez koloru. */
+.m5-switch:checked::after { transform: translateX(20px); }
+@media (hover: hover) {
+  .m5-switch:hover { box-shadow: inset 0 0 0 1px var(--text-2); }
+  .m5-switch:checked:hover { background: var(--accent-hover); }
+}
+/* Fokus nie może zjeść obwódki toru — bez niej wyłączony przełącznik na
+   jasnym tle rozpływa się w powierzchni karty. */
+.m5-switch:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--line-strong), 0 0 0 4px var(--accent-ring);
+}
+.m5-switch:checked:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-ring);
+}
+.m5-switch:active::after { transform: scale(.94); }
+.m5-switch:checked:active::after { transform: translateX(20px) scale(.94); }
+.m5-switch:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+/* ══════════════════════════════════════════════════════════════ suwak ═════
+   Każda przeglądarka wymaga własnej reguły dla pseudoelementu i NIE WOLNO
+   łączyć ich w jedną listę selektorów — nieznany pseudoelement unieważniłby
+   całą regułę. Stąd poniżej osobne bloki dla WebKit i dla Firefoksa. */
+.m5-slider {
+  --fill: 0%;
+  --fill-color: var(--accent);
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  height: var(--tap);
+  background: transparent;
+  cursor: pointer;
+}
+/* Suwak progu maluje się barwą swojej strefy, żeby „ostrzeżenie” i „alarm”
+   miały ten sam kolor tutaj i na pasku strefowym obok. */
+.m5-slider[data-zone] { --fill-color: var(--zone, var(--accent)); }
+
+.m5-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background:
+    linear-gradient(to right,
+      var(--fill-color) 0 var(--fill),
+      var(--surface-sunken) var(--fill) 100%);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.m5-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  /* (8 px toru − 24 px gałki) / 2 — gałka siada dokładnie na osi toru. */
+  margin-top: -8px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 3px var(--fill-color), var(--shadow-1);
+  transition: box-shadow var(--dur-1) var(--ease-out);
+}
+.m5-slider::-moz-range-track {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.m5-slider::-moz-range-progress {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--fill-color);
+}
+.m5-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 3px var(--fill-color), var(--shadow-1);
+}
+@media (hover: hover) {
+  .m5-slider:hover::-webkit-slider-thumb {
+    box-shadow: inset 0 0 0 3px var(--fill-color), 0 0 0 6px var(--accent-soft);
+  }
+  .m5-slider:hover::-moz-range-thumb {
+    box-shadow: inset 0 0 0 3px var(--fill-color), 0 0 0 6px var(--accent-soft);
+  }
+}
+.m5-slider:active::-webkit-slider-thumb {
+  box-shadow: inset 0 0 0 3px var(--fill-color), 0 0 0 9px var(--accent-soft);
+}
+.m5-slider:active::-moz-range-thumb {
+  box-shadow: inset 0 0 0 3px var(--fill-color), 0 0 0 9px var(--accent-soft);
+}
+.m5-slider:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+/* Pierścień fokusu rysujemy przy torze, a nie wokół całych 44 px pola. */
+.m5-slider:focus-visible {
+  outline-offset: -12px;
+  border-radius: var(--r-md);
+}
+
+/* ═════════════════════════════════════════════════════ próbki akcentu ═════ */
+.m5-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.m5-swatch {
+  --swatch: var(--accent);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: var(--r-pill);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  transition: box-shadow var(--dur-1) var(--ease-out);
+}
+.m5-swatch::before {
+  content: "";
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: var(--swatch);
+  box-shadow: var(--shadow-1);
+  transition: width var(--dur-2) var(--ease-out),
+              height var(--dur-2) var(--ease-out);
+}
+@media (hover: hover) {
+  .m5-swatch:hover { box-shadow: inset 0 0 0 1px var(--line-strong); }
+}
+/* Wybór widać po kształcie: obwódka gęstnieje, a krążek się cofa — nie trzeba
+   rozróżniać barw, żeby zobaczyć, który akcent jest włączony. */
+.m5-swatch[aria-pressed="true"],
+.m5-swatch[aria-checked="true"],
+.m5-swatch[data-state="active"] {
+  box-shadow: inset 0 0 0 2px var(--swatch);
+}
+.m5-swatch[aria-pressed="true"]::before,
+.m5-swatch[aria-checked="true"]::before,
+.m5-swatch[data-state="active"]::before {
+  width: 20px;
+  height: 20px;
+}
+.m5-swatch[aria-pressed="true"]:focus-visible,
+.m5-swatch[aria-checked="true"]:focus-visible,
+.m5-swatch[data-state="active"]:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--swatch), 0 0 0 4px var(--accent-ring);
+}
+
+/* ═══════════════════════════════════════════════════════════════ karty ════
+   Kartę odróżnia jasność powierzchni i miękki cień, nie obwódka. W motywie
+   ciemnym --shadow-1 sam z siebie zawiera włosową obwódkę, więc ta sama
+   deklaracja daje właściwy efekt w obu motywach. */
+.m5-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+.m5-card--flat { box-shadow: var(--shadow-inset-line); }
+
+.m5-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-5) var(--sp-5) 0;
+}
+.m5-card__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-h3);
+  font-weight: 650;
+  letter-spacing: -.012em;
+}
+.m5-card__subtitle {
+  flex: 1 1 100%;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+.m5-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-left: auto;
+}
+.m5-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+  padding: var(--sp-5);
+}
+.m5-card__head + .m5-card__body { padding-top: var(--sp-4); }
+/* Wiersze ustawień dotykają krawędzi karty; wcięcie dokłada sam wiersz. */
+.m5-card__body--flush {
+  gap: 0;
+  padding-inline: 0;
+  padding-block: var(--sp-2);
+}
+.m5-card__body--flush > .m5-row { padding-inline: var(--sp-5); }
+.m5-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line-1);
+}
+
+/* ═══════════════════════════════════════════════ wiersz listy ustawień ════ */
+.m5-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  min-height: var(--tap);
+  min-width: 0;
+  padding-block: var(--sp-3);
+  text-align: left;
+}
+.m5-row + .m5-row { border-top: 1px solid var(--line-1); }
+.m5-row__main {
+  /* Baza 11rem: gdy kontrolka przestaje się mieścić, wiersz łamie się sam,
+     bez zapytań o szerokość ekranu. Tak przeżywa 320 px przy skali 1,3. */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 11rem;
+  min-width: 0;
+}
+.m5-row__title {
+  color: var(--text-1);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.m5-row__desc {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+.m5-row__value {
+  color: var(--text-2);
+  font-family: var(--ff-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-sm);
+}
+.m5-row__control {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+/* Kontrolka szeroka (suwak, pasek segmentowy) staje pod opisem, na pełnej
+   szerokości — inaczej ścisnęłaby tytuł do jednej litery. */
+.m5-row--stack .m5-row__control {
+  flex: 1 0 100%;
+  margin-left: 0;
+}
+.m5-row--stack .m5-row__control > .m5-slider,
+.m5-row--stack .m5-row__control > .m5-seg { width: 100%; }
+
+/* Wiersz klikalny (odsyłacz do szczegółów, rozwinięcie): tło na hover i
+   szewron po prawej. Ujemny margines wpuszcza podświetlenie pod wcięcie. */
+.m5-row--action {
+  width: 100%;
+  padding-inline: var(--sp-3);
+  margin-inline: calc(var(--sp-3) * -1);
+  border-radius: var(--r-md);
+  color: inherit;
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+@media (hover: hover) {
+  .m5-row--action:hover { background: var(--accent-soft); }
+}
+.m5-row__chevron {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.m5-row--action[aria-expanded="true"] .m5-row__chevron { transform: rotate(180deg); }
+
+/* ══════════════════════════════════════════════════ karta statystyki ══════
+   Liczbę kolumn dobiera screens.css. Poniżej ok. 8,5 rem na kartę wersalikowa
+   etykieta zaczyna się łamać, więc siatka statystyk powinna być budowana jako
+   repeat(auto-fit, minmax(8.5rem, 1fr)), a nie sztywne trzy kolumny. */
+.m5-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+/* Statystyka wewnątrz karty jest wgłębieniem, nie kolejnym uniesieniem —
+   dwa cienie jeden na drugim czytają się jak bałagan. */
+.m5-card .m5-stat {
+  background: var(--surface-0);
+  box-shadow: var(--shadow-inset-line);
+}
+.m5-stat__label {
+  min-width: 0;
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.m5-stat__readout {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.m5-stat__value {
+  color: var(--text-1);
+  font-family: var(--ff-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-h2);
+  font-weight: 650;
+  line-height: var(--lh-tight);
+  letter-spacing: -.02em;
+  overflow-wrap: anywhere;
+}
+.m5-stat__unit {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+.m5-stat[data-zone] .m5-stat__value { color: var(--zone, var(--zone-none)); }
+/* Brak pomiaru: pauza jest wygaszona, żeby nikt nie wziął jej za wynik. */
+.m5-stat[data-zone="none"] .m5-stat__value { color: var(--text-3); }
+
+.m5-stat__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+}
+/* Trend niesie kształt, nie barwa: trójkąt w górę, trójkąt w dół, kreska.
+   Kierunek zmiany nie jest sam w sobie dobry ani zły, więc zostaje neutralny. */
+.m5-stat__trend::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.m5-stat__trend[data-trend="-1"]::before { clip-path: polygon(50% 100%, 100% 0, 0 0); }
+.m5-stat__trend[data-trend="0"]::before {
+  height: 3px;
+  border-radius: var(--r-pill);
+  clip-path: none;
+}
+
+/* ═══════════════════════════════════════════════════ kafelek metryki ══════ */
+.m5-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
+  min-width: 0;
+  padding: var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+  color: var(--text-1);
+  text-align: left;
+  transition: box-shadow var(--dur-2) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
+}
+.m5-card .m5-tile {
+  background: var(--surface-0);
+  box-shadow: var(--shadow-inset-line);
+}
+@media (hover: hover) {
+  .m5-tile:hover { box-shadow: var(--shadow-2); }
+}
+.m5-tile:active { transform: scale(.99); }
+/* Fokus musi zachować uniesienie kafelka — sam pierścień z base.css zdmuchnąłby
+   cień, bo obie rzeczy jadą tą samą właściwością. */
+.m5-tile:focus-visible { box-shadow: 0 0 0 4px var(--accent-ring), var(--shadow-2); }
+
+.m5-tile__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  color: var(--text-2);
+}
+.m5-tile__name {
+  min-width: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.25;
+  /* Kolumna kafelka bywa węższa niż „Współczynnik”. Dzielenie na sylaby jest
+     ładniejsze od łamania w losowym miejscu; działa dzięki lang="pl" na
+     <html>, a tam, gdzie nie działa, zostaje łamanie awaryjne. */
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+.m5-tile__reading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  min-width: 0;
+  /* margin-top:auto wyrównuje odczyty w siatce kafelków, nawet gdy jedna
+     nazwa zajmie dwa wiersze, a druga jeden. */
+  margin-top: auto;
+  padding-top: var(--sp-1);
+}
+.m5-tile__value {
+  color: var(--text-1);
+  font-family: var(--ff-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-h1);
+  font-weight: 650;
+  line-height: var(--lh-tight);
+  letter-spacing: -.02em;
+  overflow-wrap: anywhere;
+}
+.m5-tile__unit {
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.m5-tile[data-zone="none"] .m5-tile__value { color: var(--text-3); }
+/* Wielkość wiodąca: pierścień akcentu i akcentowa nazwa. Kafelek jest wtedy
+   aria-pressed="true", więc sygnał istnieje też poza warstwą wizualną. */
+.m5-tile[data-state="active"],
+.m5-tile[aria-pressed="true"] {
+  box-shadow: var(--shadow-1), inset 0 0 0 2px var(--accent);
+}
+.m5-tile[data-state="active"] .m5-tile__head,
+.m5-tile[aria-pressed="true"] .m5-tile__head { color: var(--accent); }
+.m5-tile[data-state="active"]:focus-visible,
+.m5-tile[aria-pressed="true"]:focus-visible {
+  box-shadow: 0 0 0 4px var(--accent-ring), var(--shadow-2), inset 0 0 0 2px var(--accent);
+}
+
+/* ─────────────────────────────────────────── kafelek zablokowany (premium)
+   Wartość jest zamazana, a nie zmyślona: nie pokazujemy liczby, której
+   użytkownik nie ma prawa zobaczyć, i nie udajemy, że jej nie ma. */
+.m5-tile[data-locked="true"] .m5-tile__reading {
+  -webkit-filter: blur(7px);
+  filter: blur(7px);
+  opacity: .5;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.m5-tile[data-locked="true"] .m5-zonebar__svg {
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1);
+  opacity: .45;
+}
+.m5-tile[data-locked="true"] .m5-zone { visibility: hidden; }
+
+/* ═════════════════════════════════════════════════════ pasek strefowy ═════
+   Sam element JEST torem — mniej zagnieżdżeń, mniej okazji do rozjazdu
+   między CSS a JS. Wypełnienie i znacznik progu rysuje ui/gauge.js wewnątrz
+   <svg class="m5-zonebar__svg">, więc tutaj zostaje wyłącznie tor. */
+.m5-zonebar {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  overflow: hidden;
+}
+.m5-zonebar__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ══════════════════════════════════════════════════════════ stan pusty ════ */
+.m5-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-7) var(--sp-5);
+  text-align: center;
+}
+.m5-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.m5-empty__title {
+  font-size: var(--fs-h3);
+  font-weight: 650;
+}
+.m5-empty__text {
+  max-width: 42ch;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+}
+.m5-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+/* ═════════════════════════════════════════════════════ stan ładowania ═════
+   Szkielet jest ozdobą dla oka — w markupie powinien mieć aria-hidden, a
+   informację o ładowaniu niesie aria-busy na kontenerze. */
+.m5-skeleton {
+  position: relative;
+  border-radius: var(--r-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+.m5-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--surface-1), transparent);
+  opacity: .5;
+  animation: m5-sweep 1300ms linear infinite;
+}
+@keyframes m5-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.m5-skeleton--title {
+  width: 60%;
+  height: 1.4em;
+  margin-block: .3em;
+}
+.m5-skeleton--block {
+  height: 120px;
+  border-radius: var(--r-lg);
+}
+
+/* ═══════════════════════════════════════════════════════ pole tekstowe ════
+   Etykieta nad kontrolką (nie obok): przy skali tekstu 1,3 i na 320 px dwie
+   kolumny nie mieszczą się, a etykieta nad polem czyta się tak samo dobrze
+   w każdej szerokości. Klasy tworzy js/screens/account.js. */
+.m5-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.m5-field__label {
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+.m5-field__input {
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--surface-sunken);
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font: inherit;
+}
+.m5-field__input::placeholder {
+  color: var(--text-3);
+  opacity: 1;                      /* Firefox przygasza podpowiedź po swojemu */
+}
+.m5-field__input:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+/* Błąd pola niesie obwódkę, a treść komunikatu stoi pod polem — sam kolor
+   obwódki nigdy nie jest jedynym sygnałem. */
+.m5-field__input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--zone-crit); }
+.m5-field__input:disabled {
+  color: var(--text-3);
+  cursor: not-allowed;
+}
+
+/* ══════════════════════════════════════════════════ wykres historii ═══════
+   Rysunek robi canvas w ui/chart.js; tutaj stoi wyłącznie obudowa: kadr,
+   zdanie odczytu pod wykresem i legenda. Wysokość kadru podaje chart.js
+   zmienną --m5-chart-h, bo jest argumentem wywołania, a nie stałą wyglądu. */
+.m5-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+}
+.m5-chart__plot {
+  position: relative;
+  width: 100%;
+}
+.m5-chart__canvas {
+  display: block;
+  width: 100%;
+  height: var(--m5-chart-h, 220px);
+  border-radius: var(--r-md);
+  /* Pionowe przewijanie strony ma działać palcem po wykresie; poziome
+     przeciągnięcie należy do kursora odczytu. */
+  touch-action: pan-y;
+  /* ctx.font czyta te dwie wartości przez getComputedStyle — muszą stać na
+     samym canvasie, rozwinięte do pikseli. */
+  font-size: var(--fs-xs);
+  font-family: var(--ff-num);
+}
+.m5-chart__readout {
+  margin: 0;
+  /* Miejsce na jeden wiersz odczytu jest zarezerwowane zawsze — inaczej
+     wykres podskakiwałby przy każdym dotknięciu. */
+  min-height: 1.4em;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-normal);
+}
+.m5-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.m5-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+/* Pasmo w tle wykresu jest półprzezroczystą mgiełką (--zone-*-soft). W legendzie,
+   na powierzchni karty, taka mgiełka w motywie ciemnym była nie do odróżnienia
+   od czerni — „umiarkowanie” wyglądało na czarny kwadrat. Klucz legendy niesie
+   więc pełną barwę strefy, a rozpoznaje się go i po kształcie: strefa to
+   kwadracik, pomiar i przerwa to kreski. */
+.m5-chart__swatch {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: var(--zone, var(--zone-none));
+  box-shadow: 0 0 0 1px var(--line-1);
+}
+.m5-chart__swatch--line,
+.m5-chart__swatch--gap {
+  width: 18px;
+  height: 3px;
+  border-radius: var(--r-pill);
+  box-shadow: none;
+}
+.m5-chart__swatch--line { background: var(--accent); }
+.m5-chart__swatch--gap {
+  background: repeating-linear-gradient(90deg, var(--line-strong) 0 4px, transparent 4px 8px);
+}
+
+/* ═══════════════════════════════════════════════════════ zasłona i warstwy ═
+   z-index: zasłona 60, arkusz/dialog 70, komunikaty 90 — nad warstwami, żeby
+   toast wywołany z arkusza był widoczny. Powłoka w base.css siedzi na 20,
+   „przejdź do treści” na 100. */
+.m5-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--surface-scrim);
+  opacity: 0;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+/* Pojawienie się gra animacją, a nie przejściem: zasłona wychodzi z
+   display:none i przeglądarka nie miałaby od czego animować przejścia.
+   Zamykanie zostaje przejściem — element już jest widoczny. Czas i tak bierze
+   z --dur-2, więc „mniej ruchu” wygasza jedno i drugie. */
+.m5-scrim[data-state="open"] {
+  opacity: 1;
+  animation: m5-fade var(--dur-2) var(--ease-out);
+}
+@keyframes m5-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.m5-scrim[hidden] { display: none; }
+
+.m5-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: center;
+}
+.m5-layer[hidden] { display: none; }
+.m5-layer--sheet { align-items: flex-end; }
+.m5-layer--dialog {
+  align-items: center;
+  padding: var(--sp-4);
+}
+
+/* ────────────────────────────────────────────────────────────── arkusz ──── */
+.m5-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 34rem;
+  /* Arkusz sięga tak wysoko, jak pozwala okno, minus pasek stanu i wąski
+     prześwit na tło — 88 % oddawało 100 px komuś, kto i tak nie mógł tam nic
+     kliknąć, a odbierało je liście planów. Nieruchome zostają nagłówek
+     i pasek akcji; kurczy się wyłącznie .m5-sheet__body. */
+  max-height: calc(100vh - var(--safe-t) - var(--sp-6));
+  max-height: min(calc(100dvh - var(--safe-t) - var(--sp-6)), 100%);
+  padding-bottom: var(--safe-b);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  background: var(--surface-2);
+  box-shadow: var(--shadow-3);
+  transition: transform var(--dur-3) var(--ease-out),
+              opacity var(--dur-2) var(--ease-out);
+}
+/* Stan zamknięty i zamykany wyglądają tak samo — różni je tylko kierunek,
+   w którym biegnie przejście. */
+.m5-sheet[data-state="closed"],
+.m5-sheet[data-state="closing"] { transform: translateY(100%); }
+
+.m5-sheet__grip {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 4px;
+  margin: var(--sp-2) auto 0;
+  border-radius: var(--r-pill);
+  background: var(--line-2);
+}
+.m5-sheet__head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2) var(--sp-5);
+}
+.m5-sheet__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-h2);
+  font-weight: 650;
+}
+/* Zamknięcie trzyma się prawej krawędzi i górnego wiersza nagłówka także
+   wtedy, gdy tytuł zajmie dwa wiersze. */
+.m5-sheet__close {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-inline-start: auto;
+}
+.m5-sheet__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--sp-2) var(--sp-5) var(--sp-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+/* Zapowiedź dalszego ciągu. ui/overlays.js stawia na korzeniu arkusza
+   data-more="true", dopóki pod dolną krawędzią została jeszcze treść — wtedy
+   nad paskiem akcji zapala się miękkie wygaszenie. Bez niego wiersz ucięty
+   w połowie (lista planów w paywallu) czyta się jak zepsuty układ, a nie jak
+   zaproszenie do przewinięcia. */
+.m5-sheet[data-more="true"] .m5-sheet__actions::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 28px;
+  background: linear-gradient(transparent, var(--surface-2));
+  pointer-events: none;
+}
+.m5-sheet__actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--line-1);
+}
+/* Przyciski dzielą wiersz po równo, a gdy zabraknie miejsca (320 px, skala
+   1,3, trzy akcje) — schodzą jeden pod drugi na pełną szerokość. */
+.m5-sheet__actions > .m5-btn { flex: 1 1 10rem; }
+
+/* Od 720 px arkusz przestaje wjeżdżać od dołu i staje się oknem na środku. */
+@media (min-width: 720px) {
+  .m5-layer--sheet {
+    align-items: center;
+    padding: var(--sp-5);
+  }
+  .m5-sheet {
+    max-height: 80vh;
+    max-height: min(80dvh, 100%);
+    padding-bottom: 0;
+    border-radius: var(--r-xl);
+  }
+  .m5-sheet__grip { display: none; }
+  .m5-sheet[data-state="closed"],
+  .m5-sheet[data-state="closing"] {
+    transform: translateY(12px) scale(.98);
+    opacity: 0;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────── dialog ──── */
+/* dialog() z overlays.js dokłada klasę m5-dialog do tego samego korpusu i
+   wpuszcza go do hosta arkusza — dlatego okno musi wyśrodkować się samo,
+   niezależnie od tego, w której warstwie stoi. */
+.m5-sheet.m5-dialog {
+  align-self: center;
+  width: min(26rem, 100%);
+  min-width: 0;
+  margin: auto var(--sp-4);
+  padding-bottom: 0;
+  border-radius: var(--r-xl);
+}
+.m5-sheet.m5-dialog .m5-sheet__grip { display: none; }
+.m5-sheet.m5-dialog[data-state="closed"],
+.m5-sheet.m5-dialog[data-state="closing"] {
+  transform: translateY(10px) scale(.97);
+  opacity: 0;
+}
+.m5-dialog__text {
+  color: var(--text-2);
+  font-size: var(--fs-body);
+}
+/* W dialogu potwierdzenie stoi po prawej, bo tam wędruje wzrok na końcu
+   pytania; „Anuluj” zostaje po lewej i nie rozpycha się na całą szerokość. */
+.m5-dialog .m5-sheet__actions { justify-content: flex-end; }
+.m5-dialog .m5-sheet__actions > .m5-btn { flex: 0 1 auto; }
+
+/* ═══════════════════════════════════════════════════════════ komunikaty ═══ */
+.m5-toasts {
+  position: fixed;
+  z-index: 90;
+  left: 50%;
+  bottom: calc(var(--tabbar-h) + var(--safe-b) + var(--sp-3));
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: min(28rem, calc(100vw - var(--sp-7)));
+  transform: translateX(-50%);
+  /* Kontener nie łapie kliknięć — łapią je same komunikaty. */
+  pointer-events: none;
+}
+@media (min-width: 900px) {
+  .m5-toasts { bottom: calc(var(--safe-b) + var(--sp-5)); }
+}
+
+.m5-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  color: var(--text-1);
+  box-shadow: var(--shadow-3);
+  font-size: var(--fs-sm);
+  pointer-events: auto;
+  transition: transform var(--dur-2) var(--ease-out),
+              opacity var(--dur-2) var(--ease-out);
+}
+.m5-toast[data-state="closed"],
+.m5-toast[data-state="closing"] {
+  transform: translateY(10px) scale(.98);
+  opacity: 0;
+}
+/* Znacznik tonu ma ten sam alfabet kształtów co etykieta strefy: koło =
+   powodzenie, romb = ostrzeżenie, trójkąt = błąd. Komunikat neutralny nie ma
+   znacznika w ogóle. */
+.m5-toast::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  background: var(--text-3);
+  clip-path: circle(50%);
+}
+.m5-toast[data-tone="neutral"]::before { display: none; }
+.m5-toast[data-tone="success"]::before { background: var(--zone-good); }
+.m5-toast[data-tone="warn"]::before {
+  background: var(--zone-warn);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.m5-toast[data-tone="error"]::before {
+  background: var(--zone-crit);
+  clip-path: polygon(50% 2%, 100% 100%, 0 100%);
+}
+.m5-toast__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.4;
+}
+/* Przyciski w komunikacie są niższe niż standardowe 44 px, więc cel dotyku
+   dokłada im niewidoczna nakładka. */
+.m5-toast .m5-btn {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding-inline: var(--sp-3);
+  background: transparent;
+  color: var(--accent);
+  box-shadow: none;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+@media (hover: hover) {
+  .m5-toast .m5-btn:hover { background: var(--accent-soft); }
+}
+/* Akcja niesie czasownik („Odśwież”, „Cofnij”) — nie wolno jej zawinąć na
+   dwa wiersze ani ścisnąć przez długi tekst komunikatu. */
+.m5-toast__action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.m5-toast__close {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  color: var(--text-2);
+}
+.m5-toast .m5-btn::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+/* ════════════════════════════════════════════════════════════ paywall ═════ */
+.m5-paywall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+/* Zdanie o symulacji jest pierwsze i podświetlone — użytkownik ma wiedzieć,
+   że nic nie kupuje, zanim zobaczy jakąkolwiek cenę. */
+.m5-paywall__demo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--zone-warn-soft);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+}
+.m5-paywall__lead {
+  color: var(--text-1);
+  font-size: var(--fs-body);
+}
+.m5-paywall__benefits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.m5-paywall__benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.m5-paywall__benefit .m5-icon {
+  margin-top: 1px;
+  color: var(--accent);
+}
+.m5-paywall__benefit strong {
+  color: var(--text-1);
+  font-weight: 650;
+}
+.m5-paywall__plans {
+  display: grid;
+  gap: var(--sp-2);
+}
+/* Wiersz planu jest przyciskiem z rodziny m5-btn (overlays.js nadaje mu
+   data-tone="primary"), ale trzy pełne akcentowe płachty jedna pod drugą
+   krzyczałyby — więc plan wraca do spokojnej powierzchni, a akcent zostaje
+   przy cenie i przy obwódce na hover. */
+/* Układ jest flexem z zawijaniem, nie siatką dwukolumnową: kolumna „auto”
+   oddawała całą szerokość cenie, a nazwie zostawała jedna litera na wiersz.
+   Tutaj cena rozpycha się do końca pierwszego wiersza (flex-grow), więc
+   plakietka zawsze schodzi do drugiego, a przy 320 px i skali 1,3 pod nazwę
+   schodzi także cena — zamiast łamać wyraz na sylaby. */
+.m5-btn.m5-paywall__plan {
+  display: flex;
+  flex-wrap: wrap;
+  /* .m5-btn centruje treść — wiersz planu czyta się od lewej krawędzi. */
+  justify-content: flex-start;
+  align-items: baseline;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  text-align: left;
+  text-wrap: pretty;
+}
+@media (hover: hover) {
+  .m5-btn.m5-paywall__plan:hover {
+    background: var(--surface-1);
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+}
+/* Nazwa i cena łamią się tylko na granicy wyrazu — dziedziczone z .m5-paywall
+   „anywhere” pocięłoby „Miesięcznie” na litery. */
+.m5-paywall__plan-name {
+  flex: 0 1 auto;
+  font-weight: 650;
+  overflow-wrap: normal;
+}
+/* „9,99 zł miesięcznie” to zdanie, nie odczyt pomiaru: krój maszynowy
+   rozstrzeliwał je szerzej niż resztę arkusza. Zostaje sam tabular-nums —
+   kolumna cyfr w liście planów pozostaje równa. */
+.m5-paywall__plan-price {
+  flex: 1 1 auto;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: normal;
+}
+.m5-paywall__plan-badge {
+  flex: 0 1 auto;
+  padding: 2px var(--sp-3);
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+.m5-paywall__plan-saving {
+  flex: 0 1 auto;
+  margin-left: auto;
+  color: var(--zone-good);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+.m5-paywall__note {
+  color: var(--text-3);
+  font-size: var(--fs-xs);
+}
+
+/* ════════════════════════════════════════════════════ mniej ruchu ═════════
+   Przejścia gasną same, bo wszystkie chodzą przez --dur-* (tokens.css).
+   Animacje w pętli mają własne czasy, więc trzeba je zatrzymać tutaj:
+   szkielet zostaje spokojną płaszczyzną, pasek zajętości nieruchomą kreską
+   przy krawędzi przycisku. */
+@media (prefers-reduced-motion: reduce) {
+  .m5-skeleton::after { display: none; }
+  .m5-btn[data-state="busy"]::after,
+  .m5-btn[aria-busy="true"]::after {
+    width: 100%;
+    animation: none;
+  }
+}
+[data-motion="reduced"] .m5-skeleton::after { display: none; }
+[data-motion="reduced"] .m5-btn[data-state="busy"]::after,
+[data-motion="reduced"] .m5-btn[aria-busy="true"]::after {
+  width: 100%;
+  animation: none;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   Ostatnie słowo należy do [hidden]: komponenty wyżej ustawiają display,
+   więc atrybut musi mieć wyższą wagę. :not(:root) podnosi ją bez uciekania
+   się do !important (zakazanego wszędzie poza .m5-sronly). */
+[hidden]:not(:root) { display: none; }
