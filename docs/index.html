@@ -23,10 +23,15 @@
   --bg: #e9e9eb;          /* tło poza ramką podglądu */
   --bar: #f7f7f8;         /* pasek narzędzi */
   --surface: #ffffff;     /* kafelki, aktywna zakładka */
-  --border: #c9c9ce;
-  --border-strong: #8e8e97;
-  --text: #17171a;        /* na --bar kontrast ok. 15:1 */
-  --muted: #55555e;       /* na --bar ok. 7:1 — powyżej wymaganych 4,5:1 */
+  /* Obrysy kontrolek to element interfejsu, nie ozdoba: WCAG 1.4.11 wymaga dla
+     nich 3:1 względem SĄSIEDNIEGO tła. Zmierzone: --border ma 3,71:1 na
+     --surface, 3,47:1 na --bar i 3,06:1 na --bg; --border-strong odpowiednio
+     4,70:1, 4,39:1 i 3,88:1 — ten drugi musi przejść także na --bg, bo rysuje
+     krawędź podglądu telefonu/tabletu na tle sceny. */
+  --border: #84848c;
+  --border-strong: #73737b;
+  --text: #17171a;        /* na --bar kontrast ok. 16,7:1 */
+  --muted: #55555e;       /* na --bar ok. 6,9:1 — powyżej wymaganych 4,5:1 */
   --focus: #1d4ed8;
   --shadow: 0 1px 2px rgba(0, 0, 0, .12), 0 8px 24px rgba(0, 0, 0, .08);
   --dur: .16s;
@@ -37,10 +42,12 @@
     --bg: #0f0f11;
     --bar: #1a1a1d;
     --surface: #26262b;
-    --border: #3a3a41;
-    --border-strong: #74747e;
+    /* Te same progi co w motywie jasnym: --border ma 3,26:1 na --surface
+       i 3,76:1 na --bar, --border-strong 4,65:1 na --surface i 6,39:1 na --bg. */
+    --border: #74747e;
+    --border-strong: #9494a0;
     --text: #f0f0f2;
-    --muted: #b3b3bc;      /* na --bar ok. 9:1 */
+    --muted: #b3b3bc;      /* na --bar ok. 8,3:1 */
     --focus: #8ab4ff;
     --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
   }
@@ -91,6 +98,13 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* Kolejność Tab idzie za kolejnością w HTML, nie za układem — więc układ musi
+   iść za HTML-em. Kolejność jest jedna dla wszystkich szerokości:
+   marka → zakładki → narzędzia, i tak samo czyta się ekran w każdym z trzech
+   układów niżej. Dlatego w całym pliku nie ma ANI JEDNEJ właściwości `order`:
+   to ona rozjeżdżała fokus z układem (WCAG 2.4.3), każąc Tabowi skoczyć do
+   drugiego wiersza, a potem wrócić do pierwszego. Zmienia się tylko to, co
+   przechodzi do nowego wiersza, a to kolejności nie rusza. */
 .bar__row {
   display: flex;
   align-items: center;
@@ -120,6 +134,9 @@ body {
    być widać, że jest dalszy ciąg — inaczej v5 znika bez śladu. */
 .tabs-wrap { position: relative; min-width: 0; flex: 1 1 auto; }
 
+/* Dopełnienie musi zmieścić pierścień fokusu (2 px obrysu + 2 px odstępu),
+   inaczej kontener przewijania obcina go od góry i od lewej — a przy ręcznej
+   aktywacji zakładek to jedyny znak, gdzie stoi fokus. */
 .tabs {
   display: flex;
   gap: .25rem;
@@ -127,7 +144,7 @@ body {
   overflow-y: hidden;
   scrollbar-width: thin;
   scroll-behavior: smooth;
-  padding: 2px 2px 4px;
+  padding: 4px 4px 6px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -135,22 +152,34 @@ body {
 
 /* Cień-zapowiedź przy krawędzi: pojawia się tylko wtedy, gdy realnie jest co
    przewijać, i znika po dojechaniu do końca. Sam gradient bywa niewidoczny
-   dla osób z zaburzeniami kontrastu, więc towarzyszy mu pionowa kreska. */
-.tabs-wrap::after {
+   dla osób z zaburzeniami kontrastu, więc towarzyszy mu pionowa kreska.
+   Zapowiedź jest po OBU stronach: przy wejściu z adresu '#v5' lista startuje
+   przewinięta do końca i bez lewej zapowiedzi v1–v2 znikają bez śladu.
+   Warstwa jest wąska (1,5rem), żeby nie przygaszać treści ostatniej zakładki. */
+.tabs-wrap::before, .tabs-wrap::after {
   content: "";
   position: absolute;
   top: 0;
-  bottom: 4px;
-  right: 0;
-  width: 2.25rem;
+  bottom: 6px;
+  width: 1.5rem;
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--dur) ease;
+}
+
+.tabs-wrap::before {
+  left: 0;
+  background: linear-gradient(to left, transparent, var(--bar) 78%);
+  border-left: 2px solid var(--border-strong);
+}
+
+.tabs-wrap::after {
+  right: 0;
   background: linear-gradient(to right, transparent, var(--bar) 78%);
   border-right: 2px solid var(--border-strong);
 }
 
-.tabs-wrap[data-more="1"]::after { opacity: 1; }
+.tabs-wrap[data-less="1"]::before, .tabs-wrap[data-more="1"]::after { opacity: 1; }
 
 .tab {
   flex: none;
@@ -195,6 +224,7 @@ body {
   display: flex;
   align-items: center;
   gap: .35rem;
+  margin-left: auto;      /* narzędzia trzymają się prawej krawędzi wiersza */
 }
 
 .seg {
@@ -232,7 +262,9 @@ body {
 
 .btn[disabled] { opacity: .5; cursor: default; }
 
-.seg .btn { border-color: transparent; background: transparent; }
+/* Także pozycje NIEWYBRANE mają obrys: bez niego „Telefon” i „Tablet” są samym
+   tekstem i nie widać, gdzie kończy się jeden cel dotyku, a zaczyna drugi. */
+.seg .btn { background: transparent; }
 
 .seg .btn[aria-pressed="true"] {
   border-color: var(--border-strong);
@@ -242,6 +274,29 @@ body {
 }
 
 .btn--danger { border-color: var(--border-strong); font-weight: 600; }
+
+/* Drugi stopień potwierdzenia dla operacji nieodwracalnej: przycisk ma wyglądać
+   inaczej niż sekundę wcześniej, żeby nie dało się go kliknąć z rozpędu. */
+.btn[data-armed="1"] {
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--text);
+  font-weight: 700;
+}
+
+/* Nazwa dostępna dłuższa niż etykieta widoczna — bez aria-label, żeby widoczny
+   tekst pozostał podciągiem nazwy (WCAG 2.5.3, sterowanie głosem). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* --- opis wersji --------------------------------------------------------- */
 
@@ -330,6 +385,19 @@ body {
    w tym chromie jest jedynym nasyconym kolorem na ekranie. */
 .veil a, .veil a:visited { color: var(--focus); }
 
+/* Nakładka błędu nie może być ślepym zaułkiem: obok odnośnika stoi wyjście
+   awaryjne, bo wykrywanie błędu bywa nadgorliwe, a pod spodem może leżeć
+   działająca aplikacja. */
+#veilActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem .9rem;
+}
+
+#veilActions[hidden] { display: none; }
+
 /* --- komunikat ----------------------------------------------------------- */
 
 .toast {
@@ -353,31 +421,33 @@ body {
 
 .toast[data-show="1"] { opacity: 1; transform: translate(-50%, 0); }
 
+/* Sama zerowa przezroczystość NIE zabiera elementu z drzewa dostępności:
+   wygaszony komunikat byłby nadal odnajdywany przy przeglądaniu treści
+   i odczytywany jako aktualny stan strony. */
+.toast:not([data-show="1"]) { visibility: hidden; }
+
 /* --- układ wąski --------------------------------------------------------- */
 
-/* Poniżej ~80rem (typowy laptop) zakładki schodzą do własnego wiersza, a
-   tożsamość i narzędzia zostają razem w pierwszym. Próg jest wysoki celowo:
-   w jednym wierszu pięć zakładek i cztery narzędzia mieszczą się dopiero na
-   szerokim monitorze, a ściśnięte zakładki są gorsze niż drugi wiersz. */
+/* Trzy układy, wszystkie w kolejności marka → zakładki → narzędzia:
+   1. powyżej ~80rem  — jeden wiersz;
+   2. 46–80rem        — marka i zakładki w pierwszym wierszu, narzędzia w drugim;
+   3. poniżej ~46rem  — każda z trzech grup w osobnym wierszu.
+   Próg 80rem: pięć zakładek i cztery narzędzia obok tożsamości mieszczą się
+   dopiero na szerokim monitorze. Próg 46rem: poniżej niego zakładki ściśnięte
+   obok nazwy miałyby ok. 200 px i pokazywały półtorej pozycji — trzeci wiersz
+   jest wtedy tańszy niż lista, w której nic nie widać. */
 @media (max-width: 80rem) {
   .bar__row { flex-wrap: wrap; }
-  .brand { flex: 1 1 auto; }
-  .tools { margin-left: auto; }        /* narzędzia zostają przy prawej krawędzi */
-  .tabs-wrap { order: 2; flex-basis: 100%; }
+  .tools { width: 100%; margin-left: 0; justify-content: flex-end; }
 }
 
-/* Poniżej ~52rem narzędzia nie mieszczą się już obok tożsamości i dostają
-   własny, przewijany wiersz — wąski pasek narzędzi przy nazwie byłby gorszy
-   niż pełnej szerokości. */
-@media (max-width: 52rem) {
-  .tools {
-    order: 3;
-    width: 100%;
-    margin-left: 0;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: thin;
-  }
+@media (max-width: 46rem) {
+  .tabs-wrap { flex-basis: 100%; }
+  /* Narzędzia ZAWIJAJĄ się, a nie przewijają: przewijany wiersz bez zapowiedzi
+     krawędzi chował na telefonie „Przeładuj” i przycisk czyszczenia całkowicie
+     poza ekranem, a to jest najważniejsze narzędzie tej strony. Niższy wiersz
+     przycisków jest tańszy niż narzędzie nie do znalezienia. */
+  .tools { flex-wrap: wrap; row-gap: .35rem; justify-content: flex-start; }
 }
 
 @media (max-width: 30rem) {
@@ -406,6 +476,9 @@ body {
            aria-label="Wersje aplikacji — strzałki przenoszą fokus, Enter otwiera wersję"></div>
     </div>
 
+    <!-- KOLEJNOŚĆ W HTML = KOLEJNOŚĆ FOKUSU, i tak samo czyta się ekran we
+         wszystkich trzech układach: marka → zakładki → narzędzia. Patrz
+         komentarz przy .bar__row — dlatego nie ma tu ani jednego `order`. -->
     <div class="tools">
       <div class="seg" role="group" aria-label="Szerokość podglądu">
         <button class="btn" type="button" data-width="phone"  aria-pressed="false">Telefon</button>
@@ -414,9 +487,14 @@ body {
              i zawierająca widoczny tekst — sterowanie głosem nadal zadziała. -->
         <button class="btn" type="button" data-width="full"   aria-pressed="true" aria-label="Pełna szerokość">Pełna</button>
       </div>
-      <a class="btn" id="openTab" href="./v5/" target="_blank" rel="noopener">Otwórz w nowej karcie</a>
+      <!-- Numer wersji dopisany w elemencie ukrytym wizualnie, a nie przez
+           aria-label: widoczny tekst musi się ZAWIERAĆ w nazwie dostępnej. -->
+      <a class="btn" id="openTab" href="./v5/" target="_blank" rel="noopener">Otwórz w nowej karcie<span class="sr-only" id="openTabVer"></span></a>
       <button class="btn" type="button" id="reload">Przeładuj</button>
-      <button class="btn btn--danger" type="button" id="purge">Wyczyść pamięć wersji</button>
+      <!-- Etykieta mówi wprost, CZEGO dotyczy operacja (wszystkich pięciu
+           wersji), bo sąsiaduje z niegroźnym „Przeładuj” i na telefonie oba cele
+           mają po 44 px. aria-live ogłasza przejście w stan potwierdzenia. -->
+      <button class="btn btn--danger" type="button" id="purge" aria-live="polite">Wyczyść offline v1–v5</button>
     </div>
 
   </div>
@@ -425,20 +503,33 @@ body {
     <b id="descTitle">v5</b>
     <span id="descText">—</span>
     <!-- Wyjaśnienie stoi przy opisie wersji, a nie w dymku przycisku, bo dymek
-         nie istnieje na telefonie. Na najwęższych ekranach zostaje samo sedno. -->
-    <span class="hint">Instalacja PWA i pełny ekran działają tylko pod własnym adresem
-      wersji<span class="hint__more">, nie w tej powłoce — do tego służy „Otwórz w nowej karcie”</span>.</span>
+         nie istnieje na telefonie. Na najwęższych ekranach zostaje samo sedno.
+         O pełnym ekranie nie ma tu mowy: ramka dostaje allow="fullscreen"
+         i pełny ekran w powłoce DZIAŁA — nie działa instalacja PWA. -->
+    <span class="hint">Instalacja PWA działa tylko pod własnym adresem
+      wersji<span class="hint__more"> — służy do tego „Otwórz w nowej karcie”; tam też otwórz wersję,
+      jeśli pomiar nie startuje w ramce (iPhone)</span>.</span>
+    <span class="hint hint__more">Wstecz cofa najpierw ekrany wewnątrz wersji.</span>
   </p>
 </header>
 
 <main class="stage" id="stage" data-width="full">
-  <div class="frame" id="frame" role="tabpanel" aria-labelledby="tab-v5">
+  <!-- role="tabpanel" i aria-labelledby ustawia skrypt: zakładka 'tab-v5'
+       powstaje dopiero w nim, a bez JS panel wskazywałby na nieistniejący
+       identyfikator i zostawał bez nazwy dostępnej. -->
+  <div class="frame" id="frame">
     <!-- iframe wstawia skrypt: nowy element przy każdej zmianie wersji,
          powód opisany przy mountFrame(). -->
-    <div class="veil" id="veil" data-state="loading">
+    <!-- Warstwa jest regionem na żywo: pierwsze wejście w wersję to pobranie
+         całej aplikacji, a przejście „Wczytywanie…” → „Nie udało się wczytać”
+         musi być ogłoszone, nie tylko narysowane. -->
+    <div class="veil" id="veil" data-state="loading" role="status" aria-live="polite">
       <strong id="veilTitle">Wczytywanie wersji…</strong>
       <p id="veilText">Pierwsze wejście pobiera całą aplikację.</p>
-      <p id="veilActions" hidden><a id="veilLink" href="./v5/">Otwórz wersję pod jej własnym adresem</a></p>
+      <p id="veilActions" hidden>
+        <a id="veilLink" href="./v5/">Otwórz wersję pod jej własnym adresem</a>
+        <button class="btn" type="button" id="veilShow">Pokaż ramkę mimo to</button>
+      </p>
     </div>
 
     <!-- Bez JavaScriptu powłoka nie umie nic osadzić, ale wersje działają same.
@@ -496,8 +587,15 @@ body {
   var veilLink = document.getElementById('veilLink');
   var descTitle = document.getElementById('descTitle');
   var descText = document.getElementById('descText');
+  var veilShow = document.getElementById('veilShow');
   var openTab = document.getElementById('openTab');
+  var openTabVer = document.getElementById('openTabVer');
   var toastEl = document.getElementById('toast');
+
+  /* Bez wsparcia dla `inert` nie ma czym wyjąć przykrytej ramki z kolejności
+     Tab. Samo aria-hidden na elemencie, który NADAL da się sfokusować, jest
+     błędem ARIA — więc albo oba atrybuty, albo żaden. */
+  var SUPPORTS_INERT = 'inert' in HTMLElement.prototype;
 
   var iframeEl = null;
   var current = null;
@@ -526,10 +624,19 @@ body {
      osobnego okna, z osobnym adresem. Zmiana hasha wewnątrz ramki nie rusza
      location.hash powłoki i odwrotnie, więc jedno nie może nadpisać drugiego.
      Warunek jest tylko taki, żeby powłoka nie przeładowywała ramki na każdym
-     zdarzeniu hashchange — stąd porównanie z 'current' poniżej. */
+     zdarzeniu hashchange — stąd porównanie z 'current' poniżej.
+
+     UWAGA, czego to NIE załatwia: nawigacja fragmentowa w ramce dokłada wpisy
+     do WSPÓLNEJ historii okna. Przycisk Wstecz obsługuje najpierw je, więc po
+     kilku ekranach obejrzanych w v4/v5 powrót do poprzedniej wersji wymaga tylu
+     naciśnięć, ile ekranów się otworzyło. Powiedziane jest to wprost w podpowiedzi
+     pod paskiem, żeby nie wyglądało na zawieszony przycisk.
+
+     Wielkość liter bez znaczenia: adres wysłany z telefonu potrafi wrócić jako
+     '#V3', a to nadal jednoznaczne wskazanie wersji. */
   function idFromHash() {
-    var m = /^#(v[1-5])$/.exec(location.hash || '');
-    return m ? m[1] : null;
+    var m = /^#(v[1-5])$/i.exec(location.hash || '');
+    return m ? m[1].toLowerCase() : null;
   }
 
   function initialId() {
@@ -587,15 +694,35 @@ body {
     if (handled) e.preventDefault();
   });
 
-  /* Sygnał „jest jeszcze coś dalej”. Liczony po każdym przewinięciu i po każdej
-     zmianie rozmiaru, bo przy szerokim oknie zakładki mieszczą się w całości. */
+  /* Sygnał „jest jeszcze coś dalej” — po OBU stronach. Liczony po każdym
+     przewinięciu i po każdej zmianie rozmiaru, bo przy szerokim oknie zakładki
+     mieszczą się w całości. */
   function updateScrollHint() {
-    var more = tabsEl.scrollWidth - tabsEl.clientWidth - tabsEl.scrollLeft > 4;
-    tabsWrap.dataset.more = more ? '1' : '0';
+    var max = tabsEl.scrollWidth - tabsEl.clientWidth;
+    var left = tabsEl.scrollLeft;
+    tabsWrap.dataset.more = (max - left > 4) ? '1' : '0';
+    tabsWrap.dataset.less = (left > 4) ? '1' : '0';
+  }
+
+  /* Wybrana zakładka musi zostać w widoku także po zmianie METRYK, nie tylko po
+     kliknięciu: obrót telefonu i zwężenie okna na biurku zerowały przewinięcie
+     i pasek nie pokazywał ANI JEDNEJ zaznaczonej wersji. */
+  function revealSelectedTab() {
+    var sel = tabsEl.querySelector('[aria-selected="true"]');
+    if (sel && sel.scrollIntoView) {
+      try { sel.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+    }
   }
 
   tabsEl.addEventListener('scroll', updateScrollHint, { passive: true });
-  window.addEventListener('resize', updateScrollHint);
+  window.addEventListener('resize', function () { revealSelectedTab(); updateScrollHint(); });
+
+  /* Szerokości zakładek zmieniają się też bez zdarzenia resize: po dojściu
+     czcionki systemowej, przy powiększeniu tekstu i przy zawinięciu paska.
+     Obserwator łapie wszystkie te przypadki jednym kanałem. */
+  if (window.ResizeObserver) {
+    try { new ResizeObserver(updateScrollHint).observe(tabsEl); } catch (e) {}
+  }
 
   /* --- warstwa stanu ----------------------------------------------------- */
 
@@ -617,7 +744,26 @@ body {
     veilActions.hidden = false;
   }
 
-  function hideVeil() { veil.dataset.state = 'idle'; }
+  /* Zdjęcie nakładki jest JEDYNYM miejscem, które przywraca ramkę do nawigacji.
+     `inert` nie przerywa wczytywania ani nie rusza kamery — inaczej niż
+     display:none, które zabiłoby strumień z kamery przy każdym błędzie. */
+  function hideVeil() {
+    veil.dataset.state = 'idle';
+    if (iframeEl && SUPPORTS_INERT) {
+      iframeEl.removeAttribute('inert');
+      iframeEl.removeAttribute('aria-hidden');
+    }
+  }
+
+  /* Wyjście awaryjne z nakładki błędu. Wykrywanie błędu bywa nadgorliwe (wolna
+     sieć i zegar 12 s), a pod spodem może stać działająca aplikacja — bez tego
+     przycisku jedynym wyjściem było przełączenie zakładki. */
+  veilShow.addEventListener('click', function () {
+    hideVeil();
+    /* Fokus stoi na przycisku, który właśnie zniknął — przenosimy go w ramkę,
+       inaczej wróciłby na <body> i nawigacja klawiaturą zaczynałaby od zera. */
+    if (iframeEl && iframeEl.focus) { try { iframeEl.focus(); } catch (e) {} }
+  });
 
   /* --- wybór wersji ------------------------------------------------------ */
 
@@ -630,18 +776,19 @@ body {
       var on = b.dataset.id === id;
       b.setAttribute('aria-selected', on ? 'true' : 'false');
       b.tabIndex = on ? 0 : -1;         /* roving tabindex: jeden przystanek Tab */
-      /* Na telefonie lista zakładek jest przewijana, a wybrana wersja może leżeć
-         poza widokiem — np. po wejściu z adresu z hashem #v5. */
-      if (on && b.scrollIntoView) {
-        try { b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
-      }
     });
 
+    /* Na telefonie lista zakładek jest przewijana, a wybrana wersja może leżeć
+       poza widokiem — np. po wejściu z adresu z hashem #v5. */
+    revealSelectedTab();
+
+    /* Rola panelu powstaje razem z listą zakładek, do której się odwołuje. */
+    frame.setAttribute('role', 'tabpanel');
     frame.setAttribute('aria-labelledby', 'tab-' + id);
     descTitle.textContent = v.id;
     descText.textContent = v.desc;
     openTab.href = urlOf(id);
-    openTab.setAttribute('aria-label', 'Otwórz ' + v.id + ' w nowej karcie');
+    openTabVer.textContent = ' — wersja ' + v.id;
     document.title = 'Monitor Światła — ' + v.id + ' (powłoka porównawcza)';
 
     mountFrame(v);
@@ -663,32 +810,65 @@ body {
     var f = document.createElement('iframe');
     f.title = 'Monitor Światła — wersja ' + v.id;   /* tytuł idzie za wersją */
     /* Bez allow="camera" osadzona aplikacja nie dostanie strumienia z kamery
-       i pomiaru nie da się w powłoce uruchomić w ogóle. */
+       i pomiaru nie da się w powłoce uruchomić w ogóle. Delegacja 'fullscreen'
+       stoi tu na zapas — dziś ŻADNA z pięciu wersji nie woła requestFullscreen
+       (warstwy pełnoekranowe v3 to zwykły CSS), więc nie ma czego odblokowywać.
+       Starszego atrybutu allowfullscreen CELOWO tu nie ma: Chrome ostrzega
+       wtedy w konsoli („Allow attribute will take precedence”), a konsola tej
+       powłoki ma zostać pusta. Gdy któraś wersja realnie sięgnie po Fullscreen
+       API na starszym WebKicie, atrybut trzeba będzie dopisać razem z testem. */
     f.setAttribute('allow', 'camera; fullscreen');
+    /* Ramka startuje przykryta nakładką „Wczytywanie…”, więc od pierwszej chwili
+       jest poza nawigacją. Zdejmuje ją stamtąd dopiero hideVeil(). */
+    if (SUPPORTS_INERT) { f.setAttribute('inert', ''); f.setAttribute('aria-hidden', 'true'); }
     f.setAttribute('src', urlOf(v.id));
 
-    /* Zdarzenie 'load' NIE znaczy „wersja się wczytała”: pada także wtedy, gdy
-       w ramce wylądowała strona błędu przeglądarki (zerwane połączenie, brak
-       sieci). Taka strona ma inne pochodzenie, więc contentDocument jest wtedy
-       niedostępny — i dokładnie po tym ją poznajemy. Wszystkie wersje leżą pod
-       tym samym pochodzeniem co powłoka, więc przy poprawnym wczytaniu dokument
-       jest widoczny, a jego ścieżka zawiera katalog wersji. */
+    /* WSZYSTKIE trzy wywołania zwrotne poniżej zaczynają się od sprawdzenia
+       `f !== iframeEl`. Bez tego stary, zdjęty ze sceny dokument steruje losem
+       NOWEJ ramki: kasuje jej wspólny zegar albo zdejmuje jej nakładkę.
+       Powtarzalny przebieg: „Przeładuj”, a zaraz potem inna zakładka. */
     f.addEventListener('load', function () {
+      if (f !== iframeEl) return;
+
+      var d = null;
+      try { d = f.contentDocument; } catch (e) { d = null; }
+
+      /* Świeżo wstawiony iframe potrafi (WebKit) wyemitować 'load' dla wstępnego
+         dokumentu about:blank, ZANIM ruszy nawigacja pod właściwy adres. To nie
+         jest wynik wczytywania i nie wolno na tej podstawie ani ogłosić błędu,
+         ani skasować zegara. */
+      if (d && d.location && d.location.href === 'about:blank') return;
+
       clearTimeout(loadTimer);
+
+      /* Test na ZAWARTOŚĆ, nie na ścieżkę. Ścieżka nie mówi nic: GitHub Pages
+         serwuje swoją stronę 404 POD ŻĄDANYM adresem, więc dla skasowanego
+         katalogu /v5/ pathname nadal zawiera '/v5/' i powłoka twierdziła, że
+         wszystko się udało — pokazując cudzą stronę 404 jako aplikację.
+         Każda z pięciu wersji ma w <head> odnośnik do manifestu (v1:9, v2:20,
+         v3:21, v4:16, v5:16); strona 404 GitHuba i strony błędu przeglądarki go
+         nie mają. To jest niezmiennik tej powłoki: NOWA WERSJA MUSI MIEĆ
+         link[rel="manifest"], inaczej powłoka uzna ją za niewczytaną.
+         W momencie 'load' dokument jest w pełni sparsowany, więc zapytanie ma
+         co znaleźć. Strona błędu przeglądarki jest cudzego pochodzenia —
+         contentDocument rzuca albo daje null i wpadamy w tę samą gałąź. */
       var ok = false;
-      try {
-        var d = f.contentDocument;
-        ok = !!(d && d.location && d.location.pathname.indexOf('/' + v.id + '/') !== -1);
-      } catch (e) { ok = false; }
+      try { ok = !!(d && d.querySelector('link[rel="manifest"]')); } catch (e) { ok = false; }
+
       if (ok) hideVeil();
-      else showError(v, 'Przeglądarka pokazała w ramce stronę błędu zamiast wersji — najczęściej znaczy to zerwane połączenie z serwerem.');
+      else showError(v, 'W ramce nie ma aplikacji — przeglądarka pokazała stronę błędu albo serwer odpowiedział stroną 404 zamiast wersji ' + v.id + '.');
     });
 
     /* Zdarzenie 'error' na iframe bywa w ogóle nie wywoływane i nie dotyczy
        odpowiedzi 404 — te wczytują się „poprawnie”. Dlatego stan awaryjny stoi
-       na trzech nogach: sprawdzeniu dokumentu wyżej, zegarze poniżej i osobnym
-       zapytaniu HEAD, które wykrywa brak katalogu wersji od razu. */
+       na dwóch nogach: sprawdzeniu zawartości dokumentu wyżej i zegarze poniżej.
+       Trzeciej nogi — zapytania HEAD — tu CELOWO NIE MA. Omijało ono service
+       workera (wszystkie pięć SW przepuszcza metody inne niż GET prosto do
+       sieci), więc gdy serwer odpowiadał 404, a worker podawał sprawną kopię
+       offline, powłoka nakładała komunikat o błędzie na DZIAŁAJĄCĄ aplikację.
+       Przy okazji znika żądanie sieciowe przy każdym przełączeniu wersji. */
     f.addEventListener('error', function () {
+      if (f !== iframeEl) return;
       clearTimeout(loadTimer);
       showError(v, 'Przeglądarka odrzuciła wczytanie ramki.');
     });
@@ -696,20 +876,12 @@ body {
     iframeEl = f;
     frame.insertBefore(f, veil);
 
+    /* Porównanie ramek, a nie identyfikatorów wersji: dwukrotne „Przeładuj” tej
+       samej wersji daje dwie różne ramki o tym samym v.id. */
     loadTimer = setTimeout(function () {
-      if (current === v.id) {
-        showError(v, 'Wersja nie odpowiedziała w ciągu 12 sekund. Otwórz ją bezpośrednio, żeby zobaczyć powód.');
-      }
+      if (f !== iframeEl) return;
+      showError(v, 'Wersja nie odpowiedziała w ciągu 12 sekund. Otwórz ją bezpośrednio, żeby zobaczyć powód.');
     }, LOAD_TIMEOUT);
-
-    if (window.fetch) {
-      fetch(urlOf(v.id), { method: 'HEAD', cache: 'no-store' }).then(function (r) {
-        if (!r.ok && current === v.id) {
-          clearTimeout(loadTimer);
-          showError(v, 'Serwer odpowiedział kodem ' + r.status + ' na adres ' + urlOf(v.id) + '.');
-        }
-      }).catch(function () { /* offline albo brak sieci: zostaje zegar */ });
-    }
   }
 
   function select(id) {
@@ -719,21 +891,38 @@ body {
       if (current !== id) showVersion(id);
       return;
     }
-    /* Zmiana hasha dokłada wpis do historii — o to chodzi: Wstecz ma wracać do
-       poprzednio oglądanej wersji. Samo przełączenie robi handler hashchange. */
+    /* Zmiana hasha dokłada wpis do historii, więc Wstecz wraca do poprzednio
+       oglądanej WERSJI — ale dopiero po wycofaniu wpisów, które v4 i v5 same
+       dopisały swoją nawigacją hashową (patrz komentarz przy idFromHash).
+       Samo przełączenie robi handler hashchange. */
     location.hash = '#' + id;
   }
 
   window.addEventListener('hashchange', function () {
     var id = idFromHash();
-    /* Ktoś skasował albo zepsuł hash: przywracamy bieżący, bez wpisu w historii. */
-    if (!id) { location.replace('#' + (current || DEFAULT_ID)); return; }
+    if (!id) {
+      /* Ktoś skasował albo zepsuł hash: przywracamy bieżący, bez wpisu
+         w historii. Cicha podmiana adresu byłaby najgorszym wyjściem — tester,
+         który dostał link „#v3” i widzi v5, nie miałby jak się dowiedzieć, że
+         to jego adres był zły. */
+      var fallback = current || DEFAULT_ID;
+      var raw = location.hash || '';
+      if (raw && raw !== '#') {
+        toast('Adres wskazywał nieznaną wersję (' + raw + '). Pokazuję ' + fallback + '.');
+      }
+      location.replace('#' + fallback);
+      return;
+    }
     if (id !== current) { remember(id); showVersion(id); }
   });
 
   /* --- narzędzia --------------------------------------------------------- */
 
-  var widthButtons = [].slice.call(document.querySelectorAll('[data-width]'));
+  /* Selektor ZAWĘŻONY do segmentu: atrybut data-width nosi także <main
+     class="stage">, więc samo '[data-width]' dopisywało elementowi o roli main
+     niedozwolone aria-pressed i wieszało na nim listener kliknięcia — kliknięcie
+     w tło wokół podglądu zapisywało szerokość na nowo. */
+  var widthButtons = [].slice.call(document.querySelectorAll('.seg [data-width]'));
 
   function setWidth(w, persist) {
     stage.dataset.width = w;
@@ -760,7 +949,15 @@ body {
     toastEl.textContent = text;
     toastEl.dataset.show = '1';
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.dataset.show = '0'; }, 7000);
+    toastTimer = setTimeout(function () {
+      toastEl.dataset.show = '0';
+      /* Treść znika dopiero po przejściu: element z visibility:hidden wypada
+         z drzewa dostępności, ale zostawiony w nim tekst byłby dalej
+         odnajdywany przy przeglądaniu strony jako aktualny stan. */
+      setTimeout(function () {
+        if (toastEl.dataset.show !== '1') toastEl.textContent = '';
+      }, 300);
+    }, 7000);
   }
 
   /* NAJWAŻNIEJSZE NARZĘDZIE TEJ STRONY.
@@ -768,50 +965,135 @@ body {
      porównywanie bardzo łatwo pokazuje kopię sprzed zmian zamiast tego, co leży
      teraz na serwerze. Ta operacja wyrejestrowuje workery WSZYSTKICH pięciu
      wersji i kasuje ich pamięci, po czym przeładowuje ramkę.
-     Uruchamiana wyłącznie ręcznie, na kliknięcie — nigdy sama z siebie, bo
-     kasuje też to, dzięki czemu wersje działają offline.
+     Uruchamiana wyłącznie ręcznie, na DWA kliknięcia — nigdy sama z siebie, bo
+     kasuje też to, dzięki czemu wersje działają offline. Danych aplikacji
+     (historia pomiarów, progi, kalibracja) NIE rusza: te leżą w localStorage
+     i IndexedDB, a nie w pamięciach podręcznych — mówi o tym komunikat, żeby
+     tester, który „wyczyścił” i nadal widzi swoje progi, nie uznał narzędzia
+     za zepsute.
      Wzorzec nazw obejmuje wyłącznie pamięci tych pięciu aplikacji
      ('blue-monitor-v1-28', 'blue-monitor-v2-2', 'blue-monitor-v3-2', 'ms4-5',
      'ms5-3') oraz pozostałość po dawnym korzeniu ('blue-monitor-v27'). Nazwy są
      wspólne dla całego pochodzenia, a na github.io pochodzenie dzielą wszystkie
      repozytoria właściciela — dlatego wzorzec jest wąski, a nie „skasuj
      wszystko”. */
-  var PURGE_SCOPE = /\/v[1-5]\/$/;
-  var PURGE_CACHE = /^(blue-monitor-v[1-5]-\d+|ms[45]-\d+|blue-monitor-v\d+)$/;
+  /* Zasięgi liczone od WŁASNEJ ścieżki bazowej, nie po końcówce adresu.
+     Wzorzec /\/v[1-5]\/$/ trafiał także w 'https://cwichula.github.io/
+     innyProjekt/v2/' — na github.io pochodzenie dzielą WSZYSTKIE repozytoria
+     właściciela, a lokalnie każda aplikacja serwowana kiedykolwiek z tego portu. */
+  var BASE_URL = new URL('./', location.href).href;
+  var MY_SCOPES = VERSIONS.map(function (v) { return BASE_URL + v.id + '/'; });
 
-  document.getElementById('purge').addEventListener('click', function () {
-    var btn = this;
-    btn.disabled = true;
-    toast('Czyszczenie pamięci wersji…');
+  /* Nazw pamięci podręcznych zakotwiczyć się NIE DA — są wspólne dla całego
+     pochodzenia i nie niosą ścieżki. To świadome ograniczenie: dlatego wzorzec
+     zostaje wąski i wymienia wyłącznie przedrostki tych pięciu aplikacji.
+     Przyrostek jest luźny ([\w.]+ zamiast \d+), bo numer w nazwie podbijamy przy
+     każdej zmianie plików wersji i 'ms5-3b' czy 'ms5-rc1' nie mogą wypaść poza
+     wzorzec — komunikat pokazałby wtedy „Usunięto pamięci: 0”, a tester dalej
+     oglądałby wersję sprzed zmian, czyli dokładnie tę awarię, przed którą to
+     narzędzie chroni. NOWA WERSJA (v6) MUSI DOPISAĆ TU SWÓJ PRZEDROSTEK. */
+  var PURGE_CACHE = /^(blue-monitor-v\d+(-[\w.]+)?|ms[45]-[\w.]+)$/;
 
-    var swDone = Promise.resolve(0);
-    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
-      swDone = navigator.serviceWorker.getRegistrations().then(function (regs) {
-        var mine = regs.filter(function (r) { return PURGE_SCOPE.test(String(r.scope || '')); });
+  /* getRegistrations() i caches.keys() potrafią rzucić SecurityError
+     SYNCHRONICZNIE (tryb prywatny, WKWebView) — wtedy .catch() w łańcuchu nawet
+     nie powstaje. Stąd opakowanie, które zamienia i wyjątek, i odrzucenie
+     w wartość `null`, czyli „API niedostępne”. Liczba znaczy „tyle usunięto”.
+
+     WEWNĄTRZ opakowania siedzi także samo SPRAWDZENIE dostępności API. Gdyby
+     stało przed nim, jak w warunku `'serviceWorker' in navigator &&
+     navigator.serviceWorker.getRegistrations`, wystarczyłoby środowisko, w
+     którym właściwość istnieje, ale jest pusta, żeby wyjątek poleciał obok całej
+     obudowy — a wtedy `purgeBtn.disabled` nigdy nie wraca do false i przycisk
+     zostaje na trwałe wyszarzony z zawieszonym „Czyszczenie…”. Sprawdzone
+     doświadczalnie na spreparowanym navigatorze; nic w tym module nie ma prawa
+     wypaść poza try. */
+  function safePurge(fn) {
+    var p;
+    try { p = Promise.resolve(fn()); } catch (e) { return Promise.resolve(null); }
+    return p.catch(function () { return null; });
+  }
+
+  var purgeBtn = document.getElementById('purge');
+  var PURGE_LABEL = purgeBtn.textContent;
+  var purgeArmed = false;
+  var purgeTimer = 0;
+
+  function disarmPurge() {
+    purgeArmed = false;
+    clearTimeout(purgeTimer);
+    purgeBtn.textContent = PURGE_LABEL;
+    purgeBtn.removeAttribute('data-armed');
+  }
+
+  purgeBtn.addEventListener('blur', disarmPurge);
+
+  /* Potwierdzenie NA MIEJSCU, nie w oknie dialogowym: operacja jest
+     nieodwracalna, sąsiaduje z niegroźnym „Przeładuj” i na telefonie oba cele
+     mają po 44 px. Pierwsze kliknięcie tylko uzbraja i mówi, co zniknie. */
+  purgeBtn.addEventListener('click', function () {
+    if (!purgeArmed) {
+      purgeArmed = true;
+      purgeBtn.textContent = 'Na pewno? Zniknie offline v1–v5';
+      purgeBtn.dataset.armed = '1';
+      clearTimeout(purgeTimer);
+      purgeTimer = setTimeout(disarmPurge, 4000);
+      return;
+    }
+    disarmPurge();
+    runPurge();
+  });
+
+  function runPurge() {
+    purgeBtn.disabled = true;
+    toast('Czyszczenie offline wersji…');
+
+    var swDone = safePurge(function () {
+      var sw = navigator.serviceWorker;
+      if (!sw || !sw.getRegistrations) return null;          /* API niedostępne */
+      return sw.getRegistrations().then(function (regs) {
+        var mine = regs.filter(function (r) { return MY_SCOPES.indexOf(String(r.scope || '')) !== -1; });
         return Promise.all(mine.map(function (r) {
           return r.unregister().catch(function () { return false; });
         })).then(function (res) { return res.filter(Boolean).length; });
-      }).catch(function () { return 0; });
-    }
+      });
+    });
 
-    var cacheDone = Promise.resolve(0);
-    if ('caches' in window) {
-      cacheDone = caches.keys().then(function (names) {
+    var cacheDone = safePurge(function () {
+      var cs = window.caches;
+      if (!cs || !cs.keys) return null;                      /* API niedostępne */
+      return cs.keys().then(function (names) {
         var mine = names.filter(function (n) { return PURGE_CACHE.test(n); });
         return Promise.all(mine.map(function (n) {
-          return caches.delete(n).catch(function () { return false; });
+          return cs.delete(n).catch(function () { return false; });
         })).then(function (res) { return res.filter(Boolean).length; });
-      }).catch(function () { return 0; });
+      });
+    });
+
+    /* Przywrócenie przycisku MUSI się wydarzyć niezależnie od wyniku — inaczej
+       jeden wyjątek zostawia go wyszarzonym na zawsze, z zawieszonym
+       komunikatem „Czyszczenie…” i bez śladu przyczyny. */
+    function done(r) {
+      purgeBtn.disabled = false;
+      var sw = r ? r[0] : null;
+      var ca = r ? r[1] : null;
+
+      /* „0 i 0” nie może znaczyć naraz „nie było czego kasować” i „nie ma tu
+         takiego API” — to jedyny komunikat, po którym tester ocenia, czy patrzy
+         na świeżą kopię. */
+      if (sw === null && ca === null) {
+        toast('Przeglądarka nie udostępnia tu service workerów ani pamięci podręcznych (tryb prywatny albo adres bez HTTPS) — nic nie wyczyszczono.');
+        return;
+      }
+
+      toast('Wyrejestrowano workery: ' + (sw === null ? 'brak dostępu' : sw)
+          + '. Usunięto pamięci: ' + (ca === null ? 'brak dostępu' : ca)
+          + '. Dane pomiarowe (historia, progi, kalibracja) zostają nietknięte.'
+          + ' Przeładowuję wersję ' + current + '.');
+      if (current) mountFrame(byId(current));
     }
 
-    Promise.all([swDone, cacheDone]).then(function (r) {
-      btn.disabled = false;
-      /* Potwierdzenie musi być widoczne, inaczej nie wiadomo, czy cokolwiek
-         się wydarzyło — komunikat podaje liczby, nie samo „gotowe”. */
-      toast('Wyrejestrowano workery: ' + r[0] + '. Usunięto pamięci: ' + r[1] + '. Przeładowuję wersję ' + current + '.');
-      if (current) mountFrame(byId(current));
-    });
-  });
+    Promise.all([swDone, cacheDone]).then(done, function () { done(null); });
+  }
 
   /* --- start ------------------------------------------------------------- */
 
@@ -822,8 +1104,10 @@ body {
 
   var startId = initialId();
   /* Adres ma być gotowy do wysłania testerowi także wtedy, gdy ktoś wszedł na
-     goły adres — ale bez dokładania wpisu do historii, stąd replace. */
-  if (idFromHash() !== startId) location.replace('#' + startId);
+     goły adres — ale bez dokładania wpisu do historii, stąd replace.
+     Porównanie z pełnym hashem, a nie z idFromHash(): '#V3' wskazuje właściwą
+     wersję, ale w adresie do skopiowania ma zostać znormalizowane '#v3'. */
+  if (location.hash !== '#' + startId) location.replace('#' + startId);
   remember(startId);
   showVersion(startId);
   updateScrollHint();
@@ -834,14 +1118,26 @@ body {
 /* Sprzątanie po service workerze wersji 1.
    Zanim wersja 1 trafiła do /v1/, jej worker był rejestrowany w KORZENIU
    witryny. U każdego, kto odwiedził stronę wcześniej, ta rejestracja nadal
-   siedzi w przeglądarce z zasięgiem '/' — serwuje z pamięci podręcznej starą
-   stronę główną i potrafi przesłonić tę tutaj. Ten skrypt wyrejestrowuje
-   wyłącznie rejestracje korzenia (workery wersji 1–5 mają zasięg swoich
-   katalogów i zostają nietknięte) oraz usuwa pamięci podręczne o nazwach
-   'blue-monitor-vN' — tak nazywał się cache starego korzenia. Wszystkie pięć
-   żywych wersji ma w nazwie przedrostek z myślnikiem ('blue-monitor-v1-28',
-   'blue-monitor-v2-2', 'blue-monitor-v3-2', 'ms4-5', 'ms5-3'), więc ten wzorzec
-   ich nie obejmuje.
+   siedzi w przeglądarce z zasięgiem korzenia witryny — serwuje z pamięci
+   podręcznej starą stronę główną i potrafi przesłonić tę tutaj. Ten skrypt
+   wyrejestrowuje DOKŁADNIE tę jedną rejestrację oraz usuwa pamięci podręczne
+   o nazwach 'blue-monitor-vN' — tak nazywał się cache starego korzenia.
+   Wszystkie pięć żywych wersji ma w nazwie przedrostek z myślnikiem
+   ('blue-monitor-v1-28', 'blue-monitor-v2-2', 'blue-monitor-v3-2', 'ms4-5',
+   'ms5-3'), więc ten wzorzec ich nie obejmuje.
+
+   DLACZEGO PORÓWNANIE, A NIE WZORZEC. getRegistrations() zwraca — zgodnie ze
+   specyfikacją — WSZYSTKIE rejestracje o tym samym POCHODZENIU, niezależnie od
+   ścieżki, a nie tylko te „pod” bieżącą stroną. Wcześniejszy filtr brzmiał
+   „wyrejestruj wszystko, czego zasięg nie kończy się na /v1/…/v5/” i na
+   cwichula.github.io, gdzie pochodzenie dzielą WSZYSTKIE repozytoria
+   właściciela, samo otwarcie tej powłoki — bez kliknięcia czegokolwiek, cicho,
+   bez komunikatu — kasowało rejestrację dowolnej innej PWA tego konta i zabijało
+   jej tryb offline. Zasięg dawnego workera korzenia to dokładnie katalog, w
+   którym leży ta strona ('https://cwichula.github.io/blueColorMonitor/'
+   na produkcji, 'http://localhost:8000/' przy serwowaniu docs/ lokalnie), więc
+   jedyny bezpieczny filtr to równość z tym adresem.
+
    Sama powłoka NIE rejestruje żadnego service workera i nigdy nie może tego
    robić: żywy worker w korzeniu to dokładnie ten problem, który ten skrypt
    sprząta.
@@ -850,7 +1146,9 @@ body {
 (function () {
   'use strict';
 
-  var VERSION_SCOPE = /\/v[1-5]\/$/;              /* zasięg katalogu wersji */
+  var ROOT = new URL('./', location.href).href;   /* zasięg dawnego workera korzenia */
+  /* Nazwy pamięci są wspólne dla pochodzenia i nie da się ich zakotwiczyć na
+     ścieżce — świadome ograniczenie, dlatego wzorzec jest maksymalnie wąski. */
   var V1_CACHE = /^blue-monitor-v\d+$/;           /* pamięci starego korzenia */
 
   try {
@@ -859,7 +1157,7 @@ body {
         regs.forEach(function (reg) {
           try {
             var scope = reg && reg.scope ? String(reg.scope) : '';
-            if (!scope || VERSION_SCOPE.test(scope)) return;
+            if (scope !== ROOT) return;
             reg.unregister().catch(function () {});
           } catch (e) { /* jedna rejestracja mniej — nie przerywamy reszty */ }
         });
