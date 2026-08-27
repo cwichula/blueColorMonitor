@@ -88,7 +88,7 @@ const LOADERS = {
   measure: () => import('./screens/measure.js'),
   history: () => import('./screens/history.js'),
   tools: () => import('./screens/tools.js'),
-  account: () => import('./screens/account.js')
+  support: () => import('./screens/support.js')
 };
 
 // id trasy -> {api, scrollTop}. Raz zbudowany ekran zostaje: powrót na niego
@@ -322,7 +322,7 @@ function maybeOnboard() {
     title: 'Zanim zaczniesz',
     body: [
       h('p.m5-screen__lead', { text: 'Monitor Światła patrzy kamerą na światło wokół Ciebie i liczy z niego siedem wielkości — od udziału niebieskiego po komfort wzrokowy.' }),
-      h('p.m5-screen__note', { text: 'Obraz nie opuszcza tego urządzenia: nie ma serwera, nie ma konta w chmurze, nie ma wysyłki. Konto i płatności są tu symulacją interfejsu.' }),
+      h('p.m5-screen__note', { text: 'Obraz nie opuszcza tego urządzenia: nie ma serwera, nie ma konta i nie ma wysyłki. Wszystkie siedem wielkości działa od razu, bez logowania i bez opłat.' }),
       h('p.m5-screen__note', { text: 'To orientacja, a nie przyrząd pomiarowy ani badanie lekarskie. Czego nie da się zmierzyć, tego nie pokazujemy — zamiast liczby zobaczysz pauzę.' })
     ],
     actions: [{ labelPL: 'Zaczynamy', tone: 'primary', autofocus: true }]
@@ -379,7 +379,7 @@ function registerServiceWorker() {
 
 /* ──────────────────────  Awaria: nigdy biały ekran  ────────────────────── */
 
-const SCREEN_ROOTS = '.m5-screen, .m5-measure, .m5-history, .m5-tools, .m5-account, .m5-fatal';
+const SCREEN_ROOTS = '.m5-screen, .m5-measure, .m5-history, .m5-tools, .m5-support, .m5-fatal';
 
 let fatalShown = false;
 let lastFailToastAt = 0;
@@ -421,10 +421,25 @@ function onFatalError(event) {
   });
 }
 
+/* ──────────────────  Sprzątanie po symulowanej monetyzacji  ─────────────── */
+
+/* Symulowane konto i płatności zniknęły z aplikacji, ale ich klucze zostały
+ * w pamięci przeglądarek, w których poprzednia wersja zdążyła się uruchomić.
+ * Kasujemy dokładnie te dwa — pomiary (ms5.history.v1), sesje
+ * (ms5.sessions.v1) i ustawienia (ms5.settings.v1) zostają nietknięte. */
+const LEGACY_KEYS = ['ms5.account.v1', 'ms5.billing.v1'];
+
+function dropLegacyKeys() {
+  try {
+    LEGACY_KEYS.forEach((key) => window.localStorage.removeItem(key));
+  } catch (err) { /* tryb prywatny albo zablokowana pamięć — nie ma czego kasować */ }
+}
+
 /* ───────────────────────────────  Start  ──────────────────────────────── */
 
 function boot() {
   ensureStyles();
+  dropLegacyKeys();
   store.applyToRoot();
 
   buildNav();

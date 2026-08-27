@@ -5,15 +5,15 @@
  *
  * Two rules govern this file and neither has an exception:
  *
- *  1. Measurement is sacred. This module never asks whether anything is paid
- *     for. There is no reference to Store, Account or Ads anywhere below, and
- *     there must never be one. Delete every other file in docs/v2/ except
- *     metrics.js and this engine still starts a camera and produces readings.
+ *  1. Measurement is sacred. This module knows nothing about the interface and
+ *     checks no permissions, because there are none: nothing in this
+ *     application is conditional on anything. Delete every other file in
+ *     docs/v2/ except metrics.js and this engine still starts a camera and
+ *     produces readings.
  *
- *  2. All seven metrics are computed on every sample, for everybody. Gating is
- *     a presentation concern owned by the interface layer. That is what makes a
- *     purchase reveal real history instead of an empty table: the numbers were
- *     already there, they were only not drawn.
+ *  2. All seven metrics are computed on every sample, for everybody, and all
+ *     seven are handed to whoever asks. This file makes no distinction between
+ *     one reading and another, and no caller can ask it for a subset.
  *
  * Honesty, repeated here because it belongs next to the code that samples
  * pixels: a phone camera has three broad channels and an auto-adjusting white
@@ -59,8 +59,9 @@
   var LIVE_WINDOW_MS = 60000;     // live buffer: what the 1-minute chart reads
   var LIVE_MARGIN_MS = 5000;      // keep a little past the window so trimming is lazy
 
-  // Long buffer. Collected for everyone, free tier included — only reading it
-  // back is a paid feature, so unlocking shows history that genuinely happened.
+  // Long buffer. This is what the Historia screen, the chart and the reports
+  // read back, so it is collected continuously and for everybody: 30 days at
+  // one point per 5 s, trimmed by age and by count.
   var LONG_STEP_MS = 5000;        // 1 point / 5 s
   var LONG_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
   var HISTORY_MAX = 15000;        // ~21 h of continuous measurement, or 30 days of use

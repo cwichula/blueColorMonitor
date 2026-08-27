@@ -185,35 +185,6 @@
     } catch (err) { return false; }
   }
 
-  /* ------------------------------------------------------------------
-     Premium access. The catalogue says a metric is paid; whether it is
-     currently locked is offer.js's business, so we ask it and default to
-     locked when it has nothing to say.
-     ------------------------------------------------------------------ */
-
-  function isLocked(m) {
-    if (!m || !m.premium) return false;
-    var offer = global.Offer;
-    if (offer && typeof offer.isUnlocked === 'function') {
-      try { if (offer.isUnlocked(m.id)) return false; } catch (err) { /* stays locked */ }
-    }
-    return true;
-  }
-
-  function isLeadLocked() { return isLocked(global.Metrics.byId(leadId)); }
-
-  function openOffer(metricId) {
-    var offer = global.Offer;
-    var names = ['openOffer', 'openSheet', 'open', 'show'];
-    for (var i = 0; i < names.length; i += 1) {
-      if (offer && typeof offer[names[i]] === 'function') {
-        try { offer[names[i]](metricId); return; } catch (err) { /* try the next one */ }
-      }
-    }
-    // offer.js not loaded: the Premium module is the honest fallback.
-    if (global.UI3 && typeof global.UI3.openScreen === 'function') global.UI3.openScreen('10');
-  }
-
   function say(textPL) {
     if (textPL && global.UI3 && typeof global.UI3.say === 'function') global.UI3.say(textPL);
   }
@@ -344,19 +315,17 @@
   // A micro scale is the same instrument at 88×18 px: bands, baseline, needle.
   // No ticks, no labels and no hatching (5.4) — the row's shape marker carries
   // the status instead.
-  function buildMicro(metricId, locked) {
-    var wrap = make('span', 'ms3-micro' + (locked ? ' ms3-micro--locked' : ''));
+  function buildMicro(metricId) {
+    var wrap = make('span', 'ms3-micro');
     wrap.setAttribute('aria-hidden', 'true');
 
     var bandBox = make('span', 'ms3-micro__bands');
-    if (!locked) {
-      var bands = global.Scale.bands(metricId, thresholds) || [];
-      for (var i = 0; i < bands.length; i += 1) {
-        var b = make('span', 'ms3-band ms3-band--' + zoneMod(bands[i].zone));
-        b.style.left = pct(bands[i].from) + '%';
-        b.style.width = pct(Math.max(0, bands[i].to - bands[i].from)) + '%';
-        bandBox.appendChild(b);
-      }
+    var bands = global.Scale.bands(metricId, thresholds) || [];
+    for (var i = 0; i < bands.length; i += 1) {
+      var b = make('span', 'ms3-band ms3-band--' + zoneMod(bands[i].zone));
+      b.style.left = pct(bands[i].from) + '%';
+      b.style.width = pct(Math.max(0, bands[i].to - bands[i].from)) + '%';
+      bandBox.appendChild(b);
     }
     wrap.appendChild(bandBox);
     wrap.appendChild(make('span', 'ms3-micro__base'));
@@ -397,26 +366,19 @@
   }
 
   function buildRow(m) {
-    var locked = isLocked(m);
-    var button = make('button', 'ms3-channel' + (locked ? ' ms3-channel--locked' : ''));
+    var button = make('button', 'ms3-channel');
     button.type = 'button';
     button.setAttribute('data-metric', m.id);
 
-    var shape = make('span', locked ? 'ms3-lock' : 'ms3-shape ms3-shape--none');
+    var shape = make('span', 'ms3-shape ms3-shape--none');
     shape.setAttribute('aria-hidden', 'true');
     button.appendChild(shape);
 
     var name = make('span', 'ms3-channel__name');
     name.appendChild(doc.createTextNode(m.namePL));
-    if (locked) {
-      var badge = make('span', 'ms3-badge ms3-badge--premium');
-      badge.textContent = T(['channels.badgePremium']);
-      name.appendChild(doc.createTextNode(' '));
-      name.appendChild(badge);
-    }
     button.appendChild(name);
 
-    var micro = buildMicro(m.id, locked);
+    var micro = buildMicro(m.id);
     button.appendChild(micro.root);
 
     var value = make('span', 'ms3-channel__value');
@@ -425,13 +387,13 @@
     button.appendChild(value);
 
     var unit = make('span', 'ms3-channel__unit');
-    unit.textContent = locked ? '' : m.unit;
+    unit.textContent = m.unit;
     button.appendChild(unit);
 
     el.channels.appendChild(button);
 
     var row = {
-      metric: m, locked: locked, button: button, shape: shape,
+      metric: m, button: button, shape: shape,
       value: value, unit: unit, needle: micro.needle,
       zone: null, stale: false, needleShown: false, label: null,
       pressTimer: null, suppressClick: false
@@ -439,7 +401,6 @@
 
     button.addEventListener('click', function () {
       if (row.suppressClick) { row.suppressClick = false; return; }
-      if (row.locked) { openOffer(m.id); return; }   // 7.3.6 — never switches the channel
       setLead(m.id, true);
     });
 
@@ -506,7 +467,6 @@
   function renderRows(reading) {
     for (var i = 0; i < rows.length; i += 1) {
       var row = rows[i];
-      if (row.locked) continue;               // a locked row never shows a number
       var id = row.metric.id;
       var v = reading ? reading.values[id] : null;
       var zone = reading ? reading.zones[id] : null;
@@ -544,7 +504,6 @@
   function refreshStale() {
     for (var i = 0; i < rows.length; i += 1) {
       var row = rows[i];
-      if (row.locked) continue;
       var stale = (row.zone === 'none' && engineState === 'running');
       if (row.stale !== stale) {
         row.stale = stale;
@@ -559,20 +518,15 @@
     for (var i = 0; i < rows.length; i += 1) {
       var row = rows[i];
       var m = row.metric;
-      var label;
-      if (row.locked) {
-        label = T(['aria.channelLocked'], { name: m.namePL });
-      } else {
-        var v = lastReading ? lastReading.values[m.id] : null;
-        var vars = {
-          name: m.namePL,
-          value: spoken(m.id, v),
-          zone: zoneWord(lastReading ? lastReading.zones[m.id] : null).toLowerCase()
-        };
-        label = (v === null || v === undefined)
-          ? T(['aria.channelStale'], vars)
-          : T(['aria.channel'], vars);
-      }
+      var v = lastReading ? lastReading.values[m.id] : null;
+      var vars = {
+        name: m.namePL,
+        value: spoken(m.id, v),
+        zone: zoneWord(lastReading ? lastReading.zones[m.id] : null).toLowerCase()
+      };
+      var label = (v === null || v === undefined)
+        ? T(['aria.channelStale'], vars)
+        : T(['aria.channel'], vars);
       if (label && row.label !== label) {
         row.label = label;
         row.button.setAttribute('aria-label', label);
@@ -626,7 +580,7 @@
       if (el.approxNote) el.approxNote.hidden = !approximate;
     }
 
-    setText(el.unit, isLeadLocked() ? '' : m.unit);
+    setText(el.unit, m.unit);
 
     paintScale(true);
 
@@ -653,10 +607,9 @@
   function renderReadout() {
     var m = global.Metrics.byId(leadId);
     if (!m) return;
-    var locked = isLeadLocked();
     var reading = lastReading;
-    var v = (reading && !locked) ? reading.values[leadId] : null;
-    var zone = (reading && !locked) ? reading.zones[leadId] : null;
+    var v = reading ? reading.values[leadId] : null;
+    var zone = reading ? reading.zones[leadId] : null;
 
     var shown = global.Scale.formatValue(leadId, v);
     setText(el.num, shown);
@@ -679,17 +632,14 @@
       }
     }
 
-    renderStamp(m, v, zone, locked);
+    renderStamp(m, v, zone);
     renderBaseline(reading);
   }
 
-  function renderStamp(m, v, zone, locked) {
+  function renderStamp(m, v, zone) {
     var word, mod, threshold = '';
 
-    if (locked) {
-      word = T(['readout.stampPremium', 'stamp.premium']);
-      mod = 'none';
-    } else if (engineState === 'running' && !warmupDone) {
+    if (engineState === 'running' && !warmupDone) {
       word = T(['stamp.settling']);
       mod = 'none';
     } else if (v === null || v === undefined) {
@@ -757,10 +707,6 @@
   }
 
   function updateVerdict(reading, now) {
-    if (isLeadLocked()) {
-      setVerdict(T(['readout.verdictPremium', 'verdict.premium']));
-      return;
-    }
     if (!warmupDone) {
       setVerdict(T(['readout.verdictWarmup', 'verdict.warmup']));
       return;
@@ -907,7 +853,7 @@
 
   function renderContext() {
     if (!el.context) return;
-    var s = (engineState === 'running' && !isLeadLocked()) ? statsFor(leadId) : null;
+    var s = (engineState === 'running') ? statsFor(leadId) : null;
     if (!s) {
       setText(el.context, T(['readout.contextEmpty', 'context.empty']));
       if (el.trace) el.trace.hidden = true;
@@ -932,7 +878,7 @@
     var m = global.Metrics.byId(leadId);
     if (!m || !thresholds) return;
     var t = thresholds[leadId] || {};
-    var v = (lastReading && !isLeadLocked()) ? lastReading.values[leadId] : null;
+    var v = lastReading ? lastReading.values[leadId] : null;
     var zone = zoneWord(lastReading ? lastReading.zones[leadId] : null).toLowerCase();
 
     if (el.scale) {
@@ -1109,7 +1055,6 @@
       global.Scale.formatValue(m.id, m.min) + ' – ' + global.Scale.formatValue(m.id, m.max) + ' ' + m.unit);
     addPair(list, T(['help.warn']), global.Scale.formatValue(m.id, t.warn) + ' ' + m.unit);
     addPair(list, T(['help.crit']), global.Scale.formatValue(m.id, t.crit) + ' ' + m.unit);
-    if (m.premium) addPair(list, T(['help.availability']), T(['help.premium']));
     body.appendChild(list);
 
     // An empty framed box would read as an unfinished screen, so the note only
@@ -1277,10 +1222,6 @@
       var id = data && (data.id || data.leadChannel);
       if (id && id !== leadId && global.Metrics.byId(id)) { leadId = id; applyLead(); }
     });
-    // offer.js may unlock the paid channels in its simulation; the strip has to
-    // stop showing locks the moment it does.
-    global.Bus.on('offer:changed', function () { applyLead(); });
-
     if (secondTimer) global.clearInterval(secondTimer);
     secondTimer = global.setInterval(tickSecond, 1000);
     tickSecond();

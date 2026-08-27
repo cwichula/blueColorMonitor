@@ -1,7 +1,7 @@
 {
   "name": "Monitor Światła",
   "short_name": "Monitor Światła",
-  "description": "Mierzy kamerą siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Liczy wszystko na urządzeniu, działa offline i niczego nie wysyła do sieci. Konto i płatności są symulacją interfejsu.",
+  "description": "Mierzy kamerą siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Liczy wszystko na urządzeniu, działa offline i niczego nie wysyła do sieci. Wszystkie siedem wielkości jest dostępnych od razu, bez konta i bez opłat.",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",

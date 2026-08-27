@@ -361,7 +361,7 @@
   }
 
   // A replacement inherits the history entry and the opener of the layer it
-  // takes over (module index → module, offer sheet → module). No new entry, so
+  // takes over (module index → module, help sheet → module). No new entry, so
   // one back press still lands on the dashboard.
   function replaceLayer(oldLayer, layer) {
     var idx = indexOf(oldLayer);

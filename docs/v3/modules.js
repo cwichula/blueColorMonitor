@@ -161,7 +161,7 @@
     return make('div', 'ms3-actions');
   }
 
-  /** 5.11 — variant is 'limits' | 'warning' | 'demo'. `body` is one sentence
+  /** 5.11 — variant is 'limits' | 'warning'. `body` is one sentence
    *  or an array of them. */
   function note(variant, titlePL, body) {
     var el = make('aside', 'ms3-note ms3-note--' + variant);
@@ -241,7 +241,7 @@
   }
 
   /* ------------------------------------------------------------------
-     Engine, metrics and premium access
+     Engine and metrics
      ------------------------------------------------------------------ */
 
   function E() { return global.Engine || null; }
@@ -274,17 +274,6 @@
     var ui = global.UI3;
     var id = ui && typeof ui.leadChannel === 'function' ? ui.leadChannel() : 'share';
     return metric(id) ? id : 'share';
-  }
-
-  /* The catalogue says a metric is paid; whether it is locked right now is
-     offer.js's business. Default to locked, exactly as dash.js does. */
-  function isLocked(m) {
-    if (!m || !m.premium) return false;
-    var offer = global.Offer;
-    if (offer && typeof offer.isUnlocked === 'function') {
-      try { if (offer.isUnlocked(m.id)) return false; } catch (err) { /* stays locked */ }
-    }
-    return true;
   }
 
   function zoneMod(zone) {
@@ -394,7 +383,7 @@
   }
 
   /** 5.12 — the tabular print-out. `rows` are arrays of cells; a cell is a
-   *  string or { textPL, num, head, lock }. */
+   *  string or { textPL, num, head }. */
   function table(captionPL, headings, rows) {
     var wrap = make('div', 'ms3-tablewrap');
     var tbl = put(wrap, make('table', 'ms3-table'));
@@ -415,11 +404,6 @@
         if (typeof cell === 'string') cell = { textPL: cell };
         var el = put(tr, make(cell.head ? 'th' : 'td', cell.num ? 'ms3-num' : ''));
         if (cell.head) el.setAttribute('scope', 'row');
-        if (cell.lock) {
-          var lock = put(el, make('span', 'ms3-lock'));
-          lock.setAttribute('aria-hidden', 'true');
-          srOnly(el, T('channels.locked'));
-        }
         if (cell.textPL) {
           var span = put(el, make('span', ''));
           span.textContent = cell.textPL;
@@ -767,7 +751,7 @@
       var entry = thr.rows[id];
       if (!entry.needle) continue;
       var m = entry.metric;
-      var value = values && !isLocked(m) ? values[id] : null;
+      var value = values ? values[id] : null;
       var pos = isNum(value) ? Scale.pos(id, value) : null;
       if (pos === null) {
         entry.needle.hidden = true;
@@ -1131,12 +1115,11 @@
     var rows = [];
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
-      var locked = isLocked(m);
       rows.push([
-        { textPL: m.namePL + ' (' + m.unit + ')', head: true, lock: locked },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, data.avg[m.id]), num: true },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, data.min[m.id]), num: true },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, data.max[m.id]), num: true }
+        { textPL: m.namePL + ' (' + m.unit + ')', head: true },
+        { textPL: fmt(m.id, data.avg[m.id]), num: true },
+        { textPL: fmt(m.id, data.min[m.id]), num: true },
+        { textPL: fmt(m.id, data.max[m.id]), num: true }
       ]);
     }
     put(tab, table(T('modules.04.tableCaption'),
@@ -1184,16 +1167,16 @@
   function reportAdvice(data) {
     var out = [];
     var avg = data.avg;
-    if (isNum(avg.melanopic) && avg.melanopic > 0.8 && !isLocked(metric('melanopic'))) {
+    if (isNum(avg.melanopic) && avg.melanopic > 0.8) {
       out.push(T('modules.04.adviceMelanopicTpl', { value: fmt('melanopic', avg.melanopic) }));
     }
     if (isNum(avg.kelvin) && avg.kelvin > 5000) {
       out.push(T('modules.04.adviceKelvinTpl', { value: fmt('kelvin', avg.kelvin) }));
     }
-    if (isNum(avg.flicker) && avg.flicker > 8 && !isLocked(metric('flicker'))) {
+    if (isNum(avg.flicker) && avg.flicker > 8) {
       out.push(T('modules.04.adviceFlickerTpl', { value: fmt('flicker', avg.flicker) }));
     }
-    if (isNum(avg.uniformity) && avg.uniformity < 60 && !isLocked(metric('uniformity'))) {
+    if (isNum(avg.uniformity) && avg.uniformity < 60) {
       out.push(T('modules.04.adviceUniformityTpl', { value: fmt('uniformity', avg.uniformity) }));
     }
     if (data.worstHour !== null && data.worstScore > 0.2) {
@@ -1257,9 +1240,8 @@
         short: m.shortPL, unit: m.unit,
         min: fmt(m.id, m.min), max: fmt(m.id, m.max)
       });
-      if (isLocked(m)) descPL += ' ' + T('modules.05.lockedColumn');
       rows.push([
-        { textPL: m.namePL + ' [' + m.unit + ']', head: true, lock: isLocked(m) },
+        { textPL: m.namePL + ' [' + m.unit + ']', head: true },
         descPL
       ]);
     }
@@ -1286,9 +1268,10 @@
       for (j = 0; j < list.length; j += 1) {
         var m = list[j];
         var v = p[m.id];
-        // A locked premium column stays empty. An invented number in a file
-        // that looks like an export would be the one thing this app must not do.
-        line.push(isLocked(m) || !isNum(v) ? '' : v.toFixed(m.decimals).replace('.', ','));
+        // A quantity the sensor could not measure stays empty. An invented
+        // number in a file that looks like an export would be the one thing
+        // this app must not do.
+        line.push(!isNum(v) ? '' : v.toFixed(m.decimals).replace('.', ','));
       }
       line.push(p.zone || '');
       rows.push(line);
@@ -1355,7 +1338,7 @@
     for (i = 0; i < list.length; i += 1) {
       columns.push({
         id: list[i].id, namePL: list[i].namePL, unit: list[i].unit,
-        decimals: list[i].decimals, locked: isLocked(list[i])
+        decimals: list[i].decimals
       });
     }
     var points = [];
@@ -1364,7 +1347,7 @@
       var out = { t: p.t, zone: p.zone || null };
       for (j = 0; j < list.length; j += 1) {
         var m = list[j];
-        out[m.id] = isLocked(m) || !isNum(p[m.id]) ? null : p[m.id];
+        out[m.id] = !isNum(p[m.id]) ? null : p[m.id];
       }
       points.push(out);
     }
@@ -1541,14 +1524,13 @@
     var rows = [];
     for (var i = 0; i < catalog.length; i += 1) {
       var m = catalog[i];
-      var locked = isLocked(m);
       var a = A.avg ? A.avg[m.id] : null;
       var b = B.avg ? B.avg[m.id] : null;
       rows.push([
-        { textPL: m.namePL + ' (' + m.unit + ')', head: true, lock: locked },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, a), num: true },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, b), num: true },
-        { textPL: locked ? T('common.noValue') : diffText(m.id, a, b), num: true }
+        { textPL: m.namePL + ' (' + m.unit + ')', head: true },
+        { textPL: fmt(m.id, a), num: true },
+        { textPL: fmt(m.id, b), num: true },
+        { textPL: diffText(m.id, a, b), num: true }
       ]);
     }
     put(diff, table(T('modules.06.diffCaption'),

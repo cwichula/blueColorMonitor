@@ -8,16 +8,11 @@
  *      delays the camera. Two screens (kalibracja, sprawdź mój monitor) READ a
  *      running measurement; neither of them can begin one on its own and
  *      neither interrupts one.
- *   2. Gating is presentation. Every paid screen shows its real name, its real
- *      description, a lock and an "Odblokuj" button — and never a fabricated
- *      number. The free tier gets something genuinely usable wherever that is
- *      possible without lying (a built-in profile can be applied, slot A of the
- *      comparison can be captured, the CSV header can be previewed).
- *   3. This module never decides what is paid for. It asks Store.has() and
- *      Store.requireFeature() and stops. Without store.js everything is free.
- *   4. Panel, sheet and tab visibility belongs to window.UI. This file writes
+ *   2. This module never gates anything. All seven tools are available to
+ *      everybody, always; there is nothing here to ask permission of.
+ *   3. Panel, sheet and tab visibility belongs to window.UI. This file writes
  *      `hidden` only on elements it created itself inside its own panels.
- *   5. All arithmetic on readings comes from metrics.js through Engine. The
+ *   4. All arithmetic on readings comes from metrics.js through Engine. The
  *      aggregations below (averages, zone counts, the worst hour) are counting,
  *      not measurement; where a number is an editorial judgement rather than a
  *      standard, the comment says so.
@@ -43,7 +38,6 @@
      ------------------------------------------------------------------ */
 
   function E() { return global.Engine || null; }
-  function S() { return global.Store || null; }
   function U() { return global.UI || null; }
   function M() { return global.Metrics || null; }
 
@@ -75,20 +69,6 @@
 
   function removeKey(key) {
     try { global.localStorage.removeItem(key); } catch (e) { /* ignore */ }
-  }
-
-  function has(featureId) {
-    var s = S();
-    if (!s || typeof s.has !== 'function') return true;   // no store: everything free
-    try { return !!s.has(featureId); } catch (e) { return true; }
-  }
-
-  function require(featureId, ctx) {
-    var s = S();
-    if (s && typeof s.requireFeature === 'function') {
-      try { return !!s.requireFeature(featureId, ctx || 'menu'); } catch (e) { return false; }
-    }
-    return true;
   }
 
   function toast(messagePL, kind) {
@@ -176,7 +156,7 @@
 
   function note(kind, titlePL, textPL) {
     var box = mk('div', 'ms-note ms-note--' + kind);
-    box.appendChild(icon(kind === 'premium' ? 'crown' : (kind === 'warning' ? 'warning' : (kind === 'critical' ? 'critical' : 'info'))));
+    box.appendChild(icon(kind === 'warning' ? 'warning' : (kind === 'critical' ? 'critical' : 'info')));
     var body = mk('div', 'ms-note__text');
     if (titlePL) body.appendChild(mk('span', 'ms-note__title', titlePL));
     if (textPL) body.appendChild(mk('span', null, textPL));
@@ -193,27 +173,6 @@
       s.appendChild(head);
     }
     return s;
-  }
-
-  /* The one shape every paid screen uses when the user has not bought it: the
-     real name, the real description, what they get instead, and a calm button.
-     No blurred numbers, no countdown, no second colour of urgency. */
-  function lockNotice(id, featureId, titlePL, whatPL, insteadPL) {
-    var box = mk('div', 'ms-note ms-note--premium');
-    box.id = id;
-    box.appendChild(icon('lock'));
-    var body = mk('div', 'ms-note__text');
-    body.appendChild(mk('span', 'ms-note__title', titlePL));
-    body.appendChild(mk('span', null, whatPL));
-    body.appendChild(mk('span', 'ms-t-cap ms-t-muted', 'Bez Premium: ' + insteadPL));
-    // Inside the text column, not beside it: as a sibling of the flex row the
-    // button shrank to its 48px minimum and the word "Odblokuj" disappeared.
-    var unlock = btn(null, 'ms-btn ms-btn--premium', 'Odblokuj', 'unlock', function () {
-      require(featureId, 'tool');
-    });
-    body.appendChild(unlock);
-    box.appendChild(body);
-    return box;
   }
 
   function switchRow(id, titlePL, subPL, checked, onChange) {
@@ -370,7 +329,6 @@
     if (!engine || typeof engine.getThresholds !== 'function') return null;
     var name = (namePL || '').replace(/^\s+|\s+$/g, '');
     if (!name) return null;
-    if (!has('profiles')) { require('profiles', 'tool'); return null; }
     var list = customProfiles();
     var entry = {
       id: 'user.' + Date.now().toString(36),
@@ -474,7 +432,7 @@
         return;
       }
       var saved = Tools.saveProfile(value);
-      if (!saved) return;                       // paywall already opened, or nothing to save
+      if (!saved) return;                       // nothing to save
       toast('Zapisano profil „' + saved.namePL + '”.', 'success');
       renderThresholds();
     }));
@@ -482,13 +440,6 @@
     field.appendChild(mk('p', 'ms-help', 'Zapisuje dokładnie te progi, które są ustawione powyżej.'));
     saveCard.appendChild(field);
     host.appendChild(saveCard);
-
-    if (!has('profiles')) {
-      host.appendChild(lockNotice('profilesLockNotice', 'profiles',
-        'Własne profile progów',
-        'Zapisuje dowolny zestaw progów pod nazwą i pozwala wracać do niego jednym dotknięciem.',
-        'trzy profile wbudowane, które możesz stosować bez ograniczeń.'));
-    }
   }
 
   function thresholdRow(m, current) {
@@ -684,7 +635,6 @@
   var thresholdsBeforeSchedule = null;
 
   function scheduleTick() {
-    if (!has('schedule')) return;
     var rule = Tools.activeRule();
     var id = rule ? rule.id : null;
     if (id === lastScheduleRuleId) return;
@@ -731,7 +681,6 @@
   function renderSchedule() {
     var host = panelHost('panelSchedule');
     if (!host) return;
-    var unlocked = has('schedule');
     var s = Tools.getSchedule();
 
     host.appendChild(note('info', 'Po co harmonogram. ',
@@ -740,12 +689,7 @@
 
     var card = mk('div', 'ms-card');
     card.appendChild(switchRow('scheduleToggle', 'Włącz automatyczne przełączanie',
-      'Sprawdzane co minutę na zegarze urządzenia.', s.enabled && unlocked, function (checked) {
-        if (checked && !unlocked) {
-          el('scheduleToggle').checked = false;
-          require('schedule', 'tool');
-          return;
-        }
+      'Sprawdzane co minutę na zegarze urządzenia.', s.enabled, function (checked) {
         s.enabled = checked;
         Tools.setSchedule(s);
         lastScheduleRuleId = null;
@@ -768,19 +712,11 @@
     host.appendChild(rules);
 
     host.appendChild(btn('btnScheduleAdd', 'ms-btn ms-btn--outline ms-btn--block', 'Dodaj regułę', 'timer', function () {
-      if (!unlocked) { require('schedule', 'tool'); return; }
       var next = Tools.getSchedule();
       next.rules.push({ id: 'r' + Date.now().toString(36), fromMin: 20 * 60, toMin: 23 * 60, profileId: 'builtin.evening' });
       Tools.setSchedule(next);
       renderSchedule();
     }));
-
-    if (!unlocked) {
-      host.appendChild(lockNotice('scheduleLockNotice', 'schedule',
-        'Harmonogram progów',
-        'Reguły „od–do” automatycznie podmieniają profil progów, na przykład 22:00–06:00 na „Wieczór — łagodny”.',
-        'ręczne przełączanie profili na ekranie „Progi i profile”. Automat jest wyłączony.'));
-    }
   }
 
   function scheduleRuleRow(schedule, rule, index) {
@@ -899,7 +835,7 @@
   function onSampleForAlerts(reading) {
     if (!reading || !reading.zones) return;
     var cfg = Tools.getAlerts();
-    if (!cfg.enabled || !has('alerts')) { alertSince = 0; return; }
+    if (!cfg.enabled) { alertSince = 0; return; }
     var wanted = cfg.level === 'warning' ? 1 : 2;
     var rank = zoneRank(reading.zones[cfg.metricId]);
     if (rank < wanted) { alertSince = 0; return; }
@@ -985,7 +921,6 @@
   function renderAlerts() {
     var host = panelHost('panelAlerts');
     if (!host) return;
-    var unlocked = has('alerts');
     var cfg = Tools.getAlerts();
 
     host.appendChild(note('info', 'Co robi alert. ',
@@ -994,12 +929,7 @@
 
     var card = mk('div', 'ms-card');
     card.appendChild(switchRow('alertsToggle', 'Włącz alerty ekspozycji',
-      'Działają tylko podczas trwającego pomiaru.', cfg.enabled && unlocked, function (checked) {
-        if (checked && !unlocked) {
-          el('alertsToggle').checked = false;
-          require('alerts', 'tool');
-          return;
-        }
+      'Działają tylko podczas trwającego pomiaru.', cfg.enabled, function (checked) {
         Tools.setAlerts({ enabled: checked });
       }));
 
@@ -1041,13 +971,6 @@
       cfg.sound, function (checked) { Tools.setAlerts({ sound: checked }); }));
 
     host.appendChild(card);
-
-    if (!unlocked) {
-      host.appendChild(lockNotice('alertsLockNotice', 'alerts',
-        'Alerty ekspozycji',
-        'Sygnał, gdy metryka trzyma strefę krytyczną dłużej, niż ustawisz. Nigdy nie zatrzymuje pomiaru.',
-        'kolor i słowo strefy na kafelku — widoczne przez cały czas pomiaru.'));
-    }
   }
 
   /* ==================================================================
@@ -1063,7 +986,6 @@
 
   Tools.captureCompareSlot = function (slot) {
     if (slot !== 'A' && slot !== 'B') return null;
-    if (slot === 'B' && !has('compare.ab')) { require('compare.ab', 'tool'); return null; }
     var engine = E();
     if (!engine || typeof engine.snapshot !== 'function') return null;
     var snap = engine.snapshot(slot === 'A' ? 'Światło A' : 'Światło B');
@@ -1120,7 +1042,6 @@
   function renderCompare() {
     var host = panelHost('panelCompare');
     if (!host) return;
-    var unlocked = has('compare.ab');
     var state = compareState();
 
     host.appendChild(note('info', 'Jak porównywać. ',
@@ -1128,8 +1049,8 @@
       'ani kąta, przełącz światło i zapisz B. Porównanie ma sens tylko wtedy, gdy scena jest ta sama.'));
 
     var grid = mk('div', 'ms-grid');
-    grid.appendChild(compareCard('A', 'compareSlotA', 'btnCaptureA', state.A, true));
-    grid.appendChild(compareCard('B', 'compareSlotB', 'btnCaptureB', state.B, unlocked));
+    grid.appendChild(compareCard('A', 'compareSlotA', 'btnCaptureA', state.A));
+    grid.appendChild(compareCard('B', 'compareSlotB', 'btnCaptureB', state.B));
     host.appendChild(grid);
 
     var wrap = mk('div', 'ms-tablewrap');
@@ -1153,7 +1074,7 @@
       th.setAttribute('scope', 'row');
       tr.appendChild(th);
       tr.appendChild(compareCell(state.A, m));
-      tr.appendChild(compareCell(unlocked ? state.B : null, m));
+      tr.appendChild(compareCell(state.B, m));
       tbody.appendChild(tr);
     }
     table.appendChild(tbody);
@@ -1162,13 +1083,11 @@
 
     var verdict = mk('div', 'ms-card ms-card--accent');
     verdict.id = 'compareVerdict';
-    var v = unlocked ? compareVerdict(state) : null;
+    var v = compareVerdict(state);
     verdict.appendChild(mk('h3', 'ms-card__title', 'Wynik porównania'));
     verdict.appendChild(mk('p', 'ms-card__sub', v
       ? v.textPL
-      : (unlocked
-        ? 'Zapisz oba światła, żeby zobaczyć, które jest łagodniejsze.'
-        : 'Porównanie dwóch źródeł jest częścią wersji Premium.')));
+      : 'Zapisz oba światła, żeby zobaczyć, które jest łagodniejsze.'));
     host.appendChild(verdict);
 
     host.appendChild(btn('btnCompareClear', 'ms-btn ms-btn--outline ms-btn--block', 'Wyczyść porównanie', 'trash', function () {
@@ -1176,21 +1095,13 @@
       renderCompare();
       toast('Porównanie wyczyszczone.', 'info');
     }));
-
-    if (!unlocked) {
-      host.appendChild(lockNotice('compareLockNotice', 'compare.ab',
-        'Porównywarka A/B',
-        'Zapamiętuje dwa źródła światła i mówi, które jest łagodniejsze — podając, którą metryką.',
-        'zapisanie i podgląd samego slotu A. Slot B pozostaje pusty, nigdy nie pokazujemy w nim zmyślonych liczb.'));
-    }
   }
 
-  function compareCard(slot, cardId, buttonId, snapshot, enabled) {
+  function compareCard(slot, cardId, buttonId, snapshot) {
     var card = mk('div', 'ms-card');
     card.id = cardId;
     var head = mk('div', 'ms-card__head');
     head.appendChild(mk('h3', 'ms-card__title', 'Światło ' + slot));
-    if (!enabled) head.appendChild(mk('span', 'ms-lock', 'Premium'));
     card.appendChild(head);
     card.appendChild(mk('p', 'ms-card__sub', snapshot
       ? 'Zapisano ' + fmtDate(snapshot.at) + ', ' + fmtTime(snapshot.at)
@@ -1213,11 +1124,6 @@
     var td = mk('td', null);
     if (!snapshot || !snapshot.values) { td.textContent = '—'; return td; }
     var value = snapshot.values[m.id];
-    if (m.premium && !has('metric.' + m.id)) {
-      td.appendChild(icon('lock'));
-      td.appendChild(mk('span', 'ms-visually-hidden', 'funkcja Premium'));
-      return td;
-    }
     td.textContent = fmtValue(m.id, value);
     var zone = snapshot.zones ? snapshot.zones[m.id] : null;
     if (zone) td.setAttribute('data-zone', zone);
@@ -1251,10 +1157,6 @@
      spectrometer. */
   Tools.startCalibration = function () {
     var engine = E();
-    if (!has('calibration')) {
-      require('calibration', 'tool');
-      return Promise.resolve({ ok: false, messagePL: 'Kalibracja jest częścią wersji Premium.' });
-    }
     if (!engine || typeof engine.latest !== 'function') {
       return Promise.resolve({ ok: false, messagePL: 'Moduł pomiaru nie jest dostępny.' });
     }
@@ -1308,7 +1210,6 @@
   function renderCalibration() {
     var host = panelHost('panelCalibration');
     if (!host) return;
-    var unlocked = has('calibration');
     var info = Tools.calibrationInfo();
 
     host.appendChild(note('info', 'Dlaczego to działa. ',
@@ -1365,13 +1266,6 @@
     }));
     card.appendChild(actions);
     host.appendChild(card);
-
-    if (!unlocked) {
-      host.appendChild(lockNotice('calibLockNotice', 'calibration',
-        'Kalibracja białą kartką',
-        'Trzy sekundy pomiaru białej kartki usuwają stały odchył kanałów czujnika.',
-        'pełne wyjaśnienie metody powyżej. Pomiar i cztery bezpłatne metryki działają bez kalibracji.'));
-    }
   }
 
   function calibStep(numberPL, titlePL) {
@@ -1423,12 +1317,9 @@
     screenCheck.results.push({ key: step.key, titlePL: step.titlePL, snapshot: snap });
 
     var next = screenCheck.index + 1;
-    // The free tier walks step one and then stops — with the remaining steps
-    // listed by name, so nobody has to guess what they are missing.
-    if (next >= SCREEN_STEPS.length || (next > 0 && !has('screencheck'))) {
+    if (next >= SCREEN_STEPS.length) {
       screenCheck.index = -1;
       renderScreenCheck();
-      if (next < SCREEN_STEPS.length) require('screencheck', 'tool');
       return null;
     }
     screenCheck.index = next;
@@ -1474,7 +1365,6 @@
   function renderScreenCheck() {
     var host = panelHost('panelScreenCheck');
     if (!host) return;
-    var unlocked = has('screencheck');
     var running = screenCheck.index >= 0;
 
     host.appendChild(note('info', 'Do czego to służy. ',
@@ -1535,11 +1425,6 @@
       text.appendChild(mk('span', 'ms-list__title', SCREEN_STEPS[i].titlePL));
       text.appendChild(mk('span', 'ms-list__sub', SCREEN_STEPS[i].hintPL));
       row.appendChild(text);
-      if (i > 0 && !unlocked) {
-        var end = mk('span', 'ms-list__end');
-        end.appendChild(mk('span', 'ms-lock', 'Premium'));
-        row.appendChild(end);
-      }
       stepsList.appendChild(row);
     }
     host.appendChild(stepsList);
@@ -1561,13 +1446,6 @@
       }
     }
     host.appendChild(resultBox);
-
-    if (!unlocked) {
-      host.appendChild(lockNotice('screenCheckLockNotice', 'screencheck',
-        'Kreator „Sprawdź mój monitor”',
-        'Pięć kroków i gotowy wniosek: równomierność podświetlenia, ściemnianie impulsowe i skuteczność trybu nocnego.',
-        'lista wszystkich kroków i wykonanie pierwszego z nich na prawdziwych danych.'));
-    }
   }
 
   /* ==================================================================
@@ -1583,38 +1461,10 @@
       try { points = engine.history({ sinceMs: at - span, untilMs: at }) || []; }
       catch (e) { points = []; }
     }
-    return aggregate(kind, at, span, points, false);
+    return aggregate(kind, at, span, points);
   };
 
-  /* The free-tier report runs on a synthetic day generated here. It is labelled
-     as synthetic in the object AND on the screen, because a made-up number that
-     looks like a measurement is exactly the thing this app was asked not to do. */
-  function sampleReport(kind) {
-    var at = Date.now();
-    var span = kind === 'week' ? 7 * DAY_MS : DAY_MS;
-    var points = [];
-    var step = span / 240;
-    for (var i = 0; i < 240; i += 1) {
-      var t = at - span + i * step;
-      var hour = new Date(t).getHours();
-      var evening = hour >= 19 || hour < 6;
-      var share = evening ? 20 + (i % 7) : 29 + (i % 9);
-      points.push({
-        t: t,
-        share: share,
-        brightness: evening ? 34 + (i % 11) : 62 + (i % 13),
-        kelvin: evening ? 2900 + (i % 5) * 60 : 5600 + (i % 7) * 80,
-        melanopic: evening ? 0.42 + (i % 5) / 100 : 0.94 + (i % 6) / 100,
-        flicker: 3 + (i % 4),
-        uniformity: 74 - (i % 9),
-        comfort: evening ? 84 - (i % 6) : 62 - (i % 8),
-        zone: evening ? 'good' : (share >= 33 ? 'critical' : (share >= 26 ? 'warning' : 'good'))
-      });
-    }
-    return aggregate(kind, at, span, points, true);
-  }
-
-  function aggregate(kind, at, span, points, synthetic) {
+  function aggregate(kind, at, span, points) {
     var ids = [];
     var list = catalogue();
     var i, j;
@@ -1666,7 +1516,6 @@
       atMs: at,
       fromMs: at - span,
       samples: points.length,
-      synthetic: !!synthetic,
       avg: avg, min: min, max: max,
       zones: zones,
       worstHour: worstScore > 0 ? worstHour : null,
@@ -1709,13 +1558,6 @@
     if (!host || !report) return;
     clear(host);
 
-    if (report.synthetic) {
-      var strip = mk('div', 'ms-demo-strip');
-      strip.appendChild(mk('span', 'ms-demo-badge demo-badge', 'PRZYKŁAD'));
-      strip.appendChild(mk('span', null, 'Raport przykładowy na danych syntetycznych — to NIE są Twoje pomiary.'));
-      host.appendChild(strip);
-    }
-
     host.appendChild(mk('p', 'ms-t-body',
       (report.kind === 'week' ? 'Tydzień' : 'Dzień') + ' od ' + fmtDate(report.fromMs) +
       ' do ' + fmtDate(report.atMs) + ' — ' +
@@ -1753,17 +1595,9 @@
       var rowHead = mk('th', null, m.namePL + ' (' + m.unit + ')');
       rowHead.setAttribute('scope', 'row');
       tr.appendChild(rowHead);
-      if (m.premium && !has('metric.' + m.id)) {
-        var locked = mk('td', null);
-        locked.setAttribute('colspan', '3');
-        locked.appendChild(icon('lock'));
-        locked.appendChild(mk('span', null, ' Funkcja Premium'));
-        tr.appendChild(locked);
-      } else {
-        tr.appendChild(mk('td', null, fmtValue(m.id, report.avg[m.id])));
-        tr.appendChild(mk('td', null, fmtValue(m.id, report.min[m.id])));
-        tr.appendChild(mk('td', null, fmtValue(m.id, report.max[m.id])));
-      }
+      tr.appendChild(mk('td', null, fmtValue(m.id, report.avg[m.id])));
+      tr.appendChild(mk('td', null, fmtValue(m.id, report.min[m.id])));
+      tr.appendChild(mk('td', null, fmtValue(m.id, report.max[m.id])));
       tbody.appendChild(tr);
     }
     table.appendChild(tbody);
@@ -1798,11 +1632,10 @@
   function renderReports() {
     var host = panelHost('panelReports');
     if (!host) return;
-    var unlocked = has('reports');
 
     host.appendChild(note('info', 'Skąd te liczby. ',
       'Raport liczy się z historii zapisanej na tym urządzeniu — po jednym punkcie na pięć sekund. ' +
-      'Silnik zbiera ją od pierwszego pomiaru, niezależnie od zakupu, więc odblokowanie nie zaczyna nic od nowa.'));
+      'Silnik zbiera ją od pierwszego pomiaru, więc raport jest gotowy od razu.'));
 
     var seg = mk('div', 'ms-segment');
     seg.setAttribute('role', 'group');
@@ -1833,25 +1666,10 @@
     host.appendChild(date);
 
     var body = mk('div', 'ms-stack');
-    body.id = unlocked ? 'reportBody' : 'reportSample';
+    body.id = 'reportBody';
     host.appendChild(body);
 
-    Tools.renderReport(body.id, unlocked ? Tools.report(reportKind) : sampleReport(reportKind));
-
-    if (!unlocked) {
-      // The container id the specification reserves for the real report has to
-      // exist even in the free tier, or another module looking it up finds
-      // nothing; it stays empty and hidden rather than holding fake numbers.
-      var realBody = mk('div', 'ms-stack');
-      realBody.id = 'reportBody';
-      realBody.hidden = true;
-      host.appendChild(realBody);
-
-      host.appendChild(lockNotice('reportLockNotice', 'reports',
-        'Raporty dzienne i tygodniowe',
-        'Średnie, minima, maksima, rozkład stref w godzinach, najgorsza pora dnia i trzy konkretne zalecenia — z Twoich danych.',
-        'raport przykładowy powyżej, wyraźnie oznaczony jako dane syntetyczne.'));
-    }
+    Tools.renderReport(body.id, Tools.report(reportKind));
   }
 
   /* ==================================================================
@@ -1922,10 +1740,6 @@
   };
 
   Tools.exportCsv = function (opts) {
-    if (!has('export.csv')) {
-      require('export.csv', 'tool');
-      return Promise.resolve({ ok: false, messagePL: 'Eksport CSV jest częścią wersji Premium.' });
-    }
     var csv = Tools.buildCsv(opts);
     if (csv.rows.length < 2) {
       return Promise.resolve({ ok: false, messagePL: 'W wybranym zakresie nie ma żadnych odczytów.' });
@@ -1954,7 +1768,6 @@
   function renderExport() {
     var host = panelHost('panelExport');
     if (!host) return;
-    var unlocked = has('export.csv');
 
     host.appendChild(note('info', 'Format pliku. ',
       'Średnik jako separator kolumn, przecinek jako separator dziesiętny, kodowanie UTF-8 ze znacznikiem BOM. ' +
@@ -1972,27 +1785,14 @@
     var list = catalogue();
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
-      /* A <span> carries no role, so aria-selected on it was ignored outright
-         and the only signals left were a padlock marked aria-hidden and a
-         ::before checkmark. Seven identical metric names, no way to tell a
-         full column from an empty one. The state is now written out for the
-         reader and driven from data-locked for the eye, so the styling never
-         depends on ARIA that does not apply. */
-      var locked = m.premium && !has('metric.' + m.id);
-      var chip = mk('span', 'ms-chip', m.namePL);
-      chip.setAttribute('data-locked', locked ? 'true' : 'false');
-      if (locked) {
-        chip.appendChild(icon('lock'));
-        chip.appendChild(mk('span', 'ms-visually-hidden', ' — kolumna pusta, funkcja Premium'));
-      } else {
-        chip.appendChild(mk('span', 'ms-visually-hidden', ' — kolumna wypełniona'));
-      }
+      var chip = mk('span', 'ms-chip ms-chip--filled', m.namePL);
+      chip.appendChild(mk('span', 'ms-visually-hidden', ' — kolumna wypełniona'));
       chips.appendChild(chip);
     }
     metricsBox.appendChild(chips);
     metricsBox.appendChild(mk('p', 'ms-help',
-      'Plik zawsze zawiera wszystkie siedem kolumn — silnik liczy je od początku. ' +
-      'Kolumny metryk płatnych są w pliku puste, dopóki nie odblokujesz metryki.'));
+      'Plik zawiera wszystkie siedem kolumn — silnik liczy je od pierwszego pomiaru ' +
+      'i wszystkie trafiają do pliku.'));
     card.appendChild(metricsBox);
     host.appendChild(card);
 
@@ -2007,13 +1807,6 @@
         toast(res.messagePL, res.ok ? 'success' : 'error');
       });
     }));
-
-    if (!unlocked) {
-      host.appendChild(lockNotice('exportLockNotice', 'export.csv',
-        'Eksport CSV',
-        'Zapisuje całą historię do pliku, który otwiera Excel, Arkusze Google i każdy program statystyczny.',
-        'opis formatu i podgląd pięciu pierwszych wierszy — na prawdziwych danych z tego urządzenia.'));
-    }
   }
 
   function renderExportPreview() {
@@ -2059,17 +1852,17 @@
      ================================================================== */
 
   var TOOL_ROWS = [
-    { id: 'btnToolProfiles', panelId: 'panelThresholds', iconName: 'tune', featureId: null,
+    { id: 'btnToolProfiles', panelId: 'panelThresholds', iconName: 'tune',
       titlePL: 'Progi i profile', subPL: 'Kiedy wartość ma zapalać ostrzeżenie' },
-    { id: 'btnToolCompare', panelId: 'panelCompare', iconName: 'grid', featureId: 'compare.ab',
+    { id: 'btnToolCompare', panelId: 'panelCompare', iconName: 'grid',
       titlePL: 'Porównywarka A/B', subPL: 'Które z dwóch świateł jest łagodniejsze' },
-    { id: 'btnToolCalibration', panelId: 'panelCalibration', iconName: 'refresh', featureId: 'calibration',
+    { id: 'btnToolCalibration', panelId: 'panelCalibration', iconName: 'refresh',
       titlePL: 'Kalibracja białą kartką', subPL: 'Jedyna funkcja, która realnie podnosi dokładność' },
-    { id: 'btnToolScreenCheck', panelId: 'panelScreenCheck', iconName: 'monitor', featureId: 'screencheck',
+    { id: 'btnToolScreenCheck', panelId: 'panelScreenCheck', iconName: 'monitor',
       titlePL: 'Sprawdź mój monitor', subPL: 'Pięć kroków i gotowy wniosek o ekranie' },
-    { id: 'btnToolSchedule', panelId: 'panelSchedule', iconName: 'timer', featureId: 'schedule',
+    { id: 'btnToolSchedule', panelId: 'panelSchedule', iconName: 'timer',
       titlePL: 'Harmonogram progów', subPL: 'Inne progi wieczorem, bez pamiętania o tym' },
-    { id: 'btnToolAlerts', panelId: 'panelAlerts', iconName: 'bell', featureId: 'alerts',
+    { id: 'btnToolAlerts', panelId: 'panelAlerts', iconName: 'bell',
       titlePL: 'Alerty ekspozycji', subPL: 'Sygnał, gdy strefa krytyczna trwa zbyt długo' }
   ];
 
@@ -2082,9 +1875,7 @@
     }
   }
 
-  /* Every row opens its screen, paid or not. The lock lives INSIDE the screen,
-     next to the explanation of what the feature does — a row that refuses to
-     open teaches the user nothing except that they are not welcome. */
+  /* Every row opens its screen. There is nothing left that could refuse. */
   function toolRow(spec) {
     var row = mk('button', 'ms-list__item ms-list__item--button');
     row.id = spec.id;
@@ -2097,7 +1888,6 @@
     text.appendChild(mk('span', 'ms-list__sub', spec.subPL));
     row.appendChild(text);
     var end = mk('span', 'ms-list__end');
-    if (spec.featureId && !has(spec.featureId)) end.appendChild(mk('span', 'ms-lock', 'Premium'));
     end.appendChild(icon('chevron'));
     row.appendChild(end);
     row.addEventListener('click', function () {
@@ -2151,11 +1941,6 @@
   });
 
   on('engine:calibration', function () { renderCalibration(); });
-
-  /* Entitlements are presentation here too: nothing is recomputed, the screens
-     are simply redrawn with or without their locks. */
-  on('store:entitlements', function () { renderAll(); });
-  on('store:reset', function () { renderAll(); });
 
   on('ui:viewchange', function (data) {
     var panelId = data && data.panelId;

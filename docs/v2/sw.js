@@ -13,7 +13,7 @@
  * Bump CACHE when any file in APP_SHELL changes; the old cache is deleted on
  * activate, so a stale stylesheet cannot outlive the markup it styles.
  */
-var CACHE = 'blue-monitor-v2-2';
+var CACHE = 'blue-monitor-v2-4';
 
 /* Relative paths on purpose: the app must work from /v2/, from a project page
    under /<repo>/docs/v2/ and from a copied directory, without editing a line.
@@ -26,7 +26,7 @@ var APP_SHELL = [
   './metrics.js',
   './ui-core.js',
   './engine.js',
-  './account.js',
+  './support.js',
   './tools.js',
   './boot.js',
   '../icons/icon-192.png',

@@ -52,7 +52,7 @@
 
   /* ---- Krawędzie ------------------------------------------------------- */
   --c-border: #DCE2EA;                 /* kontrast 1,30 — DEKORACJA, nigdy nie niesie znaczenia */
-  --c-border-strong: #8A93A0;          /* kontrast 3,11 — obrys pola, wybrany plan, oś tabeli */
+  --c-border-strong: #8A93A0;          /* kontrast 3,11 — obrys pola, oś tabeli */
 
   /* ---- Tekst ----------------------------------------------------------- */
   --c-text: #0C1116;                   /* 18,96 / 17,52 / 17,04 / 15,54 — tekst główny, duże liczby */
@@ -70,11 +70,7 @@
   --c-on-warn: #FFFFFF;                /* 6,80 na --c-warn */
   --c-on-crit: #FFFFFF;                /* 6,54 na --c-crit */
 
-  /* ---- Premium, informacja, tryb demonstracyjny ------------------------ */
-  --c-premium: #6D3BD1;                /* 6,57 / 6,07 */
-  --c-premium-2: #A32BB0;              /* 5,95 na białym — drugi kolor gradientu premium */
-  --c-premium-soft: #EFE8FD;           /* --c-premium na nim: 5,52 */
-  --c-on-premium: #FFFFFF;             /* 6,57 na --c-premium */
+  /* ---- Informacja i tryb demonstracyjny -------------------------------- */
   --c-info: #0B63C5;                   /* 5,82 / 5,38 */
   --c-info-soft: #E4EEFB;              /* --c-info na nim: 4,97 */
   --c-demo: #A5117E;                   /* 7,04 / 6,51 */
@@ -167,7 +163,7 @@
 
 /* ============================================================================
    2. AKCENTY — motyw JASNY
-   Każda paleta podmienia dokładnie pięć tokenów. Kolory stref, premium, info
+   Każda paleta podmienia dokładnie pięć tokenów. Kolory stref, informacji
    i demo zostają nietknięte: „W normie” ma znaczyć to samo w każdej palecie.
    ============================================================================ */
 
@@ -260,11 +256,7 @@
     --c-on-warn: #1B1206;              /* 12,9 na --c-warn */
     --c-on-crit: #2A0B09;              /*  8,4 na --c-crit */
 
-    /* ---- Premium, informacja, demo ------------------------------------- */
-    --c-premium: #BFA3FF;              /* 8,14 / 8,91 */
-    --c-premium-2: #D69BFF;            /* 9,09 na #0B1015 — drugi kolor gradientu */
-    --c-premium-soft: #231C40;         /* --c-premium na nim: 7,55 */
-    --c-on-premium: #150C2E;           /* 10,6 na --c-premium */
+    /* ---- Informacja i demo ---------------------------------------------- */
     --c-info: #7FB6FF;                 /* 8,25 / 9,04 */
     --c-info-soft: #122438;            /* --c-info na nim: 7,52 */
     --c-demo: #FF86D2;                 /* 7,89 / 8,64 */
@@ -365,10 +357,6 @@
   --c-on-warn: #1B1206;                /* 12,9 na --c-warn */
   --c-on-crit: #2A0B09;                /*  8,4 na --c-crit */
 
-  --c-premium: #BFA3FF;                /* 8,14 / 8,91 */
-  --c-premium-2: #D69BFF;              /* 9,09 na #0B1015 */
-  --c-premium-soft: #231C40;           /* --c-premium na nim: 7,55 */
-  --c-on-premium: #150C2E;             /* 10,6 na --c-premium */
   --c-info: #7FB6FF;                   /* 8,25 / 9,04 */
   --c-info-soft: #122438;              /* --c-info na nim: 7,52 */
   --c-demo: #FF86D2;                   /* 7,89 / 8,64 */

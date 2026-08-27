@@ -28,7 +28,7 @@ export const bus = {
     setFor(name).add(fn);
     let active = true;
     return () => {
-      // Idempotentne: podwójne wywołanie nie usunie cudzej subskrypcji, gdyby
+      // Idempotentne: podwójne wywołanie nie usunie cudzego nasłuchu, gdyby
       // ten sam `fn` zapisał się drugi raz w międzyczasie.
       if (!active) return;
       active = false;
@@ -43,7 +43,7 @@ export const bus = {
     if (typeof fn !== 'function') return () => {};
     const off = bus.on(name, (payload) => {
       // Wypisujemy się PRZED wywołaniem, żeby wyjątek w `fn` nie zostawił
-      // subskrypcji „na raz”, która odpali się po raz drugi.
+      // rejestracji „na raz”, która odpali się po raz drugi.
       off();
       fn(payload);
     });

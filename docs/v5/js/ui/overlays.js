@@ -1,11 +1,11 @@
 /**
- * ui/overlays.js — warstwy nad interfejsem: toast, arkusz, dialog, paywall.
+ * ui/overlays.js — warstwy nad interfejsem: toast, arkusz, dialog.
  *
  * Jeden stos warstw pilnuje wspólnych rzeczy: zasłony, blokady przewijania
  * tła, pułapki fokusa, klawisza Esc i powrotu fokusa do elementu, który
  * warstwę otworzył. Arkusz i dialog to ta sama konstrukcja — o tym, czy
  * wjeżdża od dołu, czy stoi na środku, decyduje wyłącznie CSS.
- * Jedyna zależność: ui/dom.js. billing.js i metrics.js ładujemy leniwie.
+ * Jedyna zależność: ui/dom.js.
  *
  * Klasy dla autora css/components.css:
  *   m5-scrim              zasłona pod warstwami (element #scrim), [hidden], [data-state="open"|"closing"]
@@ -23,9 +23,6 @@
  *   m5-toasts             kontener komunikatów (#toasts)
  *   m5-toast              komunikat: [data-tone="neutral|success|warn|error"]
  *     m5-toast__text  m5-toast__action  m5-toast__close
- *   m5-paywall            treść arkusza sprzedażowego wewnątrz m5-sheet__body
- *     m5-paywall__demo  m5-paywall__badge  m5-paywall__lead  m5-paywall__benefits  m5-paywall__benefit
- *     m5-paywall__plans m5-paywall__plan  m5-paywall__plan-badge m5-paywall__note
  *   m5-btn                przycisk; modyfikatory --primary, --ghost, --danger, --icon
  *                         (dodatkowo data-tone z tą samą wartością)
  */
@@ -466,215 +463,5 @@ export function dialog({
       onClose: () => resolve(answer)
     });
     if (text) api.el.setAttribute('aria-describedby', textId);
-  });
-}
-
-/* ───────────────────────────────  Paywall  ────────────────────────────── */
-
-// billing.js i metrics.js wchodzą do gry dopiero tutaj — dzięki temu
-// ui/overlays.js zależy statycznie wyłącznie od ui/dom.js, a brak modułu
-// (albo jego wcześniejszy błąd) nie wywraca całej aplikacji.
-async function lazyModule(path) {
-  try {
-    return await import(path);
-  } catch {
-    return null;
-  }
-}
-
-// Wiersz planu WYBIERA plan, nie kupuje go: zakup rusza dopiero z przycisku
-// w stopce arkusza, który powtarza cenę. Warunki odnowienia (perMonthPL,
-// notePL) stoją w samym wierszu — tak samo jak na ekranie Konto.
-function planRow(plan, onSelect) {
-  const metaText = [plan.perMonthPL, plan.notePL].filter(Boolean).join('. ');
-  return h('button.m5-btn.m5-paywall__plan', {
-    type: 'button',
-    dataset: { plan: plan.id, tone: 'primary' },
-    aria: { pressed: 'false' },
-    on: { click: (event) => onSelect(plan, event.currentTarget) }
-  },
-  h('span.m5-paywall__plan-name', { text: plan.namePL || plan.id }),
-  h('span.m5-paywall__plan-price', { text: [plan.pricePL, plan.periodPL].filter(Boolean).join(' ') }),
-  plan.badgePL ? h('span.m5-paywall__plan-badge', { text: plan.badgePL }) : null,
-  plan.savingPL ? h('span.m5-paywall__plan-saving', { text: plan.savingPL }) : null,
-  metaText ? h('span.m5-account__plan-meta', { style: { flex: '1 1 100%' }, text: metaText }) : null);
-}
-
-function planSentence(plan) {
-  return [plan.namePL, [plan.pricePL, plan.periodPL].filter(Boolean).join(' ')]
-    .filter(Boolean).join(' — ');
-}
-
-// Kształt wyniku purchase() nie jest w kontrakcie ustalony, więc traktujemy
-// odrzucenie szeroko: wyjątek, false, ok:false, error, status 'declined'.
-function purchaseFailed(result) {
-  if (result === false) return true;
-  if (!result || typeof result !== 'object') return false;
-  return result.ok === false || result.declined === true || result.status === 'declined' || !!result.error;
-}
-
-function failureText(result) {
-  const message = result && typeof result === 'object'
-    ? (result.messagePL || result.reasonPL || result.error)
-    : null;
-  return typeof message === 'string' && message ? message : 'Płatność odrzucona (symulacja). Spróbuj ponownie.';
-}
-
-/**
- * paywall(metricId) -> Promise<void>
- * Arkusz sprzedażowy dla zablokowanej wielkości. Ceny i korzyści zawsze
- * z billing.js — nic nie jest wpisane na sztywno. Rozwiązuje się w chwili
- * zamknięcia arkusza, niezależnie od wyniku „zakupu”.
- */
-export async function paywall(metricId) {
-  const [billing, metrics] = await Promise.all([lazyModule('../billing.js'), lazyModule('../metrics.js')]);
-
-  if (!billing || typeof billing.PLANS === 'undefined') {
-    // Bez modułu płatności nie udajemy sklepu — mówimy wprost, co się dzieje.
-    return new Promise((resolve) => {
-      sheet({
-        title: 'Wersja premium',
-        body: h('p', { text: 'Ta część demonstracji nie jest teraz dostępna. Pomiar i historia działają bez zmian.' }),
-        actions: [{ labelPL: 'Rozumiem', tone: 'primary' }],
-        onClose: () => resolve()
-      });
-    });
-  }
-
-  const item = metrics && typeof metrics.byId === 'function' ? metrics.byId(metricId) : null;
-  const metricName = item?.namePL || '';
-  const plans = Array.isArray(billing.PLANS) ? billing.PLANS : [];
-  const benefits = typeof billing.benefits === 'function' ? (billing.benefits() || []) : [];
-  const trialAvailable = typeof billing.startTrial === 'function'
-    && !(typeof billing.isTrial === 'function' && billing.isTrial())
-    && !(typeof billing.isPremium === 'function' && billing.isPremium());
-
-  return new Promise((resolve) => {
-    const content = h('div.m5-paywall');
-
-    content.appendChild(h('p.m5-paywall__demo', {
-      aria: { role: 'note' }
-    }, h('span.m5-paywall__badge', { text: 'Demo' }),
-       ' Płatności są symulowane. Żadne dane nie opuszczają urządzenia.'));
-
-    content.appendChild(h('p.m5-paywall__lead', {
-      text: metricName
-        ? `„${metricName}” to wielkość z pakietu pełnego. Odblokuj wszystkie siedem wielkości i pełną historię.`
-        : 'Odblokuj wszystkie wielkości pomiaru i pełną historię.'
-    }));
-
-    if (benefits.length) {
-      content.appendChild(h('ul.m5-paywall__benefits', null, benefits.map((b) => h('li.m5-paywall__benefit', null,
-        icon(b.icon || 'check', { size: 20 }),
-        h('span', null,
-          h('strong', { text: b.titlePL || '' }),
-          b.textPL ? h('span', { text: ` ${b.textPL}` }) : null)
-      ))));
-    }
-
-    const plansEl = h('div.m5-paywall__plans', {
-      aria: { role: 'group', label: 'Plany do wyboru' }
-    });
-    content.appendChild(plansEl);
-    // Główna akcja jest czynna od pierwszej chwili: dopóki nic nie wybrano,
-    // jej napis jest poleceniem („Wybierz plan”) i przewija arkusz do listy
-    // planów. Wyłączony przycisk pod listą, której nie widać bez przewinięcia,
-    // wyglądałby na zepsuty i nie mówiłby, czego brakuje.
-    const buyButton = h('button.m5-btn.m5-btn--primary', {
-      type: 'button',
-      dataset: { tone: 'primary' },
-      on: {
-        click: () => {
-          if (selected) { buy(selected, buyButton); return; }
-          plansEl.scrollIntoView({ block: 'nearest' });
-          rows[0]?.focus();
-        }
-      }
-    }, 'Wybierz plan');
-    content.appendChild(h('p.m5-paywall__note', {
-      text: 'Symulacja: nie pobieramy żadnych opłat, a zakup możesz cofnąć w zakładce Konto.'
-    }));
-
-    const api = sheet({
-      title: 'Pełny pomiar',
-      className: 'm5-paywall-sheet',
-      body: content,
-      actions: [
-        buyButton,
-        trialAvailable ? {
-          labelPL: 'Rozpocznij 7 dni próbnych',
-          tone: 'primary',
-          onClick: () => {
-            try {
-              billing.startTrial();
-              toast('Okres próbny aktywny przez 7 dni.', { tone: 'success' });
-            } catch {
-              toast('Nie udało się rozpocząć okresu próbnego.', { tone: 'error' });
-            }
-          }
-        } : null,
-        typeof billing.restore === 'function' ? {
-          labelPL: 'Przywróć zakup',
-          tone: 'ghost',
-          keepOpen: true,
-          onClick: () => {
-            let restored = false;
-            try {
-              restored = billing.restore() !== false;
-            } catch {
-              restored = false;
-            }
-            toast(restored ? 'Zakup przywrócony.' : 'Nie znaleziono zakupu do przywrócenia.',
-              { tone: restored ? 'success' : 'neutral' });
-            if (restored) api.close();
-          }
-        } : null,
-        { labelPL: 'Nie teraz', tone: 'ghost' }
-      ],
-      onClose: () => resolve()
-    });
-
-    let selected = null;
-    const rows = [];
-    const select = (plan, button) => {
-      selected = plan;
-      rows.forEach((row) => row.setAttribute('aria-pressed', row === button ? 'true' : 'false'));
-      buyButton.disabled = busy;
-      buyButton.textContent = `Kup: ${planSentence(plan)}`;
-    };
-
-    let busy = false;
-    const buy = async (plan, button) => {
-      if (busy || typeof billing.purchase !== 'function') return;
-      busy = true;
-      button.disabled = true;
-      button.dataset.state = 'busy';
-      button.setAttribute('aria-busy', 'true');
-      try {
-        const result = await billing.purchase(plan.id);
-        if (purchaseFailed(result)) {
-          toast(failureText(result), { tone: 'error' });
-        } else {
-          toast('Pakiet pełny aktywny. Dziękujemy!', { tone: 'success' });
-          api.close();
-          return;
-        }
-      } catch {
-        toast('Nie udało się dokończyć zakupu (symulacja).', { tone: 'error' });
-      } finally {
-        busy = false;
-        if (button.isConnected) {
-          button.disabled = false;
-          delete button.dataset.state;
-          button.removeAttribute('aria-busy');
-        }
-      }
-    };
-
-    plans.forEach((plan) => {
-      const row = planRow(plan, select);
-      rows.push(row);
-      plansEl.appendChild(row);
-    });
   });
 }

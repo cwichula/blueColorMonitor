@@ -12,7 +12,7 @@
  */
 
 import { h, clear as clearNode, mount, icon, download, announce, haptic } from '../ui/dom.js';
-import { toast, dialog, sheet, paywall } from '../ui/overlays.js';
+import { toast, dialog, sheet } from '../ui/overlays.js';
 import { chart } from '../ui/chart.js';
 import {
   RANGES, stats, sessions, all, clear as clearHistory,
@@ -102,26 +102,10 @@ export function create() {
   let pointCount = 0;
   let sessionSignature = '';
   let storageMessage = '';
-  let billing = null;                  // moduł billing.js, jeśli już istnieje
   const openSessions = new Set();      // rozwinięcia przeżywają przebudowę listy
   const chipButtons = new Map();
   const rangeButtons = new Map();
   const offs = [];
-
-  /* ─────────────────────────────  Uprawnienia  ───────────────────────── */
-
-  /* Dopóki billing.js się nie odezwie, wielkość uznajemy za dostępną: dane już
-     leżą na urządzeniu, a zasłonięcie ich na chwilę wyglądałoby jak usterka. */
-  function unlocked(id) {
-    const m = byId(id);
-    if (!m || !m.premium) return true;
-    if (!billing || typeof billing.isUnlocked !== 'function') return true;
-    try {
-      return billing.isUnlocked(id) !== false;
-    } catch (err) {
-      return true;
-    }
-  }
 
   /* ────────────────────────  Żetony wyboru wielkości  ─────────────────── */
 
@@ -140,40 +124,18 @@ export function create() {
     mount(chips, btn);
   });
 
+  /* Żeton nie dostaje aria-label: nazwa stoi w widocznym <span>, a powtórzenie
+     jej atrybutem odbiera przyszłym zmianom (ikona, licznik) prawo do bycia
+     przeczytanymi. Zostaje więc sam stan wciśnięcia. */
   function syncChips() {
     chipButtons.forEach((btn, id) => {
-      const m = byId(id);
-      const locked = !unlocked(id);
       btn.setAttribute('aria-pressed', id === metric.id ? 'true' : 'false');
-      if (locked) btn.dataset.locked = 'true';
-      else delete btn.dataset.locked;
-      // Kłódka jest drugim, niezależnym od koloru sygnałem blokady.
-      const tail = btn.lastElementChild;
-      const hasLock = !!(tail && tail.dataset && tail.dataset.lock === 'true');
-      if (locked && !hasLock) {
-        const lock = icon('lock', { size: 14 });
-        lock.dataset.lock = 'true';
-        btn.appendChild(lock);
-      } else if (!locked && hasLock) {
-        btn.removeChild(tail);
-      }
-      // Żeton odblokowany nie dostaje aria-label: nazwa stoi w widocznym
-      // <span>, a powtórzenie jej atrybutem tylko odbiera przyszłym zmianom
-      // (ikona, licznik) prawo do bycia przeczytanymi.
-      if (locked) btn.setAttribute('aria-label', m.namePL + ', wielkość premium, zablokowana');
-      else btn.removeAttribute('aria-label');
     });
   }
 
-  async function pickMetric(id) {
+  function pickMetric(id) {
     const next = byId(id);
     if (!next) return;
-    if (!unlocked(id)) {
-      haptic(8);
-      await paywall(id);
-      syncChips();
-      if (!unlocked(id)) return;       // nadal zablokowana — zostajemy przy bieżącej
-    }
     if (next.id === metric.id) return;
     metric = next;
     haptic(8);
@@ -356,12 +318,9 @@ export function create() {
       style: 'padding-bottom:var(--sp-3)'
     });
 
-    // Wielkości spod kłódki NIE trafiają do rozwinięcia: na ekranie pomiaru te
-    // same kafelki są rozmyte, więc pokazanie tu średnich i zakresów byłoby
-    // wyciekiem płatnego odczytu tylnymi drzwiami.
-    const hiddenMetrics = CATALOGUE.filter((m) => !unlocked(m.id));
-
-    CATALOGUE.filter((m) => unlocked(m.id)).forEach((m) => {
+    // Rozwinięcie pokazuje komplet siedmiu wielkości — dokładnie ten sam, który
+    // sesja zebrała i który stoi w eksporcie.
+    CATALOGUE.forEach((m) => {
       const avg = session.avg ? session.avg[m.id] : null;
       const min = session.min ? session.min[m.id] : null;
       const max = session.max ? session.max[m.id] : null;
@@ -378,27 +337,6 @@ export function create() {
           }),
           zoneTag(zoneOf(m, avg)))));
     });
-
-    if (hiddenMetrics.length) {
-      mount(details, h('div.m5-row',
-        h('div.m5-row__main',
-          h('span.m5-row__title', { text: 'Pozostałe wielkości należą do pakietu pełnego' }),
-          h('span.m5-row__desc', { text: hiddenMetrics.map((m) => m.namePL).join(', ') })),
-        h('div.m5-row__control',
-          h('button.m5-btn.m5-btn--sm', {
-            type: 'button',
-            dataset: { tone: 'primary' },
-            on: {
-              click: async () => {
-                await paywall(hiddenMetrics[0].id);
-                if (!mounted) return;
-                syncChips();
-                sessionSignature = '';
-                refreshSessions();
-              }
-            }
-          }, 'Odblokuj'))));
-    }
 
     const button = h('button.m5-row.m5-row--action', {
       id: btnId,
@@ -633,26 +571,6 @@ export function create() {
 
   /* ─────────────────────────────  Cykl życia  ────────────────────────── */
 
-  function loadBilling() {
-    // billing.js wczytujemy dynamicznie: gdy modułu nie ma (albo się wywrócił),
-    // historia ma nadal działać — po prostu bez kłódek.
-    import('../billing.js').then((mod) => {
-      billing = mod;
-      // Moduł potrafi się rozwiązać już po zejściu z ekranu: subskrypcje są
-      // wtedy zdjęte, a wykres zniszczony — przestawianie wielkości i odświeżanie
-      // odłączonego drzewa zmieniłoby tylko wybór, z którym użytkownik wyszedł.
-      if (!mounted) return;
-      syncChips();
-      if (unlocked(metric.id)) return;
-      const free = CATALOGUE.find((m) => unlocked(m.id)) || CATALOGUE[0];
-      metric = free;
-      syncChips();
-      syncStatsHead();
-      if (chartApi) chartApi.setMetric(metric.id);
-      doRefresh();
-    }).catch(() => { billing = null; });
-  }
-
   function mountScreen() {
     if (mounted) return;
     mounted = true;
@@ -664,7 +582,6 @@ export function create() {
     syncChips();
     syncRange();
     syncStatsHead();
-    loadBilling();
 
     offs.push(bus.on('history:changed', (payload) => {
       if (payload && typeof payload.count === 'number') pointCount = payload.count;
@@ -673,13 +590,6 @@ export function create() {
     }));
     // Zamknięta sesja to zdarzenie rzadkie i widoczne — na nie odświeżamy od razu.
     offs.push(bus.on('history:session', () => doRefresh()));
-    // Zmiana uprawnienia zmienia zawartość rozwinięć sesji, a nie ich podpis —
-    // dlatego kasujemy sygnaturę, żeby lista naprawdę się przebudowała.
-    offs.push(bus.on('billing:changed', () => {
-      syncChips();
-      sessionSignature = '';
-      doRefresh();
-    }));
     offs.push(bus.on('settings:changed', (payload) => {
       // Zakres mógł zmienić się poza tym ekranem (np. po przywróceniu ustawień).
       const next = payload && payload.settings ? rangeById(payload.settings.historyRange) : null;

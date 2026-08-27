@@ -20,7 +20,7 @@
  *
  * Bump CACHE when ANY file below changes. The old cache is deleted on activate.
  */
-var CACHE = 'blue-monitor-v3-2';
+var CACHE = 'blue-monitor-v3-4';
 
 /* Relative paths on purpose: the app must work from /v3/, from a project page
    under /<repo>/docs/v3/ and from a copied directory, without editing a line.
@@ -40,7 +40,7 @@ var APP_SHELL = [
   './dash.js',
   './recorder.js',
   './modules.js',
-  './offer.js',
+  './support.js',
   './docs.js',
   './boot.js',
   '../icons/icon-192.png',

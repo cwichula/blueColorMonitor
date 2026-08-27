@@ -1,6 +1,14 @@
 # Monitor Światła v4 — SPECYFIKACJA WIĄŻĄCA
 
-Wersja dokumentu: 1.0 · 2026-08-23 · autor: projektant v4
+Wersja dokumentu: 2.0 · 2026-08-27 · autor: projektant v4
+
+**Co zmieniło się w wersji 2.0 dokumentu.** Aplikacja przeszła z modelu płatnego na model
+DOBROWOLNEGO WSPARCIA. Zniknęły bez śladu: pakiety i ich ceny, okres bezpłatny na próbę,
+ekran oferty i każdy jego wariant, podział wielkości na dostępne i zamknięte wraz
+z kłódkami i plakietkami dostępu, a także symulowane konto z całą obsługą dostawców.
+Wszystkie siedem wielkości działa dla każdego, od razu i bez warunków. Zakładka, która
+nazywała się „Konto”, nazywa się teraz „Wsparcie” i mieści jedną dobrowolną prośbę
+o darowiznę obok całych ustawień aplikacji.
 Zakres: wszystko w `docs/v4/`. Nic poza tym katalogiem nie jest zmieniane.
 
 Ten plik jest jedynym źródłem prawdy dla ośmiu autorów piszących równolegle, którzy
@@ -23,27 +31,25 @@ nie wymyślaj po cichu własnej konwencji.
 | `tokens.css` | autor 1 | WYŁĄCZNIE `:root` i selektory motywu/palety. Rozdział 2 |
 | `base.css` | autor 1 | reset, typografia, powłoka, nawigacja, siatka. Rozdziały 3 i 5.A–5.C |
 | `components.css` | autor 2 | wszystkie komponenty z rozdziałów 5.D–5.M |
-| `screens.css` | autor 2 | układy czterech ekranów, paywall, arkusze narzędziowe. 5.N–5.R |
+| `screens.css` | autor 2 | układy czterech ekranów i arkusze narzędziowe. 5.N–5.R |
 | `store.js` | autor 3 | ustawienia, trwałość, zastosowanie motywu |
 | `ui.js` | autor 3 | prymitywy interfejsu, ikony, arkusze, okna, toasty |
 | `gauge.js` | autor 4 | cała wizualizacja danych (SVG) |
-| `auth.js` | autor 5 | konto (tryb demonstracyjny) |
-| `billing.js` | autor 5 | oferta, zakup, uprawnienia (tryb demonstracyjny) |
 | `app.js` | autor 6 | powłoka, router, rejestr widoków |
 | `index.html` | autor 6 | szkielet z rozdziału 4.3, przepisany dosłownie |
 | `manifest.webmanifest`, `sw.js` | autor 6 | offline; kopia z v3 z zakresem przestawionym na `/v4/` |
 | `screen-measure.js` | autor 7 | ekran POMIAR |
 | `screen-history.js` | autor 7 | ekran HISTORIA |
 | `screen-tools.js` | autor 8 | ekran NARZĘDZIA + dziewięć arkuszy narzędziowych |
-| `screen-account.js` | autor 8 | ekran KONTO + paywall + logowanie |
+| `screen-support.js` | autor 8 | ekran WSPARCIE (prośba o darowiznę) + ustawienia |
 
 ### 0.2 Kolejność ładowania (wiążąca — `engine.js` odmawia startu bez `metrics.js`)
 
 ```
 tokens.css → base.css → components.css → screens.css
 metrics.js → bus.js → engine.js → scale.js
-store.js → ui.js → gauge.js → auth.js → billing.js
-screen-measure.js → screen-history.js → screen-tools.js → screen-account.js
+store.js → ui.js → gauge.js
+screen-measure.js → screen-history.js → screen-tools.js → screen-support.js
 app.js                     (ostatni: buduje powłokę z rejestru i emituje app:ready)
 ```
 
@@ -59,10 +65,9 @@ Budowa DOM widoku dzieje się dopiero w `build(root)`, które `app.js` woła po 
    Żaden `screen-*.js` nie zawiera literału polskiego. Autor ekranu, któremu brakuje zdania,
    dopisuje je do rozdziału 7 tego dokumentu, a nie do swojego pliku.
 3. **Zero kolorów spoza tokenów.** Ani jeden `#hex`, `rgb()` czy `hsl()` poza `tokens.css`.
-   `gauge.js` używa `currentColor` i `var(--c-*)` — nic więcej. Wyjątki są dokładnie dwa
-   i oba są opisane w rozdziale 5: miniatura motywu (`ms4-themepick__preview`) musi pokazać
-   motyw, którego akurat nie ma na ekranie, a ikony dostawców logowania są rysunkami
-   w barwach własnych. Trzeciego wyjątku nie ma.
+   `gauge.js` używa `currentColor` i `var(--c-*)` — nic więcej. Wyjątek jest dokładnie jeden
+   i jest opisany w rozdziale 5: miniatura motywu (`ms4-themepick__preview`) musi pokazać
+   motyw, którego akurat nie ma na ekranie. Drugiego wyjątku nie ma.
 
 ### 0.4 Kontrakt z `engine.js`, którego nie wolno naruszyć
 
@@ -85,11 +90,11 @@ w centrum uwagi. Ta sama uczciwość, inny język wizualny. Przejmujemy z v3 **t
 
 1. **Jedna liczba jest bohaterem.** Ekran pomiaru ma jeden duży wskaźnik i jedno zdanie.
    Reszta to kafelki poniżej. Nigdy siedem równorzędnych liczb naraz.
-2. **Zdanie ważniejsze niż liczba.** Werdykt (`Scale.verdict`) jest bezpłatny, liczy się
-   ze wszystkich siedmiu wielkości i stoi bezpośrednio pod wskaźnikiem, w tej samej wadze wizualnej.
-3. **Płacisz za liczbę, nie za odpowiedź.** Premium odblokowuje trzy liczby: migotanie,
-   równomierność i komfort wzrokowy. Ocena światła działa bez opłaty i to musi być
-   napisane na paywallu, nie tylko w dokumentacji.
+2. **Zdanie ważniejsze niż liczba.** Werdykt (`Scale.verdict`) liczy się ze wszystkich
+   siedmiu wielkości i stoi bezpośrednio pod wskaźnikiem, w tej samej wadze wizualnej.
+3. **Nic nie jest zamknięte.** Wszystkie siedem wielkości ma liczby dla każdego, od pierwszego
+   uruchomienia. Nie ma kłódek, rozmytych wartości ani plakietek dostępu — a wsparcie autora
+   jest dobrowolne i niczego nie zmienia w aplikacji.
 4. **Głębia zamiast grawerunku.** Karty wyniesione nad tło (`--e-1`/`--e-2`), promienie 16–28 px,
    hojne odstępy. Zero ramek wokół wszystkiego; krawędź tylko tam, gdzie niesie znaczenie.
 5. **Kolor akcentu to marka, kolor strefy to znaczenie.** Sześć palet zmienia wyłącznie akcent
@@ -98,11 +103,12 @@ w centrum uwagi. Ta sama uczciwość, inny język wizualny. Przejmujemy z v3 **t
    stanu i wejściach arkuszy. `data-motion="reduced"` zeruje wszystko poza zmianą krycia.
 7. **Kolor nigdy sam.** Każda strefa niesie też słowo (`Scale.stamp().wordPL`) i kształt:
    kropka pełna dla „W normie”, kropka z obwódką dla „Uwaga”, trójkąt dla „Krytycznie”.
-8. **Dotyk 44 px, kontrast 4,5:1, tekst do 200%.** Bez wyjątków — także w kafelku premium
+8. **Dotyk 44 px, kontrast 4,5:1, tekst do 200%.** Bez wyjątków — także w kafelku wielkości
    i w próbce palety.
-9. **Symulacja mówi, że jest symulacją.** Każdy ekran zakupu i logowania nosi plakietkę
-   „Tryb demonstracyjny” i jedno zdanie wyjaśnienia. Nie rysujemy pola na numer karty,
-   nie kopiujemy cudzych logo, nie udajemy cudzych ekranów logowania.
+9. **Prośba tylko tam, gdzie użytkownik po nią przyszedł.** Cała warstwa wsparcia mieści się
+   na ekranie WSPARCIE. Żadnych okien po N uruchomieniach, żadnego odliczania, żadnej prośby
+   w trakcie pomiaru. Jedyny odnośnik wychodzący poza urządzenie klika sam użytkownik,
+   a stoi przy nim zdanie o tym, co się wtedy dzieje.
 10. **5 Hz to budżet, nie zaproszenie.** W pętli próbek wolno zmieniać wyłącznie `textContent`
     istniejącego węzła i atrybuty `transform` / `d` / `stroke` istniejących elementów SVG.
     Zero `innerHTML`, zero `createElement`, zero `getBoundingClientRect`, zero `localStorage`.
@@ -127,7 +133,7 @@ Kolumna „kontrast” podaje kolejno tła: `--c-surface`, `--c-bg`, `--c-surfac
 | `--c-surface-3` | `#E4E9F0` | tor suwaka, tło segmentów, szkielet ładowania | — |
 | `--c-scrim` | `rgba(11,16,24,.48)` | przyciemnienie pod arkuszem | — |
 | `--c-border` | `#DCE2EA` | krawędź dekoracyjna — NIGDY nie niesie znaczenia | 1,30 |
-| `--c-border-strong` | `#8A93A0` | krawędź znacząca: obrys pola, wybrany plan | 3,11 |
+| `--c-border-strong` | `#8A93A0` | krawędź znacząca: obrys pola, oś tabeli | 3,11 |
 | `--c-text` | `#0C1116` | tekst główny, duże liczby | 18,96 / 17,52 / 17,04 / 15,54 |
 | `--c-text-2` | `#48525F` | tekst pomocniczy, podtytuły | 7,93 / 7,33 / 7,13 / 6,50 |
 | `--c-text-3` | `#5C6673` | etykiety, jednostki, podpisy osi (podłoga) | 5,83 / 5,38 / 5,24 / 4,78 |
@@ -149,7 +155,7 @@ Kolumna „kontrast” podaje kolejno tła: `--c-bg`, `--c-surface`, `--c-surfac
 | `--c-text-2` | `#B4BDC8` | tekst pomocniczy | 9,95 / 9,09 / 8,31 / 7,40 |
 | `--c-text-3` | `#8E98A5` | etykiety, jednostki (podłoga) | 6,47 / 5,91 / 5,40 / 4,81 |
 
-### 2.3 Strefy, premium, info, demo, fokus — NIE zmieniają się z paletą
+### 2.3 Strefy, info, demo, fokus — NIE zmieniają się z paletą
 
 Motyw JASNY:
 
@@ -164,10 +170,6 @@ Motyw JASNY:
 | `--c-on-good` | `#FFFFFF` | 5,42 na `--c-good` |
 | `--c-on-warn` | `#FFFFFF` | 6,80 na `--c-warn` |
 | `--c-on-crit` | `#FFFFFF` | 6,54 na `--c-crit` |
-| `--c-premium` | `#6D3BD1` | 6,57 / 6,07 |
-| `--c-premium-2` | `#A32BB0` | 5,95 na białym — drugi kolor gradientu premium |
-| `--c-premium-soft` | `#EFE8FD` | `--c-premium` na nim: 5,52 |
-| `--c-on-premium` | `#FFFFFF` | 6,57 na `--c-premium` |
 | `--c-info` | `#0B63C5` | 5,82 / 5,38 |
 | `--c-info-soft` | `#E4EEFB` | `--c-info` na nim: 4,97 |
 | `--c-demo` | `#A5117E` | 7,04 / 6,51 |
@@ -187,10 +189,6 @@ Motyw CIEMNY:
 | `--c-on-good` | `#08150D` | 12,3 na `--c-good` |
 | `--c-on-warn` | `#1B1206` | 12,9 na `--c-warn` |
 | `--c-on-crit` | `#2A0B09` | 8,4 na `--c-crit` |
-| `--c-premium` | `#BFA3FF` | 8,14 / 8,91 |
-| `--c-premium-2` | `#D69BFF` | 9,09 na `#0B1015` — drugi kolor gradientu |
-| `--c-premium-soft` | `#231C40` | `--c-premium` na nim: 7,55 |
-| `--c-on-premium` | `#150C2E` | 10,6 na `--c-premium` |
 | `--c-info` | `#7FB6FF` | 8,25 / 9,04 |
 | `--c-info-soft` | `#122438` | `--c-info` na nim: 7,52 |
 | `--c-demo` | `#FF86D2` | 7,89 / 8,64 |
@@ -392,7 +390,6 @@ przy 720 px, poprawia się warunki progu 600, a nie dokłada piąty breakpoint.
 | odstęp między kartami | `--s-4` (16 px) |
 | kafelki metryk | 2 kolumny, `gap: var(--s-3)` |
 | kafelki narzędzi | 2 kolumny |
-| karty planów | 1 kolumna, jedna pod drugą |
 | hero | wskaźnik `Gauge.arc` 260 px średnicy, wyśrodkowany; werdykt pod nim; pasek akcji jeszcze niżej |
 | podgląd kamery | karta składana, domyślnie ROZWINIĘTA przy pierwszym uruchomieniu, proporcja 4:3 |
 | arkusze | dolny arkusz: przyklejony do dołu, `--r-xl` na górnych rogach, uchwyt 36×4 px, `max-height: 92dvh`, wjeżdża `translateY(100%) → 0` |
@@ -408,7 +405,6 @@ przy 720 px, poprawia się warunki progu 600, a nie dokłada piąty breakpoint.
 | szerokość treści | `min(100% - var(--s-7), 720px)`, wyśrodkowana |
 | kafelki metryk | 3 kolumny |
 | kafelki narzędzi | 3 kolumny |
-| karty planów | 3 kolumny obok siebie, równa wysokość (`align-items: stretch`) |
 | hero | wskaźnik 300 px, werdykt obok wskaźnika w układzie dwukolumnowym `1fr 1.1fr`, pasek akcji pod obojgiem |
 | podgląd kamery | karta pełnej szerokości treści, proporcja 16:9 |
 | arkusze | nadal dolny arkusz, ale `max-width: 640px`, wyśrodkowany poziomo, dolne rogi też zaokrąglone `--r-xl`, odsunięty od dołu o `--s-4` |
@@ -423,7 +419,6 @@ przy 720 px, poprawia się warunki progu 600, a nie dokłada piąty breakpoint.
 | szerokość treści | `min(100% - var(--s-8), var(--w-content))` czyli maks. 1180 px, wyśrodkowana w obszarze po prawej od nawigacji |
 | kafelki metryk | 4 kolumny |
 | kafelki narzędzi | 3 kolumny (kafelek narzędzia jest szerszy niż kafelek metryki i ma opis) |
-| karty planów | 3 kolumny, środkowa („Roczny”) podniesiona o 8 px i z `--e-3` |
 | hero | dwie kolumny `minmax(320px, 420px) 1fr`: po lewej wskaźnik 340 px, po prawej werdykt + plakietka + statystyka sesji + pasek akcji |
 | podgląd kamery | w prawej kolumnie hero jako karta 16:9, nie osobny blok pod spodem |
 | ekran HISTORIA | dwie kolumny `1fr 320px`: wykres po lewej, panel wyboru wielkości i statystyk po prawej |
@@ -435,7 +430,7 @@ przy 720 px, poprawia się warunki progu 600, a nie dokłada piąty breakpoint.
 
 | cecha | wartość |
 |---|---|
-| nawigacja | boczna, bez zmian, ale zyskuje sekcję stopki (`ms4-sidenav__foot`) z wersją aplikacji i stanem subskrypcji |
+| nawigacja | boczna, bez zmian, ale zyskuje sekcję stopki (`ms4-sidenav__foot`) z numerem wersji aplikacji |
 | szerokość treści | nadal maks. `--w-content` (1180 px) — treść NIE rozlewa się dalej, rośnie margines |
 | kafelki metryk | 4 kolumny, ale kafelek dostaje `min-height: 168px` i większy mikrowykres |
 | hero | `minmax(380px, 460px) 1fr`, wskaźnik 380 px |
@@ -465,13 +460,13 @@ przy 720 px, poprawia się warunki progu 600, a nie dokłada piąty breakpoint.
 | `measure` | `#/measure` | Pomiar | `measure` | `screen-measure.js` |
 | `history` | `#/history` | Historia | `history` | `screen-history.js` |
 | `tools` | `#/tools` | Narzędzia | `tools` | `screen-tools.js` |
-| `account` | `#/account` | Konto | `account` | `screen-account.js` |
+| `support` | `#/support` | Wsparcie | `cup` | `screen-support.js` |
 
 Widok startowy: `measure`. Nieznany hash → `measure` z podmianą hasha (`location.replace`).
 `App.back()` wraca do widoku poprzedniego, a jeśli go nie ma — do `measure`.
 
 Wszystko, co nie jest jednym z tych czterech widoków, jest **arkuszem** otwieranym
-nad widokiem: dziewięć narzędzi, paywall, logowanie, pomoc wielkości, celowanie.
+nad widokiem: dziewięć narzędzi, pomoc wielkości, wybór wielkości na wskaźniku, celowanie.
 Arkusz nie ma własnego hasha i nie przeżywa odświeżenia strony.
 
 ### 4.2 Struktura ekranu POMIAR (blok po bloku, kolejność w DOM = kolejność czytania)
@@ -552,12 +547,10 @@ modalne stoją w statycznym HTML, bo `engine.js` i `ui.js` szukają ich po ID pr
   <script src="store.js"></script>
   <script src="ui.js"></script>
   <script src="gauge.js"></script>
-  <script src="auth.js"></script>
-  <script src="billing.js"></script>
   <script src="screen-measure.js"></script>
   <script src="screen-history.js"></script>
   <script src="screen-tools.js"></script>
-  <script src="screen-account.js"></script>
+  <script src="screen-support.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
@@ -591,7 +584,7 @@ bo tak mówi kontrakt, i ma być obsłużone (widok znika z nawigacji poniżej 1
 | Pomiar | „Pomiar” | wskaźnik stanu (`ms4-topbar__status`) + przycisk ikonowy `help` |
 | Historia | „Historia” | przycisk ikonowy `export` |
 | Narzędzia | „Narzędzia” | — |
-| Konto | „Konto” | przycisk ikonowy `settings` (przewija do sekcji Ustawienia) |
+| Wsparcie | „Wsparcie” | przycisk ikonowy `settings` (przewija do sekcji Ustawienia) |
 
 `ms4-topbar__status` pokazuje kropkę + tekst: `Gotowy` / `Uruchamiam` / `Pomiar 00:04:12`
 / `Błąd kamery`. Tekst pochodzi ze `Scale.TEXT.state`; zegar odświeża się raz na sekundę,
@@ -601,9 +594,8 @@ nie 5 razy — to osobny `setInterval`, nie `engine:sample`.
 ## 5. INWENTARZ KLAS — najważniejszy rozdział tego dokumentu
 
 Konwencja: prefiks `ms4-`, `blok__element--modyfikator`. Klasy stanu bez prefiksu bloku:
-`is-active`, `is-open`, `is-locked`, `is-hidden`, `is-loading`, `is-selected`, `is-disabled`,
-`is-collapsed`, `is-checked`. Warianty tonu: `--good`, `--warn`, `--crit`, `--premium`,
-`--demo`, `--info`.
+`is-active`, `is-open`, `is-hidden`, `is-loading`, `is-selected`, `is-disabled`,
+`is-collapsed`, `is-checked`. Warianty tonu: `--good`, `--warn`, `--crit`, `--demo`, `--info`.
 
 Autor JS wolno mu używać WYŁĄCZNIE klas z tego rozdziału. Autor CSS musi narysować
 WSZYSTKIE klasy z tego rozdziału, także te, których na razie nikt nie woła.
@@ -656,7 +648,7 @@ na `:focus` bez klawiatury.
 | `ms4-sidenav__item.is-active` | pozycja bieżąca | tło `--c-accent-soft`, tekst i ikona `--c-accent-ink`, waga `--fw-bold` |
 | `ms4-sidenav__icon` | ikona pozycji | 24×24 px, `currentColor` |
 | `ms4-sidenav__label` | etykieta pozycji | `--t-body`, `--fw-med` |
-| `ms4-sidenav__foot` | stopka nawigacji (≥1440 px) | `margin-top: auto`, `--t-caption`, `--c-text-3`, dwie linie: stan subskrypcji i wersja |
+| `ms4-sidenav__foot` | stopka nawigacji (≥1440 px) | `margin-top: auto`, `--t-caption`, `--c-text-3`, jedna linia: numer wersji |
 
 ### 5.D Sekcje, karty, siatki
 
@@ -669,7 +661,6 @@ na `:focus` bez klawiatury.
 | `ms4-card` | podstawowa karta | tło `--c-surface`, `--r-lg` (22 px), cień `--e-1`, `padding: var(--s-4)`; od 600 px `padding: var(--s-5)`; brak widocznej krawędzi w motywie jasnym, w ciemnym `1px solid var(--c-border)` |
 | `ms4-card--flat` | karta bez wyniesienia | cień `--e-0`, tło `--c-surface-2`, krawędź `--c-border` |
 | `ms4-card--accent` | karta wyróżniona akcentem | tło `--c-accent-soft`, tekst `--c-accent-ink`, cień `--e-0`, lewa krawędź 3 px `--c-accent` |
-| `ms4-card--premium` | karta oferty premium | tło: gradient 135° `--c-premium` → `--c-premium-2`, tekst `--c-on-premium`, cień `--e-2` |
 | `ms4-card--interactive` | karta klikalna | `cursor: pointer`, przejście `transform`/`box-shadow` `--dur-fast`; `:hover` (≥1024) → `--e-2` i `translateY(-2px)`; `:active` → `scale(.99)`; `:focus-visible` → obrys fokusu |
 | `ms4-card__header` | nagłówek karty | wiersz `gap: var(--s-3)`, `align-items: flex-start`, `margin-bottom: var(--s-3)` |
 | `ms4-card__title` | tytuł karty | `--t-h2`, `--fw-bold`, `--c-text` |
@@ -680,7 +671,6 @@ na `:focus` bez klawiatury.
 | `ms4-grid` | siatka ogólna | `display: grid; gap: var(--s-3)` |
 | `ms4-grid--metrics` | siatka kafelków wielkości | `grid-template-columns: repeat(auto-fill, minmax(150px, 1fr))` |
 | `ms4-grid--tools` | siatka kafelków narzędzi | `grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))` |
-| `ms4-grid--plans` | siatka kart planów | 1 kolumna; od 600 px `repeat(3, 1fr)`, `align-items: stretch` |
 | `ms4-grid--stats` | siatka statystyk sesji | `repeat(2, 1fr)`; od 600 px `repeat(4, 1fr)` |
 | `ms4-divider` | linia rozdzielająca | `height: 1px`, tło `--c-border`, `margin: var(--s-3) 0`, `border: 0` |
 
@@ -695,14 +685,13 @@ i żadnych efektów `:hover`.
 
 | klasa | do czego | jak wygląda |
 |---|---|---|
-| `ms4-btn--primary` | akcja główna (Start pomiaru, Kup, Zaloguj) | tło `--c-accent`, tekst `--c-on-accent`, cień `--e-1`; `:hover` → cień `--e-2` i jaśniej o 6% (`filter: brightness(1.06)`) |
+| `ms4-btn--primary` | akcja główna (Start pomiaru, Zapisz) | tło `--c-accent`, tekst `--c-on-accent`, cień `--e-1`; `:hover` → cień `--e-2` i jaśniej o 6% (`filter: brightness(1.06)`) |
 | `ms4-btn--tonal` | akcja drugorzędna (Obróć kamerę, Kanał) | tło `--c-accent-soft`, tekst `--c-accent-ink`, cień `--e-0`; `:hover` → tło ciemniejsze o 4% |
-| `ms4-btn--ghost` | akcja trzeciorzędna (Anuluj, Zamknij, Przywróć zakupy) | tło przezroczyste, tekst `--c-text-2`, krawędź `1px solid var(--c-border)`; `:hover` → tło `--c-surface-2`, tekst `--c-text` |
-| `ms4-btn--danger` | akcja niszcząca (Wyczyść historię, Usuń konto) | tło przezroczyste, tekst `--c-crit`, krawędź `1px solid var(--c-crit)`; `:hover` → tło `--c-crit-soft`; w oknie potwierdzenia wariant pełny: tło `--c-crit`, tekst `--c-on-crit` |
-| `ms4-btn--premium` | odblokowanie Premium | tło: gradient 120° `--c-premium` → `--c-premium-2`, tekst `--c-on-premium`, cień `--e-2`, po lewej ikona `crown` |
+| `ms4-btn--ghost` | akcja trzeciorzędna (Anuluj, Zamknij) | tło przezroczyste, tekst `--c-text-2`, krawędź `1px solid var(--c-border)`; `:hover` → tło `--c-surface-2`, tekst `--c-text` |
+| `ms4-btn--danger` | akcja niszcząca (Wyczyść historię, Przywróć ustawienia domyślne) | tło przezroczyste, tekst `--c-crit`, krawędź `1px solid var(--c-crit)`; `:hover` → tło `--c-crit-soft`; w oknie potwierdzenia wariant pełny: tło `--c-crit`, tekst `--c-on-crit` |
 | `ms4-btn--sm` | mały | wysokość 36 px, `padding-inline: var(--s-4)`, `--t-label` |
 | `ms4-btn--md` | domyślny (można pominąć) | wysokość `--tap` (44 px), `padding-inline: var(--s-5)`, `--t-body-sm` |
-| `ms4-btn--lg` | duży (Start pomiaru, CTA paywalla) | wysokość 56 px, `padding-inline: var(--s-7)`, `--t-body`, `--fw-black` |
+| `ms4-btn--lg` | duży (Start pomiaru) | wysokość 56 px, `padding-inline: var(--s-7)`, `--t-body`, `--fw-black` |
 | `ms4-btn--full` | na całą szerokość | `width: 100%` |
 | `ms4-btn--icon` | tylko ikona | kwadrat: 36 / 44 / 56 px zależnie od rozmiaru, `padding: 0`, `--r-pill` |
 | `ms4-btn__icon` | ikona w przycisku | 20 px przy `--sm`, 24 px przy `--md` i `--lg`, `flex: 0 0 auto` |
@@ -718,17 +707,15 @@ i żadnych efektów `:hover`.
 | `ms4-chip--selectable` | chip jako przełącznik | `cursor: pointer`; `:hover` → tło `--c-surface-3` |
 | `ms4-chip.is-selected` | chip wybrany | tło `--c-accent-soft`, tekst `--c-accent-ink`, krawędź `1px solid var(--c-accent)` |
 | `ms4-chip--good/--warn/--crit` | chip strefy | tło `--c-*-soft`, tekst kolor strefy, bez krawędzi |
-| `ms4-chip--premium` | chip premium | tło `--c-premium-soft`, tekst `--c-premium`, ikona `crown` 16 px |
 | `ms4-chip--demo` | chip symulacji | tło `--c-demo-soft`, tekst `--c-demo`, ikona `flask` 16 px |
 | `ms4-chip--info` | chip informacyjny | tło `--c-info-soft`, tekst `--c-info` |
 | `ms4-chip__icon` | ikona w chipie | 16×16 px |
 | `ms4-chip__label` | tekst chipa | `--t-label`, `--fw-med` |
-| `ms4-badge` | plakietka nieklikalna („Najczęściej wybierany”, „Na żywo”) | wysokość 24 px, `--r-pill`, `--t-caption`, `--fw-bold`, `letter-spacing: .02em`, `padding-inline: 10px`, wersalikowo tylko w wariancie `--demo` |
-| `ms4-badge--good/--warn/--crit/--premium/--demo/--info` | tony plakietki | tło pełne w kolorze tonu, tekst `--c-on-*`; wariant `--demo` zawsze pełny `--c-demo` + `--c-surface` jako tekst |
+| `ms4-badge` | plakietka nieklikalna („Na żywo”) | wysokość 24 px, `--r-pill`, `--t-caption`, `--fw-bold`, `letter-spacing: .02em`, `padding-inline: 10px`, wersalikowo tylko w wariancie `--demo` (ton not o prywatności — po przejściu na model darowiznowy nie oznacza już żadnej symulacji) |
+| `ms4-badge--good/--warn/--crit/--demo/--info` | tony plakietki | tło pełne w kolorze tonu, tekst `--c-on-*`; wariant `--demo` zawsze pełny `--c-demo` + `--c-surface` jako tekst |
 | `ms4-badge--dot` | plakietka z kropką zamiast tła | tło przezroczyste, kropka 8 px w kolorze tonu + tekst `--c-text-2` |
 | `ms4-stamp` | znacznik strefy przy wskaźniku | pigułka 32 px: kształt + słowo (`Scale.stamp().wordPL`), tło `--c-*-soft`, tekst koloru strefy, `--t-label`, `--fw-bold` |
 | `ms4-stamp__shape` | kształt znacznika | 12×12 px: `--good` koło pełne, `--warn` koło z obwódką 2 px i pustym środkiem, `--crit` trójkąt równoboczny, `--none` kwadrat z przekreśleniem |
-| `ms4-lock` | mała kłódka na kafelku premium | koło 28 px, tło `--c-premium-soft`, ikona `lock` 16 px w `--c-premium` |
 
 ### 5.G Wskaźnik i wykresy (rysuje `gauge.js`, maluje `components.css`)
 
@@ -790,7 +777,7 @@ i żadnych efektów `:hover`.
 | `ms4-tile` | kafelek jednej wielkości | jak `ms4-card` z `--r-md`, `padding: var(--s-3)`, `min-height: 140px`, kolumna `gap: var(--s-2)`, `cursor: pointer`; `:hover` (≥1024) → `--e-2`, `translateY(-2px)`; `:active` → `scale(.98)` |
 | `ms4-tile__head` | wiersz nagłówka kafelka | `display: flex; align-items: center; gap: 6px; min-height: 20px` |
 | `ms4-tile__name` | nazwa wielkości | `--t-label`, `--fw-med`, `--c-text-2`, dwie linie maks., `overflow: hidden` |
-| `ms4-tile__badge` | plakietka w rogu (Premium / ≈) | `margin-left: auto`, 20 px, `--t-caption` |
+| `ms4-tile__badge` | znak `≈` w rogu przy wartości przybliżonej | `margin-left: auto`, 20 px, `--t-caption` |
 | `ms4-tile__value` | liczba | `--t-h1`, `--fw-black`, `--font-num`, `tabular-nums`, `--c-text`, `line-height: 1` |
 | `ms4-tile__unit` | jednostka przy liczbie | `--t-body-sm`, `--fw-med`, `--c-text-3`, `margin-left: 4px` |
 | `ms4-tile__approx` | znak `≈` przed liczbą | `--c-text-3`, `margin-right: 2px`, z `title` i `aria-label` „wartość przybliżona” |
@@ -798,9 +785,6 @@ i żadnych efektów `:hover`.
 | `ms4-tile__bar` | pasek strefy pod wykresem | wysokość 4 px, `--r-pill`, tło `--c-surface-3` |
 | `ms4-tile__bar-fill` | wypełnienie paska | szerokość = `Scale.pos()`, tło koloru strefy, przejście `width --dur-fast linear` |
 | `ms4-tile.is-selected` | kafelek kanału wiodącego | krawędź `2px solid var(--c-accent)`, tło `--c-accent-soft` w 40% krycia, w rogu ikona `target` 16 px |
-| `ms4-tile.is-locked` | kafelek premium bez dostępu | liczba zastąpiona przez `ms4-tile__lock`; mikrowykres rozmyty `filter: blur(4px)` i wyszarzony `opacity: .5`; tło `--c-surface`, krawędź `1px dashed var(--c-premium)` |
-| `ms4-tile__lock` | zamek zamiast liczby | wiersz: `ms4-lock` + tekst „Premium” w `--c-premium`, `--t-h3`, `--fw-bold` |
-| `ms4-tile__cta` | zachęta pod zamkiem | `--t-caption`, `--c-premium`, `--fw-med`, jedna linia, np. „Zobacz, ile to kosztuje” |
 | `ms4-tile__zone` | słowo strefy dla czytnika i przy 1,3× | `ms4-sronly` domyślnie; przy `--text-scale: 1.3` staje się widoczne jako `--t-caption` |
 
 ### 5.J Noty
@@ -865,7 +849,7 @@ i żadnych efektów `:hover`.
 | `ms4-sheet-host` | pojemnik arkuszy w `index.html` | `position: fixed; inset: 0; z-index: var(--z-sheet); pointer-events: none`; dzieci mają `pointer-events: auto` |
 | `ms4-sheet` | arkusz | tło `--c-surface`, `--r-xl` na górnych rogach, cień `--e-3`, kolumna, `max-height: 92dvh`, przyklejony do dołu; od 1024 px: wyśrodkowany, `--r-xl` na wszystkich rogach, `max-width: 720px`, `max-height: 88vh` |
 | `ms4-sheet--auto` | arkusz na wysokość treści | `height: auto` |
-| `ms4-sheet--full` | arkusz pełnoekranowy (narzędzia, paywall) | `height: 100dvh`, `--r-0` na telefonie (rogi proste), od 1024 px `max-width: 880px`, `--r-xl`, `max-height: 88vh` |
+| `ms4-sheet--full` | arkusz pełnoekranowy (narzędzia) | `height: 100dvh`, `--r-0` na telefonie (rogi proste), od 1024 px `max-width: 880px`, `--r-xl`, `max-height: 88vh` |
 | `ms4-sheet.is-open` | arkusz otwarty | telefon: `translateY(100%) → 0`; desktop: `opacity 0→1` + `scale(.96)→1`; `--dur-slow` z `--ease` |
 | `ms4-sheet__grip` | uchwyt do przeciągania | 36×4 px, `--r-pill`, tło `--c-border-strong`, wyśrodkowany, `margin: var(--s-2) auto`; od 1024 px `display: none` |
 | `ms4-sheet__header` | nagłówek arkusza | `position: sticky; top: 0`, tło `--c-surface`, dolna krawędź `--c-border`, `padding: var(--s-3) var(--s-4)`, wiersz `gap: var(--s-3)` |
@@ -947,64 +931,63 @@ i żadnych efektów `:hover`.
 | `ms4-tool__icon` | ikona narzędzia | 24 px w kwadracie 44 px z `--r-md`, tło `--c-accent-soft`, ikona `--c-accent-ink` |
 | `ms4-tool__title` | nazwa narzędzia | `--t-h3`, `--fw-bold`, `--c-text` |
 | `ms4-tool__desc` | opis jednym zdaniem | `--t-body-sm`, `--c-text-2`, maks. dwie linie, `line-height: --lh-body` |
-| `ms4-tool__badge` | plakietka premium na kafelku | `ms4-badge--premium` w prawym górnym rogu, `position: absolute; top: var(--s-3); right: var(--s-3)` |
 
-### 5.Q Ekran KONTO, logowanie
+### 5.Q Ekran WSPARCIE
 
-| klasa | do czego | jak wygląda |
-|---|---|---|
-| `ms4-profile` | nagłówek profilu | `ms4-card` z `padding: var(--s-5)`, wiersz `gap: var(--s-4)`, `align-items: center` |
-| `ms4-profile__avatar` | awatar | koło 64 px, tło: gradient 135° `--c-accent` → `--c-accent-2`, tekst `--c-on-accent` |
-| `ms4-profile__initials` | inicjały w awatarze | `--t-h2`, `--fw-black`, `letter-spacing: .02em` |
-| `ms4-profile__name` | nazwa użytkownika lub „Nie zalogowano” | `--t-h2`, `--fw-bold`, `--c-text` |
-| `ms4-profile__mail` | adres i dostawca | `--t-body-sm`, `--c-text-3`, `overflow-wrap: anywhere` |
-| `ms4-profile__actions` | przyciski profilu | wiersz `gap: var(--s-2)`, `margin-left: auto`; na telefonie schodzi pod tekst i rozciąga się na całą szerokość |
-| `ms4-subcard` | karta subskrypcji | `ms4-card`; bez premium: tło `--c-surface` z lewą krawędzią 3 px `--c-premium`; z premium: `ms4-card--premium` (gradient) |
-| `ms4-subcard__state` | opis stanu | `--t-body`, `--fw-med`; przy aktywnym premium `--c-on-premium`, inaczej `--c-text` |
-| `ms4-subcard__cta` | przycisk karty subskrypcji | `ms4-btn--premium --md --full` przy braku premium; `ms4-btn--ghost --sm` („Zarządzaj”) przy aktywnym |
-| `ms4-providers` | lista przycisków dostawców | kolumna `gap: var(--s-2)` |
-| `ms4-provider` | przycisk dostawcy | wysokość 52 px, `--r-pill`, tło `--c-surface`, krawędź `1px solid var(--c-border-strong)`, `--t-body`, `--fw-med`, `--c-text`, ikona 20 px po lewej, etykieta wyśrodkowana; `:hover` → tło `--c-surface-2` |
-| `ms4-provider__icon` | ikona dostawcy | 20×20 px, WŁASNY rysunek SVG (rozdział 6), nigdy cudzy plik logo |
-| `ms4-provider__label` | etykieta | „Kontynuuj przez Google” itd. |
-| `ms4-provider--google` | wariant Google | ikona: cztery łuki litery G w czterech barwach (`#EA4335`, `#FBBC05`, `#34A853`, `#4285F4` — drugi i ostatni dopuszczony wyjątek od zakazu hexów poza `tokens.css`, bo to rysunek, nie kolor interfejsu) |
-| `ms4-provider--facebook` | wariant Facebook | ikona: biała litera „f” w kole `#1877F2` |
-| `ms4-provider--apple` | wariant Apple | ikona: sylwetka jabłka w `currentColor` |
-| `ms4-provider--email` | wariant e-mail | ikona `mail` w `currentColor`, przycisk `ms4-btn--ghost` w stylu pozostałych |
-| `ms4-authform` | formularz e-mail | kolumna `gap: var(--s-3)`; pola `ms4-field` |
-| `ms4-field` | pole tekstowe | wysokość `--tap`, `--r-md`, tło `--c-surface-2`, krawędź `1px solid var(--c-border-strong)`, `padding-inline: var(--s-3)`, `--t-body`, `--c-text`; `:focus-visible` → krawędź `--c-accent` 2 px + obrys fokusu |
-| `ms4-field__label` | etykieta pola | `--t-label`, `--fw-med`, `--c-text-2`, nad polem |
-| `ms4-field__hint` | podpowiedź lub błąd | `--t-caption`, `--c-text-3`; w błędzie `--c-crit` i `role="alert"` |
-
-### 5.R Paywall i plany
+Zakładka, która przed przejściem na model darowiznowy nazywała się KONTO. Nie ma tu
+profilu, konta ani żadnej karty dostępu — zostały dwa bloki: jedna prośba
+o dobrowolne wsparcie i całe ustawienia aplikacji.
 
 | klasa | do czego | jak wygląda |
 |---|---|---|
-| `ms4-paywall` | korzeń paywalla | wnętrze `ms4-sheet--full`, kolumna `gap: var(--s-5)`, `padding-bottom: var(--s-8)` |
-| `ms4-paywall__hero` | blok gradientowy na górze | tło: gradient 160° `--c-premium` → `--c-premium-2`, tekst `--c-on-premium`, `padding: var(--s-7) var(--s-5)`, `--r-xl` na dolnych rogach (na telefonie: pełna szerokość, bez górnych rogów), wyśrodkowany |
-| `ms4-paywall__crown` | ikona nad tytułem | `crown` 40 px w kole 72 px, tło `rgba(255,255,255,.16)` |
-| `ms4-paywall__title` | tytuł oferty | `--t-h1`, `--fw-black`, `line-height: --lh-tight` |
-| `ms4-paywall__lede` | zdanie wprowadzające | `--t-body`, krycie 0,92, `max-width: 34ch`, `margin-inline: auto` |
-| `ms4-paywall__plans` | siatka planów | `ms4-grid--plans`, `padding-inline: var(--s-4)` |
-| `ms4-paywall__benefits` | lista korzyści | kolumna `gap: var(--s-3)`, `padding-inline: var(--s-4)` |
-| `ms4-paywall__cta` | duży przycisk zakupu | `ms4-btn--premium --lg --full`, przyklejony w `ms4-sheet__actions`; etykieta zawiera cenę wybranego planu |
-| `ms4-paywall__restore` | „Przywróć zakupy” | `ms4-btn--ghost --sm --full`, `margin-top: var(--s-2)` |
-| `ms4-paywall__fine` | drobny druk | `--t-caption`, `--c-text-3`, `text-align: center`, `max-width: 46ch`, `margin-inline: auto`, `line-height: --lh-body` |
-| `ms4-plan` | karta planu | `ms4-card` z `--r-lg`, krawędź `2px solid var(--c-border)`, `padding: var(--s-4)`, kolumna `gap: var(--s-1)`, `cursor: pointer`, `position: relative` |
-| `ms4-plan.is-selected` | plan wybrany | krawędź `2px solid var(--c-premium)`, tło `--c-premium-soft`, cień `--e-2` |
-| `ms4-plan--featured` | plan polecany (roczny) | od 600 px `transform: translateY(-8px)` i cień `--e-3` |
-| `ms4-plan__badge` | plakietka „Najczęściej wybierany” | `ms4-badge--premium`, `position: absolute; top: -12px; left: 50%; transform: translateX(-50%)` |
-| `ms4-plan__name` | nazwa planu | `--t-body`, `--fw-bold`, `--c-text` |
-| `ms4-plan__price` | cena | `--t-h1`, `--fw-black`, `--font-num`, `--c-text` |
-| `ms4-plan__period` | okres | `--t-body-sm`, `--c-text-3`, w tej samej linii co cena |
-| `ms4-plan__note` | przelicznik miesięczny | `--t-caption`, `--c-text-2` |
-| `ms4-plan__save` | oszczędność | `ms4-badge--good` z tekstem „-50%” |
-| `ms4-plan__radio` | znacznik wyboru | koło 22 px, krawędź `2px solid var(--c-border-strong)`; wybrane → wypełnione `--c-premium` z ikoną `check` 14 px w `--c-on-premium`; `position: absolute; top: var(--s-4); right: var(--s-4)` |
-| `ms4-benefit` | jedna korzyść | wiersz `gap: var(--s-3)`, `align-items: flex-start` |
-| `ms4-benefit__icon` | ikona korzyści | 20 px w kole 36 px, tło `--c-premium-soft`, ikona `--c-premium` |
-| `ms4-benefit__title` | tytuł korzyści | `--t-body`, `--fw-bold`, `--c-text` |
-| `ms4-benefit__text` | opis korzyści | `--t-body-sm`, `--c-text-2`, `line-height: --lh-body` |
-| `ms4-success` | ekran po zakupie | kolumna wyśrodkowana, `gap: var(--s-4)`, `padding: var(--s-8) var(--s-5)` |
-| `ms4-success__mark` | znacznik sukcesu | koło 96 px, tło `--c-good-soft`, ikona `check-circle` 48 px w `--c-good`; wejście `scale(.7)→1` w `--dur-slow` |
+| `ms4-support__ask` | kolumna z prośbą o wsparcie | `ms4-stack`; od 1024 px wąska kolumna siatki (`grid-area: ask`), przyklejona pod górną belką |
+| `ms4-support__settings` | kolumna ustawień | `ms4-stack`; od 1024 px szeroka kolumna siatki (`grid-area: settings`) |
+| `ms4-support__action` | karta z przyciskiem darowizny | `ms4-card`, `text-align: left`; mieści przycisk **albo** notę o braku adresu, zawsze notę o prywatności |
+| `a.ms4-btn` | odnośnik udający przycisk | `text-decoration: none`; poza tym geometria zwykłego `ms4-btn` |
+
+Przycisk darowizny jest zwykłym `ms4-btn--tonal --md --full` z ikoną `cup` — **nie** ma
+własnego wariantu, gradientu ani cudzego brandingu. Ma wyglądać jak każdy inny przycisk
+drugorzędny tej wersji.
+
+**Adres profilu darowizn.** W `screen-support.js`, jako pierwsza rzecz po nagłówku pliku,
+stoi jedna stała:
+
+```js
+var SUPPORT_URL = '';
+```
+
+Walidacja jest jednolinijkowa: przyjmujemy **wyłącznie** adres zaczynający się od
+`https://`; cokolwiek innego (w tym `javascript:`) traktujemy jak brak adresu.
+
+Zachowanie przy pustej stałej jest częścią specyfikacji, nie przypadkiem brzegowym:
+
+* ekran istnieje i wygląda normalnie — nie znika i nie pokazuje błędu,
+* w miejscu przycisku stoi spokojna informacja dla użytkownika (`support.noUrlTitle`,
+  `support.noUrlText`), nie komunikat dla programisty,
+* **nie renderuje się żaden element `<a>`** — ani martwy, ani prowadzący donikąd.
+
+Gdy adres jest ustawiony, odnośnik ma dokładnie taką postać:
+
+```html
+<a href="…" target="_blank" rel="noopener noreferrer">
+```
+
+`rel="noopener noreferrer"` jest obowiązkowe. Nie ładujemy żadnego skryptu, widgetu ani
+obrazka z serwera zewnętrznego — złamałoby to obietnicę trybu offline i „nic nie wychodzi
+do sieci”. Ikonę kubka rysujemy sami (rozdział 6.4, nazwa `cup`).
+
+**Zdanie o prywatności** (`support.privacyNote`) stoi przy przycisku i pokazuje się także
+wtedy, gdy przycisku nie ma: kliknięcie otwiera stronę zewnętrzną i jest to jedyny moment,
+w którym cokolwiek opuszcza to urządzenie.
+
+**Układ desktopowy (≥1024 px).** `.ms4-view[data-view="support"] > .ms4-view__inner` to
+siatka `minmax(0, 1fr) minmax(320px, 380px)` z obszarami `"settings ask"`. Od 1440 px
+wąska kolumna rośnie do `minmax(360px, 420px)`.
+
+Ustawienia (motyw, paleta, tekst i ruch, pomiar, dane, o aplikacji) zostały na tym ekranie
+bez zmian; ich klasy — `ms4-themepick*`, `ms4-swatch*`, `ms4-switch`, `ms4-segmented*`,
+`ms4-row*`, `ms4-field*` — opisują rozdziały 5.E–5.M.
+
 
 ### 5.S Klasy pomocnicze
 
@@ -1020,7 +1003,9 @@ i żadnych efektów `:hover`.
 
 ## 6. Kontrakt ikon — `UI.icon(name, size)`
 
-Reguły rysunku, wspólne dla wszystkich ikon poza czterema ikonami dostawców logowania:
+Reguły rysunku, wspólne dla wszystkich ikon. Po przejściu na model darowiznowy nie ma
+wśród nich ani jednej kolorowej: ikony dostawców logowania zniknęły razem z logowaniem,
+a razem z nimi ostatnie wartości barwne w `ui.js`.
 
 * `viewBox="0 0 24 24"`, `fill="none"`, `stroke="currentColor"`, `stroke-width="1.75"`,
   `stroke-linecap="round"`, `stroke-linejoin="round"`, `aria-hidden="true"`, `focusable="false"`.
@@ -1036,7 +1021,8 @@ Reguły rysunku, wspólne dla wszystkich ikon poza czterema ikonami dostawców l
 | `measure` | Półokrągła podziałka (łuk 200°) z krótką igłą wychodzącą ze środka ku górze i w prawo. |
 | `history` | Zegar: koło o promieniu 9 ze wskazówkami na godzinie 10 i 2, plus strzałka cofania na lewym łuku. |
 | `tools` | Skrzyżowany klucz płaski i śrubokręt, oba pod kątem 45°. |
-| `account` | Popiersie: koło głowy o promieniu 3,5 nad łukiem ramion. |
+| `cup` | Kubek: zaokrąglona obudowa, uszko po prawej i dwie smugi pary nad krawędzią — przycisk darowizny i zakładka WSPARCIE. |
+| `heart` | Serce z dwóch łuków, obrys bez wypełnienia — wdzięczność, nie „polubienie”. |
 | `logo` | Koło z ośmioma promieniami o różnej długości i wypełnionym środkiem — znak aplikacji. |
 | `menu` | Trzy poziome linie o równej długości, odstęp 5 px. |
 | `close` | Krzyż z dwóch linii przekątnych od 6,6 do 18,18. |
@@ -1093,7 +1079,7 @@ Reguły rysunku, wspólne dla wszystkich ikon poza czterema ikonami dostawców l
 | `trash` | Kosz: pokrywa, uchwyt i korpus z dwiema pionowymi kreskami. |
 | `share` | Trzy węzły połączone dwiema liniami — udostępnianie raportu. |
 
-### 6.4 Ustawienia i konto
+### 6.4 Ustawienia i wsparcie
 
 | nazwa | rysunek |
 |---|---|
@@ -1103,34 +1089,15 @@ Reguły rysunku, wspólne dla wszystkich ikon poza czterema ikonami dostawców l
 | `text-size` | Dwie litery „A”, mniejsza obok większej. |
 | `motion` | Strzałka w prawo z trzema liniami prędkości i ukośnym przekreśleniem — ograniczenie ruchu. |
 | `vibration` | Prostokąt telefonu z dwiema kreskami drgania po obu stronach. |
-| `crown` | Korona z trzema szczytami i prostą podstawą — Premium. |
-| `lock` | Kłódka: prostokąt korpusu i pałąk nad nim. |
-| `unlock` | Ta sama kłódka z pałąkiem otwartym w prawo. |
 | `star` | Pięcioramienna gwiazda o zaokrąglonych wierzchołkach. |
 | `shield` | Tarcza herbowa — prywatność i brak połączenia z siecią. |
 | `sparkle` | Czteroramienna iskra z mniejszą iskrą w prawym górnym rogu — nowość. |
 | `mail` | Koperta: prostokąt z trójkątnym zagięciem klapy. |
-| `user-plus` | Popiersie z małym krzyżem w prawym dolnym rogu — załóż konto. |
-| `logout` | Prostokąt drzwi z otwartym bokiem i strzałką wychodzącą w prawo. |
-| `restore` | Zegar z okrężną strzałką cofania — przywróć zakupy. |
-| `tag` | Etykieta cenowa: czworokąt ścięty z otworem — cena, plan. |
-| `wallet` | Portfel: prostokąt z klapą i kropką zapięcia. Nie rysuje karty płatniczej i nigdy jej nie rysuje. |
-| `clock` | Koło ze wskazówkami na 12 i 4 — czas trwania, okres próbny. |
+| `clock` | Koło ze wskazówkami na 12 i 4 — czas trwania. |
 | `calendar` | Siatka miesiąca: prostokąt z górnym pasem i czterema kropkami dni. |
 
-### 6.5 Ikony dostawców logowania (jedyne kolorowe, jedyne z wypełnieniem)
+Razem: 20 + 14 + 16 + 12 = **62 nazwy**. `UI.ICONS.length === 62`.
 
-Rysujemy je sami, uproszczone, w polu 20×20. To NIE są pliki logo i nie udają cudzych
-ekranów logowania — służą wyłącznie rozpoznaniu, który przycisk jest który.
-
-| nazwa | rysunek |
-|---|---|
-| `brand-google` | Litera „G” złożona z czterech łuków w czterech barwach (czerwony, żółty, zielony, niebieski) z poziomą belką po prawej stronie. |
-| `brand-facebook` | Koło wypełnione niebieskim z białą literą „f” wewnątrz. |
-| `brand-apple` | Sylwetka jabłka z listkiem i wycięciem po prawej, wypełniona `currentColor`. |
-| `brand-mail` | Ta sama koperta co `mail`, ale wypełniona `--c-surface-2` — dla równowagi wizualnej w rzędzie dostawców. |
-
-Razem: 19 + 14 + 16 + 20 + 4 = **73 nazwy**. `UI.ICONS.length === 73`.
 ---
 
 ## 7. Teksty polskie v4 — słownik `UI.T`
@@ -1155,13 +1122,11 @@ Kolizja treści między `UI.T` a `Scale.TEXT` jest błędem: wygrywa `Scale.TEXT
 nav.measure          = 'Pomiar'
 nav.history          = 'Historia'
 nav.tools            = 'Narzędzia'
-nav.account          = 'Konto'
+nav.support          = 'Wsparcie'
 nav.aria             = 'Nawigacja główna'
 nav.skip             = 'Przejdź do treści'
 nav.brand            = 'Monitor Światła'
 nav.version          = 'Wersja 4.0'
-nav.premiumOn        = 'Premium aktywne'
-nav.premiumOff       = 'Wersja bezpłatna'
 ```
 
 ### 7.2 Ekran POMIAR — `UI.T.measure`
@@ -1190,8 +1155,6 @@ measure.notCalibrated    = 'Bez kalibracji'
 measure.sessionIdle      = 'Pomiar nie trwa'
 measure.firstRun         = 'Zacznij od przycisku „Start pomiaru”. Kamera włączy się dopiero po jego naciśnięciu i nic nie opuszcza tego urządzenia.'
 measure.helpAria         = 'Czym jest ten pomiar'
-measure.premiumTileCta   = 'Zobacz, ile to kosztuje'
-measure.premiumTileWord  = 'Premium'
 ```
 
 Werdykt, plakietka strefy, zdanie „Czym ten pomiar nie jest” i wszystkie noty o granicach
@@ -1245,7 +1208,6 @@ Poniżej wyłącznie to, czego tam nie ma.
 tools.title        = 'Narzędzia'
 tools.sub          = 'Dziewięć rzeczy, które możesz zrobić z tym, co już zmierzyłeś.'
 tools.openAria     = 'Otwórz narzędzie: {name}'
-tools.premiumWord  = 'Premium'
 tools.thresholds   = 'Progi'                    /* moduł 02 */
 tools.calibration  = 'Kalibracja'               /* moduł 03 */
 tools.reports      = 'Raporty'                  /* moduł 04 */
@@ -1303,144 +1265,93 @@ tools.docsGlossary        = [
 ]
 ```
 
-### 7.5 Ekran KONTO — `UI.T.account`
+### 7.5 Ekran WSPARCIE — `UI.T.support`
+
+Gałąź, która przed przejściem na model darowiznowy nazywała się `UI.T.account`.
+Klucze konta i dostępu płatnego zniknęły; klucze ustawień zostały bez zmian,
+tylko pod nową nazwą gałęzi.
+
+Cztery rzeczy, krótko i w tej kolejności: co aplikacja daje za darmo, dlaczego jest
+prośba, co daje darowizna (nic — i to musi być napisane wprost) oraz przycisk ze zdaniem
+o prywatności.
 
 ```
-account.title             = 'Konto'
-account.signedOutName     = 'Nie zalogowano'
-account.signedOutSub      = 'Konto jest opcjonalne. Pomiar, historia i wszystkie narzędzia działają bez niego.'
-account.signIn            = 'Zaloguj się'
-account.signOut           = 'Wyloguj się'
-account.signOutConfirm    = 'Wylogować się z tego urządzenia? Historia pomiarów zostanie na miejscu.'
-account.deleteAccount     = 'Usuń konto'
-account.deleteConfirm     = 'Usunąć konto z tej przeglądarki? Znikną dane logowania i stan subskrypcji. Historia pomiarów zostanie.'
-account.providerLabelTpl  = 'Zalogowano przez {provider}'
-account.subTitle          = 'Subskrypcja'
-account.subFree           = 'Wersja bezpłatna'
-account.subFreeSub        = 'Cztery wielkości z liczbami, ocena światła i cała historia. Bez ograniczeń czasowych.'
-account.subPremium        = 'Premium aktywne'
-account.subPremiumSub     = 'Wszystkie siedem wielkości, raporty i porównania. Dziękujemy.'
-account.subTrialTpl       = 'Okres próbny — zostało {days} dni.'
-account.subManage         = 'Zarządzaj'
-account.subUnlock         = 'Odblokuj Premium'
-account.subRestore        = 'Przywróć zakupy'
-account.subCancel        = 'Zrezygnuj z subskrypcji'
-account.subCancelConfirm  = 'Zrezygnować z Premium? W symulacji dostęp znika natychmiast, a liczby trzech wielkości wracają pod kłódkę.'
-account.settingsTitle     = 'Ustawienia'
-account.theme             = 'Motyw'
-account.themeSystem       = 'Jak w systemie'
-account.themeLight        = 'Jasny'
-account.themeDark         = 'Ciemny'
-account.accent            = 'Kolor aplikacji'
-account.accentSub         = 'Zmienia wyłącznie kolor marki. Zielony, bursztynowy i czerwony stref zostają takie same, bo niosą znaczenie.'
-account.textScale         = 'Rozmiar tekstu'
-account.textScale1        = 'Zwykły'
-account.textScale115      = 'Większy'
-account.textScale13       = 'Największy'
-account.motion            = 'Ogranicz ruch'
-account.motionSub         = 'Wyłącza przesunięcia i animacje. Zostaje tylko zmiana przezroczystości.'
-account.haptics           = 'Wibracje'
-account.hapticsSub        = 'Krótkie drgnięcie przy starcie i zatrzymaniu pomiaru. Działa tylko na urządzeniach, które to potrafią.'
-account.leadMetric        = 'Wielkość na wskaźniku'
-account.dataTitle         = 'Dane'
-account.clearHistory      = 'Wyczyść historię pomiarów'
-account.clearSettings     = 'Przywróć ustawienia domyślne'
-account.clearSettingsOk   = 'Przywrócono ustawienia domyślne.'
-account.aboutTitle        = 'O aplikacji'
-account.version           = 'Wersja'
-account.versionValue      = '4.0 · dane zostają na tym urządzeniu'
-account.privacy           = 'Prywatność'
-account.privacyText       = 'Aplikacja nie wykonuje żadnych żądań sieciowych. Obraz z kamery jest przetwarzany w tej karcie przeglądarki i nigdzie nie trafia. Historia, ustawienia i stan konta leżą w pamięci tej przeglądarki i znikają razem z jej danymi.'
+support.title        = 'Wsparcie'
+support.freeTitle    = 'Wszystko działa bez opłat'
+support.freeText     = 'Wszystkie siedem wielkości z liczbami, cała historia, dziewięć narzędzi i tryb offline są dostępne od razu — bez konta, bez limitów i bez ani jednego żądania do sieci.'
+support.whyTitle     = 'Dlaczego jest ta prośba'
+support.whyText      = 'Monitor Światła utrzymuje i rozwija jedna osoba po godzinach. Dobrowolne wsparcie pokrywa ten czas i pozwala dokładać kolejne rzeczy — nic więcej za tym nie stoi.'
+support.nothingTitle = 'Co daje darowizna'
+support.nothingText  = 'Nic w aplikacji. Darowizna niczego nie odblokowuje i niczego nie zmienia — przed nią i po niej wszystko wygląda tak samo. Jedyne, co się dzieje, to że autor wie, że to się komuś przydało.'
+support.donate       = 'Postaw mi kawę'
+support.donateAria   = 'Otwórz profil darowizn w nowej karcie'
+support.donateVia    = 'Odnośnik prowadzi na zewnętrzny profil darowizn (np. Buy Me a Coffee).'
+support.privacyNote  = 'To jedyne miejsce w całej aplikacji, w którym cokolwiek opuszcza to urządzenie: przycisk otwiera stronę zewnętrzną w nowej karcie i dzieje się to dopiero po jego naciśnięciu. Pomiar, historia i ustawienia zostają tutaj.'
+support.noUrlTitle   = 'Profil nie jest jeszcze podłączony'
+support.noUrlText    = 'Adres profilu darowizn nie został jeszcze ustawiony, więc nie ma dokąd prowadzić — i dlatego nie ma tu przycisku. Cała reszta aplikacji działa bez zmian.'
+support.thanks       = 'Dziękuję za każde wsparcie — także za samo korzystanie z aplikacji.'
 ```
 
-### 7.6 Logowanie — `UI.T.auth`
+Czego w tej gałęzi **nie wolno** zapisać: odliczania, „zostało X dni”, „tylko dziś”,
+groźby, że coś przestanie działać bez wsparcia, ani słowa opisującego pakiet płatny
+w jakimkolwiek kontekście.
+
+### 7.6 Ustawienia — dalszy ciąg `UI.T.support`
+
+Ustawienia mieszkają na tym samym ekranie, więc i w tej samej gałęzi słownika.
 
 ```
-auth.title            = 'Zaloguj się'
-auth.sub              = 'Konto pozwala trzymać stan subskrypcji w jednym miejscu. Pomiar działa bez niego.'
-auth.demoBadge        = 'Tryb demonstracyjny'
-auth.demoText         = 'To symulacja logowania. Nie ma połączenia z Google ani z Facebookiem, nic nie wychodzi do sieci, a wpisane dane zostają w pamięci tej przeglądarki.'
-auth.google           = 'Kontynuuj przez Google'
-auth.facebook         = 'Kontynuuj przez Facebooka'
-auth.apple            = 'Kontynuuj przez Apple'
-auth.email            = 'Kontynuuj przez e-mail'
-auth.emailLabel       = 'Adres e-mail'
-auth.emailHint        = 'Dowolny adres zostanie przyjęty. Nie sprawdzamy go i nigdzie nie wysyłamy.'
-auth.nameLabel        = 'Imię (opcjonalnie)'
-auth.nameHint        = 'Posłuży tylko do inicjałów w awatarze.'
-auth.submit           = 'Zaloguj się'
-auth.emailEmpty       = 'Podaj adres e-mail.'
-auth.emailBad         = 'To nie wygląda na adres e-mail. Potrzebna jest małpa i kropka.'
-auth.busy             = 'Loguję…'
-auth.doneTpl          = 'Zalogowano jako {name}.'
-auth.signedOut        = 'Wylogowano.'
-auth.deleted          = 'Konto usunięte z tej przeglądarki.'
-auth.terms            = 'Logowanie jest symulowane, więc nie ma tu żadnego regulaminu do zaakceptowania ani zgody do udzielenia.'
+support.settingsTitle     = 'Ustawienia'
+support.textMotion        = 'Tekst i ruch'
+support.measureGroup      = 'Pomiar'
+support.theme             = 'Motyw'
+support.themeSystem       = 'Jak w systemie'
+support.themeLight        = 'Jasny'
+support.themeDark         = 'Ciemny'
+support.accent            = 'Kolor aplikacji'
+support.accentSub         = 'Zmienia wyłącznie kolor marki. Zielony, bursztynowy i czerwony stref zostają takie same, bo niosą znaczenie.'
+support.textScale         = 'Rozmiar tekstu'
+support.textScale1        = 'Zwykły'
+support.textScale115      = 'Większy'
+support.textScale13       = 'Największy'
+support.textScalePreview  = 'Tak będzie wyglądał tekst w całej aplikacji.'
+support.motion            = 'Ogranicz ruch'
+support.motionSub         = 'Wyłącza przesunięcia i animacje. Zostaje tylko zmiana przezroczystości.'
+support.haptics           = 'Wibracje'
+support.hapticsSub        = 'Krótkie drgnięcie przy starcie i zatrzymaniu pomiaru. Działa tylko na urządzeniach, które to potrafią.'
+support.leadMetric        = 'Wielkość na wskaźniku'
+support.camera            = 'Kamera'
+support.cameraBack        = 'Tylna'
+support.cameraFront       = 'Przednia'
+support.dataTitle         = 'Dane'
+support.historySize       = 'Zebrana historia'
+support.historySizeTpl    = '{count} odczytów · {span}'
+support.clearHistory      = 'Wyczyść historię pomiarów'
+support.clearSettings     = 'Przywróć ustawienia domyślne'
+support.clearSettingsOk   = 'Przywrócono ustawienia domyślne.'
+support.aboutTitle        = 'O aplikacji'
+support.version           = 'Wersja'
+support.versionValue      = '4.0'
+support.versionSub        = 'Wszystkie pomiary i ustawienia zostają na tym urządzeniu.'
+support.privacy           = 'Prywatność'
+support.privacyText       = 'Aplikacja nie wykonuje żadnych żądań sieciowych. Obraz z kamery jest przetwarzany w tej karcie przeglądarki i nigdzie nie trafia. Historia i ustawienia leżą w pamięci tej przeglądarki i znikają razem z jej danymi.'
+support.licenses          = 'Składniki aplikacji'
+support.licensesText      = 'Aplikacja nie korzysta z żadnej zewnętrznej biblioteki, kroju pisma ani pliku graficznego. Wszystkie ikony są rysowane w kodzie, cały pomiar liczy własny kod w tej karcie przeglądarki, a strona nie pobiera niczego z sieci — dlatego działa też bez połączenia.'
 ```
 
-### 7.7 Paywall — `UI.T.paywall`
+### 7.7 Gałęzie usunięte
 
-Pełny tekst ekranu oferty, w kolejności czytania.
+Ze słownika `UI.T` zniknęły w całości dwie gałęzie: ta od konta i ta od ekranu oferty.
+Wraz z nimi zniknęły pojedyncze klucze, które opisywały płatny dostęp: dwa w `nav`
+(stan dostępu w stopce nawigacji), dwa w `measure` (napis i zachęta na zamkniętym
+kafelku), jeden w `tools` i dwa w `aria` (nazwa zamkniętego kafelka i nazwa karty
+pakietu).
 
-```
-paywall.badge      = 'Tryb demonstracyjny'
-paywall.title      = 'Odblokuj wszystkie siedem wielkości'
-paywall.lede       = 'Migotanie, równomierność i komfort wzrokowy mają liczby dopiero w Premium. Ocena światła pod wskaźnikiem jest bezpłatna i liczy się ze wszystkich siedmiu — także tych trzech.'
-paywall.plansTitle = 'Wybierz plan'
-paywall.trialNote  = 'Roczny zaczyna się od 7 dni bez opłaty. W symulacji możesz go włączyć i wyłączyć dowolną liczbę razy.'
-paywall.ctaTpl     = 'Wybierz {plan} — {price}'
-paywall.ctaTrial   = 'Zacznij 7 dni bez opłaty'
-paywall.restore    = 'Przywróć zakupy'
-paywall.fine       = 'To jest symulacja zakupu. Nie pobieramy żadnej opłaty, nie prosimy o dane karty i nie wysyłamy niczego do sieci. Naciśnięcie przycisku zmienia tylko wpis w pamięci tej przeglądarki i możesz go w każdej chwili cofnąć w zakładce Konto.'
-paywall.benefitsTitle = 'Co dostajesz'
-paywall.fairTitle  = 'Co zostaje bezpłatne'
-paywall.fairText   = 'Ocena światła i zdanie pod wskaźnikiem są bezpłatne i biorą pod uwagę wszystkie siedem wielkości. Pakiet Premium odblokowuje liczby trzech z nich: migotania, równomierności i komfortu wzrokowego. Historia zbiera się od pierwszego dnia dla wszystkich, więc po zakupie zobaczysz przebieg, który naprawdę się wydarzył, a nie pustą tabelę.'
-paywall.confirmTitle = 'Potwierdzenie'
-paywall.confirmTpl = 'Wybrany plan: {plan}, {price}. To symulacja — nie zostanie pobrana żadna opłata i nie podajesz żadnych danych płatniczych.'
-paywall.confirmKey = 'Potwierdzam'
-paywall.busy       = 'Przetwarzam…'
-paywall.successTitle = 'Premium aktywne'
-paywall.successText  = 'Trzy zamknięte wielkości mają teraz liczby, a historia pokazuje je wstecz. Pamiętaj: to symulacja, żadna opłata nie została pobrana.'
-paywall.successKey   = 'Wróć do pomiaru'
-paywall.restoredOn   = 'Przywrócono zakup. Premium jest aktywne.'
-paywall.restoredOff  = 'Nie znaleziono zakupu do przywrócenia w tej przeglądarce.'
-paywall.cancelled    = 'Premium wyłączone. Liczby trzech wielkości wracają pod kłódkę.'
-paywall.trialStarted = 'Okres próbny włączony — 7 dni.'
-paywall.trialEnded   = 'Okres próbny się skończył.'
-```
+Ze `Scale.TEXT` zniknęły w ten sam sposób: wartość `stamp` i wartość `verdict` opisujące
+liczbę za opłatą, dwa klucze `channels` od zamkniętego kanału, klucz `help` od płatnego
+dostępu oraz `demo.fairness`. `help.free` brzmi teraz „Dla wszystkich, bez opłat”,
+a moduł `10` w `Scale.TEXT.modules` opisuje wsparcie zamiast płatnego pakietu.
 
-Plany — `Billing.PLANS`, dokładnie te trzy i w tej kolejności:
-
-```
-{ id: 'monthly',  namePL: 'Miesięczny', pricePL: '9,99 zł',   periodPL: '/mies.',
-  notePL: 'Płatność co miesiąc, rezygnacja w każdej chwili.' }
-
-{ id: 'yearly',   namePL: 'Roczny',     pricePL: '59,99 zł',  periodPL: '/rok',
-  perMonthPL: '5,00 zł/mies.', savePctPL: '-50%', badgePL: 'Najczęściej wybierany',
-  trialDays: 7, notePL: 'Pierwsze 7 dni bez opłaty, potem 59,99 zł za rok.' }
-
-{ id: 'lifetime', namePL: 'Dożywotni',  pricePL: '149,99 zł', periodPL: 'jednorazowo',
-  notePL: 'Jedna płatność, bez odnawiania. Odpowiada trzem latom planu rocznego.' }
-```
-
-Korzyści — `Billing.benefits()`, pięć wpisów, każdy z ikoną:
-
-```
-{ icon: 'waveform', titlePL: 'Migotanie w liczbach',
-  textPL: 'Zobaczysz, o ile procent pulsuje źródło światła i czy pomiar mieści się w zasięgu metody.' }
-
-{ icon: 'grid', titlePL: 'Równomierność kadru',
-  textPL: 'Dziewięć pól obrazu porównanych ze sobą — od razu widać przeświecanie i odbicia.' }
-
-{ icon: 'eye', titlePL: 'Komfort wzrokowy',
-  textPL: 'Jedna ocena 0–100 z rozpisaniem, co ją najbardziej obniża.' }
-
-{ icon: 'report', titlePL: 'Raporty i porównania',
-  textPL: 'Zestawienia dobowe i tygodniowe oraz dwie sesje obok siebie z różnicą podaną liczbowo.' }
-
-{ icon: 'export', titlePL: 'Eksport z pełnym kompletem kolumn',
-  textPL: 'CSV i JSON ze wszystkimi siedmioma wielkościami, a nie tylko czterema.' }
-```
 
 ### 7.8 Błędy — `UI.T.error`
 
@@ -1512,10 +1423,8 @@ aria.sheetTpl        = 'Okno: {name}'
 aria.closeSheet      = 'Zamknij okno'
 aria.gaugeTpl        = '{name}: {value}, {zone}.'
 aria.tileTpl         = '{name}, {value}, {zone}. Dotknij, aby pokazać na wskaźniku.'
-aria.tileLockedTpl   = '{name}, funkcja Premium. Dotknij, aby zobaczyć ofertę.'
 aria.swatchTpl       = 'Kolor aplikacji: {name}'
 aria.themeTpl        = 'Motyw: {name}'
-aria.planTpl         = 'Plan {name}, {price} {period}'
 aria.rangeTpl        = 'Zakres: {name}'
 aria.expandPreview   = 'Rozwiń podgląd kamery'
 aria.collapsePreview = 'Zwiń podgląd kamery'
@@ -1525,48 +1434,15 @@ Zdania mówione o wartościach i strefach buduje `Scale.spoken`, `Scale.spokenZo
 `Scale.announceLead`, `Scale.announceReady` i `Scale.announceStopped`. Nie piszemy własnych.
 ### 7.12 Teksty dopisane przez autorów ekranów
 
-Dopisał: autor `screen-account.js`. Klucze wchodzą do `UI.T` w istniejące gałęzie
-`account`, `auth` i `paywall` (rozdziały 7.5–7.7) — to ich dalszy ciąg, nie nowa gałąź.
+Dopisał: autor `screen-support.js`. Klucze wchodzą do `UI.T` w istniejącą gałąź
+`support` (rozdziały 7.5–7.6) — to jej dalszy ciąg, nie nowa gałąź.
 
-```
-account.appearance       = 'Wygląd'
-account.textMotion       = 'Tekst i ruch'
-account.measureGroup     = 'Pomiar'
-account.textScalePreview = 'Tak wygląda tekst w tym rozmiarze.'
-account.camera           = 'Kamera domyślna'
-account.cameraBack       = 'Tylna'
-account.cameraFront      = 'Przednia'
-account.historySize      = 'Zapisana historia'
-account.historySizeTpl   = '{count} odczytów · {span}'
-account.licenses         = 'Licencje'
-account.licensesText     = 'Cały kod tej aplikacji powstał na jej potrzeby. Nie ma tu żadnej biblioteki zewnętrznej, żadnego pliku graficznego ani kroju pisma pobranego z sieci — ikony są rysowane w kodzie, a typografia pochodzi z systemu.'
-account.accountSheet     = 'Twoje konto'
-account.nameSheetSub     = 'Nazwa służy tylko do inicjałów w awatarze i zostaje w tej przeglądarce.'
-account.subPlan          = 'Plan'
-account.subSince         = 'Włączone od'
-account.subTrialCta      = 'Włącz okres próbny'
-
-auth.passwordLabel       = 'Hasło'
-auth.passwordHint        = 'Hasło nie jest nigdzie zapisywane ani sprawdzane. To pole stoi tu tylko po to, żeby ekran wyglądał jak prawdziwy.'
-auth.termsTitle          = 'Warunki'
-auth.back                = 'Wróć do wyboru'
-
-paywall.ledeMetricTpl    = 'Liczba „{name}” jest częścią pakietu Premium.'
-paywall.compareTitle     = 'Co się zmienia'
-paywall.compareFree      = 'Bez opłaty'
-paywall.comparePremium   = 'Premium'
-paywall.cmpVerdict       = 'Ocena światła i zdanie pod wskaźnikiem'
-paywall.cmpFree4         = 'Cztery wielkości z liczbami'
-paywall.cmpPremium3      = 'Migotanie, równomierność i komfort w liczbach'
-paywall.cmpHistory       = 'Historia, wykresy i sesje'
-paywall.cmpReports       = 'Raporty i porównanie sesji'
-paywall.cmpExport        = 'Eksport ze wszystkimi kolumnami'
-paywall.cmpYes           = 'w pakiecie'
-paywall.cmpNo            = 'poza pakietem'
-paywall.manageTitle      = 'Zarządzaj subskrypcją'
-```
+Po przejściu na model darowiznowy nie ma tu już nic do dopisania: wszystkie klucze,
+które ten ekran woła, stoją w rozdziałach 7.5 i 7.6, a dwie dawne gałęzie od konta
+i od ekranu oferty przestały istnieć (rozdział 7.7).
 
 ---
+
 
 ## 8. Ruch, dostępność, wydajność
 
@@ -1601,14 +1477,14 @@ Reguły twarde:
 
 ### 8.2 Dostępność
 
-* **Cel dotyku ≥ 44×44 px.** Dotyczy też kafelka premium, próbki palety, kropki wyboru
-  planu i przycisku zamykania arkusza. Jeśli element wizualnie jest mniejszy, powiększa go
+* **Cel dotyku ≥ 44×44 px.** Dotyczy też kafelka wielkości, próbki palety, przycisku
+  darowizny i przycisku zamykania arkusza. Jeśli element wizualnie jest mniejszy, powiększa go
   przezroczysty `padding` albo `::after` z `position: absolute; inset: -Xpx`.
 * **Kontrast ≥ 4,5:1** dla tekstu, **≥ 3:1** dla dużego tekstu (≥ 24 px lub ≥ 19 px pogrubiony)
   i dla krawędzi niosących znaczenie. Wszystkie wartości policzone w rozdziale 2.
   `--c-border` (1,30:1 / 1,35:1) jest dekoracją i nie wolno nim oznaczać stanu.
 * **Kolor nigdy sam.** Strefa = kolor + słowo + kształt (`ms4-stamp__shape`).
-  Stan wybrania = kolor + krawędź + ikona `check`. Kłódka = kolor + ikona + słowo „Premium”.
+  Stan wybrania = kolor + krawędź + ikona `check`.
 * **Fokus.** `:focus-visible` → `outline: 2px solid var(--c-focus); outline-offset: 2px`.
   Nigdy `outline: none` bez zamiennika. Kolejność tabulacji zgodna z kolejnością w DOM.
 * **Arkusze i okna.** `role="dialog"`, `aria-modal="true"`, `aria-labelledby` wskazujące
@@ -1668,7 +1544,7 @@ Dodatkowo:
 * **Zegar sesji** to osobny `setInterval(1000)`, nie `engine:sample`.
 * **Wykresy historii** rysują się na wejście w widok, na `engine:history` i na zmianę
   zakresu — nigdy przy próbce. Wyjątek: zakres „1 min” dorysowuje ostatni punkt co 1 s.
-* **Widok nieaktywny nic nie robi.** `leave()` odpina KAŻDĄ subskrypcję magistrali
+* **Widok nieaktywny nic nie robi.** `leave()` odpina KAŻDY nasłuch magistrali
   (funkcje `off` zwrócone przez `Bus.on`) i kasuje timery. Czterech widoków słuchających
   próbek naraz nie ma prawa być.
 * **Kafelki** aktualizują się wszystkie siedem przy każdej próbce, ale jeden kafelek
@@ -1680,8 +1556,7 @@ Dodatkowo:
 | klucz | właściciel | zawartość |
 |---|---|---|
 | `ms4.settings.v1` | `store.js` | `{theme, accent, textScale, motion, haptics, leadMetric, onboarded, cameraFacing}` |
-| `ms4.account.v1` | `auth.js` | `{id, name, email, provider, createdAt}` lub brak |
-| `ms4.entitlement.v1` | `billing.js` | `{plan, since, trialUntil, source}` lub brak |
+| `ms4.account.v1`, `ms4.entitlement.v1` | — | klucze po dawnym koncie i dawnym uprawnieniu. Nikt ich już nie zapisuje; `app.js` kasuje je raz, przy starcie (`dropStaleKeys`), żeby nie zostawały w niczyjej przeglądarce |
 | `ms2.history.v1`, `ms2.thresholds.v1`, `ms2.session.v1`, `ms2.calibration.v1` | `engine.js` | NIE DOTYKAĆ — klucze z wersji 2, celowo wspólne, żeby historia przeżyła przejście na v4 |
 
 Każdy zapis w `try/catch`. Brak pamięci (tryb prywatny) nie może wywrócić aplikacji:
@@ -1693,7 +1568,10 @@ dostaje `UI.T.error.storageBlocked` raz na sesję, nie przy każdym zapisie.
 1. `node --check` przechodzi na każdym pliku `.js`.
 2. Wyłączona sieć: aplikacja startuje, mierzy i rysuje wszystko.
 3. `grep -n "#[0-9A-Fa-f]\{6\}" *.css` daje trafienia tylko w `tokens.css`
-   oraz w dwóch udokumentowanych miejscach (`ms4-themepick__preview`, ikony dostawców).
+   oraz w jednym udokumentowanym miejscu (`ms4-themepick__preview`).
+3a. Grep po całym katalogu wersji za słowami dawnego modelu płatnego (nazwa pakietu,
+   nazwa cyklicznej opłaty, ścianka oferty, wezwanie do logowania) daje zero trafień —
+   także w tym dokumencie.
 4. `grep` po polskich znakach w `screen-*.js`, `app.js`, `ui.js` (poza `UI.T`) — zero trafień.
 5. Każda z sześciu palet w obu motywach: tekst czytelny, przycisk główny czytelny,
    strefy odróżnialne od akcentu.
@@ -1701,9 +1579,8 @@ dostaje `UI.T.error.storageBlocked` raz na sesję, nie przy każdym zapisie.
 7. Tabulacja przez cały ekran pomiaru: każdy element ma widoczny fokus, kolejność logiczna.
 8. Arkusz: Escape zamyka, fokus wraca, tło się nie przewija.
 9. Pomiar 10 minut: brak wzrostu zużycia pamięci, brak spadku płynności.
-10. Na każdym ekranie zakupu i logowania widać plakietkę „Tryb demonstracyjny”.
-11. Nigdzie nie ma pola na numer karty i nigdzie nie ma cudzego pliku logo.
-12. Nota „Czym ten pomiar nie jest” jest widoczna na ekranie POMIAR bez rozwijania czegokolwiek.
+10. Nigdzie nie ma pola na numer karty i nigdzie nie ma cudzego pliku logo.
+11. Nota „Czym ten pomiar nie jest” jest widoczna na ekranie POMIAR bez rozwijania czegokolwiek.
 
 ---
 
@@ -1727,18 +1604,14 @@ nieważnym — zostanie narysowany jako nic.
 
 | klasa | plik | do czego | jak wygląda |
 |---|---|---|---|
-| `ms4-compare` | `screen-account.js` | tabela „Bez opłaty / Premium” na paywallu | blok `--r-md`, tło `--c-surface-2`, `padding: var(--s-2)`, wiersze jeden pod drugim, `--t-body-sm` |
-| `ms4-compare__head` | `screen-account.js` | wiersz nagłówka tabeli | siatka `1fr 84px 84px`, `--t-caption`, `--fw-bold`, `--c-text-3`, wersaliki, dolna krawędź `--c-border`, `padding: var(--s-2) var(--s-3)` |
-| `ms4-compare__row` | `screen-account.js` | jeden wiersz porównania | ta sama siatka `1fr 84px 84px`, `min-height: 44px`, `align-items: center`, `padding: var(--s-2) var(--s-3)`, kolejne wiersze rozdzielone linią `--c-border` |
-| `ms4-compare__label` | `screen-account.js` | opis cechy w lewej kolumnie | `--t-body-sm`, `--c-text`, `line-height: --lh-body` |
-| `ms4-compare__cell` | `screen-account.js` | komórka „jest / nie ma” | `display: grid; place-items: center` |
-| `ms4-compare__mark` | `screen-account.js` | ptaszek lub kreska w komórce | 20 px; wariant `--yes` ikona `check` w `--c-good`, wariant `--no` ikona `minus` w `--c-text-3` |
-| `ms4-themepick__label` | `screen-account.js` | nazwa motywu pod miniaturą | `--t-caption`, `--c-text-2`, `text-align: center`, `margin-top: var(--s-1)` |
-| `ms4-themepick__preview--light` | `screen-account.js` | miniatura motywu jasnego | prostokąt `#F4F6F9` z mniejszym prostokątem `#FFFFFF` w środku (jeden z dwóch dopuszczonych wyjątków od zakazu hexów) |
-| `ms4-themepick__preview--dark` | `screen-account.js` | miniatura motywu ciemnego | to samo w `#0E1116` i `#171B22` |
-| `ms4-themepick__preview--system` | `screen-account.js` | miniatura motywu systemowego | przekątny podział obu miniatur, granica pod kątem 45° |
-| `ms4-profile__badge` | `screen-account.js` | plakietka Premium przy nazwie w profilu | `ms4-badge--premium` osadzona w wierszu z nazwą, `margin-left: var(--s-2)`, nie zawija się |
-| `ms4-provider.is-loading` | `screen-account.js` | dostawca w trakcie logowania | etykieta `opacity: 0`, na środku `ms4-spinner` w `--c-text-2`, `pointer-events: none` |
+| `ms4-support__ask` | `screen-support.js` | kolumna z prośbą o wsparcie | `ms4-stack`; od 1024 px `grid-area: ask`, `position: sticky` pod górną belką |
+| `ms4-support__settings` | `screen-support.js` | kolumna ustawień | `ms4-stack`; od 1024 px `grid-area: settings` |
+| `ms4-support__action` | `screen-support.js` | karta z przyciskiem darowizny | `ms4-card`, `text-align: left`; wewnątrz `.ms4-row-inline` łamie się (`flex-wrap: wrap`, `gap: var(--s-2)`) |
+| `a.ms4-btn` | `screen-support.js` | odnośnik udający przycisk | `text-decoration: none`; geometria zwykłego `ms4-btn` |
+| `ms4-themepick__label` | `screen-support.js` | nazwa motywu pod miniaturą | `--t-caption`, `--c-text-2`, `text-align: center`, `margin-top: var(--s-1)` |
+| `ms4-themepick__preview--light` | `screen-support.js` | miniatura motywu jasnego | prostokąt `#F4F6F9` z mniejszym prostokątem `#FFFFFF` w środku (jedyny dopuszczony wyjątek od zakazu hexów poza `tokens.css` i planszami testu ekranu) |
+| `ms4-themepick__preview--dark` | `screen-support.js` | miniatura motywu ciemnego | to samo w `#0E1116` i `#171B22` |
+| `ms4-themepick__preview--system` | `screen-support.js` | miniatura motywu systemowego | przekątny podział obu miniatur, granica pod kątem 45° |
 | `ms4-measure__error` | `screen-measure.js` | blok błędu kamery wsuwany nad treść ekranu POMIAR (nie okno modalne) | `ms4-note--warning` na całą szerokość treści, `--r-md`, `margin-bottom: var(--s-1)`; wjeżdża `translateY(-8px)→0` + `opacity 0→1` przez `--dur`, znika przez `is-hidden` |
 | `ms4-note__body` | `screen-measure.js` | kolumna treści noty obok ikony | `display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; flex: 1 1 auto` |
 | `ms4-note__action` | `screen-measure.js` | pasek przycisku wewnątrz noty | `display: flex; gap: var(--s-2); margin-top: var(--s-2); flex-wrap: wrap` |
@@ -1749,7 +1622,7 @@ nieważnym — zostanie narysowany jako nic.
 | `ms4-camera__expand` | `screen-measure.js` | przycisk pełnoekranowego powiększenia podglądu | `ms4-btn--icon --ghost --sm` z ikoną `expand`, stoi po lewej od `ms4-camera__toggle` |
 | `ms4-camera__hint` | `screen-measure.js` | zdanie o tym, co pokazuje celownik | `--t-caption`, `--c-text-3`, `padding: var(--s-2) var(--s-4) var(--s-3)`, `line-height: var(--lh-body)`; przy `ms4-camera.is-collapsed` znika razem z ramką |
 | `ms4-tile__icon` | `screen-measure.js` | ikona wielkości w nagłówku kafelka | 18×18 px, `--c-text-3`, `flex: 0 0 auto` |
-| `ms4-tile__valuerow` | `screen-measure.js` | wiersz liczby kafelka (`≈` + liczba + jednostka) | `display: flex; align-items: baseline; gap: 0; min-width: 0`; znika przez `is-hidden` w kafelku zamkniętym kłódką |
+| `ms4-tile__valuerow` | `screen-measure.js` | wiersz liczby kafelka (`≈` + liczba + jednostka) | `display: flex; align-items: baseline; gap: 0; min-width: 0` |
 | `ms4-tile.is-good` `.is-warn` `.is-crit` | `screen-measure.js` | strefa kafelka; jedyna klasa zmieniana w pętli 5 Hz (SPEC 8.3) | steruje kolorem potomków: `.ms4-tile__spark { color: var(--c-good) / var(--c-warn) / var(--c-crit) }` i `.ms4-tile__bar-fill { background: ten sam kolor }`; tło samego kafelka zostaje `--c-surface` |
 | `ms4-measure__aim` | `screen-measure.js` | wnętrze pełnoekranowego powiększenia podglądu | kolumna `gap: var(--s-3)`; `ms4-camera__stage` w środku dostaje `aspect-ratio: auto`, `max-height: 62dvh`, `--r-lg`, `overflow: hidden` |
 | `ms4-measure__aimsheet` | `screen-measure.js` | arkusz `ms4-sheet--full` z powiększonym podglądem | tło `--c-surface`, treść wyśrodkowana w pionie, `padding-bottom: calc(var(--s-5) + env(safe-area-inset-bottom))` |
@@ -1758,7 +1631,6 @@ nieważnym — zostanie narysowany jako nic.
 | `ms4-session__avg--good` `--warn` `--crit` | `screen-history.js` | kolor średniej w wierszu sesji | `color: var(--c-good)` / `var(--c-warn)` / `var(--c-crit)`; reszta wyglądu jak `ms4-session__avg`; bez modyfikatora zostaje `--c-text-2` |
 | `ms4-coverage__seg` | `screen-history.js` | jedna godzinna kratka paska „Pokrycie doby” | `flex: 1 1 0; height: 8px`, tło `--c-surface-3`, `--r-xs` na skrajnych, 2 px odstępu między kratkami; ze stanem `is-active` (godzina z pomiarem) tło `--c-accent` |
 | `ms4-coverage__caption` | `screen-history.js` | podpis pod paskiem pokrycia doby | `--t-caption`, `--c-text-3`, `margin-top: var(--s-2)`, `line-height: var(--lh-body)` |
-| `ms4-topbar__avatar` | `app.js` | inicjały zalogowanego użytkownika w przycisku konta w górnej belce | koło 32×32 px wewnątrz `ms4-topbar__btn`, tło: gradient 135° `--c-accent` → `--c-accent-2`, tekst `--c-on-accent`, `--t-label`, `--fw-bold`, `letter-spacing: .02em`, `display: grid; place-items: center`; gdy nikt nie jest zalogowany, przycisk pokazuje zwykłą ikonę `account` i tej klasy w nim nie ma |
 | `ms4-topbar__dot--run` | `app.js` | kropka stanu „uruchamiam” i „trwa pomiar” w pigułce `ms4-topbar__status` | 8×8 px koło w `--c-accent` z pulsem krycia 0,45 ↔ 1 co 2 s; przy `data-motion="reduced"` puls znika, kolor zostaje (wariant zapowiedziany w 5.B, tu nazwany wprost obok `--idle`, `--good`, `--warn`, `--crit`) |
 | `ms4-noscript` | `index.html` | komunikat dla przeglądarki z wyłączonym JavaScriptem | jak `ms4-note--warning`: tło `--c-warn-soft`, tekst `--c-warn`, `--r-md`, `padding: var(--s-4)`, `margin: var(--s-4) auto`, `max-width: 46ch`; w środku `ms4-note__title` i `ms4-note__text`; widoczny wyłącznie wewnątrz `<noscript>`, więc nigdy nie zderza się z powłoką |
 | `ms4-gauge--linear` | `gauge.js` | degradacja wskaźnika w bardzo niskim albo bardzo szerokim kontenerze (`height < 150px` lub `width/height > 2,1`): zamiast koła 270° rysuje się poziomy pasek z tą samą liczbą | modyfikator na `ms4-gauge`: bez `aspect-ratio`, `width: 100%`, `min-height: 72px`, `margin-inline: 0`; w środku `ms4-gauge__value` schodzi do `--t-h1`, a `ms4-gauge__name` i `ms4-gauge__unit` są ukrywane z JS (jednostka dokleja się wtedy do liczby) |
@@ -1812,9 +1684,9 @@ window.Store
 
 window.UI
   el(tag, className, text), frag(), clear(node), on(node, ev, fn)
-  icon(name, size) -> <svg>,  ICONS -> [73 nazwy]
+  icon(name, size) -> <svg>,  ICONS -> [62 nazwy]
   card({title, subtitle, actions, className}) -> {root, body, header}
-  button({label, variant, icon, onClick, size, full}) variant: primary|tonal|ghost|danger|premium
+  button({label, variant, icon, onClick, size, full}) variant: primary|tonal|ghost|danger
   chip({label, icon, tone}), badge({label, tone})
   sheet({title, subtitle, size:'auto'|'full', body, actions, onClose}) -> {root, body, close()}
   dialog({title, text, confirm, cancel, tone}) -> Promise<boolean>
@@ -1834,18 +1706,8 @@ window.Gauge
   bars(container, {metricId, thresholds}) -> {update(buckets), destroy()}      buckets=[{t,avg,min,max,zone}]
   ring(container, {value, max})           -> {update(v), destroy()}
 
-window.Auth
-  CONFIG = {google:{clientId:''}, facebook:{appId:''}}      (puste => tryb demonstracyjny)
-  isDemo(), user(), providers(), signIn(providerId, {email, name}) -> Promise<user>,
-  signOut(), update(patch), deleteAccount()
-  emituje 'auth:changed' {user};  klucz 'ms4.account.v1'
-
-window.Billing
-  DEMO = true, PLANS (rozdział 7.7), benefits() (rozdział 7.7)
-  isPremium(), isUnlocked(metricId), entitlement()
-  purchase(planId) -> Promise<{ok}>, startTrial(), restore(), cancel()
-  openPaywall({source, metricId}),  registerPaywall(fn)   <- podpina screen-account.js
-  emituje 'billing:changed';  klucz 'ms4.entitlement.v1'
+(Dwa dawne moduły — od konta i od płatności — nie istnieją: usunięto je razem z modelem
+ płatnym. Ich zdarzenia magistrali nie są już ani emitowane, ani nasłuchiwane.)
 
 window.App
   registerView({id, labelPL, icon, build(root), enter(params), leave(), desktopOnly})
@@ -1866,8 +1728,6 @@ engine:calibration {calibration}
 engine:history     {reason}
 app:ready          {}                      lepki — Bus.once złapie go także po fakcie
 settings:changed   {settings}              store.js
-auth:changed       {user}                  auth.js
-billing:changed    {entitlement}           billing.js
 view:changed       {id}                    app.js
 ```
 
@@ -1880,9 +1740,9 @@ Kształt jednej próbki (`reading`), do którego odwołują się wszystkie ekran
   extra:  { kelvinReliable, flickerHz, flickerWithinRange, comfortPenalties[], cells[] } }
 ```
 
-Cztery wielkości bezpłatne: `share`, `brightness`, `kelvin`, `melanopic`.
-Trzy premium: `flicker`, `uniformity`, `comfort`. Podział bierzemy z pola `premium`
-w `Metrics.CATALOGUE` — nigdy z własnej listy w kodzie ekranu.
+Wszystkie siedem wielkości jest dostępnych dla każdego, bez warunków.
+`Metrics.CATALOGUE` nie ma i nie ma mieć pola dzielącego je na dostępne i niedostępne —
+kod ekranu nie ma czego sprawdzać przed pokazaniem liczby.
 
 ## Załącznik B — mapa ikon dla siedmiu wielkości
 
@@ -1892,9 +1752,9 @@ w `Metrics.CATALOGUE` — nigdy z własnej listy w kodzie ekranu.
 | `brightness` | `sun` | |
 | `kelvin` | `thermometer` | wartość przybliżona → kafelek pokazuje `≈` |
 | `melanopic` | `moon` | wartość przybliżona → kafelek pokazuje `≈` |
-| `flicker` | `waveform` | Premium |
-| `uniformity` | `grid` | Premium |
-| `comfort` | `eye` | Premium; w karcie sesji rysowany przez `Gauge.ring` |
+| `flicker` | `waveform` | |
+| `uniformity` | `grid` | |
+| `comfort` | `eye` | w karcie sesji rysowany przez `Gauge.ring` |
 
 Znak `≈` stawiamy przy `kelvin` i `melanopic` zawsze, a przy `kelvin` dodatkowo pokazujemy
 `Scale.TEXT.note.kelvinOutOfRange`, gdy `reading.extra.kelvinReliable === false`.

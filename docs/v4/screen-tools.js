@@ -326,12 +326,6 @@
         if (typeof cell === 'string') cell = { textPL: cell };
         var td = put(tr, el(cell.head ? 'th' : 'td', cell.num ? 'ms4-num' : ''));
         if (cell.head) td.setAttribute('scope', 'row');
-        if (cell.lock) {
-          var lock = put(td, el('span', 'ms4-lock'));
-          put(lock, icon('lock', 16));
-          lock.setAttribute('aria-hidden', 'true');
-          put(td, el('span', 'ms4-sronly', T('channels.locked')));
-        }
         if (cell.tone) {
           var chip = put(td, el('span', 'ms4-chip ms4-chip--' + cell.tone));
           put(chip, el('span', 'ms4-chip__label', cell.textPL));
@@ -519,24 +513,6 @@
       try { id = store.get().leadMetric; } catch (err) { id = null; }
     }
     return metric(id) ? id : 'share';
-  }
-
-  /* The catalogue says a metric is paid; whether it is unlocked right now is
-     billing.js's business. Anything unknown stays locked. */
-  function isLocked(m) {
-    if (!m || !m.premium) return false;
-    var billing = global.Billing;
-    if (billing && typeof billing.isUnlocked === 'function') {
-      try { if (billing.isUnlocked(m.id)) return false; } catch (err) { /* stays locked */ }
-    }
-    return true;
-  }
-
-  function openPaywall(source, metricId) {
-    var billing = global.Billing;
-    if (billing && typeof billing.openPaywall === 'function') {
-      billing.openPaywall({ source: source, metricId: metricId });
-    }
   }
 
   function fmt(id, value) {
@@ -910,7 +886,7 @@
       if (!Object.prototype.hasOwnProperty.call(state.rows, id)) continue;
       var entry = state.rows[id];
       if (!entry.preview) continue;
-      var value = values && !isLocked(entry.metric) ? values[id] : null;
+      var value = values ? values[id] : null;
       var pos = scale && isNum(value) ? scale.pos(id, value) : null;
       if (pos === null || pos === undefined) {
         entry.preview.needle.hidden = true;
@@ -1313,16 +1289,16 @@
   function reportAdvice(data) {
     var out = [];
     var avg = data.avg;
-    if (isNum(avg.melanopic) && avg.melanopic > 0.8 && !isLocked(metric('melanopic'))) {
+    if (isNum(avg.melanopic) && avg.melanopic > 0.8) {
       out.push(T('modules.04.adviceMelanopicTpl', { value: fmt('melanopic', avg.melanopic) }));
     }
     if (isNum(avg.kelvin) && avg.kelvin > 5000) {
       out.push(T('modules.04.adviceKelvinTpl', { value: fmt('kelvin', avg.kelvin) }));
     }
-    if (isNum(avg.flicker) && avg.flicker > 8 && !isLocked(metric('flicker'))) {
+    if (isNum(avg.flicker) && avg.flicker > 8) {
       out.push(T('modules.04.adviceFlickerTpl', { value: fmt('flicker', avg.flicker) }));
     }
-    if (isNum(avg.uniformity) && avg.uniformity < 60 && !isLocked(metric('uniformity'))) {
+    if (isNum(avg.uniformity) && avg.uniformity < 60) {
       out.push(T('modules.04.adviceUniformityTpl', { value: fmt('uniformity', avg.uniformity) }));
     }
     if (data.worstHour !== null && data.worstScore > 0.2) {
@@ -1403,12 +1379,11 @@
     var rows = [];
     for (var i = 0; i < items.length; i += 1) {
       var m = items[i];
-      var locked = isLocked(m);
       rows.push([
-        { textPL: m.namePL + ' (' + m.unit + ')', head: true, lock: locked },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, data.avg[m.id]), num: true },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, data.min[m.id]), num: true },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, data.max[m.id]), num: true }
+        { textPL: m.namePL + ' (' + m.unit + ')', head: true },
+        { textPL: fmt(m.id, data.avg[m.id]), num: true },
+        { textPL: fmt(m.id, data.min[m.id]), num: true },
+        { textPL: fmt(m.id, data.max[m.id]), num: true }
       ]);
     }
     put(tab.body, table(T('modules.04.tableCaption'),
@@ -1463,7 +1438,6 @@
           state.panorama = null;
         });
         handle.bus('engine:history', function () { renderReport(state); });
-        handle.bus('billing:changed', function () { renderReport(state); });
       }
     });
   }
@@ -1489,10 +1463,10 @@
       for (j = 0; j < items.length; j += 1) {
         var m = items[j];
         var v = p[m.id];
-        // A locked premium column stays empty. Inventing a number inside
+        // A column with no reading stays empty. Inventing a number inside
         // something that looks like an export is the one thing this app
         // must never do.
-        line.push(isLocked(m) || !isNum(v) ? '' : v.toFixed(m.decimals).replace('.', ','));
+        line.push(!isNum(v) ? '' : v.toFixed(m.decimals).replace('.', ','));
       }
       line.push(p.zone || '');
       rows.push(line);
@@ -1507,7 +1481,7 @@
     for (i = 0; i < items.length; i += 1) {
       columns.push({
         id: items[i].id, namePL: items[i].namePL, unit: items[i].unit,
-        decimals: items[i].decimals, locked: isLocked(items[i])
+        decimals: items[i].decimals
       });
     }
     var points = [];
@@ -1516,7 +1490,7 @@
       var out = { t: p.t, zone: p.zone || null };
       for (j = 0; j < items.length; j += 1) {
         var m = items[j];
-        out[m.id] = isLocked(m) || !isNum(p[m.id]) ? null : p[m.id];
+        out[m.id] = !isNum(p[m.id]) ? null : p[m.id];
       }
       points.push(out);
     }
@@ -1620,9 +1594,8 @@
         short: m.shortPL, unit: m.unit,
         min: fmt(m.id, m.min), max: fmt(m.id, m.max)
       });
-      if (isLocked(m)) descPL += ' ' + T('modules.05.lockedColumn');
       rows.push([
-        { textPL: m.namePL + ' [' + m.unit + ']', head: true, lock: isLocked(m) },
+        { textPL: m.namePL + ' [' + m.unit + ']', head: true },
         descPL
       ]);
     }
@@ -1880,14 +1853,13 @@
     var rows = [];
     for (var i = 0; i < catalog.length; i += 1) {
       var m = catalog[i];
-      var locked = isLocked(m);
       var a = A.avg ? A.avg[m.id] : null;
       var b = B.avg ? B.avg[m.id] : null;
       rows.push([
-        { textPL: m.namePL + ' (' + m.unit + ')', head: true, lock: locked },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, a), num: true },
-        { textPL: locked ? T('common.noValue') : fmt(m.id, b), num: true },
-        locked ? { textPL: T('common.noValue'), num: true } : diffCell(m.id, a, b, map)
+        { textPL: m.namePL + ' (' + m.unit + ')', head: true },
+        { textPL: fmt(m.id, a), num: true },
+        { textPL: fmt(m.id, b), num: true },
+        diffCell(m.id, a, b, map)
       ]);
     }
     put(diff.body, table(T('modules.06.diffCaption'),
@@ -1961,7 +1933,6 @@
           renderCompareSelects(state);
           renderCompare(state);
         });
-        handle.bus('billing:changed', function () { renderCompare(state); });
       }
     });
   }
@@ -2367,20 +2338,13 @@
     var items = catalogue();
     for (var i = 0; i < items.length; i += 1) {
       (function (m) {
-        var locked = isLocked(m);
         var selected = cfg.metricId === m.id;
         var chip = el('button', 'ms4-chip ms4-chip--selectable' +
-          (selected ? ' is-selected' : '') + (locked ? ' is-locked' : ''));
+          (selected ? ' is-selected' : ''));
         chip.type = 'button';
         chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
-        if (locked) {
-          put(chip, icon('lock', 16, 'ms4-chip__icon'));
-        }
         put(chip, el('span', 'ms4-chip__label', m.namePL));
         on(chip, 'click', function () {
-          // A metric whose number is still behind the paywall cannot be
-          // watched honestly, so the chip opens the offer instead of pretending.
-          if (locked) { openPaywall('alerts', m.id); return; }
           setAlerts({ metricId: m.id }, state);
           renderAlertMetrics(state);
         });
@@ -2448,7 +2412,6 @@
         put(body, note('warning', T('modules.09.whenNotTitle'), T('modules.09.whenNot'), 'warning'));
 
         renderAlertStatus(state);
-        handle.bus('billing:changed', function () { renderAlertMetrics(state); });
         handle.own(function () {
           if (state.sustainTimer) global.clearTimeout(state.sustainTimer);
         });
@@ -2551,8 +2514,7 @@
         { textPL: fmt(m.id, m.min) + RANGE_DASH + fmt(m.id, m.max), num: true }],
       [{ textPL: T('help.warn'), head: true }, { textPL: fmtUnit(m.id, t.warn), num: true }],
       [{ textPL: T('help.crit'), head: true }, { textPL: fmtUnit(m.id, t.crit), num: true }],
-      [{ textPL: T('help.availability'), head: true },
-        { textPL: m.premium ? T('help.premium') : T('help.free') }]
+      [{ textPL: T('help.availability'), head: true }, { textPL: T('help.free') }]
     ];
     put(built.body, table(m.namePL,
       [T('tools.docsColProperty'), T('tools.docsColValue')], rows));
@@ -2589,9 +2551,6 @@
         var items = catalogue();
         for (var j = 0; j < items.length; j += 1) put(body, metricDocCard(items[j]));
 
-        put(body, section(T('tools.premiumWord')));
-        put(body, note('info', '', T('demo.fairness'), 'crown'));
-
         put(body, section(T('tools.docsGlossaryTitle')));
         var glossary = TL('tools.docsGlossary');
         var terms = list();
@@ -2600,13 +2559,13 @@
         }
         put(body, terms);
 
-        put(body, section(T('account.privacy')));
-        put(body, note('demo', T('account.privacy'), T('account.privacyText'), 'shield'));
+        put(body, section(T('support.privacy')));
+        put(body, note('demo', T('support.privacy'), T('support.privacyText'), 'shield'));
 
-        put(body, section(T('account.aboutTitle')));
+        put(body, section(T('support.aboutTitle')));
         var about = list();
         put(about, row({
-          icon: 'info', title: T('account.version'), value: T('account.versionValue')
+          icon: 'info', title: T('support.version'), value: T('support.versionValue')
         }));
         put(body, about);
       }

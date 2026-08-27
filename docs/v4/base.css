@@ -34,8 +34,7 @@
                          treści rośnie do 1180 px, marginesy do --s-5, a dolny
                          zapas pod nawigację znika. Pojawiają się stany :hover.
     1440 px              próg „szeroki”. Treść NIE rośnie dalej — rośnie margines.
-                         Boczna nawigacja zyskuje stopkę ze stanem subskrypcji
-                         i wersją aplikacji.
+                         Boczna nawigacja zyskuje stopkę z numerem wersji.
    ============================================================================ */
 
 
@@ -404,22 +403,6 @@ code, kbd, samp, output {
   height: 24px;
 }
 
-/* Inicjały zalogowanego użytkownika zamiast ikony konta. Koło 32 px siedzi
-   w środku celu dotyku 44 px, więc cel nie maleje. */
-.ms4-topbar__avatar {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-pill);
-  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-2));
-  color: var(--c-on-accent);
-  font-size: var(--t-label);
-  font-weight: var(--fw-bold);
-  letter-spacing: .02em;
-  line-height: 1;
-}
-
 
 /* ============================================================================
    8. DOLNA NAWIGACJA (telefon i tablet)
@@ -607,7 +590,7 @@ code, kbd, samp, output {
   white-space: nowrap;
 }
 
-/* Stopka nawigacji: stan subskrypcji i wersja. Widoczna dopiero przy 1440 px —
+/* Stopka nawigacji: numer wersji. Widoczna dopiero przy 1440 px —
    niżej zabiera wysokość, której nawigacja potrzebuje na pozycje. */
 .ms4-sidenav__foot {
   display: none;

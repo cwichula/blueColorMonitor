@@ -189,257 +189,91 @@ Pełne wyjaśnienie jest też w aplikacji pod ikoną „i" w nagłówku.
 
 ---
 
-## 5. Monetyzacja (WERSJA DEMONSTRACYJNA — wszystko jest fikcyjne)
+## 5. Wsparcie (dobrowolne darowizny)
 
-> **Uwaga, najważniejsze zdanie w tym rozdziale:** w aplikacji nie ma ani jednej
-> prawdziwej płatności. Nie ma Google Play Billing, nie ma Google Pay, nie ma
-> Google Sign-In, nie ma AdMob, nie ma Firebase i nie ma **żadnego** połączenia
-> z siecią. Wszystkie ceny, produkty, konta, subskrypcje i reklamy są atrapami
-> zapisywanymi wyłącznie w `localStorage` przeglądarki. Każdy ekran, który dotyczy
-> pieniędzy, konta albo reklamy, ma trwałą, niezamykalną plakietkę **DEMO**.
-> To prototyp interfejsu (UX), a nie sklep.
+Aplikacja nie sprzedaje niczego. **Wszystko, co dana wersja potrafi, działa dla
+każdego, od razu, bez konta, bez limitów i bez opłat** — w v2…v5 to wszystkie
+siedem wielkości, w v1 obie gałki i cała reszta narzędzi. Nie ma planów, subskrypcji, cen,
+okresu próbnego, paywalla, reklam ani logowania — dawna warstwa monetyzacji
+została usunięta z wszystkich pięciu wersji, a nie tylko wyłączona.
 
-### 5.1. Model — dlaczego hybrydowy, a nie subskrypcja
+W jej miejsce w każdej wersji stoi jeden ekran (albo sekcja) **„Wsparcie”**,
+dostępny tam, gdzie wcześniej była zakładka „Konto”. Jest na nim krótkie
+wyjaśnienie i jeden przycisk prowadzący na zewnętrzny profil darowizn.
+**Darowizna niczego nie odblokowuje** — to jest napisane wprost na ekranie
+i tak ma zostać. Prośba pojawia się wyłącznie wtedy, gdy użytkownik sam tam
+wejdzie: nie ma wyskakujących okien, odliczania ani proszenia w trakcie pomiaru.
 
-Aplikacja jest **narzędziem pomiarowym** uruchamianym na krótko, a nie aplikacją
-treściową, więc czysta subskrypcja byłaby trudna do obronienia. Przyjęty model to
-wzorzec kategorii pomiarowej (jak Sleep as Android, Twilight, Decibel X):
+### 5.1. Gdzie wpisać adres profilu darowizn (SUPPORT_URL)
 
-- darmowy rdzeń **bez limitu czasu**,
-- trzy produkty premium: miesięczny, roczny (z 7-dniowym lokalnym okresem próbnym)
-  i dożywotni,
-- osobny tani produkt jednorazowy „usunięcie reklam",
-- reklamy tylko w wersji darmowej: stały baner + reklama nagradzana na życzenie.
-  Reklamy pełnoekranowe (interstitial) są **domyślnie wyłączone**, a jedyny
-  wyzwalacz, jaki `maybeShowInterstitial()` w ogóle przyjmuje, to `'neutral_return'`.
-  Wyzwalacz `'session_end'` (reklama po naciśnięciu „Stop") został **usunięty** —
-  Better Ads i polityka Play wprost zakazują reklamy przypiętej do „Start"/„Stop".
+**To jest jedyne miejsce do zmiany.** W każdej wersji jest jeden plik warstwy
+wsparcia, a w nim, na samej górze pod nagłówkiem komentarza, jedna stała
+`SUPPORT_URL`. Fabrycznie jest **pusta** — dopóki jej nie wypełnisz, aplikacja
+działa normalnie, tylko na ekranie Wsparcie zamiast przycisku stoi spokojna
+informacja, że profil nie jest jeszcze podłączony.
 
-Granica płatna leży dokładnie tam, gdzie stawia ją rynek: **darmowy jest sam pomiar,
-płatne jest zamienianie pomiaru w dane.**
-
-Cennik (fikcyjny): 149,99 zł dożywotnio (plan domyślnie zaznaczony), 79,99 zł rocznie
-z 7-dniowym okresem próbnym, 19,99 zł miesięcznie, 12,99 zł za samo usunięcie reklam.
-
-Cennik jest zapisany **wyłącznie** w katalogu w `docs/v1/billing.js`. Karty planów, blok
-warunków, etykieta przycisku zakupu i podsumowanie w arkuszu płatności biorą kwoty
-z `Billing.formatPrice()`, `Billing.formatTerms()` i `Billing.formatCta()`, więc kod
-promocyjny zmienia je wszystkie naraz i nigdzie nie zostaje kwota, której silnik nie
-naliczy. Warstwa UI nie ma własnej listy cen.
-
-### 5.2. Co jest darmowe na zawsze, a co jest w Premium
-
-| Funkcja | Darmowy | Premium |
-|---|---|---|
-| Kamera: Start / Stop / Zmień kamerę | tak | tak |
-| Obie gałki (Jasność kanału B, Udział niebieskiego) | tak | tak |
-| Oba wykresy 60 s | tak | tak |
-| Tabela odczytów bieżącej sesji | tak | tak |
-| Ręczne ustawianie obu par progów | tak | tak |
-| Cała Dokumentacja i disclaimer medyczny | tak | tak |
-| Tryb jasny / ciemny | tak | tak |
-| Historia dłuższa niż 60 s (1 h / 24 h / 7 dni / 30 dni) | nie | tak |
-| Eksport odczytów do CSV | nie | tak |
-| Raport dzienny i tygodniowy | nie | tak |
-| Zapisane profile progów | 1 zestaw | do 5 profili |
-| Alerty progowe (po 5 min nieprzerwanej ekspozycji w strefie szkodliwej) | nie | tak |
-| Podsumowanie sesji po naciśnięciu „Stop" | nie | tak |
-| Reklamy | tak | nie |
-
-Zasady, których nie wolno złamać przy dalszym rozwoju:
-
-1. **Pomiar nigdy nie jest blokowany, opóźniany ani ograniczany czasowo.** To
-   aplikacja o charakterze zdrowotnym dla osób niedowidzących — blokowanie pomiaru
-   byłoby nieetyczne i zabójcze dla ocen w sklepie.
-2. **Funkcji płatnej nigdy nie ukrywamy.** Przycisk zostaje widoczny, dostaje kłódkę
-   i `aria-label` z dopiskiem „funkcja Premium", i **nigdy** nie dostaje atrybutu
-   `disabled`. Element, który znika, jest dla czytnika ekranu gorszy niż element
-   widoczny i opisany jako niedostępny.
-3. **Nie monetyzujemy strachu.** Paywall nie może być wyzwalany wejściem odczytu
-   w strefę „szkodliwa", a żaden tekst sprzedażowy nie może obiecywać efektu
-   zdrowotnego („chroni wzrok", „zmniejsza ryzyko").
-4. **Paywall jest miękki.** Zamykalny od pierwszej sekundy, przycisk „Nie teraz —
-   korzystaj bezpłatnie" ma dokładnie ten sam rozmiar co przycisk zakupu. Zero
-   liczników odliczających i zero „oferta wygasa za…".
-5. Paywall automatyczny wolno pokazać **raz na 24 godziny**, dopiero po 45 sekundach
-   nieprzerwanego pomiaru — nigdy przy starcie aplikacji, nigdy przed zgodą na kamerę
-   i nigdy przy przełączeniu ekranu.
-6. Dane zebrane w wersji darmowej **nie są kasowane** po wygaśnięciu okresu próbnego.
-   Bufor długiej historii (1 punkt na 5 s, okno 30 dni) zbiera się u wszystkich;
-   płatny jest wyłącznie jego odczyt, więc po zakupie użytkownik widzi swoją historię
-   wstecz, a nie pustą tabelę. Bufor jest zapisywany w `localStorage`
-   (`blueMonitor.history.v1`) wsadowo — co 64 punkty długiej historii, przy „Stop",
-   przy ukryciu karty i przy `pagehide` — więc obietnica „historia 30 dni" ma
-   pokrycie także po zamknięciu aplikacji.
-7. Żadna reklama nie pojawia się w panelu Kamery, przy gałkach, w Dokumentacji ani
-   w dialogach płatności — i żadna nie pojawi się, dopóki użytkownik nie odpowie na
-   pytanie o zgodę, które zadajemy dopiero przy pierwszym realnym wyświetleniu slotu.
-
-Co dokładnie dostaje osoba z wersją Premium (stan faktyczny w kodzie, nie plan):
-
-| Uprawnienie | Gdzie to widać | Co robi |
-|---|---|---|
-| `historyLong` | `#historyUpsell` pod wykresami | Przeglądarka historii z zakresami 1 h / 24 h / 7 dni / 30 dni i podziałem czasu na strefy. Bufor jest **trwały** — leży w `blueMonitor.history.v1` i przeżywa przeładowanie strony oraz restart PWA. |
-| `csvExport` | `#exportCsvBtn` w nagłówku wykresów | Zapis odczytów do pliku CSV. |
-| `reports` | ta sama karta co historia, sekcje „Raport dzienny" i „Raport tygodniowy" | Raport dzienny: tabela „dzień → udział stref", porównanie z dniem poprzednim w punktach procentowych i godzina z największą liczbą odczytów w strefie szkodliwej. Raport tygodniowy: osobna tabela grupowana po numerze tygodnia ISO (tydzień zaczyna się w poniedziałek) plus porównanie tydzień do tygodnia; pojawia się przy zakresie 7 dni i 30 dni. |
-| `profiles` | `#profilesUpsell` w karcie ustawień progów | Do 5 nazwanych zestawów progów, przełączanych jednym dotknięciem. |
-| `alerts` | toast + wibracja w trakcie pomiaru | Po **5 minutach** nieprzerwanego pobytu w strefie szkodliwej: jeden komunikat, potem co najwyżej raz na 15 minut. Bez ani jednego słowa sprzedażowego — to reguła etyczna, nie stylistyczna. |
-| `background` | toast po „Stop" + karta „Podsumowanie ostatniej sesji" | Czas sesji, liczba odczytów i udział każdej strefy. |
-| `noAds` | oba sloty reklamowe | Znikają natychmiast po zdarzeniu `change` z uprawnieniem `noAds`. |
-
-Nic poza tą tabelą nie jest sprzedawane: lista na ekranie Konta, korzyści na paywallu
-i tabela porównania wymieniają dokładnie te uprawnienia i nic ponadto.
-
-### 5.3. Nawigacja i ekrany
-
-Górny pasek zakładek został zastąpiony **dolnym paskiem nawigacji** (`#appNav`):
-Kamera · Monitoring · Premium · Więcej. Stary pasek `.tabs` (`#legacyTabs`) pozostaje
-w kodzie jako ukryty sterownik zgodności — dzięki temu `selectTab` z `app.js` działa
-dalej bez zmian i nie ma dwóch źródeł prawdy o widocznym ekranie. Przycisk „i"
-w nagłówku nadal otwiera Dokumentację.
-
-| Ekran | Element | Do czego służy |
-|---|---|---|
-| Premium | `#panelPremium` | Jedyny ekran oferty: trzy plany, tabela porównania, oś czasu okresu próbnego, kody promocyjne, warunki i oświadczenie konsumenckie. Ekran ma trzy tryby: **oferta** (wersja darmowa i okres próbny), **zmiana planu** (aktywna subskrypcja — plan już posiadany znika z listy, a przycisk woła `Billing.changePlan()`, nie `startPurchase()`) i **posiadanie** (plan dożywotni — plany, cena, zgoda i przycisk zakupu są ukryte, zostaje podsumowanie i przejście do ekranu Konta). Nigdy nie oferujemy produktu, który użytkownik już ma. |
-| Konto i subskrypcja | `#panelAccount` | Sześć stanów subskrypcji (brak / próba / aktywna / anulowana / wstrzymana / zaległość), „Przywróć zakupy", „Anuluj subskrypcję". |
-| Więcej | `#panelMore` | Lista wszystkich pozycji drugorzędnych — każdy ekran w maks. 2 dotknięciach. |
-| O aplikacji i kontakt | `#panelAbout` | Disclaimer medyczny w pełnym brzmieniu, regulamin (DEMO), prywatność, dane sprzedawcy, zwroty, przycisk „Zresetuj stan demonstracyjny". To cel linku „Regulamin i prywatność" ze stopki paywalla i linku „Więcej" przy disclaimerze na ekranie głównym. |
-| Symulacja płatności | `#mzPurchaseSheet` | Zastępuje natywny arkusz Google Play. Pozwala wybrać wynik: sukces, anulowanie, błąd. |
-| Zgoda na reklamy | `#mzConsentDialog` | Atrapa CMP. Oba przyciski mają identyczną wagę wizualną. |
-| Reklama nagradzana | `#mzRewardedDialog` | Wyłącznie na świadome kliknięcie. Nagroda: eksport CSV albo dostęp do historii — w obu przypadkach **na 24 h**, maks. 5 razy na dobę, min. 60 s przerwy. Trzy punkty wejścia: baner pod wykresami, dialog blokady przy eksporcie CSV i przycisk `#moreRewardedBtn` na ekranie „Więcej". |
-
-Dostępność: cele dotykowe min. 48 px (przyciski akcji 56 px), `aria-current="page"`
-na aktywnej pozycji paska, roving tabindex i strzałki ←/→, Escape wychodzi z ekranu
-nakładkowego, fokus po zmianie ekranu ląduje na nagłówku `<h2>`, a zmiana jest
-ogłaszana w regionie `aria-live`. Cena, warunki, disclaimer i etykieta „Reklama"
-nigdy nie schodzą poniżej 16 px i nigdy nie używają koloru `--text-muted`.
-
-### 5.4. Gdzie dokładnie podmienić atrapę na prawdziwy Google Play Billing
-
-**Plik: `docs/v1/billing.js`. Obiekt: `MockBillingBackend`.**
-
-Cała fikcja jest zamknięta w jednym obiekcie, otoczonym w pliku komentarzami
-`FICTIONAL LAYER` i `END OF FICTIONAL LAYER`. Zawiera on katalog produktów,
-symulowane opóźnienia, wyniki zakupu, kody promocyjne, fikcyjne konto i generowanie
-dat. Wszystko poza nim to cienki adapter, który tylko deleguje do backendu, przelicza
-`state.features`, zapisuje stan w `localStorage` i emituje zdarzenia — i który
-**nie wie**, że backend jest udawany.
-
-Żeby wejść na realne płatności:
-
-1. Zbuduj aplikację jako TWA (np. Bubblewrap / PWABuilder) — Digital Goods API działa
-   tylko w aplikacji zainstalowanej ze sklepu, nie w zwykłej karcie przeglądarki.
-2. Załóż produkty w Google Play Console o **tych samych identyfikatorach**, których
-   używa kod: `premium_lifetime`, `premium_yearly`, `premium_monthly`, `remove_ads`.
-3. Podmień `MockBillingBackend` na implementację opartą o
-   `window.getDigitalGoodsService('https://play.google.com/billing')` +
-   `PaymentRequest`. Zachowaj kształt zwracanych obiektów: `BillingState`, `Product`
-   i `Result` (`{ ok, code, messagePL, state }`).
-4. W nowym backendzie ustaw `SOURCE: 'PLAY'` zamiast `'MOCK'` i `IS_MOCK = false`.
-   To jest sygnał dla całego UI: znikają plakietki DEMO, a stary stan demonstracyjny
-   zapisany pod `blueMonitor.billing.v1` można wtedy rozpoznać po polu
-   `source: 'MOCK'` i wyczyścić.
-5. `isAvailable()` ma zwracać `false`, gdy `!('getDigitalGoodsService' in window)` —
-   UI pokaże wtedy komunikat `UNAVAILABLE_IN_BROWSER` zamiast przycisku zakupu, a
-   wszystkie funkcje pomiarowe i tak działają dalej bezpłatnie.
-
-**Żaden inny plik nie wymaga zmian.** `monetization-ui.js` i `menu.js` nigdy nie
-czytają stanu płatności z `localStorage` i nigdy nie liczą uprawnień same — pytają
-wyłącznie `Billing.hasFeature(...)`, `Billing.isPremium()` i słuchają zdarzenia
-`Billing.on('change', …)`.
-
-Uwaga na dwie rzeczy przy podmianie:
-
-- `startPurchase()` **musi** dostać `consumerConsent: true` (oświadczenie o rezygnacji
-  z prawa odstąpienia), inaczej zwraca `ok:false` z kodem `CONSENT_REQUIRED`. To wymóg
-  prawa konsumenckiego, nie ozdobnik.
-- Metody backendu nigdy nie rzucają wyjątkami i nigdy nie odrzucają `Promise` — każdy
-  błąd wraca jako `Result` z `ok:false` i gotowym polskim komunikatem w `messagePL`.
-  Realny adapter musi zachować tę własność, inaczej UI będzie się zawieszać na
-  odrzuconych obietnicach.
-
-### 5.5. Klucze w localStorage
-
-| Klucz | Właściciel | Zawartość |
-|---|---|---|
-| `blueMonitor.thresholds.v1` | `app.js` | **ISTNIEJĄCY** klucz z progami stref. Nie wolno zmieniać jego formatu i **nie jest kasowany** przy resecie demonstracyjnym. |
-| `blueMonitor.history.v1` | `app.js` | Trwały bufor długiej historii: `{ v: 1, points: [[t, raw, share, brightness, zoneRaw, zoneShare], …] }`, strefy zakodowane jako 0/1/2, wartości zaokrąglone do 0,1. Przycinany do okna 30 dni i do 15 000 najnowszych punktów (budżet `localStorage`); przy przepełnieniu quoty odrzuca starszą połowę i zapisuje ponownie. To **dane pomiarowe użytkownika**, a nie stan symulacji, więc — tak samo jak progi — **nie jest kasowany** przy resecie demonstracyjnym; czyści go dopiero `AppData.clearHistoryLong()`. |
-| `blueMonitor.billing.v1` | `billing.js` | Pełny stan uprawnień (tier, status, daty, kod promocyjny, uprawnienia tymczasowe, `source: 'MOCK'`). |
-| `blueMonitor.account.v1` | `billing.js` | Fikcyjne konto demonstracyjne. |
-| `blueMonitor.promo.v1` | `billing.js` | Wykorzystane kody, okno oferty powitalnej, data ostatniego zamknięcia paywalla. |
-| `blueMonitor.ads.v1` | `monetization-ui.js` | Zgoda reklamowa (lustro stanu z `billing.js`), licznik reklam nagradzanych na dobę, flaga interstitiala. |
-| `blueMonitor.onboarding.v1` | `monetization-ui.js` | Data pierwszego uruchomienia, moment „aha", znacznik pokazanego przypomnienia o końcu okresu próbnego. |
-| `blueMonitor.profiles.v1` | `monetization-ui.js` | Profile progów (funkcja Premium). |
-| `blueMonitor.nav.v1` | `menu.js` | Ostatni ekran. Ekran „Premium" nigdy nie jest przywracany przy starcie. |
-
-Każdy odczyt i zapis jest w `try/catch` — w trybie prywatnym przeglądarki
-`localStorage` rzuca wyjątkiem, a aplikacja ma wtedy działać dalej, tylko bez
-zapamiętywania.
-
-### 5.6. Kody promocyjne w wersji demonstracyjnej
-
-| Kod | Efekt |
+| Wersja | Plik ze stałą `SUPPORT_URL` |
 |---|---|
-| `WZROK30` | −30% na pierwszy rok planu rocznego (55,99 zł zamiast 79,99 zł) |
-| `DEMO7` | 7 dni Premium |
-| `PREMIUMDEMO` | dożywotnie odblokowanie DEMO |
-| `BEZREKLAM` | usunięcie reklam |
+| v1 | `docs/v1/support.js` |
+| v2 | `docs/v2/support.js` |
+| v3 | `docs/v3/support.js` |
+| v4 | `docs/v4/screen-support.js` |
+| v5 | `docs/v5/js/support.js` |
 
-Wielkość liter nie ma znaczenia, spacje są obcinane, każdy kod działa tylko raz.
+W v5 uwaga na dwa podobne pliki: **stała jest w `docs/v5/js/support.js`**.
+Plik `docs/v5/js/screens/support.js` to sam ekran, który tę stałą tylko czyta —
+wpisanie adresu tam nie zadziała.
 
-### 5.7. Checklista QA warstwy monetyzacji
+**Co zrobić, żeby podłączyć prawdziwy profil:**
 
-1. Przejście całego paywalla **wyłącznie klawiaturą**: Tab / Shift+Tab / Enter /
-   Escape. Nic nie może być nieosiągalne ani nie może „uciekać" z pułapki fokusu.
-2. TalkBack / VoiceOver czyta pasek **DEMO bezpośrednio po pasku powrotu** — przed
-   tytułem, przed listą planów i przed jakąkolwiek ceną. Fokus przy otwarciu
-   każdego ekranu i **każdego dialogu** ląduje na jego tytule (`.mz-dialog-title`
-   / `.mz-screen-title`), a `aria-describedby` tego tytułu wskazuje pasek DEMO —
-   dzięki temu informacja o symulacji i podsumowanie zamówienia nie są pomijane.
-   Ekran „Więcej" ma własny pasek `#moreDemoBanner`, a ekran „O aplikacji i kontakt"
-   — `#aboutDemoBanner` (fikcyjny regulamin i dane sprzedawcy) — oba na samej górze.
-3. Kontrast ceny, warunków i disclaimera ≥ 4.5:1 w motywie jasnym **i** ciemnym
-   (dla tych treści używać `--text-primary`, nigdy `--text-muted`).
-4. Test przy 200% powiększeniu czcionki systemowej — nic się nie ucina i nie nachodzi.
-5. Przycisk zamknięcia paywalla działa **od pierwszej sekundy**.
-6. Po zamknięciu ekranu monetyzacji pomiar dalej działa, a wykresy są przerysowane
-   (`AppTabs.redraw()` po każdym odsłonięciu panelu).
-7. Tryb prywatny przeglądarki (rzucający `localStorage`) nie wywala aplikacji.
-8. Po wyczyszczeniu pamięci i przeładowaniu offline aplikacja startuje na nowym
-   cache — pamiętaj o podniesieniu `CACHE_NAME` w `docs/v1/sw.js` (obecnie
-   `blue-monitor-v24`) przy każdej zmianie plików z `APP_SHELL`.
-9. Escape przy otwartym dialogu zamyka **tylko dialog** i zostawia użytkownika na
-   tym samym ekranie; dopiero drugie Escape opuszcza ekran nakładkowy.
-10. Wejście na ekran Premium przyciskiem Wstecz przeglądarki zeruje oświadczenie
-    konsumenckie — pole wyboru **nigdy** nie jest wstępnie zaznaczone.
-11. Plan roczny reklamuje okres próbny wyłącznie wtedy, gdy użytkownik faktycznie
-    ma do niego prawo (`trialUsed === false`).
-12. Po użyciu kodu rabatowego karta planu podaje kwotę pierwszego okresu
-    („za pierwszy rok") i osobno kwotę odnowienia („potem 79,99 zł rocznie"),
-    a ekran Konto pokazuje **cenę odnowienia**, nie cenę po rabacie.
-13. Ekran Konto nie wymyśla płatności, której nie było: w okresie próbnym **nie**
-    pojawia się wiersz „Zapłacono…" (nic jeszcze nie obciążono), a po anulowaniu
-    subskrypcji zamiast ceny z dopiskiem „odnawia się automatycznie" widnieje
-    „Subskrypcja nie odnowi się — nie pobierzemy kolejnej opłaty."
-14. Liczebniki po polsku odmieniają się w każdym komunikacie czytanym przez
-    czytnik ekranu: „1 dzień / 2 dni", „1 odczyt / 2 odczyty / 5 odczytów",
-    „Zamknij za 1 sekundę / 2 sekundy / 5 sekund", „od 1 minuty / od 2 minut"
-    (helper `pluralPL` w `monetization-ui.js`).
+1. Załóż profil w dowolnym serwisie darowizn — Buy Me a Coffee, Ko-fi, PayPal.me
+   albo innym. Skopiuj adres swojego profilu.
+2. W każdej z pięciu wersji otwórz plik z tabeli powyżej i wklej adres między
+   apostrofy:
 
-Scenariusz przejścia całości (od pustego `localStorage`):
+   ```js
+   const SUPPORT_URL = 'https://buymeacoffee.com/twojanazwa';
+   ```
 
-- start → ekran **Kamera**, bez paywalla i bez ekranu zgody;
-- „Start", 45 sekund → paywall pojawia się **raz**, jest zamykalny, po zamknięciu
-  nie wraca; gałki i wykresy działają przez cały czas jego otwarcia;
-- Więcej → Konto i subskrypcja → „Przywróć zakupy" → komunikat w `aria-live`;
-- zakup planu dożywotniego przez „Symuluj udany zakup" → oba sloty reklamowe znikają,
-  pigułka w nagłówku zmienia się w „PRO ✓", a „Eksport CSV" traci kłódkę;
-- „Usuń reklamy" obok slotu reklamowego → paywall z **dostępną do kupienia** kartą
-  „Usunięcie reklam — 12,99 zł jednorazowo" (ten sam produkt ma też wiersz na
-  ekranie Konto, dopóki użytkownik go nie ma);
-- „Zresetuj stan demonstracyjny" → wraca wersja darmowa, ale progi w
-  `blueMonitor.thresholds.v1` i historia w `blueMonitor.history.v1`
-  **zostają nietknięte**.
+   Adres **musi zaczynać się od `https://`**. Cokolwiek innego (`http://`, sam
+   `buymeacoffee.com/…`, literówka w schemacie) aplikacja celowo traktuje jak
+   brak adresu i nie pokaże przycisku — to zabezpieczenie, nie awaria.
+3. Podnieś numer pamięci podręcznej w service workerze tej wersji, inaczej
+   telefony z już zainstalowaną aplikacją dalej dostaną starą kopię:
+
+   | Wersja | Plik | Stała do podniesienia |
+   |---|---|---|
+   | v1 | `docs/v1/sw.js` | `CACHE_NAME` |
+   | v2 | `docs/v2/sw.js` | `CACHE` |
+   | v3 | `docs/v3/sw.js` | `CACHE` |
+   | v4 | `docs/v4/sw.js` | `CACHE` |
+   | v5 | `docs/v5/sw.js` | `CACHE` |
+
+   Wystarczy zwiększyć końcową liczbę, np. `'blue-monitor-v1-28'` → `'blue-monitor-v1-29'`.
+4. Wypchnij zmiany przez GitHub Desktop i odczekaj chwilę na przebudowanie
+   GitHub Pages.
+5. Sprawdź na telefonie: wejdź na ekran „Wsparcie”. Zamiast informacji
+   o niepodłączonym profilu ma się pojawić przycisk, a kliknięcie ma otworzyć
+   Twój profil w nowej karcie.
+
+Nie chcesz zbierać darowizn? **Nie rób nic.** Pusta stała to poprawny,
+docelowy stan — aplikacja jest wtedy po prostu w pełni darmowa i o nic nie prosi.
+
+### 5.2. Czego świadomie NIE ma i nie należy dodawać
+
+- **Żadnego gotowego widżetu Buy Me a Coffee, Ko-fi ani PayPala.** Takie widżety
+  ładują kod z cudzego serwera przy każdym otwarciu strony. Złamałoby to
+  obietnicę, na której stoi cała aplikacja („pomiar zostaje na urządzeniu”),
+  i zepsuło tryb offline. Ikonka kubka jest narysowana na miejscu.
+- **Żadnego połączenia z siecią poza kliknięciem użytkownika.** Otwarcie profilu
+  darowizn to jedyny moment, w którym cokolwiek opuszcza urządzenie — i jest to
+  napisane wprost przy przycisku, na każdym ekranie Wsparcia.
+- **Żadnych kwot zapisywanych w aplikacji.** Nic nie zapamiętuje, czy ktoś
+  wsparł; nie ma „planu”, uprawnień ani stanu zakupu.
+- Jeśli kiedyś miałaby wrócić prawdziwa sprzedaż, jest to zmiana modelu
+  produktu, a nie podmiana pliku — teksty w całej aplikacji obiecują teraz
+  pełną dostępność bez opłat wszystkiego, co dana wersja potrafi (w v2…v5
+  wszystkich siedmiu wielkości, w v1 obu gałek).
 
 ---
 
@@ -455,16 +289,15 @@ docs/
                           wspólne dla wszystkich wersji
   v1/
     index.html            — struktura strony (panele: Kamera, Monitoring, Dokumentacja,
-                            Premium, Konto, Więcej, O aplikacji)
+                            Wsparcie, Więcej, O aplikacji)
     style.css             — wygląd, motyw jasny/ciemny, strefy kolorów
-    monetization.css      — style warstwy monetyzacji i dolnego menu; korzysta wyłącznie
+    ui.css                — style dolnego menu i ekranu wsparcia; korzysta wyłącznie
                             z tokenów kolorów zdefiniowanych w style.css
     app.js                — obsługa kamery, próbkowanie koloru, wykres, gałka;
                             publikuje window.AppTabs i window.AppData
-    billing.js            — silnik uprawnień i ATRAPA sklepu (window.Billing).
-                            TO JEST PLIK DO PODMIANY NA PRAWDZIWY GOOGLE PLAY BILLING
-    monetization-ui.js    — ekrany Premium/Konto, dialogi płatności, zgody i reklam,
-                            atrapy banerów, upselle (window.MonetizationUI)
+    features.js           — wspólne funkcje aplikacji, dostępne bezwarunkowo
+    support.js            — ekran „Wsparcie”; TU NA GÓRZE STOI STAŁA SUPPORT_URL
+                            (patrz rozdział 5.1)
     menu.js               — dolny pasek nawigacji, ekrany „Więcej" i „O aplikacji",
                             routing, obsługa klawiatury (window.AppNav)
     manifest.webmanifest  — metadane instalacji PWA (nazwa, ikony, kolory)
@@ -483,13 +316,13 @@ a ikony bierze ze wspólnego `../icons/`.
 Kolejność wczytywania skryptów w `index.html` jest ISTOTNA i nie wolno jej zmieniać:
 
 ```html
-<script src="billing.js"></script>
-<script src="monetization-ui.js"></script>
+<script src="features.js"></script>
 <script src="menu.js"></script>
+<script src="support.js"></script>
 <script src="app.js"></script>
 ```
 
 `app.js` jako ostatni publikuje `window.AppTabs` / `window.AppData` i wysyła zdarzenie
-`app:ready`, na które czekają trzy pozostałe moduły. Każde wywołanie cudzego API jest
-osłonięte sprawdzeniem (`if (window.Billing && window.Billing.hasFeature) …`), więc brak
-któregokolwiek pliku (np. stary cache service workera) nie wywala reszty aplikacji.
+`app:ready`, na które czekają pozostałe moduły. Każde wywołanie cudzego API jest
+osłonięte sprawdzeniem obecności, więc brak któregokolwiek pliku (np. stary cache
+service workera) nie wywala reszty aplikacji.

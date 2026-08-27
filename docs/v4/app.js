@@ -230,12 +230,9 @@
     el.sideNav.appendChild(list);
 
     el.sideFoot = make('div', 'ms4-sidenav__foot');
-    el.sideFootPlan = make('span', 'ms4-sidenav__label');
     el.sideFootVersion = make('span', 'ms4-sidenav__label', t('nav.version'));
-    el.sideFoot.appendChild(el.sideFootPlan);
     el.sideFoot.appendChild(el.sideFootVersion);
     el.sideNav.appendChild(el.sideFoot);
-    paintSubscription();
   }
 
   function onNavClick(event) {
@@ -313,7 +310,7 @@
   var TOP_ACTIONS = {
     measure: { icon: 'help', labelPath: 'measure.helpAria', action: 'help' },
     history: { icon: 'export', labelPath: 'tools.export', action: 'export' },
-    account: { icon: 'settings', labelPath: 'account.settingsTitle', action: 'settings' }
+    support: { icon: 'settings', labelPath: 'support.settingsTitle', action: 'settings' }
   };
 
   function paintTopbar() {
@@ -326,16 +323,8 @@
     if (!el.topBarActions) return;
     el.topBarActions.textContent = '';
 
-    if (isPremium()) {
-      var chip = buildPremiumChip();
-      if (chip) el.topBarActions.appendChild(chip);
-    }
-
     var spec = TOP_ACTIONS[currentId];
     if (spec) el.topBarActions.appendChild(buildTopButton(spec));
-
-    // Na ekranie KONTO skrót do konta byłby skrótem donikąd.
-    if (currentId !== 'account') el.topBarActions.appendChild(buildAccountButton());
   }
 
   function buildTopButton(spec) {
@@ -345,36 +334,6 @@
     btn.appendChild(icon(spec.icon, 24));
     btn.addEventListener('click', function () { runTopAction(spec.action); });
     return btn;
-  }
-
-  function buildAccountButton() {
-    var btn = make('button', 'ms4-topbar__btn');
-    btn.type = 'button';
-    btn.setAttribute('aria-label', t('nav.account'));
-    var user = currentUser();
-    if (user && user.initials) {
-      var av = make('span', 'ms4-topbar__avatar', user.initials);
-      btn.appendChild(av);
-    } else {
-      btn.appendChild(icon('account', 24));
-    }
-    btn.addEventListener('click', function () { go('account'); });
-    return btn;
-  }
-
-  function buildPremiumChip() {
-    if (global.UI && typeof global.UI.chip === 'function') {
-      try {
-        var chip = global.UI.chip({ label: t('nav.premiumOn'), icon: 'crown', tone: 'premium' });
-        if (chip && chip.nodeType === 1) return chip;
-      } catch (_) { /* rysujemy własny */ }
-    }
-    var span = make('span', 'ms4-chip ms4-chip--premium');
-    var ic = icon('crown', 16);
-    ic.setAttribute('class', 'ms4-chip__icon');
-    span.appendChild(ic);
-    span.appendChild(make('span', 'ms4-chip__label', t('nav.premiumOn')));
-    return span;
   }
 
   /* Zamiar z belki najpierw idzie do ekranu, który wie, jak go spełnić
@@ -399,14 +358,14 @@
     if (action === 'settings') scrollToSettings();
   }
 
-  /* Ekran KONTO nie oznacza sekcji ustawień własnym atrybutem, więc szukamy jej
+  /* Ekran WSPARCIE nie oznacza sekcji ustawień własnym atrybutem, więc szukamy jej
      po tytule ze słownika — nie po literale, którego w tym pliku nie ma. */
   function scrollToSettings() {
-    var v = index.account;
+    var v = index.support;
     if (!v || !v.inner) return;
     var target = v.inner.querySelector('[data-section="settings"]');
     if (!target) {
-      var wanted = t('account.settingsTitle');
+      var wanted = t('support.settingsTitle');
       var titles = v.inner.querySelectorAll('.ms4-section__title');
       for (var i = 0; wanted && i < titles.length; i += 1) {
         if (titles[i].textContent === wanted) { target = titles[i]; break; }
@@ -654,7 +613,7 @@
   }
 
   /* ------------------------------------------------------------------
-     Punkt łamania, subskrypcja, konto
+     Punkt łamania i drobiazgi powiązane z układem
      ------------------------------------------------------------------ */
 
   function isDesktop() {
@@ -677,21 +636,6 @@
     }
     // Widok tylko dla desktopu przestaje istnieć razem z szerokim ekranem.
     if (currentId && index[currentId] && index[currentId].desktopOnly && !isDesktop()) go(DEFAULT_VIEW);
-  }
-
-  function isPremium() {
-    try { return !!(global.Billing && global.Billing.isPremium && global.Billing.isPremium()); }
-    catch (_) { return false; }
-  }
-
-  function currentUser() {
-    try { return (global.Auth && global.Auth.user) ? global.Auth.user() : null; }
-    catch (_) { return null; }
-  }
-
-  function paintSubscription() {
-    if (!el.sideFootPlan) return;
-    el.sideFootPlan.textContent = isPremium() ? t('nav.premiumOn') : t('nav.premiumOff');
   }
 
   function announce(textPL) {
@@ -799,8 +743,23 @@
     for (var i = 0; i < pending.length; i += 1) registerView(pending[i]);
   }
 
+  /* Sprzątanie po modelu subskrypcyjnym. Wersja 4 trzymała w pamięci przeglądarki
+     dwa klucze, które dziś nie znaczą nic: symulowane konto i symulowane
+     uprawnienie do płatnych wielkości. Kasujemy je raz, przy starcie, żeby nie
+     zostawały w niczyjej przeglądarce w nieskończoność.
+     WYŁĄCZNIE te dwa — pomiary, historia, progi i ustawienia są nietykalne. */
+  var STALE_KEYS = ['ms4.account.v1', 'ms4.entitlement.v1'];
+
+  function dropStaleKeys() {
+    try {
+      if (!global.localStorage) return;
+      for (var i = 0; i < STALE_KEYS.length; i += 1) global.localStorage.removeItem(STALE_KEYS[i]);
+    } catch (_) { /* tryb prywatny rzuca wyjątkiem nawet przy kasowaniu */ }
+  }
+
   function boot() {
     if (booted) return;
+    dropStaleKeys();
     drainPending();
 
     el.appRoot = node('appRoot');
@@ -837,8 +796,6 @@
       global.Bus.on('engine:started', paintStatus);
       global.Bus.on('engine:stopped', paintStatus);
       global.Bus.on('engine:error', paintStatus);
-      global.Bus.on('billing:changed', function () { paintSubscription(); paintTopbar(); });
-      global.Bus.on('auth:changed', function () { paintTopbar(); });
     }
 
     startClock();

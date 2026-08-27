@@ -6,7 +6,7 @@
      read on a notched phone; user-scalable is deliberately NOT disabled — the
      audience of this app zooms. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Monitor Światła — pomiar udziału światła niebieskiego kamerą telefonu. Siedem wskaźników, wykres, historia. Wersja demonstracyjna interfejsu.">
+<meta name="description" content="Monitor Światła — pomiar udziału światła niebieskiego kamerą telefonu. Siedem wskaźników, wykres, historia. Wszystko dostępne, bez konta i bez opłat.">
 <meta name="color-scheme" content="light dark">
 <!-- Painted by the browser behind the page before the stylesheet applies.
      Two values, so the flash on load matches the theme the user actually has. -->
@@ -47,8 +47,7 @@
      that own them, in one place each:
        ui-core.js  — Pomiar, Historia, Narzędzia (pusta lista), Więcej, Dokumentacja,
                      arkusze sheetDialog i sheetHelp, przyciemnienie i toasty
-       account.js  — Konto, Premium, sheetLogin, sheetPurchase, sheetPaywall,
-                     sheetRewarded, treść trzech slotów reklamowych
+       support.js  — ekran Wsparcie
        tools.js    — wiersze #toolsList i wnętrza siedmiu nakładek narzędziowych
        engine.js   — tekst w #cameraPlaceholderText
      Ten plik nie buduje żadnego z tych ekranów: dwa właściciele jednego węzła
@@ -71,9 +70,6 @@
       </span>
 
       <div class="ms-header__actions">
-        <button class="ms-iconbtn" id="btnAccountShortcut" type="button" aria-label="Konto">
-          <span class="ms-icon ms-icon--person" aria-hidden="true"></span>
-        </button>
         <button class="ms-iconbtn" id="btnInfo" type="button" aria-label="Dokumentacja i wyjaśnienia">
           <span class="ms-icon ms-icon--info" aria-hidden="true"></span>
         </button>
@@ -88,18 +84,15 @@
       <section class="ms-view" id="panelMeasure" hidden></section>
       <section class="ms-view" id="panelHistory" hidden></section>
       <section class="ms-view" id="panelTools" hidden></section>
-      <section class="ms-view" id="panelPremium" hidden>
+      <section class="ms-view" id="panelSupport" hidden>
         <div class="ms-main__inner"></div>
       </section>
       <section class="ms-view" id="panelMore" hidden></section>
 
-      <!-- ---- ten overlay screens ----
+      <!-- ---- nine overlay screens ----
            Each gets its back button and title from ui-core (convention
            panelXxx -> backXxx / titleXxx), so navigation works even when the
            module that fills the screen is not loaded. -->
-      <section class="ms-view" id="panelAccount" hidden>
-        <div class="ms-main__inner"></div>
-      </section>
       <section class="ms-view" id="panelDocs" hidden></section>
       <section class="ms-view" id="panelThresholds" hidden></section>
       <section class="ms-view" id="panelReports" hidden></section>
@@ -137,14 +130,10 @@
         <span class="ms-nav__icon"><span class="ms-icon ms-icon--tune" aria-hidden="true"></span></span>
         <span class="ms-nav__label">Narzędzia</span>
       </button>
-      <button class="ms-nav__item" id="navPremium" type="button" role="tab"
-              aria-selected="false" aria-controls="panelPremium" tabindex="-1">
-        <span class="ms-nav__icon">
-          <span class="ms-icon ms-icon--crown" aria-hidden="true"></span>
-          <!-- Marks an ACTIVE subscription. Never a nag dot over an offer. -->
-          <span class="ms-nav__badge" id="navPremiumBadge" hidden></span>
-        </span>
-        <span class="ms-nav__label">Premium</span>
+      <button class="ms-nav__item" id="navSupport" type="button" role="tab"
+              aria-selected="false" aria-controls="panelSupport" tabindex="-1">
+        <span class="ms-nav__icon"><span class="ms-icon ms-icon--cup" aria-hidden="true"></span></span>
+        <span class="ms-nav__label">Wsparcie</span>
       </button>
       <button class="ms-nav__item" id="navMore" type="button" role="tab"
               aria-selected="false" aria-controls="panelMore" tabindex="-1">
@@ -161,61 +150,11 @@
      ===================================================================
      #sheetScrim, #sheetDialog and #sheetHelp are created by ui-core.js — it
      attaches their handlers at the moment it creates them, so shipping them
-     as static markup here would leave dead buttons. The four money sheets are
-     empty shells on purpose: account.js fills head, body and foot, and only
-     window.UI ever sets `hidden` or `.is-open` on them.
+     as static markup here would leave dead buttons. Nothing else lives here:
+     the four sheets that used to sell things are gone along with the modules
+     that filled them.
      =================================================================== -->
-<div id="sheetLayer">
-
-  <div class="ms-sheet" id="sheetPaywall" hidden role="dialog" aria-labelledby="paywallTitle">
-    <div class="ms-sheet__grabber" aria-hidden="true"></div>
-    <div class="ms-sheet__head">
-      <div class="ms-sheet__titles">
-        <h2 class="ms-sheet__title" id="paywallTitle">Funkcja Premium</h2>
-        <p class="ms-sheet__sub">Pomiar i cztery bezpłatne metryki działają dalej bez zmian.</p>
-      </div>
-    </div>
-    <div class="ms-sheet__body"></div>
-    <div class="ms-sheet__foot"></div>
-  </div>
-
-  <div class="ms-sheet" id="sheetPurchase" hidden role="dialog" aria-labelledby="purchaseTitle">
-    <div class="ms-sheet__grabber" aria-hidden="true"></div>
-    <div class="ms-sheet__head">
-      <div class="ms-sheet__titles">
-        <h2 class="ms-sheet__title" id="purchaseTitle">Potwierdzenie zakupu (DEMO)</h2>
-        <p class="ms-sheet__sub">Symulacja płatności — nie pobieramy żadnej opłaty.</p>
-      </div>
-    </div>
-    <div class="ms-sheet__body"></div>
-    <div class="ms-sheet__foot"></div>
-  </div>
-
-  <div class="ms-sheet" id="sheetLogin" hidden role="dialog" aria-labelledby="loginTitle">
-    <div class="ms-sheet__grabber" aria-hidden="true"></div>
-    <div class="ms-sheet__head">
-      <div class="ms-sheet__titles">
-        <h2 class="ms-sheet__title" id="loginTitle">Logowanie (symulacja)</h2>
-        <p class="ms-sheet__sub">Nie łączymy się z serwerami Google ani Facebooka.</p>
-      </div>
-    </div>
-    <div class="ms-sheet__body"></div>
-    <div class="ms-sheet__foot"></div>
-  </div>
-
-  <div class="ms-sheet" id="sheetRewarded" hidden role="dialog" aria-labelledby="rewardedTitle">
-    <div class="ms-sheet__grabber" aria-hidden="true"></div>
-    <div class="ms-sheet__head">
-      <div class="ms-sheet__titles">
-        <h2 class="ms-sheet__title" id="rewardedTitle">Reklama nagradzana (DEMO)</h2>
-        <p class="ms-sheet__sub">Atrapa. Możesz ją zamknąć w każdej chwili.</p>
-      </div>
-    </div>
-    <div class="ms-sheet__body"></div>
-    <div class="ms-sheet__foot"></div>
-  </div>
-
-</div>
+<div id="sheetLayer"></div>
 
 <!-- Outside #appRoot on purpose. An open sheet marks #appRoot inert and
      aria-hidden so a swipe gesture cannot wander into the screen behind it;
@@ -235,8 +174,8 @@
        ui-core.js  — installs window.Bus (or leaves a real bus.js alone) and
                      window.UI before any module tries to register a listener.
        engine.js   — the camera. Registers on the bus at parse time.
-       account.js  — Account, Store and Ads. Also registers at parse time.
-       tools.js    — the seven tool screens; asks Store, never decides itself.
+       support.js  — the Wsparcie screen. Also registers at parse time.
+       tools.js    — the seven tool screens. All seven are simply available.
        boot.js     — last: reports what is missing and registers the worker.
      No script is deferred and none is async, because every one of them
      registers bus listeners while the others are still loading, and the shell
@@ -245,7 +184,7 @@
 <script src="metrics.js"></script>
 <script src="ui-core.js"></script>
 <script src="engine.js"></script>
-<script src="account.js"></script>
+<script src="support.js"></script>
 <script src="tools.js"></script>
 <script src="boot.js"></script>
 

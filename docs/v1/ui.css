@@ -1,0 +1,540 @@
+/* =====================================================================
+   ui.css — style powłoki interfejsu: dolny pasek nawigacji, ekrany
+   nakładkowe (Wsparcie, Więcej, O aplikacji, Dokumentacja), listy,
+   tabele raportów i powiadomienia (toasty).
+
+   Zasady, których ten plik pilnuje:
+   - Nie wymyśla własnych kolorów. Każda wartość pochodzi z tokenów
+     zadeklarowanych na .viz-root w style.css.
+   - Nie zmienia selektorów należących do style.css (.btn, .card, .tabs …);
+     nowy wygląd to dodatkowe klasy nałożone na tamte.
+   - Tekst, który niesie zastrzeżenie medyczne albo informację o prywatności,
+     nigdy nie schodzi poniżej 16 px — główną grupą odbiorców są osoby
+     niedowidzące i te napisy muszą przetrwać powiększenie 200%.
+   ===================================================================== */
+
+/* Panele są przełączane atrybutem hidden z kilku różnych plików;
+   żadna zabłąkana reguła display nie może ich wskrzesić. */
+[hidden] { display: none !important; }
+
+/* ---------------------------------------------------------------
+   1. Ekrany nakładkowe (Wsparcie, Więcej, O aplikacji)
+   --------------------------------------------------------------- */
+.ui-screen:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ui-screen {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.ui-screen h2,
+.ui-screen h3,
+.ui-screen p,
+.ui-screen ul,
+.ui-screen ol { margin: 0; }
+.ui-screen p { font-size: 17px; line-height: 1.6; color: var(--text-secondary); }
+
+.ui-screen-title {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin: 0;
+}
+.ui-screen-title:focus { outline: none; }
+.ui-screen-title:focus-visible { outline: 3px solid var(--series-1); outline-offset: 3px; }
+
+.ui-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin: 14px 2px 2px;
+}
+
+/* Przycisk powrotu: pełnowymiarowy cel dotyku, nigdy goły odnośnik tekstowy. */
+.ui-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 16px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+  appearance: none;
+}
+.ui-back-btn svg { flex: none; width: 22px; height: 22px; }
+
+/* Wiersz nagłówkowy ekranu: powrót po lewej, opcjonalna akcja po prawej. */
+.ui-screen > .ui-row:first-child { justify-content: space-between; }
+
+/* ---------------------------------------------------------------
+   2. Narzędzia wspólne
+   --------------------------------------------------------------- */
+.ui-stack { display: flex; flex-direction: column; gap: 10px; }
+.ui-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ui-grow { flex: 1 1 auto; min-width: 0; }
+.ui-muted { font-size: 16px; line-height: 1.55; color: var(--text-secondary); }
+
+.ui-visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- przyciski nałożone na istniejące .btn ---- */
+.btn-large {
+  min-height: 56px;
+  font-size: 20px;
+  padding: 18px 22px;
+  border-radius: 12px;
+  line-height: 1.2;
+}
+.ui-stack > .btn-large { width: 100%; }
+
+/* Akcja niszcząca ma pozostać czytelna, a nie krzyczeć: przygaszone tło,
+   krytyczna ramka i zwykły kolor tekstu, żeby kontrast trzymał w obu motywach. */
+.btn-danger {
+  background: var(--status-critical-bg);
+  border: 1px solid var(--status-critical);
+  color: var(--text-primary);
+  min-height: 48px;
+}
+
+.ui-screen button:focus-visible,
+.ui-screen a:focus-visible,
+.ui-screen input:focus-visible,
+.nav-btn:focus-visible {
+  outline: 3px solid var(--series-1);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+   3. Dolny pasek nawigacji
+   --------------------------------------------------------------- */
+.nav-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: var(--page-plane);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.nav-list {
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nav-list > li {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+}
+.nav-btn {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  appearance: none;
+  border: none;
+  border-top: 3px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nav-btn-icon { flex: none; width: 26px; height: 26px; display: block; }
+/* Dolny pasek to jedyna stała nawigacja w aplikacji, a jego użytkownicy mają
+   skalowanie czcionek Androida na 150–200%. Etykiety zawijają się więc zamiast
+   być ucinane do „Monit…” — .nav-btn ma min-height, więc pasek rośnie. */
+.nav-btn-label {
+  display: block;
+  max-width: 100%;
+  font-size: 15px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+/* Bieżąca pozycja jest oznaczona na trzy sposoby — kolorem, grubością i
+   kreską 3 px — więc nigdy nie zależy wyłącznie od rozróżniania barw. */
+.nav-btn[aria-current="page"] {
+  color: var(--text-primary);
+  border-top-color: var(--series-1);
+}
+.nav-btn[aria-current="page"] .nav-btn-label { font-weight: 800; }
+.nav-btn:hover { color: var(--text-primary); }
+
+/* Stały pasek nie może zasłaniać końca żadnego ekranu. */
+body.has-bottom-nav main {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom, 0));
+}
+
+/* ---------------------------------------------------------------
+   4. Ekran „Wsparcie”
+   --------------------------------------------------------------- */
+.ui-support-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-1);
+}
+.ui-support-card p { color: var(--text-primary); }
+/* Nagłówek pierwszego bloku — ta sama nazwa i ta sama rola co w v2-v5. */
+.ui-support-title {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--text-primary);
+  margin: 0;
+}
+.ui-support-lead {
+  font-size: 19px !important;
+  font-weight: 500;
+  line-height: 1.5;
+}
+/* Przycisk darowizny wygląda jak drugorzędny akcent tej aplikacji, a nie jak
+   kolorowa naklejka z cudzego brandu. Kubek rysujemy sami — patrz support.js. */
+.ui-support-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 22px;
+  border: 2px solid var(--series-1);
+  border-radius: 12px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ui-support-btn:hover { background: var(--page-plane); }
+.ui-support-btn:focus-visible { outline: 3px solid var(--series-1); outline-offset: 3px; }
+.ui-support-btn svg { flex: none; width: 26px; height: 26px; color: var(--series-1); }
+/* Stan „adres jeszcze nie podłączony”: spokojna informacja, nie błąd. */
+.ui-support-pending {
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--page-plane);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+.ui-support-privacy {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* ---------------------------------------------------------------
+   5. Tabele raportów (dzienny, tygodniowy)
+   --------------------------------------------------------------- */
+.ui-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-1);
+}
+.ui-table {
+  width: 100%;
+  min-width: 300px;
+  border-collapse: collapse;
+  font-size: 17px;
+}
+.ui-table caption {
+  text-align: left;
+  padding: 12px 12px 6px;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+.ui-table th,
+.ui-table td {
+  padding: 12px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--gridline);
+  vertical-align: middle;
+}
+.ui-table thead th {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.ui-table tbody tr:last-child th,
+.ui-table tbody tr:last-child td { border-bottom: none; }
+.ui-table-rowhead { text-align: left; font-weight: 600; color: var(--text-primary); }
+.ui-table-val { font-size: 17px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+/* ---- pole tekstowe (nazwa profilu progów) ---- */
+.ui-input {
+  flex: 1 1 180px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------
+   6. Zastrzeżenia
+   --------------------------------------------------------------- */
+.ui-disclaimer {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--status-warning);
+  border-radius: 12px;
+  background: var(--surface-1);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+.ui-disclaimer-short {
+  margin: 6px 0 0;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-secondary);
+}
+/* To prawdziwy element nawigacji (otwiera „O aplikacji”), więc dostaje ten sam
+   cel dotyku 48 px co każda inna kontrolka w tej aplikacji. */
+.ui-disclaimer-short a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 8px;
+  color: var(--text-primary);
+}
+.ui-icon-warn { flex: none; width: 24px; height: 24px; margin-top: 1px; }
+
+/* Nagłówek wykresów niesie dwa przyciski (tabela + eksport CSV), więc próg
+   48 px ustawiamy tutaj — style.css zostaje nietknięty. */
+.chart-header .btn { min-height: 48px; }
+
+/* ---------------------------------------------------------------
+   7. Listy (ekran „Więcej”)
+   --------------------------------------------------------------- */
+.ui-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-family: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+.ui-list-item:hover { background: var(--page-plane); }
+.ui-list-item-body { flex: 1 1 auto; min-width: 0; }
+.ui-list-item-title { display: block; font-size: 19px; font-weight: 700; line-height: 1.3; }
+.ui-list-item-sub { display: block; margin-top: 3px; font-size: 16px; line-height: 1.45; color: var(--text-secondary); }
+.ui-list-chevron {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-secondary);
+}
+.ui-list-chevron svg { width: 24px; height: 24px; }
+
+/* Odnośnik tekstowy wewnątrz zdania (jedyna wzmianka o wsparciu poza dolnym
+   paskiem). Bez ramki i bez grafiki, ale z pełnym celem dotyku 48 px. */
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  appearance: none;
+}
+.btn-link:focus-visible { outline: 3px solid var(--series-1); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------
+   8. Powiadomienia (toasty)
+   --------------------------------------------------------------- */
+.ui-toast-region {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 12px;
+  pointer-events: none;
+}
+body.has-bottom-nav .ui-toast-region {
+  bottom: calc(80px + env(safe-area-inset-bottom, 0));
+}
+.ui-toast {
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left-width: 5px;
+  border-radius: 12px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 17px;
+  line-height: 1.45;
+  box-shadow: 0 4px 18px var(--border);
+}
+.ui-toast-info { border-left-color: var(--series-1); }
+.ui-toast-success { border-left-color: var(--status-good); }
+.ui-toast-warning { border-left-color: var(--status-warning); }
+.ui-toast-error { border-left-color: var(--status-critical); }
+.ui-toast-close {
+  flex: none;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--page-plane);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  appearance: none;
+}
+/* Toast blokuje dotknięcia w pasku nad dolną nawigacją przez cały swój czas
+   życia, więc zawsze niesie prawdziwy przycisk zamknięcia. */
+.ui-toast-close {
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+/* Kontrolki wyłączone przez aria-disabled (żeby zostały osiągalne Tabem i mogły
+   się wytłumaczyć) potrzebują tego samego wyglądu „jeszcze niedostępne”, który
+   dałby im atrybut disabled. */
+.btn[aria-disabled="true"],
+.ui-list-item[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Przycisk „i” to jednodotykowa droga do Dokumentacji — jedyna obietnica, jaką
+   ta aplikacja składa osobom niedowidzącym — więc ma pełne 48 px celu dotyku. */
+.app-header .icon-btn {
+  min-width: 48px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------------------------------------------------------------
+   9. Wąskie telefony (od 320 px) — nic nie może przewijać się w bok
+   --------------------------------------------------------------- */
+@media (max-width: 359px) {
+  .nav-btn { font-size: 14px; padding: 8px 2px; }
+  .nav-btn-label { font-size: 14px; }
+  .nav-btn-icon { width: 24px; height: 24px; }
+  .btn-large { font-size: 19px; padding: 16px 14px; }
+  .ui-screen-title { font-size: 22px; }
+  .ui-support-btn { font-size: 18px; padding: 14px 16px; }
+}
+.ui-screen img,
+.ui-screen svg { max-width: 100%; }
+
+/* ---------------------------------------------------------------
+   10. Desktop / szeroki ekran — ta sama kolumna 760 px co reszta
+   --------------------------------------------------------------- */
+@media (min-width: 700px) {
+  .nav-list {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  .ui-toast-region { max-width: 760px; }
+  .ui-support-btn { width: auto; align-self: flex-start; }
+}
+
+/* ---------------------------------------------------------------
+   11. Ograniczony ruch — ta grupa odbiorców często korzysta z lupy
+   ekranowej, gdzie każdy ruch niszczy orientację.
+   --------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ui-screen *,
+  .nav-bar *,
+  .ui-toast {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

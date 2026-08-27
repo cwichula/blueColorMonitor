@@ -4,7 +4,7 @@
    no conic gradient, no radius above 3 px (the status dot is the single exception). */
 
 /* =====================================================================
-   1. Shared marks: legend, status shape, badge, lock
+   1. Shared marks: legend, status shape, badge
    ===================================================================== */
 
 .ms3-legend {
@@ -52,36 +52,8 @@
   letter-spacing: var(--ms3-tracking-legend);
   white-space: nowrap;
 }
-.ms3-badge--premium { color: var(--ms3-premium); }
 .ms3-badge--live    { color: var(--ms3-good); }
 .ms3-badge--approx  { color: var(--ms3-ink-3); }
-.ms3-badge--demo    { color: var(--ms3-demo); border-width: 2px; border-style: dashed; }
-
-/* A padlock drawn from two boxes: a squared shackle and a body. No rounded corners,
-   so it stays inside the geometry rules of this faceplate. */
-.ms3-lock {
-  position: relative;
-  flex: none;
-  width: 20px;
-  height: 20px;
-  color: var(--ms3-premium);
-}
-.ms3-lock::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 4px;
-  width: 12px; height: 9px;
-  border: 2px solid currentColor;
-  border-bottom: 0;
-}
-.ms3-lock::after {
-  content: "";
-  position: absolute;
-  left: 0; bottom: 0;
-  width: 20px; height: 11px;
-  background: currentColor;
-  border-radius: 2px;
-}
 
 /* =====================================================================
    2. ms3-readout - the well (block B)
@@ -434,22 +406,6 @@
   background: var(--ms3-ink);
   clip-path: polygon(50% 100%, 0 0, 100% 0);
 }
-/* Locked (Premium) row: a dotted baseline, no bands, no needle. Nothing is invented. */
-.ms3-micro--locked .ms3-micro__bands,
-.ms3-micro--locked .ms3-micro__needle { display: none; }
-.ms3-micro--locked .ms3-micro__base {
-  background: repeating-linear-gradient(90deg,
-    var(--ms3-ink-3) 0 2px, transparent 2px 5px);
-}
-/* An empty locked micro (no inner markup) still draws its dotted baseline. */
-.ms3-micro--locked:empty::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; top: 14px;
-  height: 2px;
-  background: repeating-linear-gradient(90deg,
-    var(--ms3-ink-3) 0 2px, transparent 2px 5px);
-}
 
 /* =====================================================================
    5. ms3-channel - a channel row (block C)
@@ -534,9 +490,8 @@
     line-height: 1.15;
   }
 }
-/* Locked and stale rows say so with the mark, the value and the micro scale at once. */
-.ms3-channel--locked .ms3-channel__value,
-.ms3-channel--stale  .ms3-channel__value { color: var(--ms3-ink-3); }
+/* A stale row says so with the mark, the value and the micro scale at once. */
+.ms3-channel--stale .ms3-channel__value { color: var(--ms3-ink-3); }
 /* If the current lead channel is ever kept in the list, it carries the accent edge. */
 .ms3-channel--lead { box-shadow: inset 3px 0 0 var(--ms3-accent); }
 
@@ -638,11 +593,6 @@
   font-weight: 600;
 }
 .ms3-key--ghost:active { background: var(--ms3-well); }
-.ms3-key--demo {
-  background: transparent;
-  border: 2px dashed var(--ms3-demo);
-  color: var(--ms3-demo);
-}
 /* Starting up: same size, same place, visibly not pressable. */
 .ms3-key[aria-disabled="true"], .ms3-key[disabled] {
   background: var(--ms3-ink-3);
@@ -1105,17 +1055,6 @@
 .ms3-note--limits  { border-left-color: var(--ms3-ink-3); }
 .ms3-note--warning { border-left-color: var(--ms3-warn); }
 .ms3-note--warning .ms3-note__title { color: var(--ms3-warn); }
-.ms3-note--demo {
-  border-left: 4px dashed var(--ms3-demo);
-  border-top-color: var(--ms3-demo);
-  border-right-color: var(--ms3-demo);
-  border-bottom-color: var(--ms3-demo);
-  border-style: dashed;
-  border-width: 2px;
-  border-left-width: 4px;
-}
-.ms3-note--demo .ms3-note__title { color: var(--ms3-demo); }
-
 #ms3Notes {
   display: flex;
   flex-direction: column;
@@ -1478,7 +1417,7 @@
     min-height: calc(88px * var(--ms3-scale));
     padding-block: var(--ms3-s-2);
   }
-  .ms3-channel > .ms3-shape, .ms3-channel > .ms3-lock { grid-area: mark; }
+  .ms3-channel > .ms3-shape { grid-area: mark; }
   .ms3-channel__name  { grid-area: name; }
   .ms3-channel .ms3-micro { grid-area: micro; width: 56px; }
   .ms3-channel__value { grid-area: value; }
@@ -1503,7 +1442,6 @@
 
   .ms3-shape { background: CanvasText; border-color: CanvasText; }
   .ms3-shape--none { background: transparent; }
-  .ms3-lock { color: CanvasText; }
 
   .ms3-needle::before, .ms3-needle::after,
   #ms3Needle::before, #ms3Needle::after,
@@ -1546,7 +1484,7 @@
 }
 
 /* =====================================================================
-   22. Additions for offer.js, docs.js and boot.js
+   22. Additions for support.js, docs.js and boot.js
 
    Chapter 5 does not name these, so they are added here rather than
    invented inside a module: one home for ms3-* remains one home. Every
@@ -1554,56 +1492,42 @@
    shadow, no conic gradient, no radius above 3 px, nothing below 15 px.
    ===================================================================== */
 
-/* ---- ms3-demoframe - the simulation frame (offer.js, 8.7) ------------
-   Wraps EVERYTHING modules 10 and 11 draw, so nothing they render can
-   escape the dashed border and the mandatory sentence. */
-.ms3-demoframe {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ms3-s-4);
-  padding: var(--ms3-s-4);
-  background: var(--ms3-panel);
-  border: 2px dashed var(--ms3-demo);
-  border-radius: var(--ms3-r-panel);
-}
-.ms3-demoframe__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ms3-s-3);
-}
-.ms3-demoframe__overline {
-  font-size: var(--ms3-fs-legend);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--ms3-tracking-legend);
-  color: var(--ms3-demo);
-}
-/* The sentence from 8.7. Never smaller than body text and never collapsed. */
-.ms3-demoframe__oath {
-  font-size: var(--ms3-fs-body);
-  line-height: var(--ms3-lh-body);
-  color: var(--ms3-ink);
-}
-.ms3-demoframe__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ms3-s-5);
-}
-
-/* ---- ms3-plan - a simulated purchase key (offer.js) ------------------ */
-.ms3-plan {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
+/* ---- ms3-support__key - the donation link (support.js, module 10) ----
+   An <a>, not a button: this is a jump to another page, so the browser has
+   to be able to open it its own way. It wears the secondary key of this
+   faceplate - never a coloured sticker with somebody else's brand. */
+.ms3-support__key {
+  align-self: flex-start;
   min-height: calc(56px * var(--ms3-scale));
-  text-align: left;
+  text-decoration: none;
 }
-.ms3-plan .ms3-key__label { white-space: normal; overflow: visible; }
-.ms3-plan__price {
-  flex: none;
-  font-variant-numeric: tabular-nums lining-nums;
-  font-weight: 700;
+.ms3-support__key:visited { color: var(--ms3-ink); }
+
+/* The cup, drawn from two boxes like every other icon here: a tapered body
+   and a handle. Never a glyph - system fonts disagree about cups - and never
+   an image from somebody else's server. */
+.ms3-key__icon--cup {
+  position: relative;
+  width: 22px;
+  height: 20px;
+  background: none;
+}
+.ms3-key__icon--cup::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 3px;
+  width: 14px; height: 15px;
+  border: 2px solid currentColor;
+  border-radius: 0 0 4px 4px;
+}
+.ms3-key__icon--cup::after {
+  content: "";
+  position: absolute;
+  left: 15px; top: 6px;
+  width: 7px; height: 9px;
+  border: 2px solid currentColor;
+  border-left: 0;
+  border-radius: 0 4px 4px 0;
 }
 
 /* ---- ms3-keyrow - two or three keys side by side inside a sheet ------ */
@@ -1757,8 +1681,11 @@
 }
 
 @media (forced-colors: active) {
-  .ms3-demoframe { border-color: CanvasText; }
-  .ms3-demoframe__overline { color: CanvasText; }
+  /* The generic icon rule fills a 20x20 block; the cup is drawn with borders,
+     so it has to keep its transparent middle. */
+  .ms3-key__icon--cup { background: none; }
+  .ms3-key__icon--cup::before, .ms3-key__icon--cup::after { border-color: ButtonText; }
+  .ms3-support__key { border: 1px solid LinkText; color: LinkText; }
   .ms3-doc__formula, .ms3-doc__item, .ms3-steps__item { border-color: CanvasText; }
   .ms3-steps__no { background: Highlight; color: HighlightText; }
   .ms3-key--danger { background: Canvas; color: CanvasText; border: 2px solid CanvasText; }

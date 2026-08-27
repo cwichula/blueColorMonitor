@@ -49,19 +49,22 @@ ma je przeczytać, zanim napisze pierwszą linijkę:
 
 ### 0.1 Katalog metryk (z `metrics.js` — nie przepisujemy go nigdzie w kodzie)
 
-| # | id | namePL | unit | min | max | warn | crit | invert | premium | decimals |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | `share` | Udział niebieskiego | % | 0 | 60 | 26 | 33 | nie | nie | 0 |
-| 2 | `brightness` | Jasność sceny | % | 0 | 100 | 70 | 88 | nie | nie | 0 |
-| 3 | `kelvin` | Temperatura barwowa | K | 1500 | 9000 | 4600 | 6000 | nie | nie | 0 |
-| 4 | `melanopic` | Wpływ na rytm dobowy | × | 0 | 1,6 | 0,75 | 1,00 | nie | nie | 2 |
-| 5 | `flicker` | Migotanie | % | 0 | 60 | 8 | 20 | nie | **tak** | 1 |
-| 6 | `uniformity` | Równomierność | % | 0 | 100 | 60 | 35 | **tak** | **tak** | 0 |
-| 7 | `comfort` | Komfort wzrokowy | pkt | 0 | 100 | 70 | 45 | **tak** | **tak** | 0 |
+| # | id | namePL | unit | min | max | warn | crit | invert | decimals |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | `share` | Udział niebieskiego | % | 0 | 60 | 26 | 33 | nie | 0 |
+| 2 | `brightness` | Jasność sceny | % | 0 | 100 | 70 | 88 | nie | 0 |
+| 3 | `kelvin` | Temperatura barwowa | K | 1500 | 9000 | 4600 | 6000 | nie | 0 |
+| 4 | `melanopic` | Wpływ na rytm dobowy | × | 0 | 1,6 | 0,75 | 1,00 | nie | 2 |
+| 5 | `flicker` | Migotanie | % | 0 | 60 | 8 | 20 | nie | 1 |
+| 6 | `uniformity` | Równomierność | % | 0 | 100 | 60 | 35 | **tak** | 0 |
+| 7 | `comfort` | Komfort wzrokowy | pkt | 0 | 100 | 70 | 45 | **tak** | 0 |
+
+**Wszystkie siedem wielkości pokazuje liczby każdemu, od pierwszego uruchomienia.** Katalog nie ma
+pola dzielącego je na dostępne i niedostępne i nigdy nie będzie go miał.
 
 Kolejność w listwie kanałów = kolejność katalogu. Domyślny kanał główny = `share`.
 Progi bierzemy **zawsze** z `Engine.getThresholds()`, nigdy z `Metrics.CATALOGUE` — użytkownik mógł
-je przestawić. `min`, `max`, `invert`, `decimals`, `unit`, `premium`, `namePL`, `shortPL`, `helpPL`
+je przestawić. `min`, `max`, `invert`, `decimals`, `unit`, `namePL`, `shortPL`, `helpPL`
 — z katalogu. Formatowanie liczby — **zawsze** `Metrics.formatValue(id, v)` (daje polski przecinek).
 
 ---
@@ -88,14 +91,14 @@ je przestawić. `min`, `max`, `invert`, `decimals`, `unit`, `premium`, `namePL`,
    w arkuszach stylów ani razu — przy powiększeniu 300% rozmyty cień czyta się jak brud.
 7. **Pomiar jest ostatnim elementem układu.** Pulpit sterowania z klawiszem START/STOP jest ostatnim
    dzieckiem powłoki, `position: fixed`, z warstwą wyższą niż wszystko poza blokiem błędu. Żaden
-   arkusz, żadna oferta, żadne konto nie może się nad nim wyrenderować — to właściwość układu
+   arkusz i żaden moduł nie może się nad nim wyrenderować — to właściwość układu
    wymuszona kolejnością w DOM, nie obietnica. Na dole każdego innego ekranu siedzi żywy pasek
    z bieżącym odczytem i klawiszem powrotu.
 8. **Aplikacja mówi, czego nie wie.** Przy temperaturze barwowej i wpływie na rytm dobowy stoi znak
    „≈" — w pikselach i w nazwie dostępnej. Gdy `kelvinReliable` albo `flickerWithinRange` jest
-   fałszywe, linia bazowa skali robi się kreskowana i pada słowo. Metryka Premium pokazuje „———"
-   i kłódkę, nigdy liczby zmyślonej ani rozmytej. Nigdzie nie pada słowo „diagnoza" inaczej niż
-   w zdaniu, że jej nie stawiamy.
+   fałszywe, linia bazowa skali robi się kreskowana i pada słowo. Wielkość, której nie dało się
+   zmierzyć, pokazuje „———", nigdy liczby zmyślonej ani rozmytej. Nigdzie nie pada słowo
+   „diagnoza" inaczej niż w zdaniu, że jej nie stawiamy.
 
 **Czego ten design nigdy nie robi:** nie rysuje pierścienia ani tarczy zegarowej; nie używa cienia
 rzuconego; nie zaokrągla niczego powyżej 3 px; nie animuje cyfr; nie stawia dolnego paska zakładek;
@@ -137,8 +140,6 @@ kontrast na kolejnych trzech poziomach tła.
   --ms3-warn:       #85480A;   /*  7,17 /  5,41 /  6,45 */
   --ms3-crit:       #B01F19;   /*  6,87 /  5,19 /  6,19 */
   --ms3-on-crit:    #FFFFFF;   /*  6,87 on crit */
-  --ms3-premium:    #5A34AD;   /*  8,30 /  6,27 /  7,47 */
-  --ms3-demo:       #9E0F76;   /*  7,54 /  5,69 /  6,79  — simulation only */
   --ms3-focus:      #0B3FA8;   /*  9,17 /  6,92 /  8,25 */
 
   /* ---- zone band fills (behind the scale, never behind text) ---- */
@@ -169,7 +170,7 @@ kontrast na kolejnych trzech poziomach tła.
   --ms3-lh-tight: 1.05;
   --ms3-lh-body:  1.55;
 
-  /* ---- text-size setting (module 13) multiplies the whole scale ---- */
+  /* ---- text-size setting (module 12) multiplies the whole scale ---- */
   --ms3-scale: 1;            /* 1 | 1.15 | 1.3 */
 
   /* ---- spacing: 4 px rhythm ---- */
@@ -214,8 +215,6 @@ kontrast na kolejnych trzech poziomach tła.
     --ms3-warn: #F5B740;                        /*  9,84 / 10,80 / 10,32 */
     --ms3-crit: #FF7060;                        /*  6,49 /  7,12 /  6,81 */
     --ms3-on-crit: #330B07;                     /*  6,49 on crit */
-    --ms3-premium: #B99BFF;                     /*  7,71 /  8,46 /  8,09 */
-    --ms3-demo: #FF8FD4;                        /*  8,50 /  9,33 /  8,91 */
     --ms3-focus: #86DFF5;                       /* 11,65 / 12,78 / 12,21 */
     --ms3-fill-good: rgba(75,214,132,.22);
     --ms3-fill-warn: rgba(245,183,64,.22);
@@ -257,8 +256,6 @@ Reguły użycia tokenów, których nie da się zapisać w CSS:
 * `--ms3-ink-3` wolno użyć wyłącznie przy 15 px i większym.
 * `--ms3-accent` nie jest kolorem dekoracyjnym. Występuje w trzech miejscach: klawisz START,
   obramowanie wybranego kanału głównego, aktywny segment przełącznika zakresu. Nigdzie indziej.
-* `--ms3-demo` występuje **wyłącznie** na ekranach symulacji (Premium, Konto, potwierdzenie zakupu)
-  i zawsze razem z kreskowanym obrysem 2 px oraz nadtytułem „SYMULACJA".
 * Wersaliki: maksymalnie **dwa słowa**, minimum 15 px, tracking z tokena, i nigdy jedyny opis
   elementu. Przy ustawieniu „Duży tekst" `--ms3-tracking-legend` schodzi do `0`.
 * `--ms3-scale` mnoży skalę typograficzną w `base.css`:
@@ -270,7 +267,7 @@ Reguły użycia tokenów, których nie da się zapisać w CSS:
 ## 3. Inwentarz ekranów
 
 Model ma **dwa poziomy i ani jednego więcej**. Poziom 1 to Pulpit. Poziom 2 to moduł. Arkusze
-(pomoc, oferta, potwierdzenie) to warstwa modalna i nie liczą się do głębokości. Klawisz sprzętowy
+(pomoc do metryki, potwierdzenia) to warstwa modalna i nie liczą się do głębokości. Klawisz sprzętowy
 „wstecz", `Escape` i klawisz powrotu robią dokładnie to samo.
 
 ### Poziom 1
@@ -284,7 +281,7 @@ Model ma **dwa poziomy i ani jednego więcej**. Poziom 1 to Pulpit. Poziom 2 to 
 | Ekran | Zawartość | Jak wejść |
 |---|---|---|
 | **CELOWANIE** | pełnoekranowy podgląd kamery, celownik = dokładny wycinek próbkowany, jedna linia instrukcji, klawisze „Zamknij" i „Obróć" po 48 px | dotknięcie monitora kamery |
-| **SPIS MODUŁÓW** | lista 13 wierszy po 72 px: numer 01–13, nazwa 18 px, jedno zdanie opisu 15 px, szewron | klawisz „MENU" w pulpicie sterowania |
+| **SPIS MODUŁÓW** | lista 12 wierszy po 72 px: numer 01–12, nazwa 18 px, jedno zdanie opisu 15 px, szewron | klawisz „MENU" w pulpicie sterowania |
 
 ### Poziom 2 — moduły. Każdy ma listwę modułu u góry i żywy pasek u dołu.
 
@@ -299,18 +296,15 @@ Model ma **dwa poziomy i ani jednego więcej**. Poziom 1 to Pulpit. Poziom 2 to 
 | **07** | **Test ekranu** | plansze kontrolne, instrukcja krok po kroku | jedyny ekran wychodzący z motywu: pełne plansze |
 | **08** | **Harmonogram** | automatyczne pomiary o zadanych porach | jawnie: „działa tylko przy otwartej aplikacji" |
 | **09** | **Alerty** | powiadomienie po przekroczeniu progu | jawnie: kiedy zadziała, a kiedy nie |
-| **10** | **Premium** | oferta trzech płatnych kanałów | barwa demo, kreskowany obrys, nadtytuł „SYMULACJA" |
-| **11** | **Konto** | logowanie symulowane | jak wyżej; nigdy nie wygląda jak prawdziwe |
-| **12** | **Dokumentacja** | co to mierzy, czego nie mierzy, wzory, zakresy, pełne zastrzeżenie MDR | otwiera się sekcją „Czego ta aplikacja NIE mierzy" |
-| **13** | **Ustawienia** | motyw, rozmiar tekstu ×1 / ×1,15 / ×1,3, „Ogranicz ruch", czyszczenie historii | motyw ustawia `data-theme` na `<html>` |
+| **10** | **Wsparcie** | aplikacja jest darmowa; jeden odnośnik na zewnętrzny profil darowizn | bez licznika, bez pilności; klawisz tylko przy wypełnionym `SUPPORT_URL` |
+| **11** | **Dokumentacja** | co to mierzy, czego nie mierzy, wzory, zakresy, pełne zastrzeżenie MDR | otwiera się sekcją „Czego ta aplikacja NIE mierzy" |
+| **12** | **Ustawienia** | motyw, rozmiar tekstu ×1 / ×1,15 / ×1,3, „Ogranicz ruch", czyszczenie historii | motyw ustawia `data-theme` na `<html>` |
 
 ### Arkusze (modal nad wszystkim poza pulpitem sterowania)
 
 | Arkusz | Zawartość | Jak wejść |
 |---|---|---|
 | **Pomoc do metryki** | `namePL`, `shortPL`, `helpPL`, jednostka, zakres, aktualne progi, dostępność, mini-przebieg 240×48, nota „Czego ta liczba nie mówi" | klawisz „?" w studni odczytu; długie naciśnięcie wiersza kanału |
-| **Oferta Premium (demo)** | co odblokowuje, co działa dalej bez opłaty | dotknięcie zablokowanego wiersza kanału |
-| **Potwierdzenie zakupu (demo)** | symulacja, bez pola płatniczego | z arkusza oferty |
 
 ### Blok wsuwany (nie ekran)
 
@@ -426,7 +420,7 @@ zaokrągleń, na całą szerokość, rozdzielone linią 1 px `--ms3-rule`.
 ```
 [■ 24] Jasność sceny         [mikroskala 88×18]  [   63] [%  ]
 [● 24] Temperatura barwowa   [mikroskala 88×18]  [≈4200] [K  ]
-[🔒24] Migotanie   PREMIUM   [·············· ]  [  ———] [   ]
+[▲ 24] Migotanie             [mikroskala 88×18]  [ 12,4] [%  ]
 ```
 
 Siatka wiersza (CSS Grid): `24px 1fr 88px 5ch 3ch`, `gap: 12px`, `padding-inline: 16px`.
@@ -440,10 +434,9 @@ Siatka wiersza (CSS Grid): `24px 1fr 88px 5ch 3ch`, `gap: 12px`, `padding-inline
 Cały wiersz jest `<button>` — cel dotykowy ok. 328×56 px na telefonie 360 px (w v2 kafelek miał
 ok. 170×64 px).
 
-Wiersz zablokowany (Premium) różni się **czterema** rzeczami naraz, bo dwa różne działania nie mogą
-wyglądać tak samo: znacznik to kłódka 20 px zamiast ● ▲ ■, wartość to `———`, mikroskala ma
-kropkowaną linię bazową bez trójkąta i bez pasm, a obok nazwy stoi plakietka `PREMIUM` 15 px
-w `--ms3-premium`. Nazwa dostępna: „Migotanie, funkcja Premium, otwiera ofertę".
+Wszystkie wiersze są takie same i wszystkie pokazują liczbę: nie ma wiersza zamkniętego, kłódki
+ani plakietki mówiącej, że za tę liczbę trzeba zapłacić. Wiersz bez świeżego odczytu w trakcie
+pomiaru różni się tylko znacznikiem `—`, wartością `———` i przygaszoną barwą liczby.
 
 ### 4.5 Blok D — MONITOR KAMERY
 
@@ -612,7 +605,8 @@ Reguły wspólne dla wszystkich komponentów:
 * `.ms3-readout__approx` jest `aria-hidden`, bo znak `≈` czytnik przeczytałby jako „w przybliżeniu
   równe" w środku zdania. Informacja o przybliżeniu wchodzi do nazwy dostępnej całego bloku:
   `aria-label="Udział niebieskiego: wartość przybliżona 4200 kelwinów, uwaga"`.
-* Brak wartości (`null`, przed pierwszą próbką, kanał premium): `.ms3-readout__num` pokazuje `———`,
+* Brak wartości (`null`, przed pierwszą próbką, wielkość niemierzalna w tej scenie):
+  `.ms3-readout__num` pokazuje `———`,
   stempel `— BRAK DANYCH`, werdykt z 8.2, skala bez wskazówki.
 
 ---
@@ -631,15 +625,14 @@ Reguły wspólne dla wszystkich komponentów:
     <span class="ms3-channel__unit">%</span>
   </button>
 
-  <button class="ms3-channel ms3-channel--locked" type="button"
+  <button class="ms3-channel ms3-channel--stale" type="button"
           data-metric="flicker" tabindex="-1"
-          aria-label="Migotanie, funkcja Premium, otwiera ofertę">
-    <span class="ms3-lock" aria-hidden="true"></span>
-    <span class="ms3-channel__name">Migotanie
-      <span class="ms3-badge ms3-badge--premium">Premium</span></span>
-    <span class="ms3-micro ms3-micro--locked" aria-hidden="true"></span>
+          aria-label="Migotanie, brak danych. Pokaż na dużym wyświetlaczu">
+    <span class="ms3-shape ms3-shape--none" aria-hidden="true"></span>
+    <span class="ms3-channel__name">Migotanie</span>
+    <span class="ms3-micro" aria-hidden="true"><!-- 6.2 --></span>
     <span class="ms3-channel__value">———</span>
-    <span class="ms3-channel__unit"></span>
+    <span class="ms3-channel__unit">%</span>
   </button>
 </div>
 ```
@@ -764,8 +757,7 @@ niesie treść.
 | `--primary` | START | tło `--ms3-accent`, tekst `--ms3-on-accent`, 64 px wysokości |
 | `--stop` | STOP | tło `--ms3-crit`, tekst `--ms3-on-crit`, ikona kwadrat |
 | `--square` | OBRÓĆ, MENU | 64×64 px, tło `--ms3-panel`, obrys 1 px `--ms3-rule` |
-| `--ghost` | powrót, zamknij | przezroczyste, obrys 1 px `--ms3-rule`, min. 48 px |
-| `--demo` | zakup, logowanie | obrys **kreskowany** 2 px `--ms3-demo`, tekst `--ms3-demo` |
+| `--ghost` | powrót, zamknij, odnośnik wsparcia | przezroczyste, obrys 1 px `--ms3-rule`, min. 48 px |
 
 Promień 3 px. Bez cienia. Wciśnięcie: przyciemnienie/rozjaśnienie tła o jeden krok w 90 ms.
 Każdy klawisz ma `.ms3-key__label` z widocznym tekstem — **nie ma klawisza będącego samą ikoną**.
@@ -883,13 +875,12 @@ wejście w Ustawienia nie zrywa kontaktu z pomiarem, powrót to jedno dotknięci
 </aside>
 ```
 
-Trzy warianty, różniące się **lewym pasem 4 px** i nadtytułem, nigdy samym tłem:
+Dwa warianty, różniące się **lewym pasem 4 px** i nadtytułem, nigdy samym tłem:
 
 | Wariant | Pas | Nadtytuł | Kiedy |
 |---|---|---|---|
 | `--limits` | `--ms3-ink-3` | „Czego ta liczba nie mówi" | granice metody, przybliżenia |
 | `--warning` | `--ms3-warn` | „Uwaga" | rzecz, którą użytkownik może zrobić źle |
-| `--demo` | `--ms3-demo`, **kreskowany** | „Symulacja" | wszystko, co udaje płatność lub konto |
 
 Tło noty: `--ms3-panel` (nie kolorowy tint — kolorowe tło pod tekstem obniża kontrast).
 Nota o granicach pomiaru na Pulpicie **nigdy nie jest zwijana ani ukrywana**.
@@ -940,8 +931,8 @@ jest przewijany do widoku.
 ### 5.14 `ms3-badge` — plakietka
 
 15 px, wersaliki, waga 700, `padding: 2px 6px`, promień 2 px, obrys 1 px w barwie wariantu.
-Warianty: `--premium` (`--ms3-premium`), `--live` (`--ms3-good`, napis „Na żywo"),
-`--demo` (`--ms3-demo`, obrys kreskowany), `--approx` (`--ms3-ink-3`, napis „Przybliżenie").
+Warianty: `--live` (`--ms3-good`, napis „Na żywo") i `--approx` (`--ms3-ink-3`,
+napis „Przybliżenie").
 Plakietka nigdy nie jest jedynym nośnikiem informacji.
 
 ---
@@ -1156,9 +1147,8 @@ Pod listwą stanu przez te 3 s biegnie linia postępu.
 To jest jedyne miejsce w v3 z własną logiką redakcyjną. Musi być opisane, bo inaczej czterech
 programistów napisze cztery różne aplikacje.
 
-**Werdykt jest bezpłatny i bierze pod uwagę wszystkie siedem metryk**, także płatne. Płaci się za
-**liczbę**, nie za odpowiedź. To zdanie musi paść na ekranie Premium (8.7), inaczej konstrukcja
-wygląda na wzorzec ciemny.
+**Werdykt bierze pod uwagę wszystkie siedem metryk**, bo wszystkie siedem jest mierzone
+i pokazywane każdemu. Nic w tej aplikacji nie zależy od wpłaty.
 
 ```js
 /* verdict.js (part of scale.js). Pure: takes a reading, returns a sentence id. */
@@ -1197,8 +1187,6 @@ więc dzieje się to samo z siebie. Jest to celowe i nie wolno tego „ulepszyć
    w 120 ms liniowo.
 4. `#ms3Live` dostaje: „Kanał główny: Temperatura barwowa, 4200 kelwinów, uwaga".
 5. Wybór zapamiętujemy w `localStorage` pod `ms3.settings.v1` → `leadChannel`.
-6. Dotknięcie wiersza **zablokowanego** otwiera arkusz oferty. Nie przełącza kanału. Nazwa
-   dostępna mówi to zawczasu.
 
 ### 7.4 Ruch
 
@@ -1216,7 +1204,7 @@ liczby. Wartość się podmienia.
 
 `prefers-reduced-motion: reduce` → wszystkie czasy schodzą do 1 ms (nie 0 — `transitionend` musi
 nadal zadziałać), wskazówka skacze, moduły pojawiają się natychmiast, linia postępu rozgrzewki
-skacze co 1 s. Ustawienie „Ogranicz ruch" w module 13 robi to samo niezależnie od systemu
+skacze co 1 s. Ustawienie „Ogranicz ruch" w module 12 robi to samo niezależnie od systemu
 (ustawia `data-motion="reduced"` na `<html>`).
 
 Nic nie miga i nic nie pulsuje w żadnym trybie — w aplikacji o zmęczeniu wzroku to byłoby
@@ -1249,8 +1237,7 @@ niesmaczne. Dioda stanu jest statyczna.
   z `#ms3Live` oraz pełne dane z tabeli w module 01.
 * Każdy wykres ma `role="img"` i `aria-label` ze streszczeniem liczbowym, a pod nim tabelaryczny
   odpowiednik.
-* Nazwy dostępne wierszy kanałów mówią, **co się stanie**: „…Pokaż na dużym wyświetlaczu" albo
-  „…funkcja Premium, otwiera ofertę".
+* Nazwy dostępne wierszy kanałów mówią, **co się stanie**: „…Pokaż na dużym wyświetlaczu".
 * Znak `≈` jest `aria-hidden`; przybliżenie wchodzi do nazwy dostępnej słowem „wartość przybliżona".
 * `lang="pl"` na `<html>`. `<title>` = „Monitor Światła".
 
@@ -1262,13 +1249,15 @@ leadChannel: 'share', firstRunDone: false, lastRange: '60s' }`.
 Każdy dostęp w `try/catch` — tryb prywatny rzuca wyjątkiem także przy odczycie.
 Klucze silnika (`ms2.history.v1`, `ms2.thresholds.v1`, `ms2.session.v1`, `ms2.calibration.v1`)
 zostają **bez zmian nazw** — historia i progi użytkownika przechodzą z v2 do v3 same z siebie.
+Klucz `ms3.entitlement.v1` po symulowanych uprawnieniach i symulowanym koncie już nie istnieje;
+`support.js` kasuje go przy starcie i nie zapisuje w to miejsce niczego.
 
 ### 7.8 Reguły, których nie wolno złamać w kodzie
 
 1. Nic nie zapisuje do `#cameraPlaceholderText` poza silnikiem.
 2. Nic nie ustawia `disabled` na klawiszach pomiaru poza `dash.js`.
 3. Nic nie woła `Engine.start()` automatycznie. Pomiar zaczyna wyłącznie człowiek.
-4. Zatrzymanie pomiaru nie otwiera żadnego okna, oferty ani reklamy. Pomiar kończy się cicho.
+4. Zatrzymanie pomiaru nie otwiera żadnego okna ani prośby o wsparcie. Pomiar kończy się cicho.
 5. Żaden moduł nie renderuje się nad pulpitem sterowania.
 
 ---
@@ -1307,7 +1296,6 @@ Wszystkie napisy są tutaj. Nie wymyślamy własnych w kodzie. Teksty przeniesio
 | przed pierwszym pomiarem | `— Brak danych` | `Naciśnij „Start pomiaru", skieruj telefon na oświetloną powierzchnię i trzymaj nieruchomo kilka sekund.` |
 | pierwsze 3 s pomiaru | `— Ustalam` | `Ustalam ocenę — trzymaj telefon nieruchomo jeszcze chwilę.` |
 | kanał główny bez wartości mimo pomiaru | `— Brak danych` | `Ta wielkość nie daje się teraz zmierzyć. Sprawdź, czy obiektyw nie jest zasłonięty.` |
-| kanał główny płatny, bez dostępu | `— Funkcja Premium` | `Liczba jest częścią pakietu Premium. Ocena światła poniżej działa bez opłaty.` |
 | pomiar zatrzymany | bez zmian | `Pomiar zakończony · 4 min 12 s · zapisano w historii.` |
 
 Stemple stanu: `W normie` / `Uwaga` / `Krytycznie`, zawsze z progiem w nawiasie,
@@ -1384,7 +1372,7 @@ treść **(z v2, dosłownie)**:
 
 **Nota o kalibracji** (z v2): `Pomiar bez kalibracji — wartości traktuj porównawczo.`
 
-**Jak mierzyć sensownie** (moduł 12, z v2, dosłownie):
+**Jak mierzyć sensownie** (moduł 11, z v2, dosłownie):
 
 1. `Trzymaj telefon nieruchomo` — Automatyka ekspozycji potrzebuje 2–3 sekund, żeby się ustabilizować.
 2. `Kieruj na oświetloną powierzchnię` — Biała kartka albo jasna ściana. Nie mierz, patrząc prosto
@@ -1423,21 +1411,35 @@ Nie piszemy własnych.
 | Harmonogram, pusty | `Nie ustawiono żadnej pory. Harmonogram działa tylko przy otwartej aplikacji.` |
 | Historia wyczyszczona | `Historia jest pusta.` |
 
-### 8.7 Ekrany symulacji
+### 8.7 Ekran „Wsparcie" (moduł 10)
 
-Nadtytuł na obu: `Symulacja`. Zdanie obowiązkowe, w tym brzmieniu:
+Cztery rzeczy, krótko, w tej kolejności — i ani jednej więcej:
 
-> To jest symulacja. Nie pobieramy żadnej opłaty, nie zbieramy danych karty i nic nie wysyłamy
-> do sieci.
+1. **Co aplikacja daje za darmo.** Wszystkie siedem wielkości, historia, rejestrator, progi,
+   raporty, eksport i tryb offline — bez konta, bez opłat i bez limitów.
+2. **Dlaczego pada prośba.** Utrzymanie i rozwój, bez dramatyzowania i bez straszenia, że coś
+   przestanie działać.
+3. **Co darowizna daje.** Zdanie obowiązkowe, wprost:
 
-Na ekranie Premium, zdanie obowiązkowe (broni konstrukcji przed zarzutem wzorca ciemnego):
+   > Nic. Żadna liczba, żaden moduł i żadne ustawienie nie odblokowują się po wpłacie, bo wszystko
+   > jest odblokowane od początku.
 
-> Ocena światła i zdanie na pulpicie są bezpłatne i biorą pod uwagę wszystkie siedem wielkości.
-> Pakiet Premium odblokowuje **liczby** trzech z nich: migotania, równomierności i komfortu
-> wzrokowego.
+4. **Klawisz** i przy nim zdanie obowiązkowe o prywatności:
 
-Konto: `Logowanie symulowane — dowolny adres i dowolne hasło zostaną przyjęte, nic nie opuszcza
-tego urządzenia.`
+   > Naciśnięcie tego klawisza otwiera stronę zewnętrzną w nowej karcie i jest to jedyny moment,
+   > w którym cokolwiek opuszcza to urządzenie.
+
+Adres profilu to jedna stała `SUPPORT_URL` na górze `support.js`, przyjmowana wyłącznie ze
+schematem `https://`. **Przy pustej stałej ekran istnieje i wygląda normalnie**, w miejscu klawisza
+stoi spokojne zdanie, że profil nie jest jeszcze podłączony, i **nie renderuje się żaden
+odnośnik**. Odnośnik jest zwykłym `<a target="_blank" rel="noopener noreferrer">` z klawiszem
+`--ghost`; kubek rysujemy kształtami CSS jak każdą inną ikonę. Żadnego widżetu, skryptu ani
+obrazka z serwera zbiórki — złamałoby to zasadę 16 z rozdziału 10 i tryb offline.
+
+Czego na tym ekranie nie ma: odliczania, „zostało X dni", kwot udających koszyk, licznika wpłat,
+wyskakujących próśb, przerywników i ani jednego słowa sugerującego, że coś w tej aplikacji jest
+płatne albo zamknięte. Prośba pojawia się
+wyłącznie wtedy, gdy użytkownik sam otworzy ten moduł ze spisu.
 
 ### 8.8 Spis modułów — opisy jednym zdaniem
 
@@ -1452,10 +1454,9 @@ tego urządzenia.`
 | 07 | Test ekranu | Plansze do sprawdzenia własnego monitora, krok po kroku. |
 | 08 | Harmonogram | Automatyczne pomiary o zadanych porach. |
 | 09 | Alerty | Powiadomienie po przekroczeniu progu — i kiedy ono nie zadziała. |
-| 10 | Premium | Co odblokowuje pakiet płatny i co działa bez opłaty. |
-| 11 | Konto | Logowanie symulowane, oznaczone jako symulacja. |
-| 12 | Dokumentacja | Czym ten pomiar jest, a czym na pewno nie jest. |
-| 13 | Ustawienia | Motyw, rozmiar tekstu, ograniczenie ruchu, czyszczenie historii. |
+| 10 | Wsparcie | Aplikacja jest w całości darmowa. Tu można postawić kawę autorowi. |
+| 11 | Dokumentacja | Czym ten pomiar jest, a czym na pewno nie jest. |
+| 12 | Ustawienia | Motyw, rozmiar tekstu, ograniczenie ruchu, czyszczenie historii. |
 
 ### 8.9 Zasady języka
 
@@ -1488,7 +1489,7 @@ tego urządzenia.`
 | `docs/v3/dash.js` | P3 | Pulpit: studnia, listwa kanałów, pulpit sterowania, monitor kamery, Errata. Jedyny plik, który słucha `engine:sample` |
 | `docs/v3/recorder.js` | P3 | moduł 01: taśma, panorama, krzyż odczytu, statystyka sesji, tabela |
 | `docs/v3/modules.js` | P4 | moduły 02–09 |
-| `docs/v3/offer.js` | P4 | moduły 10–11 (symulacja) |
+| `docs/v3/support.js` | P4 | moduł 10 (Wsparcie) — stała `SUPPORT_URL` i jeden odnośnik |
 | `docs/v3/docs.js` | P4 | moduły 12–13 |
 | `docs/v3/boot.js` | integrator | spis modułów, rejestracja SW, pierwsze uruchomienie |
 | `docs/v3/sw.js` | integrator | cache pełnej listy plików, `CACHE_NAME` **podbijany przy każdej zmianie** |
@@ -1533,7 +1534,7 @@ i `#cameraPlaceholderText` piszemy wprost w `index.html`**, a `shell.js` tylko j
   Zasada „zero literałów rozsianych po kodzie" zostaje w mocy: blok rejestrujący jest jeden
   i jest pierwszą rzeczą w pliku.
 * **Kto słucha `engine:sample`:** wyłącznie `dash.js`. Moduły dostają dane przez
-  `UI3.onLive(cb)` — jedna subskrypcja, jeden throttling. Żywy pasek aktualizuje `shell.js`
+  `UI3.onLive(cb)` — jedno wpięcie, jeden throttling. Żywy pasek aktualizuje `shell.js`
   z tego samego kanału, co 200 ms, ale renderuje **tylko jeśli jest widoczny**.
 * **Kto woła `Engine.start/stop`:** wyłącznie `dash.js`, w reakcji na klawisz. Nikt inny.
 * **Kto pisze do `#cameraPlaceholderText`:** wyłącznie `engine.js`.
@@ -1593,7 +1594,8 @@ plików na dysku. Przy testach v3 najpierw wyrejestruj SW v2 albo otwórz w okni
     ładowane**. Jedna nieprzestylowana klasa `ms-*` pokazałaby zaokrąglony róg i cień, czyli złamała
     dwie zasady naczelne naraz. Moduły 02–13 piszemy w `ms3-*` od nowa, korzystając z tekstów v2.
 14. **Nie ma trzeciego poziomu nawigacji.** Moduł nie otwiera modułu.
-15. **Nie ma reklamy, oferty ani konta nad pulpitem sterowania.** Wymuszone kolejnością w DOM.
+15. **Nie ma reklamy, prośby o wpłatę ani konta nad pulpitem sterowania.** Prośba o wsparcie
+    mieszka w module 10 i nigdzie indziej; wymuszone kolejnością w DOM.
 16. **Nie ma czcionek z sieci, bibliotek, build-stepu ani żadnego zasobu spoza `docs/v3/`.**
 17. **Nie ma tekstu poniżej 15 px.** Stopień 13 px (`--ms-t-cap` z v2) nie istnieje.
 18. **Nie ma migania i pulsowania** w żadnym trybie, także dioda stanu i plakietka „Na żywo".

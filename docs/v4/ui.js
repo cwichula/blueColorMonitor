@@ -17,8 +17,9 @@
  * Cała polszczyzna aplikacji poza Scale.TEXT leży w UI.T (rozdział 7 SPEC.md).
  * Żaden ekran nie ma prawa zawierać własnego literału polskiego.
  *
- * Kolory: wyłącznie tokeny przez CSS. Jedyne hexy w tym pliku to cztery ikony
- * dostawców logowania — udokumentowany wyjątek z rozdziału 0.3.
+ * Kolory: wyłącznie tokeny przez CSS. Po przejściu na model darowiznowy nie ma
+ * w tym pliku ani jednej wartości barwnej — ostatnie hexy należały do ikon
+ * dostawców logowania i zniknęły razem z nimi.
  */
 (function (global) {
   'use strict';
@@ -42,13 +43,11 @@
       measure: 'Pomiar',
       history: 'Historia',
       tools: 'Narzędzia',
-      account: 'Konto',
+      support: 'Wsparcie',
       aria: 'Nawigacja główna',
       skip: 'Przejdź do treści',
       brand: 'Monitor Światła',
-      version: 'Wersja 4.0',
-      premiumOn: 'Premium aktywne',
-      premiumOff: 'Wersja bezpłatna'
+      version: 'Wersja 4.0'
     },
 
     measure: {
@@ -74,9 +73,7 @@
       notCalibrated: 'Bez kalibracji',
       sessionIdle: 'Pomiar nie trwa',
       firstRun: 'Zacznij od przycisku „Start pomiaru”. Kamera włączy się dopiero po jego naciśnięciu i nic nie opuszcza tego urządzenia.',
-      helpAria: 'Czym jest ten pomiar',
-      premiumTileCta: 'Zobacz, ile to kosztuje',
-      premiumTileWord: 'Premium'
+      helpAria: 'Czym jest ten pomiar'
     },
 
     history: {
@@ -115,7 +112,6 @@
       title: 'Narzędzia',
       sub: 'Dziewięć rzeczy, które możesz zrobić z tym, co już zmierzyłeś.',
       openAria: 'Otwórz narzędzie: {name}',
-      premiumWord: 'Premium',
       /* Nagłówki czterech grup na ekranie Narzędzia — kolejność jak w screen-tools.js. */
       groupMeasure: 'Pomiar',
       groupData: 'Dane i raporty',
@@ -161,32 +157,25 @@
       alertsHint: 'Alert pokazuje się w aplikacji. Nie wysyłamy powiadomień systemowych i nie prosimy o zgodę na nie.'
     },
 
-    account: {
-      title: 'Konto',
-      signedOutName: 'Nie zalogowano',
-      signedOutSub: 'Konto jest opcjonalne. Pomiar, historia i wszystkie narzędzia działają bez niego.',
-      signIn: 'Zaloguj się',
-      signOut: 'Wyloguj się',
-      signOutConfirm: 'Wylogować się z tego urządzenia? Historia pomiarów zostanie na miejscu.',
-      deleteAccount: 'Usuń konto',
-      deleteConfirm: 'Usunąć konto z tej przeglądarki? Znikną dane logowania i stan subskrypcji. Historia pomiarów zostanie.',
-      providerLabelTpl: 'Zalogowano przez {provider}',
-      accountSheet: 'Twoje konto',
-      nameSheetSub: 'Imię zostaje w pamięci tej przeglądarki i służy tylko do inicjałów w awatarze.',
-      subTitle: 'Subskrypcja',
-      subPlan: 'Plan',
-      subSince: 'Aktywne od',
-      subTrialCta: 'Zacznij 7 dni bez opłaty',
-      subFree: 'Wersja bezpłatna',
-      subFreeSub: 'Cztery wielkości z liczbami, ocena światła i cała historia. Bez ograniczeń czasowych.',
-      subPremium: 'Premium aktywne',
-      subPremiumSub: 'Wszystkie siedem wielkości, raporty i porównania. Dziękujemy.',
-      subTrialTpl: 'Okres próbny — zostało {days} dni.',
-      subManage: 'Zarządzaj',
-      subUnlock: 'Odblokuj Premium',
-      subRestore: 'Przywróć zakupy',
-      subCancel: 'Zrezygnuj z subskrypcji',
-      subCancelConfirm: 'Zrezygnować z Premium? W symulacji dostęp znika natychmiast, a liczby trzech wielkości wracają pod kłódkę.',
+    /* Ekran WSPARCIE. Zastąpił dawną zakładkę konta: nie ma tu już ani logowania,
+       ani żadnej opłaty — została jedna, dobrowolna prośba i całe ustawienia aplikacji. */
+    support: {
+      title: 'Wsparcie',
+      freeTitle: 'Wszystko działa bez opłat',
+      freeText: 'Wszystkie siedem wielkości z liczbami, cała historia, dziewięć narzędzi i tryb offline są dostępne od razu — bez konta, bez limitów i bez wysyłania czegokolwiek do sieci.',
+      whyTitle: 'Dlaczego o to proszę',
+      whyText: 'Monitor Światła robię i utrzymuję sam, po godzinach. Dobrowolne wsparcie pokrywa ten czas i pozwala dokładać kolejne rzeczy — nic więcej za tym nie stoi.',
+      nothingTitle: 'Co daje darowizna',
+      nothingText: 'Nic w aplikacji. Darowizna niczego nie odblokowuje i niczego nie zmienia — przed nią i po niej wszystko wygląda tak samo. Zostaje tylko tyle, że wiem, że to komuś się przydało.',
+      donate: 'Postaw mi kawę',
+      donateAria: 'Otwórz profil darowizn w nowej karcie',
+      donateVia: 'Odnośnik prowadzi na zewnętrzny profil darowizn (np. Buy Me a Coffee).',
+      privacyNote: 'To jedyne miejsce w całej aplikacji, w którym cokolwiek opuszcza to urządzenie: przycisk otwiera stronę zewnętrzną w nowej karcie i dzieje się to dopiero po jego naciśnięciu. Pomiar, historia i ustawienia zostają tutaj.',
+      privacyNotePending: 'Kiedy adres się pojawi, przycisk otworzy stronę zewnętrzną w nowej karcie. Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie. Pomiar, historia i ustawienia zostają tutaj.',
+      noUrlTitle: 'Profil nie jest jeszcze podłączony',
+      noUrlText: 'Adres profilu darowizn nie został jeszcze ustawiony, więc nie ma dokąd prowadzić — i dlatego nie ma tu przycisku. Cała reszta aplikacji działa bez zmian.',
+      thanks: 'Dziękuję za każde wsparcie — także za samo korzystanie z aplikacji.',
+      thanksPending: 'Dziękuję za samo korzystanie z aplikacji.',
       settingsTitle: 'Ustawienia',
       /* Nagłówki dwóch grup ustawień pod kartą wyglądu. */
       textMotion: 'Tekst i ruch',
@@ -222,80 +211,10 @@
       versionValue: '4.0',
       versionSub: 'Wszystkie pomiary i ustawienia zostają na tym urządzeniu.',
       privacy: 'Prywatność',
+      privacyShort: 'Nic w tej aplikacji nie wysyła niczego do sieci. Wszystkie liczby powstają na tym urządzeniu i tu zostają.',
       licenses: 'Składniki aplikacji',
       licensesText: 'Aplikacja nie korzysta z żadnej zewnętrznej biblioteki, kroju pisma ani pliku graficznego. Wszystkie ikony są rysowane w kodzie, cały pomiar liczy własny kod w tej karcie przeglądarki, a strona nie pobiera niczego z sieci — dlatego działa też bez połączenia.',
-      privacyText: 'Aplikacja nie wykonuje żadnych żądań sieciowych. Obraz z kamery jest przetwarzany w tej karcie przeglądarki i nigdzie nie trafia. Historia, ustawienia i stan konta leżą w pamięci tej przeglądarki i znikają razem z jej danymi.'
-    },
-
-    auth: {
-      title: 'Zaloguj się',
-      sub: 'Konto pozwala trzymać stan subskrypcji w jednym miejscu. Pomiar działa bez niego.',
-      demoBadge: 'Tryb demonstracyjny',
-      demoText: 'To symulacja logowania. Nie ma połączenia z Google ani z Facebookiem, nic nie wychodzi do sieci, a wpisane dane zostają w pamięci tej przeglądarki.',
-      google: 'Kontynuuj przez Google',
-      facebook: 'Kontynuuj przez Facebooka',
-      apple: 'Kontynuuj przez Apple',
-      email: 'Kontynuuj przez e-mail',
-      emailLabel: 'Adres e-mail',
-      emailHint: 'Dowolny adres zostanie przyjęty. Nie sprawdzamy go i nigdzie nie wysyłamy.',
-      passwordLabel: 'Hasło',
-      /* Pole hasła istnieje tylko dla kompletności formularza — podpowiedź
-         musi to powiedzieć wprost, bo inaczej byłoby to wyłudzanie hasła. */
-      passwordHint: 'Wpisane hasło nie jest nigdzie zapisywane ani wysyłane — formularz go po prostu nie odczytuje. Możesz zostawić to pole puste.',
-      nameLabel: 'Imię (opcjonalnie)',
-      nameHint: 'Posłuży tylko do inicjałów w awatarze.',
-      submit: 'Zaloguj się',
-      back: 'Wróć do wyboru',
-      emailEmpty: 'Podaj adres e-mail.',
-      emailBad: 'To nie wygląda na adres e-mail. Potrzebna jest małpa i kropka.',
-      busy: 'Loguję…',
-      doneTpl: 'Zalogowano jako {name}.',
-      signedOut: 'Wylogowano.',
-      deleted: 'Konto usunięte z tej przeglądarki.',
-      termsTitle: 'Regulamin',
-      terms: 'Logowanie jest symulowane, więc nie ma tu żadnego regulaminu do zaakceptowania ani zgody do udzielenia.'
-    },
-
-    paywall: {
-      badge: 'Tryb demonstracyjny',
-      title: 'Odblokuj wszystkie siedem wielkości',
-      lede: 'Migotanie, równomierność i komfort wzrokowy mają liczby dopiero w Premium. Ocena światła pod wskaźnikiem jest bezpłatna i liczy się ze wszystkich siedmiu — także tych trzech.',
-      /* Wersja wstępu, gdy paywall otwiera konkretny kafelek — {name} to nazwa wielkości. */
-      ledeMetricTpl: '{name} ma liczbę dopiero w Premium. Ocena światła pod wskaźnikiem jest bezpłatna i liczy się także z tej wielkości — Premium pokazuje ją wprost.',
-      plansTitle: 'Wybierz plan',
-      /* Tabela „co w którym pakiecie”. cmpYes/cmpNo czyta tylko czytnik ekranu. */
-      compareTitle: 'Co jest w którym pakiecie',
-      compareFree: 'Bezpłatnie',
-      comparePremium: 'Premium',
-      cmpVerdict: 'Ocena światła i zdanie pod wskaźnikiem',
-      cmpFree4: 'Liczby czterech wielkości: udziału niebieskiego, jasności, temperatury barwowej i melanopiku',
-      cmpHistory: 'Cała historia, wykresy i sesje',
-      cmpPremium3: 'Liczby migotania, równomierności i komfortu wzrokowego',
-      cmpReports: 'Raporty i porównanie sesji z kompletem siedmiu wielkości',
-      cmpExport: 'Eksport CSV i JSON ze wszystkimi siedmioma kolumnami',
-      cmpYes: 'jest w tym pakiecie',
-      cmpNo: 'poza tym pakietem',
-      manageTitle: 'Zarządzaj subskrypcją',
-      trialNote: 'Roczny zaczyna się od 7 dni bez opłaty. W symulacji możesz go włączyć i wyłączyć dowolną liczbę razy.',
-      ctaTpl: 'Wybierz {plan} — {price}',
-      ctaTrial: 'Zacznij 7 dni bez opłaty',
-      restore: 'Przywróć zakupy',
-      fine: 'To jest symulacja zakupu. Nie pobieramy żadnej opłaty, nie prosimy o dane karty i nie wysyłamy niczego do sieci. Naciśnięcie przycisku zmienia tylko wpis w pamięci tej przeglądarki i możesz go w każdej chwili cofnąć w zakładce Konto.',
-      benefitsTitle: 'Co dostajesz',
-      fairTitle: 'Co zostaje bezpłatne',
-      fairText: 'Ocena światła i zdanie pod wskaźnikiem są bezpłatne i biorą pod uwagę wszystkie siedem wielkości. Pakiet Premium odblokowuje liczby trzech z nich: migotania, równomierności i komfortu wzrokowego. Historia zbiera się od pierwszego dnia dla wszystkich, więc po zakupie zobaczysz przebieg, który naprawdę się wydarzył, a nie pustą tabelę.',
-      confirmTitle: 'Potwierdzenie',
-      confirmTpl: 'Wybrany plan: {plan}, {price}. To symulacja — nie zostanie pobrana żadna opłata i nie podajesz żadnych danych płatniczych.',
-      confirmKey: 'Potwierdzam',
-      busy: 'Przetwarzam…',
-      successTitle: 'Premium aktywne',
-      successText: 'Trzy zamknięte wielkości mają teraz liczby, a historia pokazuje je wstecz. Pamiętaj: to symulacja, żadna opłata nie została pobrana.',
-      successKey: 'Wróć do pomiaru',
-      restoredOn: 'Przywrócono zakup. Premium jest aktywne.',
-      restoredOff: 'Nie znaleziono zakupu do przywrócenia w tej przeglądarce.',
-      cancelled: 'Premium wyłączone. Liczby trzech wielkości wracają pod kłódkę.',
-      trialStarted: 'Okres próbny włączony — 7 dni.',
-      trialEnded: 'Okres próbny się skończył.'
+      privacyText: 'Aplikacja nie wykonuje żadnych żądań sieciowych. Obraz z kamery jest przetwarzany w tej karcie przeglądarki i nigdzie nie trafia. Historia i ustawienia leżą w pamięci tej przeglądarki i znikają razem z jej danymi.'
     },
 
     error: {
@@ -355,10 +274,8 @@
       closeSheet: 'Zamknij okno',
       gaugeTpl: '{name}: {value}, {zone}.',
       tileTpl: '{name}, {value}, {zone}. Dotknij, aby pokazać na wskaźniku.',
-      tileLockedTpl: '{name}, funkcja Premium. Dotknij, aby zobaczyć ofertę.',
       swatchTpl: 'Kolor aplikacji: {name}',
       themeTpl: 'Motyw: {name}',
-      planTpl: 'Plan {name}, {price} {period}',
       rangeTpl: 'Zakres: {name}',
       expandPreview: 'Rozwiń podgląd kamery',
       collapsePreview: 'Zwiń podgląd kamery'
@@ -517,29 +434,18 @@
     return out;
   }
 
-  /* Kolory czterech ikon dostawców. To jedyne hexy w całym JS aplikacji
-     i jedyne miejsce, w którym rysunek ma własną barwę (SPEC 0.3). */
-  var G_RED = '#EA4335';
-  var G_YELLOW = '#FBBC05';
-  var G_GREEN = '#34A853';
-  var G_BLUE = '#4285F4';
-  var FB_BLUE = '#1877F2';
-
-  function googleArc(color, fromDeg, toDeg) {
-    var a = polar(12, 12, 7.2, fromDeg);
-    var b = polar(12, 12, 7.2, toDeg);
-    var large = Math.abs(toDeg - fromDeg) > 180 ? 1 : 0;
-    var extra = { fill: 'none', stroke: color, 'stroke-width': 3.2, 'stroke-linecap': 'butt' };
-    return P('M' + a.x + ' ' + a.y + 'A7.2 7.2 0 ' + large + ' 1 ' + b.x + ' ' + b.y, extra);
-  }
-
   var SHAPES = {
     /* --- 6.1 nawigacja i powłoka --- */
     'measure': [P('M4 17a8 8 0 1 1 16 0'), P('M12 17l4.4-5.1')],
     'history': [C(12, 12, 8.6), P('M12 12 8.4 9.4'), P('M12 12 15.6 9.4'), P('M5.6 9.2 3.2 11.8l2.7 2.2')],
     'tools': [P('M19.4 4.6A3.4 3.4 0 1 0 19.4 9.4'), L(14.9, 9.1, 5.4, 18.6),
       P('M3.4 6.2 6.2 3.4 9.2 6.4 6.4 9.2Z'), L(7.8, 7.8, 18.4, 18.4)],
-    'account': [C(12, 8.4, 3.5), P('M4.6 20.2a7.4 7.4 0 0 1 14.8 0')],
+    /* Kubek: obudowa, uszko i para smug pary. Rysowany tu, jak każda inna
+       ikona tej wersji — żadnego obrazka ani skryptu z cudzego serwera. */
+    'cup': [P('M4.4 9.2h11.2v6.2a4.6 4.6 0 0 1-4.6 4.6H9a4.6 4.6 0 0 1-4.6-4.6Z'),
+      P('M15.6 10.6h1.9a2.5 2.5 0 0 1 0 5h-1.9'),
+      P('M8 6.6q1.2-1.4 0-2.8'), P('M12 6.6q1.2-1.4 0-2.8')],
+    'heart': [P('M12 20.2 4.9 13.3a4.4 4.4 0 1 1 7.1-5 4.4 4.4 0 1 1 7.1 5Z')],
     'logo': [DOT(12, 12, 3.1)].concat(rays(12, 12, 4.8, [20.4, 17.2, 20.8, 16.8, 20.2, 17.4, 20.6, 17], 0, 45)),
     'menu': [L(4, 7, 20, 7), L(4, 12, 20, 12), L(4, 17, 20, 17)],
     'close': [L(6, 6, 18, 18), L(18, 6, 6, 18)],
@@ -602,7 +508,7 @@
       L(10.3, 10.4, 10.3, 17), L(13.7, 10.4, 13.7, 17)],
     'share': [C(17.4, 6, 2.6), C(6.6, 12, 2.6), C(17.4, 18, 2.6), L(8.9, 10.7, 15.1, 7.3), L(8.9, 13.3, 15.1, 16.7)],
 
-    /* --- 6.4 ustawienia i konto --- */
+    /* --- 6.4 ustawienia i wsparcie --- */
     'settings': [P(gearPath(12, 12, 8.4, 6, 6)), C(12, 12, 3)],
     'palette': [P('M12 3.2a8.8 8.8 0 0 0 0 17.6c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.3 0-1 .9-1.8 2-1.8h1.6c2.7 0 4.7-2 4.7-4.6 0-3.8-3.7-6.9-9.3-6.9Z'),
       DOT(7.6, 10.2, 1.1), DOT(10.5, 7, 1.1), DOT(14.6, 7.4, 1.1), DOT(17.1, 10.6, 1.1)],
@@ -612,61 +518,26 @@
     'motion': [L(4.6, 12, 17.4, 12), P('M13.4 8 17.4 12l-4 4'), L(3, 8, 9, 8), L(3, 16, 9, 16), L(4.5, 20, 19.5, 4)],
     'vibration': [R(8.5, 4, 7, 16, 2), L(4.6, 9.5, 4.6, 14.5), L(2.3, 10.8, 2.3, 13.2),
       L(19.4, 9.5, 19.4, 14.5), L(21.7, 10.8, 21.7, 13.2)],
-    'crown': [P('M4.2 18 5.8 7.2l4.1 3.5L12 5.4l2.1 5.3 4.1-3.5L19.8 18Z'), L(4.8, 20.6, 19.2, 20.6)],
-    'lock': [R(4.5, 10.5, 15, 10, 2.5), P('M8 10.5V7.6a4 4 0 0 1 8 0v2.9'), DOT(12, 15.5, 1.2)],
-    'unlock': [R(4.5, 10.5, 15, 10, 2.5), P('M8 10.5V7.6a4 4 0 0 1 7.8-1.1'), DOT(12, 15.5, 1.2)],
     'star': [P('M12 3.6 14.6 9l5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.8 9.4 9Z')],
     'shield': [P('M12 3 19.5 6v6.2c0 4.3-3 7.2-7.5 8.8-4.5-1.6-7.5-4.5-7.5-8.8V6Z')],
     'sparkle': [P('M9.6 3.4 11.2 8 15.8 9.6 11.2 11.2 9.6 15.8 8 11.2 3.4 9.6 8 8Z'),
       P('M17.6 14 18.5 16.4 20.9 17.3 18.5 18.2 17.6 20.6 16.7 18.2 14.3 17.3 16.7 16.4Z')],
     'mail': [R(3, 5.5, 18, 13, 2.5), P('M3.4 7.2 12 13.2l8.6-6')],
-    'user-plus': [C(10, 8.2, 3.4), P('M3.4 19.8a6.6 6.6 0 0 1 13.2 0'),
-      L(19.2, 14.6, 19.2, 20.2), L(16.4, 17.4, 22, 17.4)],
-    'logout': [P('M9.5 4.5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h3.5'), L(10, 12, 20.4, 12), P('M17 8.5 20.4 12 17 15.5')],
-    'restore': [P('M3.6 4.4v5h5'), P('M4.4 14.8A8.2 8.2 0 1 0 6.2 6.2L3.6 9.4'), P('M12 8v4.2l3 1.8')],
-    'tag': [P('M11.6 3.4H5.4a2 2 0 0 0-2 2v6.2a2 2 0 0 0 .6 1.4l7 7a2 2 0 0 0 2.8 0l6.2-6.2a2 2 0 0 0 0-2.8l-7-7a2 2 0 0 0-1.4-.6Z'),
-      C(7.8, 7.8, 1.4)],
-    'wallet': [R(3.2, 5.4, 17.6, 13.2, 2.6), P('M3.2 9.4h13.2'),
-      P('M16.6 11.4h4.2v3.6h-4.2a1.8 1.8 0 0 1 0-3.6Z'), DOT(18.2, 13.2, .9)],
     'clock': [C(12, 12, 8.6), L(12, 12, 12, 6.4), L(12, 12, 15.9, 14.3)],
     'calendar': [R(3.6, 5, 16.8, 15.4, 2.4), L(3.6, 9.6, 20.4, 9.6),
-      DOT(8, 13.4, 1), DOT(12, 13.4, 1), DOT(16, 13.4, 1), DOT(8, 17.2, 1)],
-
-    /* --- 6.5 dostawcy logowania — jedyne kolorowe, jedyne z wypełnieniem --- */
-    'brand-google': [
-      googleArc(G_YELLOW, 125, 200),
-      googleArc(G_RED, 200, 305),
-      googleArc(G_BLUE, 305, 360),
-      googleArc(G_GREEN, 20, 125),
-      R(12.4, 10.4, 7, 3.2, 0, { fill: G_BLUE, stroke: 'none' })
-    ],
-    'brand-facebook': [
-      C(12, 12, 9.4, { fill: FB_BLUE, stroke: 'none' }),
-      P('M13.4 20.3v-6.5h2.2l.4-2.6h-2.6V9.5c0-.8.2-1.3 1.3-1.3h1.4V5.8c-.3 0-1.1-.1-2.1-.1-2.1 0-3.5 1.3-3.5 3.6v2h-2.3v2.6h2.3v6.4Z',
-        { fill: '#FFFFFF', stroke: 'none' })
-    ],
-    'brand-apple': [
-      P('M16.3 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.2 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.2.9-1.2 1.3-2.5 1.3-2.5s-2.5-1-2.5-3.6Z', FILLED),
-      P('M14.2 5.6c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-.9 2.9 1 .1 2-.5 2.7-1.3Z', FILLED)
-    ],
-    'brand-mail': [
-      R(3, 5.5, 18, 13, 2.5, { fill: 'var(--c-surface-2)' }),
-      P('M3.4 7.2 12 13.2l8.6-6')
-    ]
+      DOT(8, 13.4, 1), DOT(12, 13.4, 1), DOT(16, 13.4, 1), DOT(8, 17.2, 1)]
   };
 
   UI.ICONS = [
-    'measure', 'history', 'tools', 'account', 'logo', 'menu', 'close',
+    'measure', 'history', 'tools', 'cup', 'heart', 'logo', 'menu', 'close',
     'chevron-right', 'chevron-left', 'chevron-down', 'chevron-up',
     'arrow-right', 'arrow-up', 'arrow-down', 'plus', 'minus', 'check', 'check-circle', 'more',
     'play', 'stop', 'camera', 'camera-flip', 'target', 'expand', 'bulb', 'sun', 'moon',
     'thermometer', 'droplet', 'waveform', 'grid', 'eye',
     'sliders', 'calibrate', 'report', 'export', 'compare', 'screen', 'schedule', 'bell',
     'book', 'info', 'warning', 'help', 'flask', 'refresh', 'trash', 'share',
-    'settings', 'palette', 'contrast', 'text-size', 'motion', 'vibration', 'crown',
-    'lock', 'unlock', 'star', 'shield', 'sparkle', 'mail', 'user-plus', 'logout',
-    'restore', 'tag', 'wallet', 'clock', 'calendar',
-    'brand-google', 'brand-facebook', 'brand-apple', 'brand-mail'
+    'settings', 'palette', 'contrast', 'text-size', 'motion', 'vibration',
+    'star', 'shield', 'sparkle', 'mail', 'clock', 'calendar'
   ];
 
   var iconCache = Object.create(null);
@@ -713,7 +584,7 @@
      4. Atomy: przycisk, chip, plakietka, sekcja, karta
      ================================================================== */
 
-  var BTN_VARIANTS = { primary: 1, tonal: 1, ghost: 1, danger: 1, premium: 1 };
+  var BTN_VARIANTS = { primary: 1, tonal: 1, ghost: 1, danger: 1 };
   var BTN_SIZES = { sm: 1, md: 1, lg: 1 };
 
   /** button({label, variant, icon, onClick, size, full, disabled, ariaLabel, iconRight, className})
@@ -723,7 +594,7 @@
     var variant = BTN_VARIANTS[o.variant] ? o.variant : 'tonal';
     var size = BTN_SIZES[o.size] ? o.size : 'md';
     var label = text(o.label);
-    var iconName = o.icon || (variant === 'premium' && !o.noIcon ? 'crown' : '');
+    var iconName = o.icon || '';
     var cls = 'ms4-btn ms4-btn--' + variant + ' ms4-btn--' + size;
     if (!label) cls += ' ms4-btn--icon';
     if (o.full) cls += ' ms4-btn--full';
@@ -793,7 +664,7 @@
     return btn;
   };
 
-  var TONES = { good: 1, warn: 1, crit: 1, premium: 1, demo: 1, info: 1 };
+  var TONES = { good: 1, warn: 1, crit: 1, demo: 1, info: 1 };
 
   /** chip({label, icon, tone, selectable, selected, onClick, ariaLabel}) */
   UI.chip = function (opts) {
@@ -810,7 +681,7 @@
       node.type = 'button';
       node.setAttribute('aria-pressed', o.selected ? 'true' : 'false');
     }
-    var iconName = o.icon || (o.tone === 'premium' ? 'crown' : (o.tone === 'demo' ? 'flask' : ''));
+    var iconName = o.icon || (o.tone === 'demo' ? 'flask' : '');
     if (iconName) node.appendChild(UI.icon(iconName, 16, 'ms4-chip__icon'));
     node.appendChild(UI.el('span', 'ms4-chip__label', text(o.label)));
     if (o.ariaLabel) node.setAttribute('aria-label', o.ariaLabel);

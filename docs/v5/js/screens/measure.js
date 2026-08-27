@@ -14,13 +14,12 @@
 import { bus } from '../bus.js';
 import * as camera from '../camera.js';
 import * as history from '../history.js';
-import * as billing from '../billing.js';
 import { CATALOGUE, byId, zoneFor } from '../metrics.js';
 import { get as getSettings, set as saveSettings, thresholdsFor } from '../store.js';
 import { metricValue, metricValueUnit, duration, clock, plural, ZONE_LABEL } from '../format.js';
 import { h, icon, clear as clearNode, announce, rafThrottle, haptic } from '../ui/dom.js';
 import { heroGauge, metricTile } from '../ui/gauge.js';
-import { toast, sheet, paywall } from '../ui/overlays.js';
+import { toast, sheet } from '../ui/overlays.js';
 
 /* ─────────────────────────────  Stałe ekranu  ───────────────────────────── */
 
@@ -227,17 +226,6 @@ function num(v) {
   return typeof v === 'number' && Number.isFinite(v);
 }
 
-/* Uprawnienie pytamy przy każdym renderze, nigdy nie trzymamy w kopii: zakup
- * i wygaśnięcie okresu próbnego mają działać natychmiast. Gdyby billing.js
- * odpowiedział błędem, wracamy do katalogu — awaria modułu płatności nie może
- * zamknąć wielkości darmowych. */
-function isUnlocked(metric) {
-  try {
-    if (typeof billing.isUnlocked === 'function') return !!billing.isUnlocked(metric.id);
-  } catch (err) { /* poniżej: wartość z katalogu */ }
-  return !metric.premium;
-}
-
 function limitsOf(metric) {
   return thresholdsFor(metric.id) || { warn: metric.warn, crit: metric.crit };
 }
@@ -420,10 +408,8 @@ export function create() {
     metric,
     view: metricTile({
       metricId: metric.id,
-      locked: !isUnlocked(metric),
       selected: metric.id === leadId,
-      onSelect: (id) => setLead(id),
-      onLocked: (id) => openPaywall(id)
+      onSelect: (id) => setLead(id)
     })
   }));
 
@@ -548,7 +534,7 @@ export function create() {
 
   /* ────────────────────────────  Sesja pomiaru  ──────────────────────────── */
 
-  /* Akumulator sesji ma własną subskrypcję, niezależną od mount()/unmount().
+  /* Akumulator sesji ma własny nasłuch, niezależny od mount()/unmount().
    * Gdyby żył razem z ekranem, średnia z sesji gubiłaby czas spędzony na innej
    * zakładce — a pomiar wtedy trwa i użytkownik ma prawo oczekiwać, że jest
    * liczony. Do historii NIC wtedy nie idzie: tego pilnuje osobna ścieżka. */
@@ -726,20 +712,18 @@ export function create() {
 
   /* ──────────────────────────  Wielkość wiodąca  ─────────────────────────── */
 
-  /* Zapisana wielkość wiodąca mogła stracić uprawnienie (koniec okresu
-   * próbnego). Wskaźnik-bohater nigdy nie może pokazać liczby, za którą nie ma
-   * uprawnienia, więc schodzimy na pierwszą dostępną. */
+  /* Zapisana wielkość wiodąca bywa nieznana katalogowi: ustawienia przeżyły
+   * podmianę wersji albo ktoś poprawił je ręcznie w pamięci przeglądarki.
+   * Wtedy wracamy na pierwszą z katalogu, zamiast zostawić pusty wskaźnik. */
   function resolveLead(wanted) {
     const metric = byId(wanted);
-    if (metric && isUnlocked(metric)) return metric.id;
-    const open = CATALOGUE.find((m) => isUnlocked(m));
-    return open ? open.id : CATALOGUE[0].id;
+    return metric ? metric.id : CATALOGUE[0].id;
   }
 
   function setLead(id, options) {
     const opts = options || {};
     const metric = byId(id);
-    if (!metric || !isUnlocked(metric) || id === leadId) return;
+    if (!metric || id === leadId) return;
     leadId = id;
 
     hero.setMetric(id);
@@ -772,18 +756,9 @@ export function create() {
 
   function syncTiles() {
     tiles.forEach((t) => {
-      t.view.setLocked(!isUnlocked(t.metric));
       t.view.setSelected(t.metric.id === leadId);
       t.view.el.hidden = t.metric.id === leadId;
     });
-  }
-
-  async function openPaywall(metricId) {
-    await paywall(metricId);
-    // Zakup mógł się udać także wtedy, gdy zdarzenie do nas nie doszło
-    // (np. przywrócenie zakupu) — odświeżamy kłódki na wszelki wypadek.
-    syncTiles();
-    if (lastReading && !paused) paintThrottled(lastReading);
   }
 
   /* ────────────────────────────  Odczyty  ────────────────────────────────── */
@@ -895,13 +870,11 @@ export function create() {
   function renderSummary(s) {
     clearNode(summaryView);
 
-    // Wielkość bez uprawnienia nie pojawia się w podsumowaniu ani w wyborze
-    // „najgorszej” — inaczej płatny odczyt wyciekłby tylnymi drzwiami.
-    // Wielkość dostępna, ale niezmierzona, zostaje na liście z pauzą: jej brak
-    // jest informacją, a ciche usunięcie kafelka wyglądałoby jak wynik dobry.
-    const shown = CATALOGUE.filter((m) => isUnlocked(m));
+    // Podsumowanie pokazuje komplet siedmiu wielkości. Ta niezmierzona zostaje
+    // na liście z pauzą: jej brak jest informacją, a ciche usunięcie kafelka
+    // wyglądałoby jak wynik dobry.
+    const shown = CATALOGUE;
     const measured = shown.filter((m) => num(s.avg[m.id]));
-    const lockedCount = CATALOGUE.length - shown.length;
 
     const metaParts = [clock(s.startedAt) + '–' + clock(s.endedAt)];
     metaParts.push(plural(s.samples, 'próbka', 'próbki', 'próbek'));
@@ -979,22 +952,6 @@ export function create() {
             h('span', { text: adviceFor(source.metric, source.value, source.zone, s.endedAt) })))));
     }
 
-    if (lockedCount > 0) {
-      const firstLocked = CATALOGUE.find((m) => !isUnlocked(m));
-      summaryView.appendChild(h('div.m5-card', null,
-        h('div.m5-card__body', null,
-          h('p.m5-measure__note', {
-            // Zdanie zbudowane tak, żeby liczba nie rządziła odmianą czasownika:
-            // „3 wielkości są” i „5 wielkości jest” wymagałyby dwóch szablonów.
-            text: 'Podsumowanie pomija wielkości z pakietu pełnego (' +
-              lockedCount + ' z ' + CATALOGUE.length + ').'
-          }),
-          h('button.m5-btn.m5-btn--ghost', {
-            type: 'button',
-            on: { click: () => openPaywall(firstLocked.id) }
-          }, icon('lock', { size: 18 }), 'Zobacz pełny pomiar'))));
-    }
-
     if (!s.noted) {
       summaryView.appendChild(h('p.m5-measure__note', {
         text: 'Sesja trwała ' + duration(s.measuredMs) +
@@ -1052,22 +1009,6 @@ export function create() {
 
   /* ────────────────────────────  Cykl życia ekranu  ──────────────────────── */
 
-  function onBillingChanged() {
-    const nextLead = resolveLead(leadId);
-    if (nextLead !== leadId) {
-      // Uprawnienie wygasło pod wskaźnikiem-bohaterem: schodzimy na wielkość
-      // dostępną, zamiast zostawić na ekranie liczbę bez pokrycia.
-      const previousName = (byId(leadId) || { namePL: '' }).namePL;
-      setLead(nextLead, { silent: true });
-      saveSettings({ leadMetric: nextLead });
-      toast('„' + previousName + '” wymaga pakietu pełnego — wskaźnik pokazuje teraz „' +
-        byId(nextLead).namePL + '”.', { tone: 'neutral' });
-    }
-    syncTiles();
-    if (lastReading && !paused) paintThrottled(lastReading);
-    if (el.dataset.state === 'summary' && summary) renderSummary(summary);
-  }
-
   function onSettingsChanged(payload) {
     const wanted = payload && payload.settings ? payload.settings.leadMetric : null;
     if (wanted && wanted !== leadId) setLead(resolveLead(wanted), { silent: true });
@@ -1081,7 +1022,6 @@ export function create() {
     uiSubs.push(bus.on('camera:reading', onReadingUI));
     uiSubs.push(bus.on('camera:state', onCameraState));
     uiSubs.push(bus.on('camera:error', onCameraError));
-    uiSubs.push(bus.on('billing:changed', onBillingChanged));
     uiSubs.push(bus.on('settings:changed', onSettingsChanged));
 
     setLead(resolveLead(getSettings().leadMetric), { silent: true });

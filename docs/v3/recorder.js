@@ -193,7 +193,7 @@
   }
 
   /* ------------------------------------------------------------------
-     Catalogue and premium access
+     Catalogue
      ------------------------------------------------------------------ */
 
   function catalogue() {
@@ -204,20 +204,7 @@
     return (global.Metrics && global.Metrics.byId) ? global.Metrics.byId(id) : null;
   }
 
-  // The catalogue says a metric is paid; whether it is locked right now is
-  // offer.js's business. With no answer it stays locked — the honest default.
-  function isLocked(m) {
-    if (!m || !m.premium) return false;
-    var offer = global.Offer;
-    if (offer && typeof offer.isUnlocked === 'function') {
-      try { if (offer.isUnlocked(m.id)) return false; } catch (err) { /* stays locked */ }
-    }
-    return true;
-  }
-
   function valueText(id, v) {
-    var m = metric(id);
-    if (isLocked(m)) return noValue();
     return global.Scale.formatValue(id, v);
   }
 
@@ -811,7 +798,7 @@
       var cell = el.crossCells[id];
       if (!cell) continue;
       setText(cell.value, valueText(id, item.p[id]));
-      setText(cell.unit, isLocked(list[i]) ? '' : global.Scale.unitSuffix(id));
+      setText(cell.unit, global.Scale.unitSuffix(id));
     }
 
     setAttr(el.cross, 'aria-valuemin', '0');
@@ -1003,20 +990,6 @@
     if (saved && metric(saved)) leadId = saved;
     setText(el.leadName, leadName());
 
-    // A paid channel promoted to lead (a stale setting; the strip itself never
-    // switches to one) must not leak its numbers into a chart. The tape goes
-    // away and the sentence says why — the same one the well shows.
-    if (isLocked(metric(leadId))) {
-      points = []; series = []; buckets = []; items = []; geom = null;
-      setHidden(el.strip, true);
-      setHidden(el.nav, true);
-      setHidden(el.crossList, true);
-      setHidden(el.tableWrap, true);
-      setText(el.empty, T(['verdict.premium']));
-      setHidden(el.empty, false);
-      renderSession();
-      return;
-    }
     setHidden(el.strip, false);
 
     var range = currentRange();
@@ -1366,7 +1339,6 @@
     global.Bus.on('engine:stopped', refresh);
     global.Bus.on('ui3:theme', refresh);      // canvas colours do not follow the theme by themselves
     global.Bus.on('ui3:lead', refresh);
-    global.Bus.on('offer:changed', refresh);  // an unlocked channel changes the print-out
 
     global.addEventListener('resize', scheduleResize);
     global.addEventListener('orientationchange', scheduleResize);

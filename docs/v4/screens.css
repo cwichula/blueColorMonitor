@@ -1,9 +1,9 @@
 /* ============================================================================
    screens.css — Monitor Światła v4
-   Autor 2. Zakres: rozdziały 5.N–5.R SPEC.md (układy czterech ekranów, logowanie,
-   paywall) oraz te wiersze rozdziału 9, które są elementami ekranów: blok błędu
-   i pasek rozgrzewania POMIARU, pokrycie doby HISTORII, strzałka kafelka narzędzia,
-   podgląd skali progów, plansze testu ekranu, tabela porównania na paywallu.
+   Autor 2. Zakres: rozdziały 5.N–5.R SPEC.md (układy czterech ekranów, w tym
+   ekranu WSPARCIE) oraz te wiersze rozdziału 9, które są elementami ekranów:
+   blok błędu i pasek rozgrzewania POMIARU, pokrycie doby HISTORII, strzałka
+   kafelka narzędzia, podgląd skali progów, plansze testu ekranu.
    Komponenty wielokrotnego użytku leżą w components.css, powłoka w base.css.
    Ten plik ładuje się jako ostatni, więc wolno mu doprecyzowywać komponenty
    w kontekście ekranu — i tylko w tym celu.
@@ -14,10 +14,10 @@
 
    PROGI I CO SIĘ NA NICH ZMIENIA
      360 px  wszystko w jednej kolumnie; wskaźnik 260 px; kafelki 2 kolumny;
-             pasek akcji: START rozciągnięty, dwie ikony obok; plany jeden pod drugim
+             pasek akcji: START rozciągnięty, dwie ikony obok
      390 px  bez zmian układu — więcej powietrza wewnątrz kart
      430 px  jw.; kafelki nadal 2 kolumny (minmax 150 px), liczba nie łamie wiersza
-     768 px  hero dwukolumnowy 1fr 1.1fr; kafelki 3 kolumny; plany 3 obok siebie;
+     768 px  hero dwukolumnowy 1fr 1.1fr; kafelki 3 kolumny;
              statystyka sesji 4 kolumny; próbki palet w jednym rzędzie
      1024 px hero minmax(320,420) 1fr; kafelki 4 kolumny; podgląd kamery wchodzi
              w prawą kolumnę obok kafelków i przykleja się przy przewijaniu;
@@ -548,453 +548,55 @@
   .ms4-plate__hint { flex: 1 1 auto; }
 }
 
-
 /* ===========================================================================
-   5.Q  EKRAN KONTO I LOGOWANIE
+   5.Q  EKRAN WSPARCIE
+   Jedna karta z prośbą i jeden odnośnik na zewnątrz. Żadnego gradientu,
+   żadnej korony i żadnej ceny — przycisk darowizny jest zwykłym przyciskiem
+   drugorzędnym tej wersji (.ms4-btn--tonal), żeby nie wyglądać na naklejkę.
    =========================================================================== */
 
-.ms4-profile {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--s-4);
-  padding: var(--s-5);
-}
-.ms4-profile__avatar {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: var(--r-pill);
-  background-image: linear-gradient(135deg, var(--c-accent), var(--c-accent-2));
-  color: var(--c-on-accent);
-}
-.ms4-profile__avatar > svg { width: 28px; height: 28px; }
-.ms4-profile__initials {
-  font-size: var(--t-h2);
-  font-weight: var(--fw-black);
-  letter-spacing: .02em;
-}
-.ms4-profile__name {
-  margin: 0;
-  font-size: var(--t-h2);
-  font-weight: var(--fw-bold);
-  line-height: var(--lh-tight);
-  color: var(--c-text);
-}
-.ms4-profile__badge {
-  margin-left: var(--s-2);
-  white-space: nowrap;
-}
-.ms4-profile__mail {
-  margin: 0;
-  font-size: var(--t-body-sm);
-  line-height: var(--lh-body);
-  color: var(--c-text-3);
-  overflow-wrap: anywhere;
-}
-.ms4-profile__actions {
-  display: flex;
-  gap: var(--s-2);
-  width: 100%;                 /* telefon: przyciski schodzą pod tekst */
-}
-.ms4-profile__actions > .ms4-btn { flex: 1 1 auto; }
-@media (min-width: 600px) {
-  .ms4-profile__actions {
-    width: auto;
-    margin-left: auto;
-  }
-  .ms4-profile__actions > .ms4-btn { flex: 0 0 auto; }
-}
+.ms4-support__action { text-align: left; }
 
-/* --- karta subskrypcji ---------------------------------------------------- */
-.ms4-subcard { border-left: 3px solid var(--c-premium); }
-.ms4-subcard.ms4-card--premium { border-left-color: transparent; }
-.ms4-subcard__state {
-  margin: 0;
-  font-size: var(--t-body);
-  font-weight: var(--fw-med);
-  color: var(--c-text);
-}
-.ms4-card--premium .ms4-subcard__state { color: var(--c-on-premium); }
-.ms4-subcard__cta { margin-top: var(--s-2); }
-/* Przycisk „Zarządzaj” na karcie z gradientem musi być czytelny na fiolecie. */
-.ms4-card--premium .ms4-btn--ghost {
-  color: var(--c-on-premium);
-  border-color: var(--c-on-premium);
-}
+/* Odnośnik udający przycisk musi mieć tę samą geometrię co <button>: bez tego
+   tekst siada w pionie inaczej niż w każdym innym przycisku aplikacji. */
+a.ms4-btn { text-decoration: none; }
 
-/* --- przyciski dostawców -------------------------------------------------- */
-.ms4-providers {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-}
-.ms4-provider {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  width: 100%;
-  min-height: 52px;
-  padding-inline: var(--s-4);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-pill);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font-size: var(--t-body);
-  font-weight: var(--fw-med);
-  cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
-}
-.ms4-provider:active { transform: scale(.98); }
-@media (hover: hover) {
-  .ms4-provider:hover { background: var(--c-surface-2); }
-}
-.ms4-provider__icon {
-  flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-}
-.ms4-provider__label {
-  flex: 1 1 auto;
-  text-align: center;
-  /* Etykieta jest wyśrodkowana mimo ikony po lewej — kompensujemy jej szerokość. */
-  padding-right: calc(20px + var(--s-3));
-  transition: opacity var(--dur-fast) var(--ease);
-}
-/* Wariant e-mail jest cichszy: to nie jest logowanie „przez kogoś”. */
-.ms4-provider--email {
-  border-color: var(--c-border);
-  color: var(--c-text-2);
-}
-/* Google i Facebook: rysunek w ui.js niesie własne barwy (SPEC 5.Q i 6.5).
-   CSS nie ma prawa go przemalować — dlatego tu NIE ma color na ikonie, jest za to
-   pewność, że nic jej nie odziedziczy. Jabłko i koperta idą currentColor. */
-.ms4-provider--google .ms4-provider__icon,
-.ms4-provider--facebook .ms4-provider__icon { color: initial; }
-.ms4-provider--apple .ms4-provider__icon { color: var(--c-text); }
-.ms4-provider--email .ms4-provider__icon { color: var(--c-text-2); }
-.ms4-provider.is-loading {
-  pointer-events: none;
-}
-.ms4-provider.is-loading .ms4-provider__label,
-.ms4-provider.is-loading .ms4-provider__icon { opacity: 0; }
-.ms4-provider.is-loading::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  margin: -10px 0 0 -10px;
-  box-sizing: border-box;
-  border: 2px solid var(--c-text-2);
-  border-top-color: transparent;
-  border-radius: var(--r-pill);
-  animation: ms4-spinner-rot 700ms linear infinite;
-}
-
-.ms4-authform {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
+/* Siedem chipów z nazwami wielkości łamie się na kilka wierszy i nie skacze. */
+.ms4-support__ask .ms4-row-inline { flex-wrap: wrap; gap: var(--s-2); }
 
 
 /* ===========================================================================
-   5.R  PAYWALL I PLANY
-   =========================================================================== */
-
-/* Paywall siedzi w ms4-sheet__body, które ma własny padding. Zdejmujemy go
-   ujemnym marginesem, żeby blok gradientowy sięgnął krawędzi arkusza, i wracamy
-   z odstępem na poszczególnych dzieciach. Dzięki temu SPEC-owe
-   „padding-inline: var(--s-4)” obowiązuje raz, a nie dwa razy. */
-.ms4-paywall {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
-  margin: calc(var(--s-4) * -1);
-  padding-bottom: var(--s-8);
-}
-.ms4-paywall > *:not(.ms4-paywall__hero) { margin-inline: var(--s-4); }
-
-.ms4-paywall__hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-7) var(--s-5);
-  border-radius: 0 0 var(--r-xl) var(--r-xl);
-  background-image: linear-gradient(160deg, var(--c-premium), var(--c-premium-2));
-  color: var(--c-on-premium);
-  text-align: center;
-}
-.ms4-paywall__crown {
-  display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: var(--r-pill);
-  /* Wartość wprost z SPEC 5.R: rozjaśnienie ma leżeć NA gradiencie premium,
-     a nie zależeć od motywu — token o tej roli nie istnieje. */
-  background: rgb(255 255 255 / .16);
-}
-.ms4-paywall__crown > svg { width: 40px; height: 40px; }
-.ms4-paywall__title {
-  margin: 0;
-  font-size: var(--t-h1);
-  font-weight: var(--fw-black);
-  line-height: var(--lh-tight);
-  color: inherit;
-}
-.ms4-paywall__lede {
-  margin: 0 auto;
-  max-width: 34ch;
-  font-size: var(--t-body);
-  line-height: var(--lh-body);
-  color: inherit;
-  opacity: .92;
-}
-
-.ms4-paywall__benefits {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-.ms4-paywall__plans { width: auto; }
-
-.ms4-paywall__cta { width: 100%; }
-.ms4-paywall__restore { margin-top: var(--s-2); }
-.ms4-paywall__fine {
-  margin: 0 auto;
-  max-width: 46ch;
-  font-size: var(--t-caption);
-  line-height: var(--lh-body);
-  color: var(--c-text-3);
-  text-align: center;
-}
-
-/* --- karta planu ---------------------------------------------------------- */
-.ms4-plan {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  padding: var(--s-4);
-  padding-right: calc(var(--s-4) + var(--s-7));   /* miejsce na kółko wyboru */
-  border: 2px solid var(--c-border);
-  border-radius: var(--r-lg);
-  background: var(--c-surface);
-  box-shadow: var(--e-1);
-  cursor: pointer;
-  transition:
-    border-color var(--dur-fast) var(--ease),
-    background-color var(--dur-fast) var(--ease),
-    box-shadow var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
-}
-.ms4-plan.is-selected {
-  border-color: var(--c-premium);
-  background: var(--c-premium-soft);
-  box-shadow: var(--e-2);
-}
-/* Plan polecany podnosi się dopiero tam, gdzie plany stoją obok siebie. */
-@media (min-width: 600px) {
-  .ms4-plan--featured {
-    transform: translateY(-8px);
-    box-shadow: var(--e-3);
-  }
-  .ms4-plan--featured.is-selected { box-shadow: var(--e-3); }
-}
-.ms4-plan__badge {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-}
-.ms4-plan__name {
-  font-size: var(--t-body);
-  font-weight: var(--fw-bold);
-  color: var(--c-text);
-}
-.ms4-plan__price {
-  font-family: var(--font-num);
-  font-size: var(--t-h1);
-  font-weight: var(--fw-black);
-  line-height: var(--lh-tight);
-  color: var(--c-text);
-}
-.ms4-plan__period {
-  font-size: var(--t-body-sm);
-  color: var(--c-text-3);
-}
-.ms4-plan__note {
-  font-size: var(--t-caption);
-  line-height: var(--lh-body);
-  color: var(--c-text-2);
-}
-.ms4-plan__save { align-self: flex-start; margin-top: var(--s-1); }
-.ms4-plan__radio {
-  position: absolute;
-  top: var(--s-4);
-  right: var(--s-4);
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--c-border-strong);
-  border-radius: var(--r-pill);
-  color: transparent;
-  transition: background-color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
-}
-.ms4-plan__radio > svg { width: 14px; height: 14px; }
-.ms4-plan.is-selected .ms4-plan__radio {
-  background: var(--c-premium);
-  border-color: var(--c-premium);
-  color: var(--c-on-premium);
-}
-/* Kółko jest małe, ale celem dotyku jest cała karta — i to ona ma 44 px z okładem. */
-
-/* --- korzyści ------------------------------------------------------------- */
-.ms4-benefit {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--s-3);
-}
-.ms4-benefit__icon {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-pill);
-  background: var(--c-premium-soft);
-  color: var(--c-premium);
-}
-.ms4-benefit__icon > svg { width: 20px; height: 20px; }
-.ms4-benefit__title {
-  margin: 0;
-  font-size: var(--t-body);
-  font-weight: var(--fw-bold);
-  color: var(--c-text);
-}
-.ms4-benefit__text {
-  margin: 0;
-  font-size: var(--t-body-sm);
-  line-height: var(--lh-body);
-  color: var(--c-text-2);
-}
-
-/* --- tabela porównania (rozdz. 9) ----------------------------------------- */
-.ms4-compare {
-  padding: var(--s-2);
-  border-radius: var(--r-md);
-  background: var(--c-surface-2);
-  font-size: var(--t-body-sm);
-}
-.ms4-compare__head,
-.ms4-compare__row {
-  display: grid;
-  grid-template-columns: 1fr 84px 84px;
-  align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-}
-.ms4-compare__head {
-  border-bottom: 1px solid var(--c-border);
-  font-size: var(--t-caption);
-  font-weight: var(--fw-bold);
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  color: var(--c-text-3);
-}
-.ms4-compare__head .ms4-compare__cell { text-align: center; }
-.ms4-compare__row {
-  min-height: var(--tap);
-  border-bottom: 1px solid var(--c-border);
-}
-.ms4-compare__row:last-child { border-bottom: 0; }
-.ms4-compare__label {
-  font-size: var(--t-body-sm);
-  line-height: var(--lh-body);
-  color: var(--c-text);
-}
-.ms4-compare__cell {
-  display: grid;
-  place-items: center;
-}
-.ms4-compare__mark { width: 20px; height: 20px; }
-.ms4-compare__mark--yes { color: var(--c-good); }
-.ms4-compare__mark--no  { color: var(--c-text-3); }
-/* 360 px: dwie kolumny po 84 px to za dużo przy najwęższym telefonie. */
-@media (max-width: 389px) {
-  .ms4-compare__head,
-  .ms4-compare__row { grid-template-columns: 1fr 60px 60px; }
-}
-
-/* --- ekran po zakupie ----------------------------------------------------- */
-.ms4-success {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s-4);
-  padding: var(--s-8) var(--s-5);
-  text-align: center;
-}
-.ms4-success__mark {
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
-  border-radius: var(--r-pill);
-  background: var(--c-good-soft);
-  color: var(--c-good);
-  animation: ms4-success-pop var(--dur-slow) var(--ease) both;
-}
-.ms4-success__mark > svg { width: 48px; height: 48px; }
-@keyframes ms4-success-pop {
-  from { transform: scale(.7); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-
-
-/* ===========================================================================
-   5.Q  EKRAN KONTO — UKŁAD DESKTOPOWY
-   Do 1024 px trzy bloki stoją jeden pod drugim. Wyżej kolumna treści ma
+   5.Q  EKRAN WSPARCIE — UKŁAD DESKTOPOWY
+   Do 1024 px oba bloki stoją jeden pod drugim. Wyżej kolumna treści ma
    1180 px i bez siatki przełącznik odjeżdżałby o metr od etykiety, a próbka
    koloru pływała w pustce — czyli dokładnie „rozciągnięty telefon".
+   Prośba o wsparcie jest wąska i lepka: ma być widoczna, ale nie ma zabierać
+   ustawieniom szerokości.
    =========================================================================== */
 @media (min-width: 1024px) {
-  .ms4-view[data-view="account"] > .ms4-view__inner {
+  .ms4-view[data-view="support"] > .ms4-view__inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
     gap: var(--s-5);
     align-items: start;
-    grid-template-areas:
-      "profile  sub"
-      "settings sub";
+    grid-template-areas: "settings ask";
   }
-  .ms4-view[data-view="account"] > .ms4-view__inner > .ms4-account__profile { grid-area: profile; }
-  .ms4-view[data-view="account"] > .ms4-view__inner > .ms4-account__sub {
-    grid-area: sub;
+  .ms4-view[data-view="support"] > .ms4-view__inner > .ms4-support__ask {
+    grid-area: ask;
     position: sticky;
     top: calc(var(--h-topbar) + var(--s-4));
   }
-  .ms4-view[data-view="account"] > .ms4-view__inner > .ms4-account__settings { grid-area: settings; }
+  .ms4-view[data-view="support"] > .ms4-view__inner > .ms4-support__settings { grid-area: settings; }
 
   /* Formanty mają swoją naturalną szerokość — rozciąganie ich na całą kolumnę
      psuje związek etykiety z wartością. Ograniczenie dotyczy WYŁĄCZNIE ekranu
-     KONTO; te same klasy w arkuszach mają własne, węższe otoczenie. */
-  .ms4-view[data-view="account"] .ms4-providers { max-width: 420px; }
-  .ms4-view[data-view="account"] .ms4-themepick,
-  .ms4-view[data-view="account"] .ms4-swatches { max-width: 560px; }
-  .ms4-view[data-view="account"] .ms4-row { max-width: 640px; }
+     WSPARCIE; te same klasy w arkuszach mają własne, węższe otoczenie. */
+  .ms4-view[data-view="support"] .ms4-themepick,
+  .ms4-view[data-view="support"] .ms4-swatches { max-width: 560px; }
+  .ms4-view[data-view="support"] .ms4-row { max-width: 640px; }
 }
 @media (min-width: 1440px) {
-  .ms4-view[data-view="account"] > .ms4-view__inner {
+  .ms4-view[data-view="support"] > .ms4-view__inner {
     grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
   }
 }
@@ -1006,17 +608,11 @@
    =========================================================================== */
 @media (prefers-reduced-motion: reduce) {
   .ms4-measure__error { animation: none !important; }
-  .ms4-success__mark { animation: none !important; }
-  .ms4-provider.is-loading::after { animation: ms4-spinner-fade 1.4s ease-in-out infinite !important; }
   .ms4-zonebar__seg,
   .ms4-coverage__seg,
   .ms4-miniscale__needle { transition: none !important; }
 }
 :root[data-motion="reduced"] .ms4-measure__error { animation: none !important; }
-:root[data-motion="reduced"] .ms4-success__mark { animation: none !important; }
-:root[data-motion="reduced"] .ms4-provider.is-loading::after {
-  animation: ms4-spinner-fade 1.4s ease-in-out infinite !important;
-}
 :root[data-motion="reduced"] .ms4-zonebar__seg,
 :root[data-motion="reduced"] .ms4-coverage__seg,
 :root[data-motion="reduced"] .ms4-miniscale__needle { transition: none !important; }

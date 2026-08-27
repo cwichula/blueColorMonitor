@@ -162,7 +162,6 @@ export const ICONS = {
   gauge: '<path d="M3.6 17.8a8.4 8.4 0 1 1 16.8 0"/><path d="M12 17.8l4.8-6.2"/><circle cx="12" cy="17.8" r="1.2"/>',
   chart: '<path d="M4.2 3.8v14.6a1.4 1.4 0 0 0 1.4 1.4h14.2"/><path d="M7.6 15.4l3.6-4.2 3 2.4 4.6-6"/>',
   sliders: '<path d="M4 8.2h8.2M17.2 8.2h2.8M4 15.8h2.8M11.8 15.8h8.2"/><circle cx="14.6" cy="8.2" r="2.4"/><circle cx="9.2" cy="15.8" r="2.4"/>',
-  user: '<circle cx="12" cy="8.6" r="3.8"/><path d="M4.8 20c0-3.4 3.2-5.6 7.2-5.6s7.2 2.2 7.2 5.6"/>',
   droplet: '<path d="M12 3.4c3.6 4.2 5.6 7.1 5.6 9.5a5.6 5.6 0 1 1-11.2 0c0-2.4 2-5.3 5.6-9.5z"/>',
   sun: '<circle cx="12" cy="12" r="4.1"/><path d="M12 3.2v2.1M12 18.7v2.1M3.2 12h2.1M18.7 12h2.1M5.8 5.8l1.5 1.5M16.7 16.7l1.5 1.5M18.2 5.8l-1.5 1.5M7.3 16.7l-1.5 1.5"/>',
   thermometer: '<path d="M14 14.3V6.2a2 2 0 1 0-4 0v8.1a4.2 4.2 0 1 0 4 0z"/><path d="M16.6 8.2H14M16.6 11.2H14"/>',
@@ -187,9 +186,11 @@ export const ICONS = {
   settings: '<path d="' + gearPath() + '"/><circle cx="12" cy="12" r="3.1"/>',
   sparkle: '<path d="M10.4 3.9C10.4 8.2 11.6 9.4 15.9 9.4 11.6 9.4 10.4 10.6 10.4 14.9 10.4 10.6 9.2 9.4 4.9 9.4 9.2 9.4 10.4 8.2 10.4 3.9Z"/><path d="M17.8 14.6C17.8 16.8 18.9 17.9 21.1 17.9 18.9 17.9 17.8 19 17.8 21.2 17.8 19 16.7 17.9 14.5 17.9 16.7 17.9 17.8 16.8 17.8 14.6Z"/>',
   alert: '<path d="M10.6 5.4a1.6 1.6 0 0 1 2.8 0l7 12.4a1.6 1.6 0 0 1-1.4 2.4H5a1.6 1.6 0 0 1-1.4-2.4z"/><path d="M12 10.2v3.9"/><path d="M12 17.2h.01"/>',
-  google: '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 12h-7.4"/>',
-  apple: '<path d="M12 8.4C10.6 7.3 8.6 7.4 7.4 8.8 5.8 10.7 6.2 14.6 7.6 17.2 8.4 18.7 9.3 19.9 10.3 19.9 11 19.9 11.4 19.4 12 19.4 12.6 19.4 13 19.9 13.7 19.9 14.7 19.9 15.6 18.7 16.4 17.2 17.8 14.6 18.2 10.7 16.6 8.8 15.4 7.4 13.4 7.3 12 8.4Z"/><path d="M12.6 7.7c-.4-2 .8-3.9 2.8-4.4.4 2-.8 3.9-2.8 4.4z"/>',
-  mail: '<rect x="3" y="5.4" width="18" height="13.2" rx="2.6"/><path d="M3.6 7.6l7.3 5.1a2 2 0 0 0 2.2 0l7.3-5.1"/>'
+  /* Kubek rysujemy sami, tą samą kreską co resztę zestawu. Gotowy widżet
+     „Buy Me a Coffee” ciągnie skrypt i grafikę z cudzego serwera przy każdym
+     otwarciu strony — a ta aplikacja obiecuje na każdym ekranie, że nic nie
+     wychodzi do sieci. */
+  coffee: '<path d="M4.4 9.2h12.4v5.6a4.6 4.6 0 0 1-4.6 4.6H9a4.6 4.6 0 0 1-4.6-4.6z"/><path d="M16.8 10.8h1.2a2.6 2.6 0 0 1 0 5.2h-1.2"/><path d="M8.2 3.4c0 1.3 1.1 1.3 1.1 2.6M12 3.4c0 1.3 1.1 1.3 1.1 2.6"/>'
 };
 
 const iconTemplates = new Map();

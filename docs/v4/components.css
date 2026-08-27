@@ -2,7 +2,7 @@
    components.css — Monitor Światła v4
    Autor 2. Zakres: rozdziały 5.D–5.M i 5.S SPEC.md oraz te wiersze rozdziału 9,
    które są wariantami komponentów (noty, tabela, kroki, select, znaczniki).
-   Układy czterech ekranów, paywall i arkusze narzędziowe leżą w screens.css.
+   Układy czterech ekranów i arkusze narzędziowe leżą w screens.css.
    Powłoka, nawigacja, siatka strony i klasy pomijalne (5.A–5.C) należą do base.css
    i tego pliku nie dotyczą — nie ma tu ani jednej reguły dla ms4-app, ms4-topbar,
    ms4-tabbar, ms4-sidenav, ms4-view, ms4-skip, ms4-sronly, ms4-scroll-x, is-hidden.
@@ -22,7 +22,7 @@
 
    PROGI (te same w całym pliku; co się zmienia — opisano przy każdej regule)
      360 / 390 / 430 px  telefon: układ referencyjny, jedna kolumna, arkusz od dołu
-     768 px  (>=600) tablet: karty luźniejsze, arkusz wyśrodkowany 640 px, plany w 3 kol.
+     768 px  (>=600) tablet: karty luźniejsze, arkusz wyśrodkowany 640 px.
      1024 px desktop: :hover żyje, arkusz staje się oknem 720/880 px, uchwyt znika
      1440 px szeroki: bez zmian w komponentach (rośnie tylko margines strony w base.css)
    ============================================================================ */
@@ -30,8 +30,8 @@
 
 /* ---------------------------------------------------------------------------
    0. Wspólny reset dla komponentów rysowanych na <button>
-   ui.js, screen-measure.js, screen-history.js, screen-tools.js i screen-account.js
-   budują kafelki, wiersze, chipy, plany i próbki jako prawdziwe <button> — inaczej
+   ui.js, screen-measure.js, screen-history.js, screen-tools.js i screen-support.js
+   budują kafelki, wiersze, chipy i próbki jako prawdziwe <button> — inaczej
    nie działałaby klawiatura (SPEC 8.2). Przeglądarka nadaje im własną czcionkę,
    ramkę i wyśrodkowanie; zdejmujemy to w jednym miejscu.
    --------------------------------------------------------------------------- */
@@ -46,8 +46,6 @@
 .ms4-section__action,
 .ms4-toast__action,
 .ms4-card--interactive,
-.ms4-plan,
-.ms4-provider,
 .ms4-tool {
   font: inherit;
   color: inherit;
@@ -60,7 +58,6 @@
 button.ms4-card,
 button.ms4-tile,
 button.ms4-row,
-button.ms4-plan,
 button.ms4-swatch,
 button.ms4-themepick__option,
 button.ms4-tool {
@@ -84,10 +81,7 @@ button.ms4-tool {
 .ms4-field:focus-visible,
 .ms4-select:focus-visible,
 .ms4-slider__input:focus-visible,
-.ms4-plan:focus-visible,
-.ms4-provider:focus-visible,
-.ms4-tool:focus-visible,
-.ms4-tile__cta:focus-visible {
+.ms4-tool:focus-visible {
   outline: 2px solid var(--c-focus);
   outline-offset: 2px;
 }
@@ -183,18 +177,6 @@ button.ms4-tool {
   color: inherit;
 }
 
-.ms4-card--premium {
-  background-image: linear-gradient(135deg, var(--c-premium), var(--c-premium-2));
-  color: var(--c-on-premium);
-  border-color: transparent;
-  box-shadow: var(--e-2);
-}
-.ms4-card--premium .ms4-card__title,
-.ms4-card--premium .ms4-card__subtitle,
-.ms4-card--premium .ms4-subcard__state {
-  color: inherit;
-}
-
 .ms4-card--interactive {
   cursor: pointer;
   transition:
@@ -277,15 +259,9 @@ button.ms4-tool {
 .ms4-grid--metrics { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .ms4-grid--tools   { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .ms4-grid--stats   { grid-template-columns: repeat(2, 1fr); }
-.ms4-grid--plans   { grid-template-columns: 1fr; }
 
 @media (min-width: 600px) {
   .ms4-grid--stats { grid-template-columns: repeat(4, 1fr); }
-  .ms4-grid--plans {
-    grid-template-columns: repeat(3, 1fr);
-    align-items: stretch;
-    gap: var(--s-4);
-  }
 }
 
 .ms4-divider {
@@ -359,11 +335,6 @@ button.ms4-tool {
   color: var(--c-crit);
   border: 1px solid var(--c-crit);
 }
-.ms4-btn--premium {
-  background-image: linear-gradient(120deg, var(--c-premium), var(--c-premium-2));
-  color: var(--c-on-premium);
-  box-shadow: var(--e-2);
-}
 /* Okno potwierdzenia akcji niszczącej: przycisk pełny, nie obrysowany (SPEC 5.L). */
 .ms4-dialog--danger .ms4-btn--danger {
   background: var(--c-crit);
@@ -382,10 +353,6 @@ button.ms4-tool {
     color: var(--c-text);
   }
   .ms4-btn--danger:hover:not([disabled]):not(.is-disabled) { background: var(--c-crit-soft); }
-  .ms4-btn--premium:hover:not([disabled]):not(.is-disabled) {
-    box-shadow: var(--e-3);
-    filter: brightness(1.06);
-  }
   .ms4-dialog--danger .ms4-btn--danger:hover:not([disabled]) {
     background: var(--c-crit);
     filter: brightness(1.06);
@@ -400,7 +367,7 @@ button.ms4-tool {
 }
 /* Cel dotyku 44 px bez powiekszania pigulki - ta sama sztuczka co
    w .ms4-segmented__option: 36 px + 4 px z gory i z dolu domyka 44 px.
-   Bez tego kazdy maly klawisz ("Eksportuj", "Przywroc zakupy", zwijanie
+   Bez tego kazdy maly klawisz ("Eksportuj", "Skopiuj do schowka", zwijanie
    podgladu kamery) jest o 8 px za niski dla palca. */
 .ms4-btn--sm::after {
   content: "";
@@ -540,10 +507,7 @@ button.ms4-tool {
 .ms4-chip--warn { background: var(--c-warn-soft); color: var(--c-warn); border-color: transparent; }
 .ms4-chip--crit { background: var(--c-crit-soft); color: var(--c-crit); border-color: transparent; }
 .ms4-chip--info { background: var(--c-info-soft); color: var(--c-info); border-color: transparent; }
-.ms4-chip--premium { background: var(--c-premium-soft); color: var(--c-premium); border-color: transparent; }
 .ms4-chip--demo { background: var(--c-demo-soft); color: var(--c-demo); border-color: transparent; }
-/* Chip premium zamknięty kłódką (wybór wielkości w HISTORII). */
-.ms4-chip--premium.is-locked { border-color: var(--c-premium); border-style: dashed; }
 
 .ms4-chip__icon {
   flex: 0 0 auto;
@@ -575,7 +539,6 @@ button.ms4-tool {
 .ms4-badge--warn    { background: var(--c-warn); color: var(--c-on-warn); }
 .ms4-badge--crit    { background: var(--c-crit); color: var(--c-on-crit); }
 .ms4-badge--info    { background: var(--c-info); color: var(--c-on-accent); }
-.ms4-badge--premium { background: var(--c-premium); color: var(--c-on-premium); }
 .ms4-badge--demo    {
   background: var(--c-demo);
   color: var(--c-surface);
@@ -612,8 +575,6 @@ button.ms4-tool {
 .ms4-badge--dot.ms4-badge--warn::before { background: var(--c-warn); }
 .ms4-badge--dot.ms4-badge--crit { color: var(--c-text-2); }
 .ms4-badge--dot.ms4-badge--crit::before { background: var(--c-crit); }
-.ms4-badge--dot.ms4-badge--premium { color: var(--c-text-2); }
-.ms4-badge--dot.ms4-badge--premium::before { background: var(--c-premium); }
 .ms4-badge--dot.ms4-badge--info { color: var(--c-text-2); }
 .ms4-badge--dot.ms4-badge--info::before { background: var(--c-info); }
 .ms4-badge--dot.ms4-badge--demo {
@@ -692,20 +653,6 @@ button.ms4-tool {
   background: currentColor;
   transform: rotate(-45deg);
 }
-
-/* --- kłódka --------------------------------------------------------------- */
-.ms4-lock {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-pill);
-  background: var(--c-premium-soft);
-  color: var(--c-premium);
-}
-.ms4-lock > svg { width: 16px; height: 16px; }
-
 
 /* ===========================================================================
    5.G  WSKAŹNIK I WYKRESY  (węzły rysuje gauge.js, barwy nadaje ten plik)
@@ -1203,8 +1150,6 @@ button.ms4-tool {
   font-size: var(--t-caption);
   color: var(--c-text-3);
 }
-.ms4-tile__badge > svg { width: 16px; height: 16px; color: var(--c-premium); }
-
 .ms4-tile__valuerow {
   display: flex;
   align-items: baseline;
@@ -1268,31 +1213,6 @@ button.ms4-tool {
   background: var(--c-surface);
 }
 .ms4-tile.is-selected .ms4-tile__name { color: var(--c-accent-ink); }
-
-.ms4-tile.is-locked {
-  background: var(--c-surface);
-  border: 1px dashed var(--c-premium);
-}
-.ms4-tile.is-locked .ms4-tile__spark {
-  filter: blur(4px);
-  opacity: .5;
-}
-.ms4-tile__lock {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  font-size: var(--t-h3);
-  font-weight: var(--fw-bold);
-  color: var(--c-premium);
-}
-.ms4-tile__cta {
-  font-size: var(--t-caption);
-  font-weight: var(--fw-med);
-  color: var(--c-premium);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* Słowo strefy: dla czytnika ekranu zawsze, dla oka dopiero przy 130% tekstu,
    kiedy różnice barw bywają najmniej czytelne (SPEC 5.I). */
@@ -1525,7 +1445,6 @@ a.ms4-row:active { background: var(--c-surface-3); }
   color: var(--c-accent);
 }
 .ms4-row--danger .ms4-row__title { color: var(--c-crit); }
-.ms4-row.is-locked .ms4-row__title { color: var(--c-text-2); }
 
 /* --- przełącznik ---------------------------------------------------------- */
 .ms4-switch {
@@ -2350,7 +2269,6 @@ a.ms4-row:active { background: var(--c-surface-3); }
   :root:not([data-theme="light"]) .ms4-list,
   :root:not([data-theme="light"]) .ms4-sheet,
   :root:not([data-theme="light"]) .ms4-dialog { border-color: var(--c-border); }
-  :root:not([data-theme="light"]) .ms4-card--premium,
   :root:not([data-theme="light"]) .ms4-card--accent { border-color: transparent; }
 }
 :root[data-theme="dark"] .ms4-card,
@@ -2358,7 +2276,6 @@ a.ms4-row:active { background: var(--c-surface-3); }
 :root[data-theme="dark"] .ms4-list,
 :root[data-theme="dark"] .ms4-sheet,
 :root[data-theme="dark"] .ms4-dialog { border-color: var(--c-border); }
-:root[data-theme="dark"] .ms4-card--premium,
 :root[data-theme="dark"] .ms4-card--accent { border-color: transparent; }
 
 

@@ -1,7 +1,7 @@
 {
   "name": "Monitor Światła",
   "short_name": "Monitor Światła",
-  "description": "Mierzy kamerą telefonu siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Działa offline i niczego nie wysyła do sieci. Konto i płatności są symulacją interfejsu.",
+  "description": "Mierzy kamerą telefonu siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Działa offline i niczego nie wysyła do sieci. Wszystkie funkcje są darmowe, bez konta i bez limitów.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -30,7 +30,7 @@
       "name": "Dokumentacja",
       "short_name": "Dokumentacja",
       "description": "Czym ten pomiar jest, a czym na pewno nie jest.",
-      "url": "./?modul=12",
+      "url": "./?modul=11",
       "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]

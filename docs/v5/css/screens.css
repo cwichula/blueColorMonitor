@@ -1,4 +1,4 @@
-/* screens.css — układy ekranów historii, narzędzi i konta Monitora Światła v5.
+/* screens.css — układy ekranów historii, narzędzi i wsparcia Monitora Światła v5.
    Ostatnia warstwa kaskady: tokens.css → base.css → components.css → ten plik.
    Ani jednej wartości koloru wprost: wszystko z tokenów, więc oba motywy, pięć
    akcentów, tryb zwarty (data-density) i skala tekstu (data-text-scale)
@@ -44,12 +44,9 @@
    narzędzia<div class="m5-tools">…m5-card z m5-card__body--flush i m5-row…
               <div class="m5-tools__limits">  (reszta klas .m5-tools__* ma
               własne reguły w bloku STYLE tools.js)
-   konto    <div class="m5-account">
-              <div class="m5-account__profile">
-                <span class="m5-account__avatar" aria-hidden="true">TW</span>
-                <span class="m5-account__identity">…__name, __email…
-              <div class="m5-account__plans">…m5-btn m5-paywall__plan…
-              <div class="m5-account__providers">…m5-btn…
+   wsparcie <div class="m5-support">…cztery m5-card, w ostatniej
+              <div class="m5-support__cta">   (reguły .m5-support__* ma blok
+              STYLE w screens/support.js — ten arkusz zna tylko korzeń ekranu)
 
    Elementy chowane atrybutem [hidden] mają tu jawne display:none — bez tego
    własne display z tych reguł pokonałoby ukrycie z UA. */
@@ -62,7 +59,7 @@
 .m5-measure,
 .m5-history,
 .m5-tools,
-.m5-account {
+.m5-support {
   display: flex;
   flex-direction: column;
   gap: var(--sp-5);
@@ -77,7 +74,7 @@
 .m5-main > .m5-measure,
 .m5-main > .m5-history,
 .m5-main > .m5-tools,
-.m5-main > .m5-account {
+.m5-main > .m5-support {
   padding-bottom: calc(var(--sp-7) + var(--tabbar-h) + var(--safe-b));
 }
 @media (min-width: 900px) {
@@ -85,7 +82,7 @@
   .m5-main > .m5-measure,
   .m5-main > .m5-history,
   .m5-main > .m5-tools,
-  .m5-main > .m5-account {
+  .m5-main > .m5-support {
     padding-bottom: calc(var(--sp-8) + var(--safe-b));
   }
 }
@@ -109,20 +106,6 @@
   line-height: 1.45;
 }
 .m5-screen__note .m5-icon { margin-top: 2px; }
-
-/* Plakietka „to symulacja”. Ostrzegawcze tło niesie sygnał, ale tekst zostaje
-   --text-1, więc czytelność nie zależy od rozróżniania barw. */
-.m5-screen__demo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--r-md);
-  background: var(--zone-warn-soft);
-  color: var(--text-1);
-  font-size: var(--fs-sm);
-}
 
 /* ═══════════════════════════════════════════════════ ekran historii ═══════ */
 
@@ -182,119 +165,12 @@
 }
 .m5-tools__limits > * + * { margin-top: var(--sp-2); }
 
-/* ═════════════════════════════════════════════════════ ekran konta ════════ */
-
-.m5-account__profile {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  min-width: 0;
-}
-/* Awatar to inicjały, nie zdjęcie — nic nie wychodzi poza urządzenie. */
-.m5-account__avatar {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--r-pill);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: var(--fs-h3);
-  font-weight: 700;
-  line-height: 1;
-  text-transform: uppercase;
-}
-.m5-account__identity {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.m5-account__name {
-  font-size: var(--fs-h3);
-  font-weight: 650;
-  line-height: var(--lh-tight);
-  overflow-wrap: anywhere;
-}
-/* Adres bywa dłuższy niż kolumna na 320 px — łamiemy go, zamiast wypychać
-   całą stronę w bok. */
-.m5-account__email {
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-  overflow-wrap: anywhere;
-}
-
-/* Karta planu: nazwa planu jest wielkością wiodącą tej karty, więc dostaje
-   największy stopień pisma i akcent. */
-.m5-account__plan {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--sp-2) var(--sp-3);
-  min-width: 0;
-}
-.m5-account__plan-name {
-  color: var(--accent);
-  font-size: var(--fs-h2);
-  font-weight: 650;
-  line-height: var(--lh-tight);
-  letter-spacing: -.012em;
-}
-.m5-account__plan-meta {
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-}
-
-/* Siatka planów. Wiersz planu to ten sam element co w arkuszu sprzedażowym
-   (.m5-btn.m5-paywall__plan), więc ceny i plakietki wyglądają identycznie
-   w obu miejscach — bez drugiego kompletu stylów. */
-.m5-account__plans {
-  display: grid;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-@media (min-width: 600px) {
-  .m5-account__plans {
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    align-items: stretch;
-  }
-  .m5-account__plans > .m5-paywall__plan { align-content: flex-start; }
-}
-
-/* Przyciski dostawców logowania: na telefonie pełna szerokość jeden pod
-   drugim, od 480 px dwa w rzędzie. Każdy ma pełne 44 px wysokości. */
-.m5-account__providers {
-  display: grid;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-@media (min-width: 480px) {
-  .m5-account__providers { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
-}
-.m5-account__providers > .m5-btn {
-  width: 100%;
-  min-height: var(--tap);
-}
-
-.m5-account__benefits { min-width: 0; }
-
-/* Akcje nieodwracalne stoją osobno i na końcu — nie sąsiadują z „Przywróć
-   zakup”, żeby pomyłka kosztowała jeden ruch więcej. */
-.m5-account__danger {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-
 /* ═══════════════════════ dopełnienia kafelka z ui/gauge.js ════════════════
    ui/gauge.js buduje kafelek nieco inaczej, niż zakłada components.css:
-   odczyt nosi klasę .m5-tile__reading (nie __readout), zamiast osobnej kłódki
-   jest plakietka .m5-tile__badge, a wielkość wiodąca zaznaczana jest
-   atrybutem data-selected. Te trzy braki domykamy tutaj — bez nich kafelki
-   w siatce mają odczyty na różnych wysokościach, a wielkość wiodąca niczym
-   się nie wyróżnia. */
+   odczyt nosi klasę .m5-tile__reading (nie __readout), a wielkość wiodąca
+   zaznaczana jest atrybutem data-selected. Te dwa braki domykamy tutaj — bez
+   nich kafelki w siatce mają odczyty na różnych wysokościach, a wielkość
+   wiodąca niczym się nie wyróżnia. */
 
 .m5-tile__reading {
   display: flex;
@@ -307,27 +183,11 @@
   padding-top: var(--sp-1);
 }
 
-/* Plakietka „Premium” nie ma prawa zwęzić nazwy poniżej czytelności. Przy
-   czterech kolumnach na kafelek zostaje ~140 px, a nierozrywalne „Premium”
-   zabierało z tego 90 px — „Migotanie” łamało się wtedy po jednej literze
-   w wierszu. Nagłówek zawija, więc plakietka schodzi do własnego wiersza. */
+/* Nazwa nie ma prawa zwęzić się poniżej czytelności: przy czterech kolumnach
+   na kafelek zostaje ~140 px, a „Temperatura barwowa” łamałaby się wtedy po
+   jednej literze w wierszu. Nagłówek zawija, nazwa dostaje własną podstawę. */
 .m5-tile__head { flex-wrap: wrap; }
 .m5-tile__name { flex: 1 1 6rem; }
-
-.m5-tile__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-1);
-  flex: 0 0 auto;
-  padding: 1px var(--sp-2);
-  border-radius: var(--r-pill);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  white-space: nowrap;
-}
-.m5-tile__badge[hidden] { display: none; }
 
 /* Wielkość wiodąca: obwódka akcentu i akcentowa nazwa — dokładnie ten sam
    wygląd, jaki components.css daje wariantom data-state / aria-pressed. */
@@ -335,13 +195,6 @@
 .m5-tile[data-selected="true"] .m5-tile__head { color: var(--accent); }
 .m5-tile[data-selected="true"]:focus-visible {
   box-shadow: 0 0 0 4px var(--accent-ring), var(--shadow-2), inset 0 0 0 2px var(--accent);
-}
-
-/* Kafelek zablokowany też jest klikalny (otwiera arkusz sprzedażowy), więc
-   plakietka gaśnie do neutralnej — akcent zostaje przy tym, co odblokowane. */
-.m5-tile[data-locked="true"] .m5-tile__badge {
-  background: var(--zone-none-soft);
-  color: var(--text-2);
 }
 
 .m5-gauge { min-width: 0; }
@@ -373,7 +226,7 @@
 .m5-measure > *,
 .m5-history > *,
 .m5-tools > *,
-.m5-account > * {
+.m5-support > * {
   min-width: 0;
   max-width: 100%;
 }

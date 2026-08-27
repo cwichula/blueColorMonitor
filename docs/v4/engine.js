@@ -59,8 +59,7 @@
   var LIVE_WINDOW_MS = 60000;     // live buffer: what the 1-minute chart reads
   var LIVE_MARGIN_MS = 5000;      // keep a little past the window so trimming is lazy
 
-  // Long buffer. Collected for everyone, free tier included — only reading it
-  // back is a paid feature, so unlocking shows history that genuinely happened.
+  // Long buffer. Collected and read back by everybody; there is no tier.
   var LONG_STEP_MS = 5000;        // 1 point / 5 s
   var LONG_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
   var HISTORY_MAX = 15000;        // ~21 h of continuous measurement, or 30 days of use

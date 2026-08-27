@@ -1,7 +1,7 @@
 {
   "name": "Monitor Światła — pomiar światła niebieskiego",
   "short_name": "Monitor Światła",
-  "description": "Mierzy kamerą telefonu siedem wskaźników światła: udział niebieskiego, jasność, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Działa offline. Konto, płatności i reklamy są symulacją interfejsu.",
+  "description": "Mierzy kamerą telefonu siedem wskaźników światła: udział niebieskiego, jasność, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Wszystkie siedem jest dostępnych dla każdego. Działa offline, bez konta i bez opłat.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

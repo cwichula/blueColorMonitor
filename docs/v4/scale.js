@@ -111,9 +111,8 @@
 
   /** The sentence under the big number.
    *
-   *  Free of charge and computed from ALL SEVEN metrics, premium ones
-   *  included: the money buys a number, never an answer (8.7 says so on
-   *  screen, and this function is what makes that sentence true).
+   *  Computed from ALL SEVEN metrics, every one of which is available to
+   *  everyone: there is nothing here to buy and nothing to unlock.
    *
    *  Worst zone wins; inside that zone the culprit is the metric with the
    *  highest severity, ties resolved by catalogue order. NO hysteresis here —
@@ -412,8 +411,7 @@
       warning: 'Uwaga',
       critical: 'Krytycznie',
       none: 'Brak danych',
-      settling: 'Ustalam',
-      premium: 'Funkcja Premium'
+      settling: 'Ustalam'
     },
 
     /* ---- 8.3 verdicts, keyed [zone][culprit] ---- */
@@ -423,7 +421,6 @@
       idle: 'Naciśnij „Start pomiaru”, skieruj telefon na oświetloną powierzchnię i trzymaj nieruchomo kilka sekund.',
       warmup: 'Ustalam ocenę — trzymaj telefon nieruchomo jeszcze chwilę.',
       noValue: 'Ta wielkość nie daje się teraz zmierzyć. Sprawdź, czy obiektyw nie jest zasłonięty.',
-      premium: 'Liczba jest częścią pakietu Premium. Ocena światła poniżej działa bez opłaty.',
       stoppedTpl: 'Pomiar zakończony · {time} · zapisano w historii.',
 
       good: {
@@ -456,7 +453,6 @@
     note: {
       titleLimits: 'Czego ta liczba nie mówi',
       titleWarning: 'Uwaga',
-      titleDemo: 'Symulacja',
 
       dashTitle: 'Czym ten pomiar nie jest',
       dashText: 'Aparat telefonu ma trzy szerokie kanały barwne i automatyczny balans bieli — nie mierzy widma. Temperatura barwowa i wpływ na rytm dobowy są przybliżeniami wyliczonymi z barw sRGB. Aplikacja dobrze pokazuje różnice i zmiany w czasie, nie zastępuje miernika i nie stawia żadnej diagnozy. Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.',
@@ -536,15 +532,6 @@
       historyEmpty: 'Historia jest pusta.'
     },
 
-    /* ---- 8.7 simulation screens ---- */
-
-    demo: {
-      overline: 'Symulacja',
-      simulation: 'To jest symulacja. Nie pobieramy żadnej opłaty, nie zbieramy danych karty i nic nie wysyłamy do sieci.',
-      fairness: 'Ocena światła i zdanie na pulpicie są bezpłatne i biorą pod uwagę wszystkie siedem wielkości. Pakiet Premium odblokowuje liczby trzech z nich: migotania, równomierności i komfortu wzrokowego.',
-      account: 'Logowanie symulowane — dowolny adres i dowolne hasło zostaną przyjęte, nic nie opuszcza tego urządzenia.'
-    },
-
     /* ---- 8.8 the module index ---- */
 
     menu: {
@@ -561,8 +548,7 @@
       '07': { no: '07', titlePL: 'Test ekranu', descPL: 'Plansze do sprawdzenia własnego monitora, krok po kroku.' },
       '08': { no: '08', titlePL: 'Harmonogram', descPL: 'Automatyczne pomiary o zadanych porach.' },
       '09': { no: '09', titlePL: 'Alerty', descPL: 'Powiadomienie po przekroczeniu progu — i kiedy ono nie zadziała.' },
-      '10': { no: '10', titlePL: 'Premium', descPL: 'Co odblokowuje pakiet płatny i co działa bez opłaty.' },
-      '11': { no: '11', titlePL: 'Konto', descPL: 'Logowanie symulowane, oznaczone jako symulacja.' },
+      '10': { no: '10', titlePL: 'Wsparcie', descPL: 'Dobrowolna darowizna — i to, że niczego nie odblokowuje.' },
       '12': { no: '12', titlePL: 'Dokumentacja', descPL: 'Czym ten pomiar jest, a czym na pewno nie jest.' },
       '13': { no: '13', titlePL: 'Ustawienia', descPL: 'Motyw, rozmiar tekstu, ograniczenie ruchu, czyszczenie historii.' }
     },
@@ -577,10 +563,8 @@
     channels: {
       groupAria: 'Kanały pomiarowe',
       pick: 'Pokaż na dużym wyświetlaczu',
-      locked: 'funkcja Premium, otwiera ofertę',
       stale: 'brak danych',
-      approx: 'wartość przybliżona',
-      badgePremium: 'Premium'
+      approx: 'wartość przybliżona'
     },
 
     /* Accessible names for the dashboard (5.1, 5.3, 5.4, 7.6). The eye gets the
@@ -593,7 +577,6 @@
       help: 'Co oznacza: {name}',
       channel: '{name}, {value}, {zone}. Pokaż na dużym wyświetlaczu.',
       channelStale: '{name}, brak danych. Pokaż na dużym wyświetlaczu.',
-      channelLocked: '{name}, funkcja Premium, otwiera ofertę.',
       scale: 'Skala: {name}, od {min} do {max}. Teraz {value}, {zone}. Próg uwagi {warn}, próg krytyczny {crit}.',
       readout: '{name}: {value}, {zone}.',
       readoutApprox: '{name}: około {value}, {zone}. Wartość przybliżona.'
@@ -612,8 +595,7 @@
       warn: 'Próg uwagi',
       crit: 'Próg krytyczny',
       availability: 'Dostępność',
-      free: 'Bez opłaty',
-      premium: 'Pakiet Premium',
+      free: 'Dla wszystkich, bez opłat',
       now: 'teraz'
     },
 
@@ -815,7 +797,6 @@
     M['05'].descTime = 'Godzina punktu z dokładnością do sekundy.';
     M['05'].descZone = 'Strefa udziału niebieskiego w chwili zapisu. Silnik zapisuje strefę tylko dla tej jednej wielkości — dla pozostałych policz ją z progów.';
     M['05'].descMetricTpl = '{short} Jednostka: {unit}. Zakres {min}–{max}.';
-    M['05'].lockedColumn = 'Kolumna pozostaje pusta, dopóki liczba jest częścią pakietu Premium.';
     M['05'].previewTitle = 'Podgląd';
     M['05'].previewHint = 'Pierwsze pięć wierszy pliku, dokładnie tak, jak zostaną zapisane.';
     M['05'].savedTpl = 'Zapisano plik {name} — {rows} wierszy.';
@@ -951,10 +932,10 @@
        .monitor    legend badge open
        .aim        titlePL hintPL close flip
        .readout    legend helpAriaTpl thresholdTpl contextTpl contextEmpty approxSign
-       .stamp      good warning critical none settling premium
-       .verdict    idle warmup noValue premium stoppedTpl
+       .stamp      good warning critical none settling
+       .verdict    idle warmup noValue stoppedTpl
                    good.any · warning.<metricId> · critical.<metricId>
-       .note       titleLimits titleWarning titleDemo dashTitle dashText approxLegend
+       .note       titleLimits titleWarning dashTitle dashText approxLegend
                    kelvinOutOfRange flickerOutOfRange helpTitle helpText calibration
                    howToTitle howTo[3].{titlePL,textPL}
        .transient  firstRun measureStopped leadChanged warmupDone newVersion
@@ -963,14 +944,13 @@
        .spoken     noValue units.<metricId> zones.<zone>
        .empty      recorderNoHistory recorderNoRange coverageTpl reportsNoData
                    compareOneSession exportNoData alertsOff scheduleEmpty historyEmpty
-       .demo       overline simulation fairness account
        .menu       titlePL
        .modules    '01'..'13' -> {no, titlePL, descPL}
        .errata     titlePL retry
-       .aria       help channel channelStale channelLocked scale readout readoutApprox
-       .channels   groupAria pick locked stale approx badgePremium
+       .aria       help channel channelStale scale readout readoutApprox
+       .channels   groupAria pick stale approx
        .livebar    stopped key
-       .help       titleTpl unit range thresholds warn crit availability free premium now
+       .help       titleTpl unit range thresholds warn crit availability free now
        .recorder   rangeAria ranges.{60s,15min,1h,24h,30d} gap sessionTitle zonesCaption
                    tableCaption crosshair prevAria nextAria colTime
        .settings   themeLabel themeSystem themeLight themeDark textLabel text1 text115

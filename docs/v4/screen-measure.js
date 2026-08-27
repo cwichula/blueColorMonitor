@@ -8,7 +8,8 @@
  *   2. pasek akcji — Start/Stop, obrót kamery, wybór kanału wiodącego;
  *   3. kamera      — karta podglądu; PRZENOSI (appendChild) węzeł #cameraStage
  *                    z index.html, nigdy nie tworzy drugiego <video>;
- *   4. kafelki     — siedem wielkości, płatne w stanie zamkniętym z kłódką;
+ *   4. kafelki     — siedem wielkości, każda z liczbą, paskiem strefowym
+ *                    i mikrowykresem; wszystkie widoczne i wybieralne;
  *   5. noty        — „Czym ten pomiar nie jest” (zawsze widoczna) plus noty o ≈
  *                    i o zakresie metody dla temperatury barwowej i migotania.
  *
@@ -111,13 +112,6 @@
     return global.Metrics && global.Metrics.CATALOGUE ? global.Metrics.CATALOGUE : [];
   }
 
-  function unlocked(id) {
-    var m = metric(id);
-    if (!m || !m.premium) return true;               // podział bierzemy z katalogu, nigdy z własnej listy
-    var B = global.Billing;
-    return !B || typeof B.isUnlocked !== 'function' ? false : !!B.isUnlocked(id);
-  }
-
   function settings() {
     var St = global.Store;
     return St && typeof St.get === 'function' ? St.get() : {};
@@ -194,7 +188,6 @@
 
     builtOk = true;
     syncEngineState(global.Engine ? global.Engine.state() : 'idle');
-    syncLocks();
     setLead(leadId, false);
   }
 
@@ -517,8 +510,7 @@
     head.appendChild(addCls(icon(METRIC_ICON[m.id] || 'info', 20), 'ms4-tile__icon'));
     head.appendChild(el('span', 'ms4-tile__name', m.namePL));
     var badge = el('span', 'ms4-tile__badge');
-    if (m.premium) badge.appendChild(icon('crown', 16));
-    else if (APPROX[m.id]) badge.textContent = S('readout', 'approxSign');
+    if (APPROX[m.id]) badge.textContent = S('readout', 'approxSign');
     head.appendChild(badge);
     btn.appendChild(head);
 
@@ -534,16 +526,6 @@
     vrow.appendChild(el('span', 'ms4-tile__unit', unitOf(m)));
     btn.appendChild(vrow);
 
-    var lock = el('div', 'ms4-tile__lock is-hidden');
-    var disc = el('span', 'ms4-lock');
-    disc.appendChild(icon('lock', 16));
-    lock.appendChild(disc);
-    lock.appendChild(doc.createTextNode(T('measure', 'premiumTileWord')));
-    btn.appendChild(lock);
-
-    var cta = el('span', 'ms4-tile__cta is-hidden', T('measure', 'premiumTileCta'));
-    btn.appendChild(cta);
-
     var sparkBox = el('div', 'ms4-tile__spark');
     btn.appendChild(sparkBox);
 
@@ -556,10 +538,10 @@
     btn.appendChild(zoneWord);
 
     var t = {
-      id: m.id, premium: !!m.premium, root: btn,
+      id: m.id, root: btn,
       valueEl: value, unitEl: vrow.lastChild, approxEl: approx,
-      lockEl: lock, ctaEl: cta, sparkBox: sparkBox, fillEl: fill, zoneEl: zoneWord,
-      valueRow: vrow, spark: null, locked: false, lockSynced: false, selected: false, zone: null,
+      sparkBox: sparkBox, fillEl: fill, zoneEl: zoneWord,
+      valueRow: vrow, spark: null, selected: false, zone: null,
       lastText: S('common', 'noValue'), lastWidth: '', className: TILE_BASE
     };
     btn.addEventListener('click', function () { onTileClick(t); });
@@ -576,11 +558,6 @@
   }
 
   function onTileClick(t) {
-    if (t.locked) {
-      var B = global.Billing;
-      if (B && typeof B.openPaywall === 'function') B.openPaywall({ source: 'tile', metricId: t.id });
-      return;
-    }
     haptic(10);
     setLead(t.id, true);
   }
@@ -689,8 +666,7 @@
   }
 
   function buildLeadRow(m) {
-    var isLocked = m.premium && !unlocked(m.id);
-    var row = el('button', 'ms4-row' + (isLocked ? ' is-locked' : ''));
+    var row = el('button', 'ms4-row');
     row.type = 'button';
 
     var ic = el('span', 'ms4-row__icon');
@@ -704,25 +680,14 @@
 
     var Sc = global.Scale;
     var v = latest && latest.values ? latest.values[m.id] : null;
-    var valueText = isLocked || !Sc ? S('common', 'noValue') : Sc.formatValue(m.id, v);
+    var valueText = !Sc ? S('common', 'noValue') : Sc.formatValue(m.id, v);
     row.appendChild(el('span', 'ms4-row__value', valueText));
 
     var ctrl = el('span', 'ms4-row__control');
-    if (isLocked) {
-      var lock = el('span', 'ms4-lock');
-      lock.appendChild(icon('lock', 16));
-      ctrl.appendChild(lock);
-    } else if (m.id === leadId) {
-      ctrl.appendChild(icon('check', 20));
-    }
+    if (m.id === leadId) ctrl.appendChild(icon('check', 20));
     row.appendChild(ctrl);
 
     row.addEventListener('click', function () {
-      if (isLocked) {
-        var B = global.Billing;
-        if (B && typeof B.openPaywall === 'function') B.openPaywall({ source: 'leadsheet', metricId: m.id });
-        return;
-      }
       setLead(m.id, true);
       if (leadSheet && typeof leadSheet.close === 'function') leadSheet.close();
       leadSheet = null;
@@ -917,29 +882,6 @@
     if (next !== leadId) setLead(next, false);
   }
 
-  function syncLocks() {
-    for (var i = 0; i < tiles.length; i += 1) {
-      var t = tiles[i];
-      var locked = t.premium && !unlocked(t.id);
-      if (t.lockSynced && locked === t.locked) continue;
-      t.lockSynced = true;
-      t.locked = locked;
-      show(t.lockEl, locked);
-      show(t.ctaEl, locked);
-      show(t.valueRow, !locked);
-      applyTileClass(t);
-      if (locked) {
-        t.root.setAttribute('aria-label', fillAria('tileLockedTpl', { name: nameOf(t.id) }));
-        t.valueEl.textContent = S('common', 'noValue');
-        t.lastText = S('common', 'noValue');
-        t.fillEl.style.width = '0%';
-        t.lastWidth = '0%';
-      } else {
-        t.root.removeAttribute('aria-label');
-      }
-    }
-  }
-
   function nameOf(id) {
     var m = metric(id);
     return m ? m.namePL : '';
@@ -949,11 +891,6 @@
     var Sc = global.Scale;
     var tpl = T('aria', key);
     return Sc && typeof Sc.fill === 'function' ? Sc.fill(tpl, map) : tpl;
-  }
-
-  function onBilling() {
-    syncLocks();
-    paintNow();
   }
 
   /* ==================================================================
@@ -1069,25 +1006,23 @@
     var drawSpark = sampleNo % SPARK_EVERY === 0;
     for (var i = 0; i < tiles.length; i += 1) {
       var t = tiles[i];
-      if (!t.locked) {
-        var value = reading && reading.values ? reading.values[t.id] : null;
-        var zone = reading && reading.zones ? reading.zones[t.id] || null : null;
+      var value = reading && reading.values ? reading.values[t.id] : null;
+      var zone = reading && reading.zones ? reading.zones[t.id] || null : null;
 
-        var text = Sc.formatValue(t.id, value);
-        if (text !== t.lastText) { t.valueEl.textContent = text; t.lastText = text; }
+      var text = Sc.formatValue(t.id, value);
+      if (text !== t.lastText) { t.valueEl.textContent = text; t.lastText = text; }
 
-        var pos = Sc.pos(t.id, value);
-        var width = (pos === null ? 0 : Math.round(pos)) + '%';
-        if (width !== t.lastWidth) { t.fillEl.style.width = width; t.lastWidth = width; }
+      var pos = Sc.pos(t.id, value);
+      var width = (pos === null ? 0 : Math.round(pos)) + '%';
+      if (width !== t.lastWidth) { t.fillEl.style.width = width; t.lastWidth = width; }
 
-        if (zone !== t.zone) {
-          t.zone = zone;
-          applyTileClass(t);
-          t.zoneEl.textContent = Sc.stamp(zone).wordPL;
-          t.root.setAttribute('aria-label', fillAria('tileTpl', {
-            name: nameOf(t.id), value: Sc.spoken(t.id, value), zone: Sc.spokenZone(zone)
-          }));
-        }
+      if (zone !== t.zone) {
+        t.zone = zone;
+        applyTileClass(t);
+        t.zoneEl.textContent = Sc.stamp(zone).wordPL;
+        t.root.setAttribute('aria-label', fillAria('tileTpl', {
+          name: nameOf(t.id), value: Sc.spoken(t.id, value), zone: Sc.spokenZone(zone)
+        }));
       }
       if (drawSpark && t.spark && typeof t.spark.update === 'function') {
         t.spark.update(sparkData[t.id]);
@@ -1098,8 +1033,7 @@
   function applyTileClass(t) {
     var cls = TILE_BASE;
     if (t.selected) cls += ' is-selected';
-    if (t.locked) cls += ' is-locked';
-    else if (t.zone && ZONE_CLASS[t.zone]) cls += ' ' + ZONE_CLASS[t.zone];
+    if (t.zone && ZONE_CLASS[t.zone]) cls += ' ' + ZONE_CLASS[t.zone];
     if (cls === t.className) return;
     t.className = cls;
     t.root.setAttribute('class', cls);
@@ -1112,8 +1046,7 @@
       lastKelvinOk = kOk;
       show(nodes.noteKelvin, !kOk);
     }
-    // Nota o zakresie migotania ma sens tylko wtedy, gdy liczba jest odsłonięta.
-    var fOk = !extra || extra.flickerWithinRange !== false || !unlocked('flicker');
+    var fOk = !extra || extra.flickerWithinRange !== false;
     if (fOk !== lastFlickerOk) {
       lastFlickerOk = fOk;
       show(nodes.noteFlicker, !fOk);
@@ -1184,13 +1117,11 @@
       offs.push(B.on('engine:thresholds', onThresholds));
       offs.push(B.on('engine:calibration', onCalibration));
       offs.push(B.on('settings:changed', onSettings));
-      offs.push(B.on('billing:changed', onBilling));
     }
 
     clockTimer = global.setInterval(tickClock, 1000);
 
     syncEngineState(E ? E.state() : 'idle');
-    syncLocks();
     onCalibration();
     applyMirror();
     tickClock();

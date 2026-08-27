@@ -36,7 +36,7 @@
                  <div class="m5-card__body">…</div>
                  <div class="m5-card__foot">…</div></section>          (+ --flat)
    kafelek     <button class="m5-tile" data-zone="good" data-state="active"
-                       data-locked="true" aria-pressed="true">
+                       aria-pressed="true">
                  <span class="m5-tile__head"><svg class="m5-icon">…</svg>
                    <span class="m5-tile__name">Udział niebieskiego</span></span>
                  <span class="m5-tile__reading">
@@ -115,8 +115,7 @@
 .m5-zone,
 .m5-empty,
 .m5-sheet,
-.m5-toast,
-.m5-paywall { overflow-wrap: anywhere; }
+.m5-toast { overflow-wrap: anywhere; }
 
 /* ───────────────────────────────────────────── etykieta strefy (słowna) ───
    Kolor nigdy nie niesie znaczenia sam: obok słowa stoi znacznik o innym
@@ -163,8 +162,7 @@
 }
 
 /* ────────────────────────────────────────────────────────── plakietki ──── */
-.m5-badge,
-.m5-paywall__badge {
+.m5-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
@@ -177,17 +175,6 @@
   line-height: 1.6;
   letter-spacing: .02em;
   white-space: nowrap;
-}
-/* „Demo” to jedyna plakietka, która ma prawo być głośna: mówi, że konto
-   i płatności są udawane, a tego użytkownik nie może przeoczyć. */
-.m5-badge--demo,
-.m5-paywall__badge {
-  background: var(--zone-warn-soft);
-  color: var(--zone-warn);
-}
-.m5-badge--premium {
-  background: var(--accent-soft);
-  color: var(--accent);
 }
 .m5-badge[data-zone] {
   background: var(--zone-soft, var(--zone-none-soft));
@@ -349,9 +336,9 @@
 
 /* — stany wspólne
    Wyłączony przycisk nie jest wyblakłą wersją siebie: przygaszenie samą
-   przezroczystością zostawiało pełną płachtę akcentu w bladym kolorze
-   („Wybierz plan” w paywallu wyglądał na zepsuty, nie na nieaktywny).
-   Stan wyłączony schodzi więc na spokojną powierzchnię z czytelnym napisem. */
+   przezroczystością zostawiało pełną płachtę akcentu w bladym kolorze —
+   przycisk wyglądał na zepsuty, nie na nieaktywny. Stan wyłączony schodzi
+   więc na spokojną powierzchnię z czytelnym napisem. */
 .m5-btn:disabled,
 .m5-btn[aria-disabled="true"] {
   background: var(--surface-sunken);
@@ -379,7 +366,7 @@
 /* Zajętość: cienki pasek pełznący dolną krawędzią. Świadomie bez kręcącego
    się kółka w treści — kółko przesuwałoby etykietę, a pasek jest poza
    układem (position:absolute), więc zachowuje się tak samo w przycisku
-   flexowym, jak i w siatkowym wierszu planu w paywallu. */
+   flexowym, jak i w wierszu siatki. */
 .m5-btn[data-state="busy"],
 .m5-btn[aria-busy="true"] {
   cursor: progress;
@@ -1095,23 +1082,6 @@
   box-shadow: 0 0 0 4px var(--accent-ring), var(--shadow-2), inset 0 0 0 2px var(--accent);
 }
 
-/* ─────────────────────────────────────────── kafelek zablokowany (premium)
-   Wartość jest zamazana, a nie zmyślona: nie pokazujemy liczby, której
-   użytkownik nie ma prawa zobaczyć, i nie udajemy, że jej nie ma. */
-.m5-tile[data-locked="true"] .m5-tile__reading {
-  -webkit-filter: blur(7px);
-  filter: blur(7px);
-  opacity: .5;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.m5-tile[data-locked="true"] .m5-zonebar__svg {
-  -webkit-filter: grayscale(1);
-  filter: grayscale(1);
-  opacity: .45;
-}
-.m5-tile[data-locked="true"] .m5-zone { visibility: hidden; }
-
 /* ═════════════════════════════════════════════════════ pasek strefowy ═════
    Sam element JEST torem — mniej zagnieżdżeń, mniej okazji do rozjazdu
    między CSS a JS. Wypełnienie i znacznik progu rysuje ui/gauge.js wewnątrz
@@ -1197,45 +1167,6 @@
 .m5-skeleton--block {
   height: 120px;
   border-radius: var(--r-lg);
-}
-
-/* ═══════════════════════════════════════════════════════ pole tekstowe ════
-   Etykieta nad kontrolką (nie obok): przy skali tekstu 1,3 i na 320 px dwie
-   kolumny nie mieszczą się, a etykieta nad polem czyta się tak samo dobrze
-   w każdej szerokości. Klasy tworzy js/screens/account.js. */
-.m5-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  min-width: 0;
-}
-.m5-field__label {
-  color: var(--text-1);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-}
-.m5-field__input {
-  width: 100%;
-  min-height: var(--tap);
-  padding: var(--sp-2) var(--sp-4);
-  border: 0;
-  border-radius: var(--r-md);
-  background: var(--surface-sunken);
-  color: var(--text-1);
-  box-shadow: inset 0 0 0 1px var(--line-strong);
-  font: inherit;
-}
-.m5-field__input::placeholder {
-  color: var(--text-3);
-  opacity: 1;                      /* Firefox przygasza podpowiedź po swojemu */
-}
-.m5-field__input:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
-/* Błąd pola niesie obwódkę, a treść komunikatu stoi pod polem — sam kolor
-   obwódki nigdy nie jest jedynym sygnałem. */
-.m5-field__input[aria-invalid="true"] { box-shadow: inset 0 0 0 2px var(--zone-crit); }
-.m5-field__input:disabled {
-  color: var(--text-3);
-  cursor: not-allowed;
 }
 
 /* ══════════════════════════════════════════════════ wykres historii ═══════
@@ -1365,7 +1296,7 @@
   max-width: 34rem;
   /* Arkusz sięga tak wysoko, jak pozwala okno, minus pasek stanu i wąski
      prześwit na tło — 88 % oddawało 100 px komuś, kto i tak nie mógł tam nic
-     kliknąć, a odbierało je liście planów. Nieruchome zostają nagłówek
+     kliknąć, a odbierało je treści arkusza. Nieruchome zostają nagłówek
      i pasek akcji; kurczy się wyłącznie .m5-sheet__body. */
   max-height: calc(100vh - var(--safe-t) - var(--sp-6));
   max-height: min(calc(100dvh - var(--safe-t) - var(--sp-6)), 100%);
@@ -1423,8 +1354,8 @@
 /* Zapowiedź dalszego ciągu. ui/overlays.js stawia na korzeniu arkusza
    data-more="true", dopóki pod dolną krawędzią została jeszcze treść — wtedy
    nad paskiem akcji zapala się miękkie wygaszenie. Bez niego wiersz ucięty
-   w połowie (lista planów w paywallu) czyta się jak zepsuty układ, a nie jak
-   zaproszenie do przewinięcia. */
+   w połowie czyta się jak zepsuty układ, a nie jak zaproszenie do
+   przewinięcia. */
 .m5-sheet[data-more="true"] .m5-sheet__actions::before {
   content: "";
   position: absolute;
@@ -1589,124 +1520,6 @@
   content: "";
   position: absolute;
   inset: -4px;
-}
-
-/* ════════════════════════════════════════════════════════════ paywall ═════ */
-.m5-paywall {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-/* Zdanie o symulacji jest pierwsze i podświetlone — użytkownik ma wiedzieć,
-   że nic nie kupuje, zanim zobaczy jakąkolwiek cenę. */
-.m5-paywall__demo {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--r-md);
-  background: var(--zone-warn-soft);
-  color: var(--text-1);
-  font-size: var(--fs-sm);
-}
-.m5-paywall__lead {
-  color: var(--text-1);
-  font-size: var(--fs-body);
-}
-.m5-paywall__benefits {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-}
-.m5-paywall__benefit {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-3);
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-  line-height: 1.45;
-}
-.m5-paywall__benefit .m5-icon {
-  margin-top: 1px;
-  color: var(--accent);
-}
-.m5-paywall__benefit strong {
-  color: var(--text-1);
-  font-weight: 650;
-}
-.m5-paywall__plans {
-  display: grid;
-  gap: var(--sp-2);
-}
-/* Wiersz planu jest przyciskiem z rodziny m5-btn (overlays.js nadaje mu
-   data-tone="primary"), ale trzy pełne akcentowe płachty jedna pod drugą
-   krzyczałyby — więc plan wraca do spokojnej powierzchni, a akcent zostaje
-   przy cenie i przy obwódce na hover. */
-/* Układ jest flexem z zawijaniem, nie siatką dwukolumnową: kolumna „auto”
-   oddawała całą szerokość cenie, a nazwie zostawała jedna litera na wiersz.
-   Tutaj cena rozpycha się do końca pierwszego wiersza (flex-grow), więc
-   plakietka zawsze schodzi do drugiego, a przy 320 px i skali 1,3 pod nazwę
-   schodzi także cena — zamiast łamać wyraz na sylaby. */
-.m5-btn.m5-paywall__plan {
-  display: flex;
-  flex-wrap: wrap;
-  /* .m5-btn centruje treść — wiersz planu czyta się od lewej krawędzi. */
-  justify-content: flex-start;
-  align-items: baseline;
-  column-gap: var(--sp-3);
-  row-gap: var(--sp-1);
-  padding: var(--sp-4) var(--sp-5);
-  border-radius: var(--r-lg);
-  background: var(--surface-1);
-  color: var(--text-1);
-  box-shadow: inset 0 0 0 1px var(--line-2);
-  text-align: left;
-  text-wrap: pretty;
-}
-@media (hover: hover) {
-  .m5-btn.m5-paywall__plan:hover {
-    background: var(--surface-1);
-    box-shadow: inset 0 0 0 2px var(--accent);
-  }
-}
-/* Nazwa i cena łamią się tylko na granicy wyrazu — dziedziczone z .m5-paywall
-   „anywhere” pocięłoby „Miesięcznie” na litery. */
-.m5-paywall__plan-name {
-  flex: 0 1 auto;
-  font-weight: 650;
-  overflow-wrap: normal;
-}
-/* „9,99 zł miesięcznie” to zdanie, nie odczyt pomiaru: krój maszynowy
-   rozstrzeliwał je szerzej niż resztę arkusza. Zostaje sam tabular-nums —
-   kolumna cyfr w liście planów pozostaje równa. */
-.m5-paywall__plan-price {
-  flex: 1 1 auto;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  text-align: right;
-  overflow-wrap: normal;
-}
-.m5-paywall__plan-badge {
-  flex: 0 1 auto;
-  padding: 2px var(--sp-3);
-  border-radius: var(--r-pill);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: var(--fs-xs);
-  font-weight: 700;
-}
-.m5-paywall__plan-saving {
-  flex: 0 1 auto;
-  margin-left: auto;
-  color: var(--zone-good);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-}
-.m5-paywall__note {
-  color: var(--text-3);
-  font-size: var(--fs-xs);
 }
 
 /* ════════════════════════════════════════════════════ mniej ruchu ═════════

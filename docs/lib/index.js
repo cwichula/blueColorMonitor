@@ -40,8 +40,10 @@ export { uniformity } from './uniformity.js';
 export { comfortIndex } from './comfort.js';
 export { zoneFor, zonesFor, DEFAULT_THRESHOLDS } from './zones.js';
 
-/* Katalog wielkości — nazwy, jednostki, zakresy, podział na darmowe i płatne. */
-export { CATALOGUE, byId, FREE_IDS, PREMIUM_IDS } from './catalogue.js';
+/* Katalog wielkości — nazwy, jednostki, zakresy i progi. Wszystkie siedem
+ * wielkości jest dostępnych bez warunków, więc katalog nie wystawia już
+ * żadnego podziału na dostępne i niedostępne (powód w catalogue.js). */
+export { CATALOGUE, byId } from './catalogue.js';
 
 /* Obróbka klatki bez canvasu i bez DOM: kadrowanie, siatka, kalibracja,
  * okno próbek dla migotania. */

@@ -14,7 +14,7 @@ export const ROUTES = [
   { id: 'measure', path: '/measure', labelPL: 'Pomiar',    icon: 'gauge' },
   { id: 'history', path: '/history', labelPL: 'Historia',  icon: 'chart' },
   { id: 'tools',   path: '/tools',   labelPL: 'Narzędzia', icon: 'sliders' },
-  { id: 'account', path: '/account', labelPL: 'Konto',     icon: 'user' }
+  { id: 'support', path: '/support', labelPL: 'Wsparcie',  icon: 'coffee' }
 ];
 
 const DEFAULT_ROUTE = ROUTES[0];

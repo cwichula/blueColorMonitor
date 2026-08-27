@@ -22,7 +22,7 @@
  * Numer w nazwie pamięci podbijamy przy KAŻDEJ zmianie któregokolwiek pliku z listy.
  */
 
-var CACHE = 'ms4-5';
+var CACHE = 'ms4-7';
 var CACHE_PREFIX = 'ms4-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v4/, spod
@@ -41,12 +41,10 @@ var APP_SHELL = [
   './store.js',
   './ui.js',
   './gauge.js',
-  './auth.js',
-  './billing.js',
   './screen-measure.js',
   './screen-history.js',
   './screen-tools.js',
-  './screen-account.js',
+  './screen-support.js',
   './app.js',
   '../icons/icon-192.png',
   '../icons/icon-512.png',

@@ -3,8 +3,8 @@
  * The last script in index.html, and deliberately the smallest one. Its whole
  * job is to answer three questions and then get out of the way:
  *
- *   1. Did every module actually load? Four files were written in parallel by
- *      four people. If one of them is missing the app must say so in Polish, on
+ *   1. Did every module actually load? The files were written in parallel by
+ *      several people. If one is missing the app must say so in Polish, on
  *      screen, instead of failing with a blank tab and a console nobody opens.
  *   2. Is the offline worker registered? Once, from here — no other file talks
  *      to navigator.serviceWorker.
@@ -40,9 +40,7 @@
     ['Bus', 'bus (w ui-core.js)', 'moduły przestaną się widzieć'],
     ['UI', 'ui-core.js', 'nie da się przełączać ekranów'],
     ['Engine', 'engine.js', 'kamera i pomiar nie ruszą'],
-    ['Store', 'account.js', 'ekran Premium będzie pusty'],
-    ['Account', 'account.js', 'ekran Konto będzie pusty'],
-    ['Ads', 'account.js', 'sloty reklamowe zostaną puste'],
+    ['Support', 'support.js', 'ekran Wsparcie będzie pusty'],
     ['Tools', 'tools.js', 'zakładka Narzędzia będzie pusta']
   ];
 

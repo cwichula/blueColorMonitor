@@ -24,7 +24,7 @@
  * z listy poniżej.
  */
 
-var CACHE = 'ms5-3';
+var CACHE = 'ms5-5';
 var CACHE_PREFIX = 'ms5-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v5/, spod
@@ -47,8 +47,7 @@ var APP_SHELL = [
   './js/store.js',
   './js/history.js',
   './js/camera.js',
-  './js/account.js',
-  './js/billing.js',
+  './js/support.js',
   './js/router.js',
   './js/app.js',
 
@@ -60,7 +59,7 @@ var APP_SHELL = [
   './js/screens/measure.js',
   './js/screens/history.js',
   './js/screens/tools.js',
-  './js/screens/account.js',
+  './js/screens/support.js',
 
   './icons/icon-192.png',
   './icons/icon-512.png',

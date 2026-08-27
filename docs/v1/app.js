@@ -6,14 +6,11 @@
   const SAMPLE_SIZE = 32;        // offscreen sampling canvas side, px
   const CROP_FRACTION = 0.6;     // sample the center 60% of the frame
 
-  // Long-term buffer. Collected for EVERYONE, free tier included — only reading
-  // it is a premium feature, so a purchase reveals real history instead of an
-  // empty table. Downsampled to 1 point / 5 s to stay cheap on budget phones.
+  // Bufor długoterminowy — zbierany zawsze i czytany przez features.js bez
+  // żadnych warunków. Przerzedzony do 1 punktu / 5 s, żeby był tani na
+  // budżetowych telefonach.
   const LONG_STEP_MS = 5000;
   const LONG_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
-  // "Aha moment": the soft paywall may be offered only after this much
-  // uninterrupted successful measurement, never before.
-  const VALUE_MOMENT_MS = 45_000;
 
   const ICONS = {
     good: '<path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>',
@@ -68,7 +65,6 @@
   let sessionStartedAt = null;
   let sessionSamples = 0;
   let sessionZones = { good: 0, warning: 0, critical: 0 };
-  let valueMomentTimer = null;
   const sampleListeners = [];
   const sessionEndListeners = [];
 
@@ -485,18 +481,11 @@
       switchBtn.disabled = false;
       startBtn.textContent = 'Start';
 
-      // Session bookkeeping. The monetization layer is NOT allowed to gate the
-      // camera in any way — it only gets told that a session has begun.
+      // Księgowanie sesji na potrzeby podsumowania po zatrzymaniu pomiaru.
+      // Nic w aplikacji nie ma prawa opóźnić ani zatrzymać kamery.
       sessionStartedAt = Date.now();
       sessionSamples = 0;
       sessionZones = { good: 0, warning: 0, critical: 0 };
-      clearTimeout(valueMomentTimer);
-      valueMomentTimer = setTimeout(() => {
-        valueMomentTimer = null;
-        if (window.MonetizationUI && window.MonetizationUI.maybeShowValueMomentPaywall) {
-          try { window.MonetizationUI.maybeShowValueMomentPaywall(); } catch (_) { /* ignore */ }
-        }
-      }, VALUE_MOMENT_MS);
 
       clearInterval(sampleTimer);
       sampleTimer = setInterval(takeSample, SAMPLE_MS);
@@ -511,8 +500,6 @@
   function stopCamera() {
     clearInterval(sampleTimer);
     sampleTimer = null;
-    clearTimeout(valueMomentTimer);
-    valueMomentTimer = null;
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
       stream = null;
@@ -611,8 +598,8 @@
     { id: 'camera', btn: tabCamera, panel: panelCamera, onShow: () => drawOverlay() },
     { id: 'monitoring', btn: tabMonitoring, panel: panelMonitoring, onShow: () => drawCharts() }
   ];
-  // Overlay screens live outside the tablist. menu.js and monetization-ui.js add
-  // their own via AppTabs.registerOverlay(); the documentation ships registered.
+  // Ekrany nakładkowe stoją poza listą zakładek. menu.js i support.js dokładają
+  // swoje przez AppTabs.registerOverlay(); Dokumentacja jest zarejestrowana od razu.
   const OVERLAY_PANELS = [panelMethodology];
   const OVERLAY_ON_SHOW = new Map();
 
@@ -687,10 +674,10 @@
 
   if (location.search.includes('tab=methodology')) showDocs();
 
-  // ---- public API for billing.js / monetization-ui.js / menu.js ----
-  // Thin, stable surface over what already exists. Nothing here may gate,
-  // delay or interrupt measurement — that is a promise made to the user in
-  // the documentation and it is not negotiable.
+  // ---- publiczne API dla features.js / menu.js / support.js ----
+  // Cienka, stabilna warstwa nad tym, co już istnieje. Nic tutaj nie ma prawa
+  // blokować, opóźniać ani przerywać pomiaru — to obietnica złożona
+  // użytkownikowi w Dokumentacji i nie podlega negocjacji.
   window.AppTabs = {
     select(tabId) {
       const tab = TABS.find((t) => t.id === tabId);
@@ -777,6 +764,6 @@
   window.BlueMonitor.AppTabs = window.AppTabs;
   window.BlueMonitor.AppData = window.AppData;
 
-  // Boots billing.js / monetization-ui.js / menu.js. MUST stay last.
+  // Uruchamia features.js / menu.js / support.js. MUSI zostać na końcu.
   document.dispatchEvent(new CustomEvent('app:ready'));
 })();

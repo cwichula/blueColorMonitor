@@ -1,15 +1,18 @@
 /* Testy katalogu wielkości.
  *
  * Katalog jest jedynym źródłem prawdy o wielkościach: z niego bierze się nazwy,
- * jednostki, zakresy suwaków, progi stref i podział na darmowe i płatne.
- * Testy sprawdzają spójność wewnętrzną (nie ma drugiej listy, która mogłaby się
- * rozjechać) oraz to, że opisane kierunki zgadzają się z fizyką wielkości:
- * równomierność i komfort są odwrócone, bo w nich WIĘCEJ znaczy lepiej.
+ * jednostki, zakresy suwaków i progi stref. Testy sprawdzają spójność wewnętrzną
+ * oraz to, że opisane kierunki zgadzają się z fizyką wielkości: równomierność
+ * i komfort są odwrócone, bo w nich WIĘCEJ znaczy lepiej.
+ *
+ * Osobna grupa testów na końcu pilnuje decyzji z catalogue.js: podziału na
+ * wielkości darmowe i płatne już nie ma i nie ma go czym po cichu przywrócić.
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CATALOGUE, byId, FREE_IDS, PREMIUM_IDS } from './catalogue.js';
+import * as katalog from './catalogue.js';
+import { CATALOGUE, byId } from './catalogue.js';
 
 test('katalog ma dokładnie siedem pozycji', () => {
   assert.ok(Array.isArray(CATALOGUE));
@@ -39,7 +42,6 @@ test('każda pozycja ma komplet pól opisowych po polsku', () => {
     assert.equal(typeof m.shortPL, 'string', `${m.id}: brak krótkiego opisu`);
     assert.ok(m.shortPL.length > 0, `${m.id}: pusty opis`);
     assert.equal(typeof m.helpPL, 'string', `${m.id}: brak opisu rozszerzonego`);
-    assert.equal(typeof m.premium, 'boolean', `${m.id}: brak podziału darmowe/płatne`);
     assert.equal(typeof m.invert, 'boolean', `${m.id}: brak kierunku wielkości`);
   }
 });
@@ -96,26 +98,34 @@ test('byId dla nieznanego identyfikatora zwraca null, a nie wyjątek', () => {
   assert.equal(byId(), null);
 });
 
-test('FREE_IDS i PREMIUM_IDS razem dają cały katalog i nie zachodzą na siebie', () => {
-  const wszystkie = CATALOGUE.map((m) => m.id).sort();
-  assert.deepEqual([...FREE_IDS, ...PREMIUM_IDS].sort(), wszystkie);
-  const wspolne = FREE_IDS.filter((id) => PREMIUM_IDS.includes(id));
-  assert.deepEqual(wspolne, [], 'wielkość nie może być naraz darmowa i płatna');
-});
+/* --- Model dobrowolnego wsparcia: podziału na darmowe i płatne już nie ma. --- *
+ *
+ * Te trzy testy nie sprawdzają nowej funkcjonalności — pilnują, żeby stara nie
+ * wróciła bokiem. Wystarczy jedno `premium: false` dopisane „dla zgodności”
+ * i cała aplikacja znowu ma czym warunkować dostęp do wielkości.
+ */
 
-test('podział darmowe/płatne zgadza się z polem premium', () => {
+test('żadna pozycja katalogu nie ma już pola premium', () => {
   for (const m of CATALOGUE) {
-    if (m.premium) assert.ok(PREMIUM_IDS.includes(m.id), `${m.id} oznaczone premium, ale brak w PREMIUM_IDS`);
-    else assert.ok(FREE_IDS.includes(m.id), `${m.id} darmowe, ale brak w FREE_IDS`);
+    assert.equal(Object.prototype.hasOwnProperty.call(m, 'premium'), false,
+      `${m.id}: pole premium wróciło do katalogu — wszystkie wielkości są dostępne bez warunków`);
   }
 });
 
-test('udział niebieskiego jest darmowy — to pierwotna wielkość aplikacji', () => {
-  assert.ok(FREE_IDS.includes('share'));
-  assert.equal(byId('share').premium, false);
+test('moduł nie wystawia już list FREE_IDS ani PREMIUM_IDS', () => {
+  assert.equal(katalog.FREE_IDS, undefined, 'FREE_IDS wróciło — nie ma już czego dzielić');
+  assert.equal(katalog.PREMIUM_IDS, undefined, 'PREMIUM_IDS wróciło — nie ma wielkości płatnych');
+  const eksporty = Object.keys(katalog).sort();
+  assert.deepEqual(eksporty, ['CATALOGUE', 'byId'],
+    'katalog ma wystawiać wyłącznie sam katalog i wyszukiwarkę po identyfikatorze');
 });
 
-test('obie listy identyfikatorów są niepuste', () => {
-  assert.ok(FREE_IDS.length > 0, 'coś musi być dostępne bez opłaty');
-  assert.ok(PREMIUM_IDS.length > 0, 'inaczej podział nie miałby sensu');
+test('wszystkie siedem wielkości jest dostępnych dla każdego', () => {
+  // Zastępuje dawny test „udział niebieskiego jest darmowy”: skoro nie ma
+  // podziału, pytanie brzmi już tylko, czy lista dostępnych to cały katalog.
+  const dostepne = CATALOGUE.map((m) => m.id);
+  assert.equal(dostepne.length, 7);
+  assert.ok(dostepne.includes('share'), 'udział niebieskiego — pierwotna wielkość aplikacji');
+  assert.ok(dostepne.includes('flicker') && dostepne.includes('uniformity') && dostepne.includes('comfort'),
+    'wielkości dawniej płatne mają być na tej samej liście co reszta');
 });

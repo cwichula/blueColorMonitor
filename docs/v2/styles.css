@@ -12,14 +12,12 @@
  *    element is at least 48x48 CSS px even when it looks smaller, and why no
  *    piece of information is carried by hue alone — every status also carries a
  *    distinct SHAPE (circle / triangle / diamond) and a distinct icon.
- * 2. Measurement outranks monetisation. The ad slots here are physically unable
- *    to sit on top of the camera controls: the anchored slot docks ABOVE the
- *    navigation bar and reserves its own space via --ms-ad-h, so the layout
- *    shrinks instead of the buttons being covered.
- * 3. Everything fake must look fake. The demo palette (magenta, hazard stripes,
- *    dashed borders) is deliberately ugly and deliberately unlike every other
- *    surface in the app, so a sign-in or payment screen can never be mistaken
- *    for the real thing.
+ * 2. Nothing here is sold and nothing here is withheld. There is no lock, no
+ *    lock, no badge and no advertising surface in this stylesheet, because
+ *    there is no state in the application that any of them could express: all
+ *    seven metrics and all seven tools are drawn the same way for everybody.
+ * 3. The one donation surface is styled as a secondary accent of THIS app —
+ *    the --ms-support tokens below — never as somebody else's brand.
  *
  * Colour contrast was computed, not guessed. The ratios are recorded next to
  * the tokens; all body/label pairs clear 4.5:1 in BOTH themes.
@@ -81,21 +79,15 @@
   --ms-neutral:      #4a505e;
   --ms-neutral-soft: #e7ebf2;
 
-  /* --- Premium (light) ---
+  /* --- Support accent (light) ---
      Violet, not gold: gold sits next to the warning amber and colour-blind
-     users would have to tell two warm tones apart. Violet is unambiguous.
-     #6a3fbe -> 6.9:1 on white, 6.3:1 on bg; on --ms-premium-soft 5.5:1. */
-  --ms-premium:      #6a3fbe;
-  --ms-premium-soft: #eae2fb;
-  --ms-on-premium:   #ffffff;
-
-  /* --- Demo marker (light) ---
-     Reserved exclusively for simulated sign-in, simulated payment and ad
-     placeholders. Nothing real in the app is ever this colour.
-     #a3117a -> 7.2:1 on white, 6.6:1 on bg; on --ms-demo-soft 5.9:1. */
-  --ms-demo:      #a3117a;
-  --ms-demo-soft: #fbe1f2;
-  --ms-on-demo:   #ffffff;
+     users would have to tell two warm tones apart. Violet is unambiguous, and
+     it is used in exactly one place — the Wsparcie screen — so it never
+     competes with a status colour for meaning.
+     #6a3fbe -> 6.9:1 on white, 6.3:1 on bg; on --ms-support-soft 5.5:1. */
+  --ms-support:      #6a3fbe;
+  --ms-support-soft: #eae2fb;
+  --ms-on-support:   #ffffff;
 
   /* --- Focus ring --- */
   --ms-focus: #0b3fa8;
@@ -158,7 +150,6 @@
   --ms-tap:     48px;   /* minimum touch target, no exceptions */
   --ms-nav-h:   72px;   /* bottom navigation height, without safe area */
   --ms-max-w:  760px;   /* content column */
-  --ms-ad-h:     0px;   /* set by JS to the anchored ad height, 0 when absent */
   --ms-safe-b: env(safe-area-inset-bottom, 0px);
   --ms-safe-t: env(safe-area-inset-top, 0px);
 }
@@ -204,22 +195,17 @@
     --ms-crit:         #ff8a80;
     --ms-crit-soft:    #3a1c1a;
     /* NOT white. White on this salmon is 2.28:1 — under the 3:1 floor even for
-       large text — and it sat on the confirm button of "delete my account".
+       large text — and it sat on the confirm button of "delete my history".
        Near-black on it is 8.1:1. */
     --ms-on-crit:      #3a0d0a;
     --ms-neutral:      #b3bcca;
     --ms-neutral-soft: #232a34;
 
     /* #c4a7ff on surface 8.5:1, on its container 7.6:1. */
-    --ms-premium:      #c4a7ff;
-    --ms-premium-soft: #271f3d;
-    --ms-on-premium:   #241344;
-
-    /* #ff8fd4 on surface 8.3:1, on its container 7.5:1. */
-    --ms-demo:      #ff8fd4;
-    --ms-demo-soft: #3a1830;
-    --ms-on-demo:   #3d0a2c;
-
+    --ms-support:      #c4a7ff;
+    --ms-support-soft: #271f3d;
+    --ms-on-support:   #241344;
+  
     --ms-focus: #9cc0ff;
 
     --ms-sh-1: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -265,13 +251,9 @@
   --ms-neutral:      #b3bcca;
   --ms-neutral-soft: #232a34;
 
-  --ms-premium:      #c4a7ff;
-  --ms-premium-soft: #271f3d;
-  --ms-on-premium:   #241344;
-
-  --ms-demo:      #ff8fd4;
-  --ms-demo-soft: #3a1830;
-  --ms-on-demo:   #3d0a2c;
+  --ms-support:      #c4a7ff;
+  --ms-support-soft: #271f3d;
+  --ms-on-support:   #241344;
 
   --ms-focus: #9cc0ff;
 
@@ -297,10 +279,10 @@
   --ms-i-chart:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 20h18'/%3E%3Cpath d='M6 20V11M11 20V5M16 20v-6M21 20v-9'/%3E%3C/svg%3E");
   --ms-i-history:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7L3 8'/%3E%3Cpath d='M3 4v4h4'/%3E%3Cpath d='M12 7v5l3.5 2'/%3E%3C/svg%3E");
   --ms-i-tune:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h9M17 7h3M4 17h3M11 17h9'/%3E%3Ccircle cx='15' cy='7' r='2.4'/%3E%3Ccircle cx='9' cy='17' r='2.4'/%3E%3C/svg%3E");
-  --ms-i-person:    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M4.5 20a7.5 7.5 0 0 1 15 0'/%3E%3C/svg%3E");
-  --ms-i-crown:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8l4.5 4L12 5l4.5 7L21 8l-1.7 10H4.7L3 8z'/%3E%3C/svg%3E");
-  --ms-i-lock:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10V7.5a4 4 0 0 1 8 0V10'/%3E%3C/svg%3E");
-  --ms-i-unlock:    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4.5' y='10' width='15' height='10' rx='2.5'/%3E%3Cpath d='M8 10V7.5a4 4 0 0 1 7.6-1.7'/%3E%3C/svg%3E");
+  /* A mug with a handle and two curls of steam — drawn here, in the same
+     stroke weight as every other glyph, precisely so that nothing has to be
+     fetched from a donation service to show a cup of coffee. */
+  --ms-i-cup:       url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9h13v5.5a4.5 4.5 0 0 1-4.5 4.5h-4A4.5 4.5 0 0 1 4 14.5V9z'/%3E%3Cpath d='M17 10.5h1.6a2.4 2.4 0 0 1 0 4.8H17'/%3E%3Cpath d='M8 3v2.5M12 3v2.5'/%3E%3C/svg%3E");
   --ms-i-info:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5.5'/%3E%3Ccircle cx='12' cy='7.8' r='1.1' fill='%23000' stroke='none'/%3E%3C/svg%3E");
   --ms-i-help:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.4 9.2a2.7 2.7 0 1 1 3.6 2.5c-.7.3-1 .9-1 1.7v.3'/%3E%3Ccircle cx='12' cy='17' r='1.1' fill='%23000' stroke='none'/%3E%3C/svg%3E");
   --ms-i-play:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M8 5.5v13l11-6.5z'/%3E%3C/svg%3E");
@@ -321,8 +303,6 @@
   --ms-i-timer:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='13.5' r='7.5'/%3E%3Cpath d='M12 9.5v4l2.5 1.8M9.5 2.5h5'/%3E%3C/svg%3E");
   --ms-i-trash:     url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 6.5h15M9.5 6.5V4h5v2.5'/%3E%3Cpath d='M6.5 6.5l1 13h9l1-13'/%3E%3Cpath d='M10.5 10v6M13.5 10v6'/%3E%3C/svg%3E");
   --ms-i-sparkle:   url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M12 2l2 6.2 6.2 2-6.2 2-2 6.2-2-6.2L3.8 10.2 10 8.2z'/%3E%3Cpath d='M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z'/%3E%3C/svg%3E");
-  --ms-i-google:    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.2c0 5-3.6 8.3-8.7 8.3A8.5 8.5 0 1 1 12.3 3.5c2.3 0 4.2.85 5.6 2.2l-2.4 2.3a4.9 4.9 0 0 0-3.2-1.2 5.2 5.2 0 1 0 5 6.1h-5V9.9H21z'/%3E%3C/svg%3E");
-  --ms-i-facebook:  url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000'%3E%3Cpath d='M13.6 21v-7.9h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.8V3.7c-.3-.04-1.3-.13-2.5-.13-2.5 0-4.2 1.5-4.2 4.3v2.1H7.4v3.1h2.7V21z'/%3E%3C/svg%3E");
   --ms-i-menu:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16'/%3E%3C/svg%3E");
   --ms-i-grid:      url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'%3E%3Crect x='3.5' y='3.5' width='7' height='7' rx='1.6'/%3E%3Crect x='13.5' y='3.5' width='7' height='7' rx='1.6'/%3E%3Crect x='3.5' y='13.5' width='7' height='7' rx='1.6'/%3E%3Crect x='13.5' y='13.5' width='7' height='7' rx='1.6'/%3E%3C/svg%3E");
   --ms-i-eye:       url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z'/%3E%3Ccircle cx='12' cy='12' r='3.2'/%3E%3C/svg%3E");
@@ -348,10 +328,7 @@
 .ms-icon--chart    { --ms-icon-img: var(--ms-i-chart); }
 .ms-icon--history  { --ms-icon-img: var(--ms-i-history); }
 .ms-icon--tune     { --ms-icon-img: var(--ms-i-tune); }
-.ms-icon--person   { --ms-icon-img: var(--ms-i-person); }
-.ms-icon--crown    { --ms-icon-img: var(--ms-i-crown); }
-.ms-icon--lock     { --ms-icon-img: var(--ms-i-lock); }
-.ms-icon--unlock   { --ms-icon-img: var(--ms-i-unlock); }
+.ms-icon--cup      { --ms-icon-img: var(--ms-i-cup); }
 .ms-icon--info     { --ms-icon-img: var(--ms-i-info); }
 .ms-icon--help     { --ms-icon-img: var(--ms-i-help); }
 .ms-icon--play     { --ms-icon-img: var(--ms-i-play); }
@@ -372,8 +349,6 @@
 .ms-icon--timer    { --ms-icon-img: var(--ms-i-timer); }
 .ms-icon--trash    { --ms-icon-img: var(--ms-i-trash); }
 .ms-icon--sparkle  { --ms-icon-img: var(--ms-i-sparkle); }
-.ms-icon--google   { --ms-icon-img: var(--ms-i-google); }
-.ms-icon--facebook { --ms-icon-img: var(--ms-i-facebook); }
 .ms-icon--menu     { --ms-icon-img: var(--ms-i-menu); }
 .ms-icon--grid     { --ms-icon-img: var(--ms-i-grid); }
 .ms-icon--eye      { --ms-icon-img: var(--ms-i-eye); }
@@ -390,8 +365,8 @@
    element (chapter 3 of the architecture: one writer, one mechanism). Every
    component below sets `display` from a class, and a class beats the user-agent
    [hidden] rule, so without this line `hidden` silently does nothing on most of
-   them. Found during integration: all seven metric tiles were wearing the
-   Premium veil and the header claimed a measurement was running. Enforced once,
+   them. Found during integration: the header claimed a measurement was
+   running when none was. Enforced once,
    here, instead of asking every component to remember its own guard. */
 [hidden] { display: none !important; }
 
@@ -519,7 +494,7 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
   padding: var(--ms-s-4) var(--ms-s-4) 0;
   /* Reserve room for the nav bar AND for an anchored ad, so neither can ever
      cover the last card or the Start/Stop controls. */
-  padding-bottom: calc(var(--ms-nav-h) + var(--ms-ad-h) + var(--ms-safe-b) + var(--ms-s-6));
+  padding-bottom: calc(var(--ms-nav-h) + var(--ms-safe-b) + var(--ms-s-6));
 }
 .ms-main__inner {
   max-width: var(--ms-max-w);
@@ -665,19 +640,6 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 .ms-nav__item:hover { color: var(--ms-text); }
 .ms-nav__item:active { transform: scale(0.96); }
 
-/* Small count/dot on a nav item — used for "premium" or "nowość". */
-.ms-nav__badge {
-  position: absolute;
-  top: -2px;
-  right: 8px;
-  min-width: 10px;
-  height: 10px;
-  padding: 0 3px;
-  border-radius: var(--ms-r-full);
-  background: var(--ms-premium);
-  border: 2px solid var(--ms-surface);
-}
-
 /* On a wide screen the bar becomes a floating capsule rather than a full-width
    strip, which is what the good Play Store apps do on tablets. */
 @media (min-width: 901px) {
@@ -712,7 +674,6 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 .ms-card--bare  { padding: 0; overflow: hidden; }
 .ms-card--hero  { border-radius: var(--ms-r-xl); padding: var(--ms-s-5); }
 .ms-card--accent   { border-color: var(--ms-accent); background: var(--ms-accent-soft); }
-.ms-card--premium  { border-color: var(--ms-premium); background: var(--ms-premium-soft); }
 
 .ms-card__head { display: flex; align-items: flex-start; gap: var(--ms-s-3); }
 .ms-card__title { flex: 1 1 auto; font-size: var(--ms-t-h3); font-weight: 700; line-height: var(--ms-lh-tight); }
@@ -756,10 +717,6 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
   .ms-tile--wide { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--ms-s-5); align-items: center; }
   .ms-tile--wide > .ms-gauge { grid-row: 1 / span 4; }
 }
-/* Unlock buttons line up along the bottom edge instead of floating wherever
-   the description above them happened to end. */
-.ms-tile > .ms-btn--premium { margin-top: auto; }
-
 /* Overlay header: the back circle and the screen title share a centre line and
    a little breathing room, instead of the title being wedged against a 48px
    button with no common baseline. */
@@ -962,7 +919,6 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 .ms-status--good     { background: var(--ms-good-soft); color: var(--ms-good); }
 .ms-status--warning  { background: var(--ms-warn-soft); color: var(--ms-warn); }
 .ms-status--critical { background: var(--ms-crit-soft); color: var(--ms-crit); }
-.ms-status--premium  { background: var(--ms-premium-soft); color: var(--ms-premium); }
 .ms-status--accent   { background: var(--ms-accent-soft); color: var(--ms-on-accent-soft); }
 
 /* ==================================================================
@@ -1219,8 +1175,6 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 .ms-btn--text:hover { background: var(--ms-accent-soft); }
 
 .ms-btn--danger  { background: var(--ms-crit); color: var(--ms-on-crit); }
-.ms-btn--premium { background: var(--ms-premium); color: var(--ms-on-premium); box-shadow: var(--ms-sh-1); }
-.ms-btn--demo    { background: var(--ms-demo); color: var(--ms-on-demo); }
 
 .ms-btn--lg    { min-height: 56px; font-size: var(--ms-t-h3); padding: 0 var(--ms-s-6); }
 .ms-btn--block { display: flex; width: 100%; }
@@ -1230,7 +1184,7 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
    The ellipsis was the single most damaging line in this stylesheet: at 360px
    it turned "Start" into "St…", at 130% text into "S…", it cut the renewal
    amount off the purchase button — the one figure the terms require to be in
-   view — and it clipped "Przywróć domyślne" and "Wyczyść stan demonstracyjny".
+   view — and it clipped "Przywróć domyślne" and "Wyczyść historię pomiarów".
    Every one of those is a control whose whole job is to say what it will do.
    A button that is one line taller costs nothing; a button that lies about
    what it does costs everything. Polish compounds are long and often have no
@@ -1269,7 +1223,7 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 .ms-fab {
   position: fixed;
   right: var(--ms-s-4);
-  bottom: calc(var(--ms-nav-h) + var(--ms-ad-h) + var(--ms-safe-b) + var(--ms-s-4));
+  bottom: calc(var(--ms-nav-h) + var(--ms-safe-b) + var(--ms-s-4));
   z-index: 35;
   min-height: 56px;
   padding: 0 var(--ms-s-5);
@@ -1324,21 +1278,20 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
   color: var(--ms-on-accent-soft);
   font-weight: 800;
 }
-/* A chip that describes a column rather than a filter: filled columns read as
-   selected, locked ones stay outlined. Driven by data-locked, never by ARIA
-   that a <span> cannot carry. */
-.ms-chip[data-locked="false"] {
+/* A chip that describes a column rather than a filter. It is a <span>, which
+   carries no role, so the state cannot be expressed with ARIA — it is a class
+   for the eye and a visually-hidden sentence for the reader. */
+.ms-chip--filled {
   background: var(--ms-accent-soft);
   border-color: transparent;
   color: var(--ms-on-accent-soft);
   font-weight: 800;
 }
-.ms-chip[data-locked="true"] { color: var(--ms-text-3); border-style: dashed; }
 
 /* The checkmark is what tells a colour-blind user which chip is on. */
 .ms-chip[aria-pressed="true"]::before,
 .ms-chip[aria-selected="true"]::before,
-.ms-chip[data-locked="false"]::before {
+.ms-chip--filled::before {
   content: "";
   width: 18px; height: 18px;
   background: currentColor;
@@ -1346,7 +1299,7 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
           mask: var(--ms-i-check) center / contain no-repeat;
 }
 
-/* Five ranges, each able to carry a padlock, do not fit across a 320px screen
+/* Five ranges do not fit across a 320px screen
    at any font size — sharing the width equally forced two-line labels and, once
    those were forbidden, ran the words into each other. The row scrolls instead:
    the same behaviour .ms-chipbar has, which the visual system provides for
@@ -1377,7 +1330,7 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
   font-size: var(--ms-t-label);
   font-weight: 700;
   /* One line per segment. Wrapped labels turned the row into a set of
-     mismatched boxes and pushed the padlocks into the text. */
+     mismatched boxes. */
   white-space: nowrap;
   cursor: pointer;
   transition: background var(--ms-dur-fast) var(--ms-ease), color var(--ms-dur-fast) var(--ms-ease);
@@ -1492,14 +1445,11 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
   color: var(--ms-text-2);
 }
 .ms-list__icon--accent  { background: var(--ms-accent-soft);  color: var(--ms-on-accent-soft); }
-.ms-list__icon--premium { background: var(--ms-premium-soft); color: var(--ms-premium); }
-.ms-list__icon--demo    { background: var(--ms-demo-soft);    color: var(--ms-demo); }
 
-/* The trailing slot may hold a "Premium" pill, which does not wrap — at 320px
-   with the largest text it kept its full 128px and squeezed the row title down
-   to 47px of "Porównywar…". The title now claims a floor instead, and the row
-   wraps the trailing slot onto its own line rather than cutting the name of the
-   tool the row leads to. */
+/* The trailing slot holds a chevron, which does not wrap — at 320px with the
+   largest text the row title was squeezed down to 47px of "Porównywar…". The
+   title claims a floor instead, and the row wraps the trailing slot onto its
+   own line rather than cutting the name of the tool the row leads to. */
 .ms-list__text  { flex: 1 1 12ch; min-width: 0; overflow-wrap: anywhere; }
 .ms-list__title { font-weight: 600; }
 .ms-list__sub   { font-size: var(--ms-t-cap); color: var(--ms-text-3); }
@@ -1621,7 +1571,7 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 .ms-toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--ms-nav-h) + var(--ms-ad-h) + var(--ms-safe-b) + var(--ms-s-4));
+  bottom: calc(var(--ms-nav-h) + var(--ms-safe-b) + var(--ms-s-4));
   z-index: 70;
   transform: translate(-50%, 16px);
   opacity: 0;
@@ -1654,396 +1604,44 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 }
 
 /* ==================================================================
-   16. ADS — always visibly fake, never in the way
+   16. SUPPORT — the one donation surface
    ==================================================================
-   Every ad surface carries .ms-demo-badge as a hard requirement of the markup.
-   The dashed magenta border makes the placeholder impossible to confuse with
-   app content even at a glance, which is the whole point.
+   Deliberately small: a secondary accent button, a soft tile behind the cup
+   icon and a plain text link. No hero gradient, no sticker, no borrowed
+   branding — the screen is an explanation with a button at the end of it, and
+   it must not out-shout the measurement it is asking about.
    ------------------------------------------------------------------ */
 
-/* min-height is 64px, the number the specification names, not 72: the DEMO
-   pill hangs off the top edge (.ms-demo-badge--corner) instead of standing in
-   the flex row, where it was taking 153 of the 380 available pixels and
-   crushing the text column to 42px of one-word-per-line wrapping. */
-.ms-ad {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ms-s-3);
-  padding: var(--ms-s-4) var(--ms-s-4) var(--ms-s-3);
-  min-height: 64px;
-  border: 2px dashed var(--ms-demo);
-  border-radius: var(--ms-r-md);
-  background: var(--ms-demo-soft);
-  color: var(--ms-text);
+.ms-btn--support {
+  background: var(--ms-support);
+  color: var(--ms-on-support);
+  box-shadow: var(--ms-sh-1);
 }
-/* Should a badge ever be placed inline anyway, it must not consume the row. */
-.ms-ad > .ms-demo-badge { flex: 0 0 auto; }
-.ms-ad__body  { flex: 1 1 12ch; min-width: 0; padding-right: var(--ms-tap); }
-.ms-ad__title { font-weight: 800; font-size: var(--ms-t-label); }
-/* Belt and braces for a 320px screen: a long word breaks rather than escaping
-   from under the button next to it. */
-.ms-ad__text  { font-size: var(--ms-t-cap); color: var(--ms-text-2); overflow-wrap: anywhere; }
-.ms-ad__cta   { flex: 0 0 auto; }
-.ms-ad__close {
-  /* Pinned to the corner rather than standing in the row: as a flex item it
-     took 48px plus a gap from the text column on a 360px screen. */
-  position: absolute;
-  top: 2px; right: 2px;
-  width: var(--ms-tap); height: var(--ms-tap);
-  display: grid; place-items: center;
-  border: 0; background: none;
-  color: var(--ms-demo);
-  border-radius: var(--ms-r-full);
-  cursor: pointer;
-}
-.ms-ad__close:hover { background: rgba(163, 17, 122, 0.12); }
+/* Anchors carry no button styling of their own, and this one IS an anchor:
+   it leaves the application, so it must be a real link for middle-click,
+   "open in new tab" and every assistive technology that lists links. */
+a.ms-btn--support { text-decoration: none; }
 
-/* Docked slot. It sits ABOVE the navigation bar and its height is fed back to
-   the layout through --ms-ad-h (set by JS), so content is never hidden behind
-   it. It physically cannot cover the Start/Stop row, which lives in .ms-main. */
-.ms-ad--anchored {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--ms-nav-h) + var(--ms-safe-b));
-  z-index: 25;
-  width: min(var(--ms-max-w), calc(100% - 2 * var(--ms-s-3)));
-  margin-bottom: var(--ms-s-2);
-  box-shadow: var(--ms-sh-2);
-  background: var(--ms-surface);
-}
-.ms-ad--inline { width: 100%; }
+.ms-list__icon--support { background: var(--ms-support-soft); color: var(--ms-support); }
 
-/* Rewarded / interstitial demo. Full screen, but it can only ever appear while
-   no measurement is running — the rule lives in JS; the style just makes the
-   skip control large and immediate. */
-.ms-ad-full {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ms-s-5);
-  align-items: center;
-  justify-content: center;
-  padding: var(--ms-s-6);
-  text-align: center;
-  background: var(--ms-bg);
-}
-.ms-ad-full[hidden] { display: none; }
-.ms-ad-full__box {
-  width: min(420px, 100%);
-  padding: var(--ms-s-6);
-  border: 3px dashed var(--ms-demo);
-  border-radius: var(--ms-r-xl);
-  background: var(--ms-demo-soft);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ms-s-3);
-}
-.ms-ad-full__title { font-size: var(--ms-t-h2); font-weight: 800; }
-.ms-ad-full__text  { color: var(--ms-text-2); font-size: var(--ms-t-label); }
-.ms-ad-full__skip  { min-width: 200px; }
-
-/* ==================================================================
-   17. DEMO MARKING — the honesty layer
-   ==================================================================
-   Anything simulated (sign-in, payment, subscription state, ads) must wear one
-   of these. They are intentionally loud.
-   ------------------------------------------------------------------ */
-
-.ms-demo-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  min-height: 26px;
-  border-radius: var(--ms-r-full);
-  background: var(--ms-demo);
-  color: var(--ms-on-demo);
-  font-size: var(--ms-t-cap);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.ms-demo-badge--corner {
-  position: absolute;
-  top: -12px;
-  left: var(--ms-s-3);
-  z-index: 2;
-}
-
-/* Hazard strip. Used as the top edge of any simulated payment or account panel.
-   The stripes are a repeating gradient, not an image. */
-.ms-demo-strip {
-  display: flex;
-  align-items: center;
-  gap: var(--ms-s-2);
-  padding: var(--ms-s-2) var(--ms-s-4);
-  font-size: var(--ms-t-cap);
-  font-weight: 800;
-  color: var(--ms-on-demo);
-  background:
-    repeating-linear-gradient(135deg,
-      var(--ms-demo) 0 12px,
-      color-mix(in srgb, var(--ms-demo) 72%, #000) 12px 24px);
-}
-/* The sentence rides on a flat chip, not on the stripes: over the dark stripe
-   the label was 4.25:1, and this is the single most important sentence in the
-   application. On the flat token it is 7.2:1 / 7.9:1. */
-.ms-demo-strip > span {
-  background: var(--ms-demo);
-  color: var(--ms-on-demo);
-  padding: 2px 8px;
-  border-radius: var(--ms-r-xs);
-}
-/* color-mix is widely supported, but a flat fallback must exist for old
-   engines: declared first so it wins when the mix cannot be parsed. */
-@supports not (background: color-mix(in srgb, red 50%, blue)) {
-  .ms-demo-strip {
-    background: repeating-linear-gradient(135deg,
-      var(--ms-demo) 0 12px, var(--ms-on-demo) 12px 24px);
-  }
-}
-
-/* Wraps an entire simulated screen. */
-.ms-demo-frame {
-  position: relative;
-  border: 3px dashed var(--ms-demo);
-  border-radius: var(--ms-r-lg);
-  padding: var(--ms-s-4);
-  background: var(--ms-surface);
-  display: flex;
-  flex-direction: column;
-  gap: var(--ms-s-3);
-}
-.ms-demo-note {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ms-s-2);
-  padding: var(--ms-s-3);
-  border-radius: var(--ms-r-sm);
-  background: var(--ms-demo-soft);
-  color: var(--ms-text);
-  border-left: 5px solid var(--ms-demo);
-  font-size: var(--ms-t-label);
-}
-
-/* ==================================================================
-   18. PREMIUM, LOCKS AND THE PAYWALL
-   ==================================================================
-   A locked tile still SHOWS its name, its unit and its explanation. Only the
-   number is withheld. Hiding the whole card would make the app feel smaller
-   than it is and would teach the user nothing about what they are missing.
-   ------------------------------------------------------------------ */
-
-.ms-tile--locked .ms-tile__value { color: var(--ms-text-3); }
-.ms-tile--locked .ms-tile__bar   { opacity: 0.4; }
-
-.ms-lock {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  min-height: 26px;
-  border-radius: var(--ms-r-full);
-  background: var(--ms-premium-soft);
-  color: var(--ms-premium);
-  font-size: var(--ms-t-cap);
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-/* Blur veil over a locked value. `filter` on the parent would blur the label
-   too, so the veil is a sibling overlay with a soft-tinted backdrop. */
-.ms-tile__veil {
-  position: absolute;
-  inset: 5px 0 0 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ms-s-2);
-  padding: var(--ms-s-3);
-  text-align: center;
-  background: color-mix(in srgb, var(--ms-surface) 52%, transparent);
-  -webkit-backdrop-filter: blur(5px);
-          backdrop-filter: blur(5px);
-}
-@supports not (background: color-mix(in srgb, red 50%, blue)) {
-  .ms-tile__veil { background: var(--ms-surface-2); }
-}
-.ms-tile__veil-text { font-size: var(--ms-t-cap); font-weight: 700; color: var(--ms-text-2); }
-/* A locked dial must look deliberate. At 82% opacity the veil was an opaque
-   slab and the ring vanished underneath, which reads as "failed to load". The
-   dial below now shows through, and the ring is redrawn as a dashed violet
-   outline so the tile says "paid", not "broken". */
-.ms-gauge:has(> .ms-tile__veil:not([hidden])) .ms-gauge__dial {
-  opacity: 0.35;
-  filter: grayscale(1);
-}
-.ms-tile__veil::after {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border: 2px dashed var(--ms-premium);
-  border-radius: 50%;
-  opacity: 0.75;
-  pointer-events: none;
-}
-.ms-tile__veil > .ms-icon { color: var(--ms-premium); }
-
-.ms-pro-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 9px;
-  border-radius: var(--ms-r-full);
-  background: var(--ms-premium);
-  color: var(--ms-on-premium);
-  font-size: var(--ms-t-cap);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-
-.ms-paywall__hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ms-s-3);
-  padding: var(--ms-s-6) var(--ms-s-4);
-  text-align: center;
-  border-radius: var(--ms-r-xl);
-  background: var(--ms-premium-soft);
-  border: 1px solid var(--ms-premium);
-}
-.ms-paywall__title { font-size: var(--ms-t-h1); font-weight: 800; line-height: var(--ms-lh-tight); }
-.ms-paywall__lead  { color: var(--ms-text-2); font-size: var(--ms-t-label); max-width: 42ch; }
-
-.ms-plans { display: grid; gap: var(--ms-s-3); grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 561px) { .ms-plans { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-.ms-plan {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ms-s-2);
-  padding: var(--ms-s-4);
-  border: 2px solid var(--ms-border);
-  border-radius: var(--ms-r-lg);
-  background: var(--ms-surface);
-  text-align: left;
-  width: 100%;
-  min-height: var(--ms-tap);
-}
-/* Only when the plan really IS a control. As a <div> it offered a pointer
-   cursor and a hover border for a click that did nothing. */
-button.ms-plan, [role="radio"].ms-plan { cursor: pointer; }
-button.ms-plan:hover,
-[role="radio"].ms-plan:hover { border-color: var(--ms-border-strong); }
-.ms-plan[aria-pressed="true"],
-.ms-plan[aria-checked="true"],
-.ms-plan--featured { border-color: var(--ms-premium); background: var(--ms-premium-soft); }
-.ms-plan__badge {
-  position: absolute;
-  top: -13px; right: var(--ms-s-4);
-  padding: 2px 10px;
-  border-radius: var(--ms-r-full);
-  background: var(--ms-premium);
-  color: var(--ms-on-premium);
-  font-size: var(--ms-t-cap);
-  font-weight: 800;
-}
-.ms-plan__name  { font-weight: 700; font-size: var(--ms-t-h3); }
-/* The price is what the card is for. At 22px it was four pixels bigger than
-   the plan name and lost the comparison between the three cards. */
-.ms-plan__price { font-size: var(--ms-t-h1); font-weight: 800; font-variant-numeric: tabular-nums; line-height: var(--ms-lh-tight); }
-
-/* Full terms behind a disclosure; the renewal line stays on the card face. */
-.ms-plan__details { font-size: var(--ms-t-cap); }
-.ms-plan__summary {
-  display: flex;
-  align-items: center;
-  min-height: var(--ms-tap);
+/* The single discreet mention outside the Wsparcie screen: a sentence, and a
+   word in it that happens to be clickable. It gets the 48px target height that
+   everything else in this app gets, without turning into a button. */
+.ms-linkbtn {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--ms-accent);
+  font: inherit;
   font-weight: 700;
+  text-decoration: underline;
   cursor: pointer;
 }
-.ms-plan__summary:focus-visible { outline: 3px solid var(--ms-focus); outline-offset: 2px; border-radius: var(--ms-r-xs); }
-.ms-plan__note  { font-size: var(--ms-t-cap); color: var(--ms-text-2); }
-
-.ms-feature-list { display: flex; flex-direction: column; gap: var(--ms-s-3); }
-.ms-feature { display: flex; align-items: flex-start; gap: var(--ms-s-3); }
-.ms-feature__icon {
-  flex: 0 0 auto;
-  width: 36px; height: 36px;
-  display: grid; place-items: center;
-  border-radius: var(--ms-r-sm);
-  background: var(--ms-premium-soft);
-  color: var(--ms-premium);
-}
-.ms-feature__text  { flex: 1 1 auto; min-width: 0; }
-.ms-feature__title { font-weight: 700; }
-.ms-feature__desc  { font-size: var(--ms-t-cap); color: var(--ms-text-2); }
+.ms-linkbtn:focus-visible { outline: 3px solid var(--ms-focus); outline-offset: 2px; border-radius: var(--ms-r-xs); }
 
 /* ==================================================================
-   19. ACCOUNT
-   ================================================================== */
-
-.ms-account {
-  display: flex;
-  align-items: center;
-  gap: var(--ms-s-4);
-}
-.ms-avatar {
-  flex: 0 0 auto;
-  width: 48px; height: 48px;
-  display: grid; place-items: center;
-  border-radius: 50%;
-  background: var(--ms-accent-soft);
-  color: var(--ms-on-accent-soft);
-  font-weight: 800;
-  font-size: var(--ms-t-h3);
-  overflow: hidden;
-}
-.ms-avatar--lg { width: 72px; height: 72px; font-size: var(--ms-t-h1); }
-.ms-avatar--premium { background: var(--ms-premium-soft); color: var(--ms-premium); }
-
-.ms-account__text  { flex: 1 1 auto; min-width: 0; }
-.ms-account__name  { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ms-account__meta  { font-size: var(--ms-t-cap); color: var(--ms-text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* Simulated identity providers. They are NOT styled in Google/Facebook brand
-   colours on purpose: brand-accurate buttons would be the most convincing lie
-   in the app. Neutral surface + a permanent DEMO badge instead. */
-.ms-provider {
-  display: flex;
-  align-items: center;
-  gap: var(--ms-s-3);
-  width: 100%;
-  min-height: 56px;
-  padding: 0 var(--ms-s-4);
-  border: 2px solid var(--ms-border-strong);
-  border-radius: var(--ms-r-full);
-  background: var(--ms-surface);
-  color: var(--ms-text);
-  font-size: var(--ms-t-body);
-  font-weight: 700;
-  cursor: pointer;
-  text-align: left;
-}
-.ms-provider:hover  { background: var(--ms-surface-2); }
-.ms-provider:active { transform: scale(0.98); }
-.ms-provider__icon  { flex: 0 0 auto; color: var(--ms-text-2); }
-.ms-provider__label { flex: 1 1 auto; min-width: 0; }
-.ms-provider__tag   { flex: 0 0 auto; }
-
-/* ==================================================================
-   20. CHARTS, TABLES, EMPTY STATES
+   17. CHARTS, TABLES, EMPTY STATES
    ================================================================== */
 
 .ms-chart {
@@ -2132,7 +1730,7 @@ button.ms-plan:hover,
 .ms-empty__text  { font-size: var(--ms-t-label); max-width: 40ch; }
 
 /* ==================================================================
-   21. FORMS
+   18. FORMS
    ================================================================== */
 
 .ms-field { display: flex; flex-direction: column; gap: 6px; }
@@ -2207,7 +1805,7 @@ button.ms-plan:hover,
 .ms-help { font-size: var(--ms-t-cap); color: var(--ms-text-3); }
 
 /* ==================================================================
-   22. NOTES, BADGES, PROGRESS
+   19. NOTES, BADGES, PROGRESS
    ==================================================================
    .ms-note is where the app admits what it cannot measure. It appears often on
    purpose: a phone camera has no spectrometer and the interface says so.
@@ -2236,9 +1834,6 @@ button.ms-plan:hover,
 .ms-note--critical { background: var(--ms-crit-soft); border-left-color: var(--ms-crit); color: var(--ms-crit); }
 .ms-note--critical .ms-note__icon,
 .ms-note--critical .ms-note__title { color: inherit; }
-.ms-note--premium  { background: var(--ms-premium-soft); border-left-color: var(--ms-premium); color: var(--ms-premium); }
-.ms-note--premium .ms-note__icon,
-.ms-note--premium .ms-note__title { color: inherit; }
 
 .ms-badge {
   display: inline-flex;
@@ -2286,7 +1881,7 @@ button.ms-plan:hover,
 @keyframes ms-shimmer { to { background-position: -135% 0; } }
 
 /* ==================================================================
-   23. UTILITIES
+   20. UTILITIES
    ================================================================== */
 
 .ms-t-h2      { font-size: var(--ms-t-h2); font-weight: 800; line-height: var(--ms-lh-tight); }
@@ -2301,15 +1896,13 @@ button.ms-plan:hover,
 .ms-t-good     { color: var(--ms-good); }
 .ms-t-warning  { color: var(--ms-warn); }
 .ms-t-critical { color: var(--ms-crit); }
-.ms-t-premium  { color: var(--ms-premium); }
-.ms-t-demo     { color: var(--ms-demo); }
 
 .ms-hide { display: none !important; }
 @media (max-width: 700px) { .ms-only-wide   { display: none !important; } }
 @media (min-width: 701px) { .ms-only-narrow { display: none !important; } }
 
 /* ==================================================================
-   24. MOTION PREFERENCE
+   21. MOTION PREFERENCE
    ==================================================================
    A blanket switch-off. Transitions are removed rather than shortened: for a
    user who asked for no motion, a 1ms slide is still a slide.
@@ -2329,7 +1922,7 @@ button.ms-plan:hover,
 }
 
 /* ==================================================================
-   25. FORCED COLOURS / HIGH CONTRAST
+   22. FORCED COLOURS / HIGH CONTRAST
    ==================================================================
    Windows high-contrast mode drops author colours. Masked icons would vanish
    entirely, so they are forced back to the system text colour, and every
@@ -2338,7 +1931,7 @@ button.ms-plan:hover,
 
 @media (forced-colors: active) {
   .ms-icon { background-color: CanvasText; }
-  .ms-card, .ms-tile, .ms-list, .ms-sheet, .ms-nav, .ms-ad, .ms-tablewrap {
+  .ms-card, .ms-tile, .ms-list, .ms-sheet, .ms-nav, .ms-tablewrap {
     border: 1px solid CanvasText;
   }
   .ms-tile::before, .ms-tile__fill, .ms-progress__fill, .ms-mark { forced-color-adjust: none; }
@@ -2346,7 +1939,7 @@ button.ms-plan:hover,
 }
 
 /* ==================================================================
-   26. PRINT
+   23. PRINT
    ==================================================================
    Exporting a session as a printed page is a genuine use case (showing it to
    an optician), so the chrome is dropped and the cards flatten.
@@ -2367,44 +1960,33 @@ button.ms-plan:hover,
       one sentence ("MigotanieProcent migotania i…"). One rule fixes thirty
       call sites, and `.ms-note__title` above already did exactly this.
 
-   2. Pills stretched to full width. A chip in a flex COLUMN stretches unless it
-      is told not to, which turned every "DEMO" badge into something that looked
-      like a button. `.ms-tile__status` already carried `align-self: flex-start`
-      for this reason; the other chips simply never got it.
+   2. Pills stretched to full width. A chip in a flex COLUMN stretches unless
+      it is told not to, which turned every status pill into something that
+      looked like a button. `.ms-tile__status` already carried
+      `align-self: flex-start`; the other chips simply never got it.
    ------------------------------------------------------------------ */
 
 .ms-list__text,
-.ms-account__text,
 .ms-switch__text,
-.ms-feature__text,
-.ms-note__text,
-.ms-ad__body {
+.ms-note__text {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .ms-list__title, .ms-list__sub,
-.ms-account__name, .ms-account__meta,
-.ms-switch__label, .ms-switch__sub,
-.ms-feature__title, .ms-feature__desc,
-.ms-ad__title, .ms-ad__text,
-.ms-tile__veil-text { display: block; }
+.ms-switch__label, .ms-switch__sub { display: block; }
 
 /* Only ever a flex item's own alignment; on a chip that is not in a flex
    container this property does nothing at all. */
-.ms-demo-badge, .ms-lock, .ms-pro-badge, .ms-status, .ms-badge { align-self: flex-start; }
+.ms-status, .ms-badge { align-self: flex-start; }
 
 /* A note that ends with a call to action gives it a little air and its own
    line, rather than letting it sit tight against the last sentence. */
 .ms-note__text > .ms-btn { align-self: flex-start; margin-top: var(--ms-s-2); }
 
-/* The demo strip and the demo note are full-width bands by design, so they
-   opt back out of the line above through their own children. */
-.ms-demo-strip .ms-demo-badge { align-self: center; }
-
 @media print {
-  .ms-nav, .ms-fab, .ms-ad, .ms-ad--anchored, .ms-toast, .ms-scrim, .ms-sheet, .ms-skip { display: none !important; }
+  .ms-nav, .ms-fab, .ms-toast, .ms-scrim, .ms-sheet, .ms-skip { display: none !important; }
   body { background: #fff; color: #000; }
   .ms-main { padding-bottom: 0; }
   .ms-card, .ms-tile, .ms-tablewrap { box-shadow: none; border: 1px solid #999; break-inside: avoid; }

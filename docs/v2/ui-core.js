@@ -9,16 +9,14 @@
  *   2. The measurement presentation: seven tiles generated in a loop from
  *      Metrics.CATALOGUE, the history chart drawn by hand on a canvas, and the
  *      readings table (the `Viz` contract of the specification).
- *   3. Nothing about money. Account, store, paywall and ad screens belong to
- *      other modules; this file only builds and exposes the hooks they mount
- *      into, and asks Store.has() / Store.requireFeature() when a metric or a
- *      chart range is gated.
+ *   3. Nothing about money. The one donation screen lives in support.js; this
+ *      file only reserves its panel and its place in the tab bar.
  *
  * Two rules shaped most of the code below:
  *
- *   - Measurement is never blocked. Nothing here waits for an account, a
- *     purchase or an ad. If Store is missing entirely the app still measures;
- *     it simply shows the three premium metrics as locked.
+ *   - Measurement is never blocked, and nothing in the application gates a
+ *     metric, a chart range or a tool. All seven metrics are drawn for
+ *     everybody, always; there is no code path here that could hide one.
  *   - A canvas measured inside a hidden panel is 0 px wide. That was a real bug
  *     in v1: charts drawn on a hidden tab came out empty and never repaired
  *     themselves. Every reveal here therefore schedules a redraw in
@@ -166,7 +164,7 @@
      2. Settings (ms2.settings.v1)
      ==================================================================
      Owned here. Nobody reads the key directly; the rest of the app goes
-     through UI.getSetting() / UI.setSetting(). Survives Store.resetDemo().
+     through UI.getSetting() / UI.setSetting().
      ------------------------------------------------------------------ */
 
   var SETTINGS_KEY = 'ms2.settings.v1';
@@ -365,7 +363,7 @@
 
   var ICON_ALIAS = {
     measure: 'monitor', tools: 'tune', more: 'menu', 'switch': 'flip',
-    back: 'chevron', account: 'person', premium: 'crown', 'export': 'download',
+    back: 'chevron', support: 'cup', 'export': 'download',
     calendar: 'timer', compare: 'grid', target: 'eye', screen: 'monitor',
     star: 'sparkle', ad: 'doc', sync: 'refresh'
   };
@@ -379,58 +377,17 @@
     return el;
   }
 
-  function demoBadge(textPL) {
-    return make('span', 'ms-demo-badge', textPL || 'DEMO');
-  }
-
-  function lockBadge(textPL) {
-    var el = make('span', 'ms-lock');
-    el.appendChild(icon('lock', 'sm'));
-    el.appendChild(make('span', null, textPL || 'Premium'));
-    return el;
-  }
-
   function srOnly(textPL) { return make('span', 'ms-visually-hidden', textPL); }
 
   /* ==================================================================
-     6. Entitlements — asked here, decided only in store.js
-     ==================================================================
-     A missing Store (isolated development of the shell) degrades to the free
-     tier instead of throwing, and measurement carries on either way.
-     ------------------------------------------------------------------ */
-
-  function hasFeature(featureId) {
-    var S = global.Store;
-    if (!S || typeof S.has !== 'function') return false;
-    try { return !!S.has(featureId); } catch (e) { return false; }
-  }
-
-  function requireFeature(featureId, context) {
-    var S = global.Store;
-    if (S && typeof S.requireFeature === 'function') {
-      try { return !!S.requireFeature(featureId, context); } catch (e) { return false; }
-    }
-    // Without store.js the invitation still has to reach somebody: the bus
-    // carries it, exactly as Store.requireFeature() would have done.
-    emit('store:paywall', { featureId: featureId, context: context });
-    return false;
-  }
-
-  function metricFeatureId(metricId) { return 'metric.' + metricId; }
-
-  function metricUnlocked(metric) {
-    return !metric.premium || hasFeature(metricFeatureId(metric.id));
-  }
-
-  /* ==================================================================
-     7. Screen registry
+     6. Screen registry
      ================================================================== */
 
   var TABS = [
     { tabId: 'measure', panelId: 'panelMeasure', navId: 'navMeasure', labelPL: 'Pomiar', iconName: 'monitor' },
     { tabId: 'history', panelId: 'panelHistory', navId: 'navHistory', labelPL: 'Historia', iconName: 'history' },
     { tabId: 'tools', panelId: 'panelTools', navId: 'navTools', labelPL: 'Narzędzia', iconName: 'tune' },
-    { tabId: 'premium', panelId: 'panelPremium', navId: 'navPremium', labelPL: 'Premium', iconName: 'crown' },
+    { tabId: 'support', panelId: 'panelSupport', navId: 'navSupport', labelPL: 'Wsparcie', iconName: 'cup' },
     { tabId: 'more', panelId: 'panelMore', navId: 'navMore', labelPL: 'Więcej', iconName: 'menu' }
   ];
 
@@ -438,7 +395,6 @@
      panel with its back button and title so navigation works even if a module
      is not loaded yet, and every module can find its container by id. */
   var OVERLAYS = [
-    { panelId: 'panelAccount', titlePL: 'Konto' },
     { panelId: 'panelDocs', titlePL: 'Dokumentacja' },
     { panelId: 'panelThresholds', titlePL: 'Progi i profile' },
     { panelId: 'panelReports', titlePL: 'Raporty' },
@@ -706,7 +662,7 @@
   /* Exactly one place says the name of the screen. An overlay carries its own
      header (back button + title, the panelXxx -> backXxx/titleXxx contract), so
      the app bar goes back to the application name there instead of printing
-     "Konto" twice, 40px apart. On a tab screen there is no second header, so
+     "Dokumentacja" twice, 40px apart. On a tab screen there is no second header, so
      the bar names the tab. */
   function updateHeaderForView() {
     var titleEl = byId('appTitle');
@@ -759,12 +715,6 @@
 
       var iconWrap = make('span', 'ms-nav__icon');
       iconWrap.appendChild(icon(tab.iconName));
-      if (tab.tabId === 'premium') {
-        var badge = make('span', 'ms-nav__badge');
-        badge.id = 'navPremiumBadge';
-        badge.hidden = true;
-        iconWrap.appendChild(badge);
-      }
       btn.appendChild(iconWrap);
       btn.appendChild(make('span', 'ms-nav__label', tab.labelPL));
       list.appendChild(btn);
@@ -926,10 +876,10 @@
     if (!el) return false;
     var o = opts || {};
 
-    /* Two fast taps on "Odblokuj" pushed two entries for one sheet. Closing it
-       popped one, anySheetOpen() still saw the other, and the user was left
-       looking at a bare scrim with nothing on it. A sheet is a set, not a
-       stack: opening one that is already open just moves the focus. */
+    /* Two fast taps on the same opener pushed two entries for one sheet.
+       Closing it popped one, anySheetOpen() still saw the other, and the user
+       was left looking at a bare scrim with nothing on it. A sheet is a set,
+       not a stack: opening one that is already open just moves the focus. */
     for (var d = 0; d < navStack.length; d += 1) {
       if (navStack[d].kind === 'sheet' && navStack[d].id === sheetId) {
         var again = o.focusId ? byId(o.focusId) : null;
@@ -1091,9 +1041,6 @@
         cancelBtn.hidden = opts.cancelPL === false;
         cancelBtn.textContent = opts.cancelPL || 'Anuluj';
       }
-      var demoStrip = byId('dialogDemoStrip');
-      if (demoStrip) demoStrip.hidden = !opts.demo;
-
       dialogResolver = resolve;
       openSheet('sheetDialog', { focusId: opts.danger ? 'dialogCancel' : 'dialogConfirm' });
     });
@@ -1105,8 +1052,7 @@
       titlePL: opts.titlePL || 'Informacja',
       bodyPL: opts.bodyPL || '',
       confirmPL: opts.okPL || 'Rozumiem',
-      cancelPL: false,
-      demo: opts.demo
+      cancelPL: false
     }).then(function () { return undefined; });
   }
 
@@ -1124,7 +1070,6 @@
       kv.appendChild(kvRow('Zakres skali', formatMetric(metric.id, metric.min) + ' – ' + formatMetric(metric.id, metric.max)));
       kv.appendChild(kvRow('Próg ostrzegawczy', formatMetric(metric.id, thresholdFor(metric).warn) + ' ' + metric.unit));
       kv.appendChild(kvRow('Próg krytyczny', formatMetric(metric.id, thresholdFor(metric).crit) + ' ' + metric.unit));
-      kv.appendChild(kvRow('Dostępność', metric.premium ? 'Funkcja Premium' : 'Bezpłatna'));
       body.appendChild(kv);
 
       var note = make('div', 'ms-note ms-note--info');
@@ -1202,13 +1147,6 @@
       inner.appendChild(status);
 
       var actions = make('div', 'ms-header__actions');
-
-      var accountBtn = make('button', 'ms-iconbtn');
-      accountBtn.id = 'btnAccountShortcut';
-      accountBtn.type = 'button';
-      accountBtn.setAttribute('aria-label', 'Konto');
-      accountBtn.appendChild(icon('person'));
-      actions.appendChild(accountBtn);
 
       var infoBtn = make('button', 'ms-iconbtn');
       infoBtn.id = 'btnInfo';
@@ -1320,11 +1258,6 @@
   function ensureDialogSheet(layer) {
     if (byId('sheetDialog')) return;
     var sheet = sheetSkeleton('sheetDialog', 'dialogTitle', 'Potwierdzenie');
-
-    var strip = make('div', 'ms-demo-strip', 'DEMO — symulacja');
-    strip.id = 'dialogDemoStrip';
-    strip.hidden = true;
-    sheet.insertBefore(strip, sheet.firstChild);
 
     var body = make('div', 'ms-sheet__body');
     var p = make('p', 'ms-t-body');
@@ -1562,14 +1495,6 @@
     grid.id = 'tileGrid';
     section.appendChild(grid);
 
-    /* Mounting point for the Premium invitation. The shell only reserves the
-       place, BELOW the tiles; store.js decides whether and when to fill it
-       (chapter 12.2: not before 45 s of measurement, once per session). */
-    var teaser = make('div', null);
-    teaser.id = 'teaserBanner';
-    teaser.hidden = true;
-    section.appendChild(teaser);
-
     /* --- session summary --- */
     var summary = make('div', 'ms-card');
     summary.id = 'sessionSummary';
@@ -1733,7 +1658,6 @@
     for (var i = 0; i < list.length; i += 1) {
       grid.appendChild(buildTile(list[i], list[i].id === HERO_METRIC_ID));
     }
-    applyTileLocks();
   }
 
   /* The metric the application is named after leads the screen. Seven identical
@@ -1785,19 +1709,6 @@
     readout.appendChild(unit);
     gauge.appendChild(readout);
 
-    /* The veil for a locked metric sits INSIDE the gauge, so the name, the unit
-       and the explanation stay readable and only the number is withheld. It
-       covers a dash, never an invented or blurred value — a fake number would
-       be a dark pattern and would also teach the user nothing. */
-    var veil = make('div', 'ms-tile__veil');
-    veil.id = 'tileLock-' + metric.id;
-    veil.hidden = true;
-    // A padlock at 32px plus the pill: a lone 13px pill on a near-opaque slab
-    // read as "this tile failed to load" rather than "this tile is paid for".
-    veil.appendChild(icon('lock', 'lg'));
-    veil.appendChild(lockBadge('Premium'));
-    gauge.appendChild(veil);
-
     tile.appendChild(gauge);
 
     var status = make('p', 'ms-tile__status');
@@ -1812,57 +1723,7 @@
     hint.id = 'tileHint-' + metric.id;
     tile.appendChild(hint);
 
-    if (metric.premium) {
-      var unlock = make('button', 'ms-btn ms-btn--premium ms-btn--block');
-      unlock.id = 'tileUnlock-' + metric.id;
-      unlock.type = 'button';
-      unlock.hidden = true;
-      unlock.appendChild(icon('unlock', 'sm'));
-      unlock.appendChild(make('span', 'ms-btn__label', 'Odblokuj'));
-      unlock.addEventListener('click', function () {
-        requireFeature(metricFeatureId(metric.id), 'tile');
-      });
-      tile.appendChild(unlock);
-    }
     return tile;
-  }
-
-  /* Locked state is presentation only. Engine keeps computing all seven metrics
-     the whole time, so unlocking shows real history instead of starting over. */
-  function applyTileLocks() {
-    var list = catalogue();
-    for (var i = 0; i < list.length; i += 1) {
-      var metric = list[i];
-      var tile = byId('tile-' + metric.id);
-      if (!tile) continue;
-      var unlocked = metricUnlocked(metric);
-      var veil = byId('tileLock-' + metric.id);
-      var unlock = byId('tileUnlock-' + metric.id);
-      var hint = byId('tileHint-' + metric.id);
-
-      if (metric.premium && !unlocked) {
-        tile.classList.add('ms-tile--locked');
-        if (veil) veil.hidden = false;
-        if (unlock) unlock.hidden = false;
-        if (hint) {
-          hint.textContent = metric.shortPL + ' Ta wartość jest częścią wersji Premium — ' +
-            'pomiar działa dalej bez niej.';
-        }
-        setText(byId('tileValue-' + metric.id), '—');
-        tile.removeAttribute('data-zone');
-        var gaugeLocked = byId('tileGauge-' + metric.id);
-        if (gaugeLocked) {
-          gaugeLocked.removeAttribute('data-zone');
-          gaugeLocked.style.setProperty('--ms-gauge-pct', 0);
-        }
-        setZoneStatus(metric.id, null, 'Funkcja Premium');
-      } else {
-        tile.classList.remove('ms-tile--locked');
-        if (veil) veil.hidden = true;
-        if (unlock) unlock.hidden = true;
-        if (hint) hint.textContent = metric.shortPL;
-      }
-    }
   }
 
   function setZoneStatus(metricId, zone, wordPL) {
@@ -1885,7 +1746,6 @@
       var metric = list[i];
       var tile = byId('tile-' + metric.id);
       if (!tile) continue;
-      if (metric.premium && !metricUnlocked(metric)) continue;
 
       var value = reading && reading.values ? reading.values[metric.id] : null;
       var zone = reading && reading.zones ? reading.zones[metric.id] : null;
@@ -1992,16 +1852,13 @@
   var DAY_MS = 86400000;
 
   var RANGES = [
-    { id: 'range1m', ms: 60000, labelPL: '1 min', premium: false },
-    // No full stops: "1 godz." wrapped onto two lines in a five-way segment
-    // once the padlock took its share of the width.
-    { id: 'range1h', ms: HOUR_MS, labelPL: '1 godz', premium: false },
-    { id: 'range24h', ms: 24 * HOUR_MS, labelPL: '24 godz', premium: true },
-    { id: 'range7d', ms: 7 * DAY_MS, labelPL: '7 dni', premium: true },
-    { id: 'range30d', ms: 30 * DAY_MS, labelPL: '30 dni', premium: true }
+    { id: 'range1m', ms: 60000, labelPL: '1 min' },
+    // No full stops: "1 godz." wrapped onto two lines in a five-way segment.
+    { id: 'range1h', ms: HOUR_MS, labelPL: '1 godz' },
+    { id: 'range24h', ms: 24 * HOUR_MS, labelPL: '24 godz' },
+    { id: 'range7d', ms: 7 * DAY_MS, labelPL: '7 dni' },
+    { id: 'range30d', ms: 30 * DAY_MS, labelPL: '30 dni' }
   ];
-
-  var HISTORY_FEATURE = 'history.long';
 
   var chartMetricId = 'share';
   var chartRangeMs = 60000;
@@ -2081,18 +1938,6 @@
         'Uruchom pomiar na ekranie Pomiar — wykres zapełni się w kilka sekund.'));
       section.appendChild(empty);
 
-      var lockNotice = make('div', 'ms-note ms-note--premium');
-      lockNotice.id = 'historyLockNotice';
-      lockNotice.hidden = true;
-      lockNotice.appendChild(icon('lock'));
-      var lockText = make('div', 'ms-note__text');
-      lockText.appendChild(make('span', 'ms-note__title', 'Dłuższe zakresy w wersji Premium'));
-      lockText.appendChild(make('span', null,
-        'Dane z ostatnich 30 dni są już zapisane na Twoim urządzeniu — odblokowanie pokazuje je ' +
-        'natychmiast, nic nie zaczyna się liczyć od nowa.'));
-      lockNotice.appendChild(lockText);
-      section.appendChild(lockNotice);
-
       var actions = make('div', 'ms-row');
       var reportsBtn = make('button', 'ms-btn ms-btn--outline');
       reportsBtn.id = 'btnOpenReports';
@@ -2141,12 +1986,6 @@
       tableWrap.appendChild(table);
       section.appendChild(tableWrap);
 
-      /* Ad slot: last element of the screen, in the normal flow, never above
-         anything the user needs. ads.js fills it; the shell only reserves it. */
-      var ad = make('div', null);
-      ad.id = 'adSlotHistory';
-      section.appendChild(ad);
-
       panel.appendChild(section);
     }
 
@@ -2154,7 +1993,7 @@
     buildRangeSegment();
     buildTableHead();
     wireHistoryControls();
-    updateRangeLocks();
+    updateRangePressed();
     /* Decide chart-versus-empty once at build time as well. drawCharts settles
        it on every draw, but its first run is a frame after the panel is
        revealed, and until then the screen showed a fully drawn empty axis and
@@ -2176,7 +2015,7 @@
 
   function chartSeriesCount() {
     var metric = global.Metrics ? global.Metrics.byId(chartMetricId) : null;
-    if (!metric || !metricUnlocked(metric)) return 1;   // locked draws its own message
+    if (!metric) return 1;
     try { return getSeries(metric.id, chartRangeMs).length; }
     catch (e) { return 0; }
   }
@@ -2190,9 +2029,7 @@
       var m = list[i];
       var opt = DOC.createElement('option');
       opt.value = m.id;
-      // A native <select> cannot carry an icon, so the locked state is spelled
-      // out in words — a screen reader announces it exactly as it looks.
-      opt.textContent = m.namePL + (m.premium && !metricUnlocked(m) ? ' — Premium (zablokowane)' : '');
+      opt.textContent = m.namePL;
       if (m.id === chartMetricId) opt.selected = true;
       select.appendChild(opt);
     }
@@ -2221,35 +2058,6 @@
     }
   }
 
-  function updateRangeLocks() {
-    var unlocked = hasFeature(HISTORY_FEATURE);
-    for (var i = 0; i < RANGES.length; i += 1) {
-      var r = RANGES[i];
-      var btn = byId(r.id);
-      if (!btn) continue;
-      var locked = r.premium && !unlocked;
-      btn.setAttribute('aria-label', r.labelPL + (locked ? ' — funkcja Premium' : ''));
-      var lock = btn.querySelector('.ms-icon--lock');
-      if (locked && !lock) btn.appendChild(icon('lock', 'sm'));
-      else if (!locked && lock && lock.parentNode) lock.parentNode.removeChild(lock);
-      btn.setAttribute('aria-pressed', r.ms === chartRangeMs ? 'true' : 'false');
-    }
-    var notice = byId('historyLockNotice');
-    if (notice) notice.hidden = unlocked;
-
-    // A range that stops being allowed (demo reset, subscription cancelled)
-    // must not leave the chart showing a locked window. The fallback is NOT
-    // written back to settings: this runs once before account.js has read a
-    // single receipt, and persisting it there erased a Premium user's chosen
-    // range on every single start-up. Only setChartRange(), i.e. the user, is
-    // allowed to record a choice.
-    var current = rangeByMs(chartRangeMs);
-    if (current.premium && !unlocked) {
-      chartRangeMs = HOUR_MS;
-      updateRangePressed();
-    }
-  }
-
   function updateRangePressed() {
     for (var i = 0; i < RANGES.length; i += 1) {
       var btn = byId(RANGES[i].id);
@@ -2260,12 +2068,6 @@
   function setChartMetric(metricId) {
     var metric = global.Metrics ? global.Metrics.byId(metricId) : null;
     if (!metric) return false;
-    if (metric.premium && !metricUnlocked(metric)) {
-      requireFeature(metricFeatureId(metric.id), 'chart');
-      var select = byId('chartMetricSelect');
-      if (select) select.value = chartMetricId;   // put the choice back
-      return false;
-    }
     chartMetricId = metricId;
     setSetting('chartMetric', metricId);
     drawCharts();
@@ -2275,11 +2077,6 @@
 
   function setChartRange(ms) {
     var r = rangeByMs(ms);
-    if (r.premium && !hasFeature(HISTORY_FEATURE)) {
-      requireFeature(HISTORY_FEATURE, 'chart');
-      updateRangePressed();
-      return false;
-    }
     chartRangeMs = r.ms;
     setSetting('chartRangeMs', chartRangeMs);
     updateRangePressed();
@@ -2410,8 +2207,7 @@
     var metric = global.Metrics ? global.Metrics.byId(chartMetricId) : null;
     if (!metric) return;
 
-    var unlocked = metricUnlocked(metric);
-    var data = unlocked ? getSeries(metric.id, chartRangeMs) : [];
+    var data = getSeries(metric.id, chartRangeMs);
 
     /* Exactly one empty state at a time. A fully drawn axis with two threshold
        rules and a legend, sitting directly above a second "Brak danych" panel,
@@ -2419,7 +2215,7 @@
        This runs BEFORE the canvas is measured on purpose: un-hiding the box
        first is what lets clientWidth report a real number on the very draw
        where the first sample arrives. */
-    var nothingToPlot = unlocked && data.length === 0;
+    var nothingToPlot = data.length === 0;
     applyChartVisibility(nothingToPlot);
     if (nothingToPlot) { drawLegend(metric, 0); chartDirty = false; return; }
 
@@ -2506,15 +2302,6 @@
     ctx.fillText(formatShortTime(tStart), padL, cssH - padB / 2);
     ctx.textAlign = 'right';
     ctx.fillText('teraz', padL + plotW, cssH - padB / 2);
-
-    if (!unlocked) {
-      drawChartMessage(ctx, cssW, cssH, colors,
-        'Wykres tej metryki jest częścią wersji Premium.');
-      canvas.setAttribute('aria-label',
-        metric.namePL + ' — wykres dostępny w wersji Premium. Pomiar i cztery bezpłatne metryki działają bez zmian.');
-      drawLegend(metric, data.length);
-      return;
-    }
 
     if (!data.length) {
       canvas.setAttribute('aria-label',
@@ -2609,10 +2396,6 @@
       cell.setAttribute('scope', 'col');
       cell.id = 'tableCol-' + m.id;
       cell.appendChild(make('span', null, m.namePL));
-      if (m.premium && !metricUnlocked(m)) {
-        cell.appendChild(icon('lock', 'sm'));
-        cell.appendChild(srOnly('funkcja Premium'));
-      }
       tr.appendChild(cell);
     }
     thead.appendChild(tr);
@@ -2679,15 +2462,10 @@
       for (var j = 0; j < list.length; j += 1) {
         var metric = list[j];
         var cell = make('td', null);
-        if (metric.premium && !metricUnlocked(metric)) {
-          cell.appendChild(icon('lock', 'sm'));
-          cell.appendChild(srOnly('funkcja Premium'));
-        } else {
-          var value = row.values[metric.id];
-          cell.textContent = formatMetric(metric.id, value);
-          var zone = row.zones[metric.id];
-          if (zone) cell.setAttribute('data-zone', zone);
-        }
+        var value = row.values[metric.id];
+        cell.textContent = formatMetric(metric.id, value);
+        var zone = row.zones[metric.id];
+        if (zone) cell.setAttribute('data-zone', zone);
         tr.appendChild(cell);
       }
       body.appendChild(tr);
@@ -2698,8 +2476,7 @@
      19. Tools screen — container only
      ==================================================================
      tools.js owns every row inside #toolsList. The shell creates the empty
-     list and the ad slot so P4 has a place to mount and never has to touch
-     the panel itself.
+     list so P4 has a place to mount and never has to touch the panel itself.
      ------------------------------------------------------------------ */
 
   function buildToolsScreen() {
@@ -2719,13 +2496,9 @@
     var note = make('div', 'ms-note ms-note--info');
     note.appendChild(icon('info'));
     note.appendChild(make('div', 'ms-note__text',
-      'Narzędzia pomagają zinterpretować pomiar. Sam pomiar i cztery bezpłatne metryki ' +
-      'działają zawsze, niezależnie od tego, co jest tu odblokowane.'));
+      'Narzędzia pomagają zinterpretować pomiar. Wszystkie są dostępne od razu, ' +
+      'a sam pomiar działa niezależnie od nich.'));
     section.appendChild(note);
-
-    var ad = make('div', null);
-    ad.id = 'adSlotTools';
-    section.appendChild(ad);
 
     panel.appendChild(section);
   }
@@ -2733,8 +2506,8 @@
   /* ==================================================================
      20. More screen — appearance and accessibility (owned by the shell)
      ==================================================================
-     Account, purchases, ad preferences and the demo reset belong to other
-     modules; they mount their own cards into #panelMore, before #adSlotMore.
+     Everything on this screen belongs to the shell. Other modules may still
+     mount a card into #panelMore; it lands at the end of the screen.
      ------------------------------------------------------------------ */
 
   function buildMoreScreen() {
@@ -2748,8 +2521,6 @@
     section.appendChild(navHead);
 
     var list = make('div', 'ms-list');
-    list.appendChild(listRowButton('btnOpenAccount', 'person', 'Konto',
-      'Logowanie demonstracyjne i synchronizacja profilu', function () { openOrExplain('panelAccount'); }));
     list.appendChild(listRowButton('btnOpenThresholds', 'tune', 'Progi i profile',
       'Kiedy wartość ma zapalać ostrzeżenie', function () { openOrExplain('panelThresholds'); }));
     list.appendChild(listRowButton('btnOpenDocs', 'doc', 'Dokumentacja',
@@ -2783,22 +2554,14 @@
 
     section.appendChild(card);
 
-    /* --- data and demo state ---
-       Integration note: chapter 10.10 of the specification names these four
-       controls but assigns them to nobody. They are wired here because this
-       screen belongs to the shell; each one only calls the module that owns
-       the data, and never touches that module's storage key. */
+    /* --- data ---
+       Wired here because this screen belongs to the shell; the control only
+       calls the module that owns the data and never touches its storage key. */
     var dataHead = make('div', 'ms-section__head');
-    dataHead.appendChild(make('h2', 'ms-section__title', 'Dane i stan demonstracyjny'));
+    dataHead.appendChild(make('h2', 'ms-section__title', 'Dane'));
     section.appendChild(dataHead);
 
     var dataCard = make('div', 'ms-card');
-    dataCard.appendChild(switchRow('adsPersonalisedToggle', 'Reklamy dopasowane (DEMO)',
-      'W tej wersji nie ma sieci reklamowej, więc przełącznik niczego nie wysyła — pokazuje, gdzie taka zgoda powinna stać.',
-      false));
-    dataCard.appendChild(switchRow('simulateFailuresToggle', 'Symuluj błędy logowania i płatności',
-      'Do sprawdzenia, jak aplikacja zachowuje się przy nieudanej operacji. Domyślnie wyłączone; nic nie dzieje się losowo.',
-      !!getSetting('simulateFailures')));
 
     var dataList = make('div', 'ms-list');
 
@@ -2815,32 +2578,26 @@
     clearRow.appendChild(clearText);
     dataList.appendChild(clearRow);
 
-    var resetRow = make('button', 'ms-list__item ms-list__item--button ms-list__item--danger');
-    resetRow.id = 'btnResetDemo';
-    resetRow.type = 'button';
-    var resetIcon = make('span', 'ms-list__icon ms-list__icon--demo');
-    resetIcon.appendChild(icon('refresh'));
-    resetRow.appendChild(resetIcon);
-    var resetText = make('span', 'ms-list__text');
-    resetText.appendChild(make('span', 'ms-list__title', 'Wyczyść stan demonstracyjny'));
-    resetText.appendChild(make('span', 'ms-list__sub',
-      'Cofa symulowane zakupy, konto i licznik reklam. Pomiary, progi i profile zostają nienaruszone.'));
-    resetRow.appendChild(resetText);
-    var resetEnd = make('span', 'ms-list__end');
-    resetEnd.appendChild(demoBadge('DEMO'));
-    resetRow.appendChild(resetEnd);
-    dataList.appendChild(resetRow);
-
     dataCard.appendChild(dataList);
     section.appendChild(dataCard);
 
-    var version = make('p', 'ms-t-cap ms-t-muted', 'Monitor Światła — wersja 2 (interfejs demonstracyjny)');
+    /* The one permitted second mention of the donation screen in the whole
+       application: a single line of text at the very bottom of the settings,
+       no graphic, no frame, no badge. Everything else about it lives on the
+       Wsparcie tab, where the user goes of their own accord. */
+    var supportLine = make('p', 'ms-t-cap ms-t-muted');
+    supportLine.id = 'moreSupportLine';
+    supportLine.appendChild(DOC.createTextNode('Aplikacja jest bezpłatna w całości. '));
+    var supportLink = make('button', 'ms-linkbtn', 'Możesz ją wesprzeć dobrowolnie.');
+    supportLink.id = 'btnOpenSupport';
+    supportLink.type = 'button';
+    supportLink.addEventListener('click', function () { showTab('support'); });
+    supportLine.appendChild(supportLink);
+    section.appendChild(supportLine);
+
+    var version = make('p', 'ms-t-cap ms-t-muted', 'Monitor Światła — wersja 2');
     version.id = 'appVersion';
     section.appendChild(version);
-
-    var ad = make('div', null);
-    ad.id = 'adSlotMore';
-    section.appendChild(ad);
 
     panel.appendChild(section);
     wireAppearanceControls();
@@ -2906,22 +2663,10 @@
     return label;
   }
 
-  /* The three destructive/demo controls of the More screen. Each one asks the
-     owning module to do the work — the shell never deletes another module's
-     data itself, and every irreversible step is confirmed first. */
+  /* The one destructive control of the More screen. It asks the module that
+     owns the data to do the work — the shell never deletes another module's
+     data itself — and the irreversible step is confirmed first. */
   function wireDataControls() {
-    bindOnce('adsPersonalisedToggle', 'change', function (ev) {
-      var A = global.Ads;
-      if (A && typeof A.setPersonalised === 'function') A.setPersonalised(!!ev.target.checked);
-      toast(ev.target.checked
-        ? 'Zapisano wybór. W tej wersji demonstracyjnej i tak nie ma żadnej sieci reklamowej.'
-        : 'Zapisano wybór: reklamy niedopasowane (DEMO).', { kind: 'info' });
-    });
-
-    bindOnce('simulateFailuresToggle', 'change', function (ev) {
-      setSetting('simulateFailures', !!ev.target.checked);
-    });
-
     bindOnce('btnClearHistory', 'click', function () {
       var E = global.Engine;
       if (!E || typeof E.clearHistory !== 'function') return;
@@ -2939,35 +2684,6 @@
         toast('Historia pomiarów usunięta.', { kind: 'info' });
       });
     });
-
-    bindOnce('btnResetDemo', 'click', function () {
-      var S = global.Store;
-      if (!S || typeof S.resetDemo !== 'function') {
-        toast('Moduł sklepu nie został wczytany.', { kind: 'error' });
-        return;
-      }
-      confirmDialog({
-        titlePL: 'Wyczyścić stan demonstracyjny?',
-        bodyPL: 'Cofniemy symulowane zakupy, wylogujemy konto demonstracyjne i wyzerujemy licznik reklam. ' +
-          'Twoje pomiary, progi, profile progów, kalibracja, harmonogram i alerty zostaną nienaruszone.',
-        confirmPL: 'Wyczyść demo',
-        cancelPL: 'Zostaw',
-        danger: true,
-        demo: true
-      }).then(function (yes) {
-        if (!yes) return;
-        S.resetDemo();
-        toast('Stan demonstracyjny wyczyszczony. Aplikacja wróciła do wersji bezpłatnej.', { kind: 'info' });
-      });
-    });
-  }
-
-  function syncDataControls() {
-    var ads = byId('adsPersonalisedToggle');
-    var A = global.Ads;
-    if (ads && A && typeof A.isPersonalised === 'function') ads.checked = !!A.isPersonalised();
-    var fail = byId('simulateFailuresToggle');
-    if (fail) fail.checked = !!getSetting('simulateFailures');
   }
 
   function wireAppearanceControls() {
@@ -3052,7 +2768,6 @@
       var card = make('div', 'ms-card ms-card--flat');
       var head = make('div', 'ms-card__head');
       head.appendChild(make('h4', 'ms-card__title', m.namePL));
-      if (m.premium) head.appendChild(lockBadge('Premium'));
       card.appendChild(head);
       card.appendChild(make('p', 'ms-card__sub', m.shortPL));
       card.appendChild(make('p', 'ms-t-body', m.helpPL));
@@ -3075,13 +2790,14 @@
     privacy.appendChild(privacyText);
     section.appendChild(privacy);
 
-    var demo = make('div', 'ms-demo-note');
-    demo.appendChild(demoBadge('DEMO'));
-    demo.appendChild(make('p', null,
-      'Konto, płatności i reklamy w tej aplikacji są symulacją interfejsu. Nie ma integracji ' +
-      'z Google, Facebookiem ani z żadnym systemem płatności; żadna opłata nie zostanie pobrana, ' +
-      'a „logowanie” tworzy wyłącznie lokalne konto demonstracyjne na tym urządzeniu.'));
-    section.appendChild(demo);
+    /* Stwierdzenie faktu, nie prośba: bez ramki, bez ikony kubka i bez odsyłania
+       do zakładki Wsparcie. Cała aplikacja prosi o wsparcie w jednym miejscu —
+       na ekranie Wsparcie — plus jedno zdanie w „Więcej”, i na tym koniec. */
+    var free = make('p', 'ms-t-cap ms-t-muted',
+      'Wszystkie siedem wskaźników, historia, wykres, narzędzia i tryb offline ' +
+      'działają dla każdego, bez konta i bez opłat.');
+    free.id = 'docsFreeLine';
+    section.appendChild(free);
 
     panel.appendChild(section);
   }
@@ -3131,28 +2847,8 @@
     el.hidden = !(running && currentView.panelId !== 'panelMeasure');
   }
 
-  function updatePremiumBadges() {
-    var S = global.Store;
-    var premium = !!(S && typeof S.tier === 'function' && S.tier() === 'premium');
-    var badge = byId('navPremiumBadge');
-    // Editorial judgement, not a rule: the dot marks an ACTIVE subscription,
-    // it is never used to nag a free user. A permanent red dot over an offer
-    // is exactly the pattern this app was asked not to copy.
-    if (badge) badge.hidden = !premium;
-    var header = byId('appTitle');
-    if (!header) return;
-    var existing = byId('headerProBadge');
-    if (premium && !existing) {
-      var pro = make('span', 'ms-pro-badge', 'PRO');
-      pro.id = 'headerProBadge';
-      if (header.parentNode) header.parentNode.insertBefore(pro, header.nextSibling);
-    } else if (!premium && existing && existing.parentNode) {
-      existing.parentNode.removeChild(existing);
-    }
-  }
-
   /* ==================================================================
-     23. Engine and store wiring
+     23. Engine wiring
      ================================================================== */
 
   var latestReading = null;
@@ -3230,31 +2926,9 @@
         : 'Pomiar bez kalibracji — wartości traktuj porównawczo.';
     });
 
-    /* Entitlements changed: locks are presentation, so this is a redraw and
-       nothing more. The measurements behind them were there all along. */
-    on('store:entitlements', function () { refreshEntitlements(); });
-    on('store:reset', function () { refreshEntitlements(); });
-
     on('tools:alert', function (data) {
       if (data && data.messagePL) announce(data.messagePL, true);
     });
-  }
-
-  function refreshEntitlements() {
-    syncDataControls();
-    applyTileLocks();
-    fillMetricSelect();
-    buildTableHead();
-    updateRangeLocks();
-    updatePremiumBadges();
-    var metric = global.Metrics ? global.Metrics.byId(chartMetricId) : null;
-    if (metric && metric.premium && !metricUnlocked(metric)) {
-      // Keep the chart on something the user can actually see.
-      chartMetricId = 'share';
-      setSetting('chartMetric', 'share');
-      fillMetricSelect();
-    }
-    scheduleRedraw();
   }
 
   /* ==================================================================
@@ -3263,7 +2937,6 @@
 
   function wireHeader() {
     bindOnce('btnInfo', 'click', function () { showPanel('panelDocs'); });
-    bindOnce('btnAccountShortcut', 'click', function () { openOrExplain('panelAccount'); });
     var skip = byId('skipLink');
     if (skip && skip.getAttribute('data-ms-bound') !== 'skip') {
       skip.setAttribute('data-ms-bound', 'skip');
@@ -3345,7 +3018,6 @@
 
     showTab('measure');
     drawTiles(null);
-    updatePremiumBadges();
   }
 
   function afterReady() {
@@ -3396,8 +3068,6 @@
     setBusy: setBusy,
 
     icon: icon,
-    demoBadge: demoBadge,
-    lockBadge: lockBadge,
 
     getTheme: function () { return getSetting('theme'); },
     setTheme: setTheme,
@@ -3413,30 +3083,22 @@
     pluralPL: pluralPL,
     countPL: countPL,
 
-    /* Mounting points for the account, store, ads and tools modules. */
+    /* Mounting points for the tools and support modules. */
     panelBody: function (panelId) { return byId(panelId); },
-    contentAnchor: function (panelId) {
-      var map = { panelHistory: 'adSlotHistory', panelTools: 'adSlotTools', panelMore: 'adSlotMore' };
-      return byId(map[panelId] || '') || null;
-    },
+    contentAnchor: function () { return null; },
     mount: function (panelId, node) {
       var panel = byId(panelId);
       if (!panel || !node) return false;
-      var anchor = UI.contentAnchor(panelId);
-      // Ads always stay last; anything mounted later goes above them.
-      if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(node, anchor);
-      else panel.appendChild(node);
+      panel.appendChild(node);
       return true;
     },
     slot: function (name) {
       var map = {
-        teaser: 'teaserBanner', tools: 'toolsList',
-        adHistory: 'adSlotHistory', adTools: 'adSlotTools', adMore: 'adSlotMore',
+        tools: 'toolsList',
         measureStatus: 'measureStatus', calibrationNotice: 'calibrationNotice'
       };
       return byId(map[name] || '') || null;
     },
-    refreshEntitlements: refreshEntitlements,
     openMetricHelp: function (metricId) {
       var m = global.Metrics ? global.Metrics.byId(metricId) : null;
       if (m) openHelpSheet(m);

@@ -4,7 +4,7 @@
 // by deleting every cache called 'blue-monitor-v<digits>', which is what v1's
 // cache used to be called back when it lived there. Anything named that way is
 // now, by definition, a leftover of that old root - never a live cache.
-const CACHE_NAME = 'blue-monitor-v1-28';
+const CACHE_NAME = 'blue-monitor-v1-30';
 
 // Every version of the app now lives in its own directory (/v1/, /v2/, /v3/,
 // /v4/) and ships its own service worker, registered from that directory and
@@ -22,10 +22,10 @@ const APP_SHELL = [
   './',
   './index.html',
   './style.css',
-  './monetization.css',
-  './billing.js',
-  './monetization-ui.js',
+  './ui.css',
+  './features.js',
   './menu.js',
+  './support.js',
   './app.js',
   './manifest.webmanifest',
   '../icons/icon-192.png',

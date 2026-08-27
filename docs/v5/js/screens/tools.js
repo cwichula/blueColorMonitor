@@ -719,13 +719,7 @@ function metricDetails(metric) {
         text: 'Skala: od ' + metricValueUnit(metric.id, metric.min)
           + ' do ' + metricValueUnit(metric.id, metric.max) + '.'
       }),
-      thresholdEl,
-      metric.premium
-        ? h('p.m5-tools__note.m5-tools__note--quiet', {
-            text: 'Wielkość z planu premium. Plany w tej aplikacji są symulacją interfejsu — '
-              + 'nic tu nie kosztuje i nic nie wychodzi do sieci.'
-          })
-        : null));
+      thresholdEl));
 
   function sync(settings) {
     const now = settings.thresholds[metric.id] || { warn: metric.warn, crit: metric.crit };
@@ -802,20 +796,15 @@ function aboutCard(settings) {
 
 /* ──────────────────────────────  Karta: Dane  ───────────────────────────── */
 
-/* Usunięcie wszystkiego jest nieodwracalne i dotyczy także modułów, których ten
-   ekran nie zna. Konto i plany ładujemy dynamicznie: gdyby któregoś modułu
-   zabrakło albo wywrócił się przy imporcie, skasowanie reszty i tak musi się udać. */
-async function wipeEverything() {
+/* Usunięcie wszystkiego jest nieodwracalne i dotyczy także kluczy, których ten
+   ekran nie zna z nazwy. */
+function wipeEverything() {
   historyStore.clear();
 
-  await Promise.all([
-    import('../account.js').then((m) => m.deleteAccount()).catch(() => null),
-    import('../billing.js').then((m) => m.cancel()).catch(() => null)
-  ]);
-
-  // Zamiatanie resztek: klucze po starszych wersjach modułów albo po module,
-  // który w tej sesji w ogóle nie został wczytany. Ruszamy wyłącznie własny
-  // prefiks — dane wersji v1–v4 leżą w tej samej pamięci i mają tam zostać.
+  // Zamiatanie resztek: klucze po starszych wersjach modułów (także po zniesionej
+  // symulacji konta i płatności) albo po module, który w tej sesji w ogóle nie
+  // został wczytany. Ruszamy wyłącznie własny prefiks — dane wersji v1–v4 leżą
+  // w tej samej pamięci i mają tam zostać.
   try {
     const doomed = [];
     for (let i = 0; i < window.localStorage.length; i += 1) {
@@ -851,9 +840,9 @@ function confirmWipe() {
       title: 'Usunąć wszystkie dane aplikacji?',
       body: [
         h('p.m5-tools__note', {
-          text: 'Znikną: cała historia pomiarów i lista sesji, Twoje progi i kalibracja, '
-            + 'ustawienia wyglądu oraz symulowane konto i plan. Aplikacja wróci do stanu '
-            + 'z pierwszego uruchomienia.'
+          text: 'Znikną: cała historia pomiarów i lista sesji, Twoje progi i kalibracja '
+            + 'oraz ustawienia wyglądu. Aplikacja wróci do stanu z pierwszego '
+            + 'uruchomienia.'
         }),
         h('p.m5-tools__note.m5-tools__note--quiet', {
           text: 'Nie mamy kopii tych danych — nigdy nie opuściły tego urządzenia, więc nie ma ich '
@@ -964,7 +953,7 @@ function dataCard() {
         const ok = await confirmWipe();
         if (!ok) return;
         haptic([18, 60, 18]);
-        await wipeEverything();
+        wipeEverything();
         toast('Usunięto wszystkie dane aplikacji', { tone: 'success' });
         announce('Usunięto wszystkie dane aplikacji. Ustawienia wróciły do domyślnych.');
       }

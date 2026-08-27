@@ -234,20 +234,6 @@
 
   function rangeLabel(range) { return T('history.' + range.key); }
 
-  function metricLocked(metricId) {
-    var m = MetricsRef() ? global.Metrics.byId(metricId) : null;
-    if (!m || !m.premium) return false;
-    var b = global.Billing;
-    if (b && typeof b.isUnlocked === 'function') return !b.isUnlocked(metricId);
-    return true;
-  }
-
-  function firstFreeMetric() {
-    var cat = MetricsRef() ? global.Metrics.CATALOGUE : [];
-    for (var i = 0; i < cat.length; i += 1) if (!metricLocked(cat[i].id)) return cat[i].id;
-    return cat.length ? cat[0].id : 'share';
-  }
-
   /* ------------------------------------------------------------------
      Stan ekranu
      ------------------------------------------------------------------ */
@@ -280,12 +266,7 @@
   var prefsRead = false;
 
   function readPrefs() {
-    if (prefsRead) {
-      // Przy powrocie sprawdzamy już tylko to, co mogło się zmienić poza ekranem:
-      // utratę Premium na wybranej wielkości.
-      if (metricLocked(state.metricId)) state.metricId = firstFreeMetric();
-      return;
-    }
+    if (prefsRead) return;
     prefsRead = true;
 
     var s = null;
@@ -297,9 +278,6 @@
     var wanted = s ? s.historyMetric : null;
     if (!(metrics && global.Metrics.byId(wanted))) wanted = s ? s.leadMetric : null;
     if (metrics && global.Metrics.byId(wanted)) state.metricId = wanted;
-    // Wielkość zamknięta kłódką nie może zostać wybrana z pamięci — inaczej
-    // po utracie Premium ekran rysowałby dane, za które nikt nie zapłacił.
-    if (metricLocked(state.metricId)) state.metricId = firstFreeMetric();
   }
 
   function savePrefs() {
@@ -597,24 +575,16 @@
     var cat = MetricsRef() ? global.Metrics.CATALOGUE : [];
     for (var i = 0; i < cat.length; i += 1) {
       (function (m) {
-        var locked = metricLocked(m.id);
         var cls = 'ms4-chip ms4-chip--selectable';
-        if (locked) cls += ' ms4-chip--premium is-locked';
-        else if (m.id === state.metricId) cls += ' is-selected';
+        if (m.id === state.metricId) cls += ' is-selected';
         var chip = el('button', cls);
         chip.type = 'button';
-        chip.setAttribute('aria-pressed', (!locked && m.id === state.metricId) ? 'true' : 'false');
-        if (locked) {
-          chip.setAttribute('aria-label', fill(T('aria.tileLockedTpl'), { name: m.namePL }));
-        }
-        var ico = icon(locked ? 'lock' : (METRIC_ICONS[m.id] || 'measure'), 16);
+        chip.setAttribute('aria-pressed', m.id === state.metricId ? 'true' : 'false');
+        var ico = icon(METRIC_ICONS[m.id] || 'measure', 16);
         ico.setAttribute('class', 'ms4-chip__icon');
         chip.appendChild(ico);
         chip.appendChild(el('span', 'ms4-chip__label', m.namePL));
-        on(chip, 'click', function () {
-          if (locked) { openPaywall(m.id); return; }
-          setMetric(m.id);
-        });
+        on(chip, 'click', function () { setMetric(m.id); });
         dom.chips.appendChild(chip);
       }(cat[i]));
     }
@@ -783,11 +753,6 @@
 
   function hasExport() {
     return !!(global.Tools && typeof global.Tools.openExport === 'function');
-  }
-
-  function openPaywall(metricId) {
-    var b = global.Billing;
-    if (b && typeof b.openPaywall === 'function') b.openPaywall({ source: VIEW_ID, metricId: metricId });
   }
 
   function confirmClear() {
@@ -1150,11 +1115,6 @@
       refresh();
     }));
     state.subs.push(bus.on('engine:state', function () { renderLive(); }));
-    state.subs.push(bus.on('billing:changed', function () {
-      if (metricLocked(state.metricId)) { state.metricId = firstFreeMetric(); savePrefs(); }
-      buildChips();
-      refresh();
-    }));
     state.subs.push(bus.on('settings:changed', function () {
       // Zmiana skali tekstu przesuwa segmenty; pigułka musi za nimi nadążyć.
       positionThumb();

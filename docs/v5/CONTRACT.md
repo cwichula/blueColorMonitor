@@ -22,8 +22,14 @@ pliku, ale nie zmieniaj tego, co jest.
 - **Uczciwość pomiaru**: żadna liczba nie jest przedstawiana jako pomiar
   fotometryczny ani wynik medyczny. Wartość niezmierzona to `null` i wyświetla
   się jako `—`, nigdy jako 0 ani jako dobry wynik.
-- Konto, plany i płatności są **symulacją interfejsu** — musi to być widoczne
-  w UI (plakietka „Demo”), nie tylko w dokumentacji.
+- **Model: dobrowolne wsparcie.** Wszystkie siedem wielkości, historia,
+  narzędzia i tryb offline działają dla każdego, od razu, bez konta i bez
+  opłat. Nie ma uprawnień, kłódek, rozmytych wartości ani żadnego podziału
+  na wielkości darmowe i płatne — jeżeli coś takiego znajdzie się w kodzie,
+  jest to błąd, nie funkcja. Jedyna warstwa pieniędzy to `js/support.js`:
+  jeden adres zewnętrznego profilu darowizn, który użytkownik może kliknąć
+  na ekranie „Wsparcie”. Darowizna **niczego nie odblokowuje** i ekran mówi
+  to wprost.
 - Dostępność jest wymogiem, nie dodatkiem: kontrast tekstu ≥ 4.5:1, cel dotyku
   ≥ 44 px, pełna obsługa klawiaturą, widoczny `:focus-visible`, poprawne role
   ARIA, `prefers-reduced-motion`.
@@ -46,17 +52,16 @@ docs/v5/
   js/store.js                ustawienia (localStorage) + atrybuty na <html>
   js/history.js              bufor i trwałość historii pomiarów
   js/camera.js               getUserMedia, próbkowanie klatek, stan sesji
-  js/account.js              symulowane konto
-  js/billing.js              symulowane plany i uprawnienia
+  js/support.js              warstwa wsparcia: SUPPORT_URL + walidacja https
   js/router.js               router po hashu
   js/ui/dom.js               h(), utils DOM, focus trap, ikony SVG
-  js/ui/overlays.js          arkusz, dialog, toast, scrim, paywall
+  js/ui/overlays.js          arkusz, dialog, toast, scrim
   js/ui/gauge.js             wskaźnik-bohater, kafelek-wskaźnik, sparkline
   js/ui/chart.js             wykres historii (canvas)
   js/screens/measure.js
   js/screens/history.js
   js/screens/tools.js
-  js/screens/account.js
+  js/screens/support.js
   js/app.js                  powłoka: topbar, tabbar/sidenav, montaż ekranów
 ```
 
@@ -67,8 +72,7 @@ format, bus, metrics        (liść, bez importów)
 store        -> bus
 history      -> bus, metrics, format
 camera       -> bus, metrics, store
-account      -> bus
-billing      -> bus, metrics, account
+support      -> (liść, bez importów)
 ui/dom       -> store (dynamicznie, wyłącznie settings.haptics; import w dół drzewa, więc bez cyklu)
 ui/overlays  -> ui/dom
 ui/gauge     -> ui/dom, metrics, format, store
@@ -177,8 +181,6 @@ Zdarzenia (pełna lista, nikt nie wymyśla nowych bez dopisania tutaj):
 'history:changed' {count}
 'history:session' {session}
 'settings:changed'{settings}
-'account:changed' {user}
-'billing:changed' {entitlement}
 'route:changed'   {route, previous}
 ```
 
@@ -199,8 +201,9 @@ export function comfortIndex({melanopic, kelvin, flickerPercent, uniformity}) ->
 export function zoneFor(value, warn, crit, invert) -> 'good'|'warn'|'crit'|null
 export const CATALOGUE = [...]   // 7 pozycji, id i kolejność jak w v4
 export function byId(id)
-export const FREE_IDS, PREMIUM_IDS
 ```
+Katalog **nie ma** pola `premium` ani list `FREE_IDS` / `PREMIUM_IDS`:
+podział na wielkości darmowe i płatne nie istnieje, więc nie ma czym sterować.
 **Uczciwość zwracanych wartości:** `colourTemperature` zwraca `kelvin: null`,
 gdy `reliable` jest fałszem (wielomian poza zakresem ważności albo chromatyczność
 daleko od krzywej Plancka) — obcięta do granicy liczba wyglądałaby jak pomiar.
@@ -212,8 +215,8 @@ rozbicie sumuje się do oceny.
 **`'crit'`** — spójna z tokenami `--zone-crit-*` i z `data-zone="crit"`.
 Etykiety kar w `comfortIndex` zostają po polsku, jak w v4.
 
-Pola pozycji katalogu (jak w v4, plus `icon`):
-`{id, namePL, unit, shortPL, helpPL, premium, decimals, min, max, warn, crit, invert, icon}`
+Pola pozycji katalogu (jak w v4, minus `premium`, plus `icon`):
+`{id, namePL, unit, shortPL, helpPL, decimals, min, max, warn, crit, invert, icon}`
 gdzie `icon` to nazwa ikony z `ui/dom.js`:
 share→`droplet`, brightness→`sun`, kelvin→`thermometer`, melanopic→`moon`,
 flicker→`wave`, uniformity→`grid`, comfort→`heart`.
@@ -293,37 +296,26 @@ wznawia. `keepAwake` → Screen Wake Lock API, opcjonalnie i defensywnie.
 żeby historia nie rosła, gdy ekran pomiaru nie jest zamontowany. Zamiast tego
 `camera.js` emituje `'camera:reading'`.
 
-### js/account.js
-Symulowane konto, zero sieci. Klucz `ms5.account.v1`.
+### js/support.js
+Cała warstwa wsparcia. Zero sieci, zero pamięci, zero stanu — moduł tylko
+podaje adres i pilnuje, żeby nie był śmieciem.
 ```js
-export function user() -> {id, name, email, avatarInitials, provider, createdAt}|null
-export function isSignedIn()
-export async function signIn(providerId)   // 'demo'|'google'|'apple'|'email' — opóźnienie ~700 ms
-export function signOut()
-export function update(patch)
-export function deleteAccount()
-export const PROVIDERS = [{id, labelPL, icon}, …]
+export function supportUrl() -> string      // '' == profil niepodłączony
+export function hasSupportUrl() -> boolean
 ```
-Każdy ekran logowania musi mówić wprost, że to demonstracja i że żadne dane
-nie opuszczają urządzenia.
-
-### js/billing.js
-Klucz `ms5.billing.v1`.
+Na samej górze pliku, zaraz za nagłówkiem i **przed jakimkolwiek kodem**, stoi
+dokładnie jedna stała do wypełnienia przez właściciela:
 ```js
-export const DEMO = true
-export const PLANS = [{id:'monthly'|'yearly'|'lifetime', namePL, pricePL, periodPL, badgePL?, savingPL?}]
-export function entitlement() -> {plan:'free'|'premium', source:'none'|'trial'|'purchase', trialEndsAt, since}
-export function isPremium()
-export function isTrial()
-export function trialDaysLeft()
-export function isUnlocked(metricId)
-export function lockedMetrics() -> metricId[]
-export async function purchase(planId)     // symulacja z opóźnieniem, może zwrócić odrzucenie płatności
-export function startTrial()               // 7 dni
-export function restore()
-export function cancel()
-export function benefits() -> [{titlePL, textPL, icon}]
+const SUPPORT_URL = '';
 ```
+Wymagania, od których nie ma odstępstwa:
+- przyjmujemy **wyłącznie `https://`**; cokolwiek innego (`javascript:`,
+  literówka w schemacie, adres nie do rozebrania) `supportUrl()` zwraca jako
+  `''` — adres trafia prosto do atrybutu `href`,
+- gdy adres jest pusty, ekran „Wsparcie” istnieje i wygląda normalnie, ale
+  **nie renderuje żadnego odnośnika** — ani martwego, ani prowadzącego donikąd,
+- **żadnego skryptu, widżetu ani obrazka z serwera Buy Me a Coffee.** Ikonę
+  kubka (`ICONS.coffee`) rysujemy sami, tą samą kreską co resztę zestawu.
 
 ### js/router.js
 ```js
@@ -331,7 +323,7 @@ export const ROUTES = [
   {id:'measure', path:'/measure', labelPL:'Pomiar',    icon:'gauge'},
   {id:'history', path:'/history', labelPL:'Historia',  icon:'chart'},
   {id:'tools',   path:'/tools',   labelPL:'Narzędzia', icon:'sliders'},
-  {id:'account', path:'/account', labelPL:'Konto',     icon:'user'}
+  {id:'support', path:'/support', labelPL:'Wsparcie',  icon:'coffee'}
 ]
 export function start()      // czyta hash, ustawia trasę domyślną '/measure'
 export function go(path)
@@ -362,7 +354,7 @@ export function reducedMotion() -> boolean       // data-motion na <html> ma pie
 Wymagany komplet ikon (`ICONS`): `gauge, chart, sliders, user, droplet, sun,
 thermometer, moon, wave, grid, heart, play, stop, cameraFlip, info, close,
 check, lock, chevronRight, chevronDown, download, trash, share, plus, minus,
-settings, sparkle, alert, google, apple, mail`.
+settings, sparkle, alert, coffee`.
 Jeden styl: obrys 1.75 px, `stroke="currentColor"`, `fill="none"`, zaokrąglone
 końce, `viewBox="0 0 24 24"`. Bez emoji w interfejsie.
 
@@ -372,7 +364,6 @@ export function toast(text, {tone='neutral', action, duration=3200} = {})
 export function sheet({title, body, actions, dismissible = true}) -> {close}
    // arkusz od dołu na telefonie, wyśrodkowany dialog od 720 px
 export function dialog({title, text, confirmPL, cancelPL, tone}) -> Promise<boolean>
-export function paywall(metricId) -> Promise<void>   // arkusz sprzedażowy z billing.PLANS
 ```
 Wszystkie warstwy: `role="dialog"` + `aria-modal="true"`, pułapka fokusa, `Esc`
 zamyka, po zamknięciu fokus wraca do elementu, który je otworzył, tło się nie
@@ -384,8 +375,8 @@ jedyny obszar przewijania w tej powłoce) z zachowaniem i odtworzeniem
 ```js
 export function heroGauge({metricId}) -> {el, update(reading), setMetric(id), destroy()}
    // duży wskaźnik: łuk, wartość, jednostka, słowna nazwa strefy, mikro-sparkline
-export function metricTile({metricId, locked = false}) -> {el, update(reading), setLocked(b), destroy()}
-   // kafelek: nazwa, wartość, jednostka, pasek strefowy, kłódka gdy locked
+export function metricTile({metricId, selected = false, onSelect}) -> {el, update(reading), setSelected(b), destroy()}
+   // kafelek: nazwa, wartość, jednostka, pasek strefowy — bez wariantu zablokowanego
 export function sparkline({points, min, max, width = 120, height = 32}) -> SVGElement
 export function zoneBar({metricId, value}) -> {el, update(value)}
 ```
@@ -417,7 +408,7 @@ export function create() -> {
   titlePL,         // tytuł do topbara
   actions(),       // [{icon, labelPL, onClick}] do prawej strony topbara
   mount(),         // po wejściu na ekran
-  unmount(),       // przy wyjściu — sprzątanie subskrypcji i pętli
+  unmount(),       // przy wyjściu — sprzątanie nasłuchów i pętli
 }
 ```
 
@@ -429,9 +420,9 @@ Stan pracy: podgląd z kamery jako mały, zaokrąglony kafelek (nie tło —
 migający obraz pod tekstem to zła praktyka), wskaźnik-bohater z wielkością
 wiodącą (`store.leadMetric`, zmiana przez dotknięcie kafelka), pod nim siatka
 kafelków pozostałych wielkości (2 kolumny na telefonie, 3–4 na szerokim
-ekranie), na dole pasek akcji: Stop, przełącz kamerę. Wielkości premium bez
-uprawnienia: kafelek z kłódką i zamazaną wartością, dotknięcie otwiera
-`overlays.paywall(metricId)`. Ten ekran wywołuje `history.push(reading)`
+ekranie), na dole pasek akcji: Stop, przełącz kamerę. Wszystkie siedem
+kafelków pokazuje swoją liczbę — nie ma kafelka zablokowanego ani zamazanego.
+Ten ekran wywołuje `history.push(reading)`
 (dławione do ~1 Hz) i `history.noteSession()` po zatrzymaniu. Po zatrzymaniu:
 podsumowanie sesji (czas, średnie, najgorsza wielkość, jedno zdanie zalecenia).
 
@@ -454,13 +445,28 @@ z `helpPL` + uczciwe ograniczenia metody), **Dane** (eksport, wyczyść
 wszystko). Każda zmiana zapisuje się natychmiast, bez przycisku „Zapisz”, i
 potwierdza toastem tylko wtedy, gdy efekt nie jest widoczny od razu.
 
-### screens/account.js
-Niezalogowany: karta z korzyściami, przyciski dostawców z `account.PROVIDERS`,
-wyraźna plakietka „Demo — dane nie opuszczają urządzenia”. Zalogowany: karta
-profilu (inicjały jako awatar), karta planu (`billing.entitlement()`), lista
-korzyści premium (`billing.benefits()`), przyciski: kup / rozpocznij okres
-próbny / przywróć zakup / anuluj, wylogowanie, usunięcie konta (dialog z
-potwierdzeniem). Ceny i plany zawsze z `billing.PLANS`, nigdy na sztywno.
+### screens/support.js
+Ekran statyczny: buduje się raz, nie subskrybuje żadnego zdarzenia i niczego
+nie zapisuje. Cztery karty, w tej kolejności i nie w innej:
+
+1. **Co aplikacja daje za darmo** — siedem wielkości, historia, narzędzia,
+   tryb offline; bez konta i bez limitów. Jedno–dwa zdania.
+2. **Dlaczego pada prośba** — utrzymanie i rozwój, uczciwie i bez dramatyzowania.
+3. **Co daje darowizna** — nic poza tym, że autor wie, że to się komuś przydało.
+   **To musi być napisane wprost.**
+4. **Przycisk** (`<a href target="_blank" rel="noopener noreferrer">` z ikoną
+   `coffee`, wygląd zwykłego `m5-btn--primary`, bez cudzego brandingu)
+   **plus zdanie o prywatności** stojące tuż przy nim: kliknięcie otwiera
+   stronę zewnętrzną i jest to jedyny moment, w którym cokolwiek opuszcza
+   to urządzenie. Przy pustym `SUPPORT_URL` w miejscu przycisku stoi spokojna
+   informacja dla użytkownika, a odnośnika nie ma w ogóle.
+
+Czego na tym ekranie (i w całej wersji) **nie wolno**: odliczania, sztucznej
+pilności, wyskakujących próśb, przerywników, okien po N uruchomieniach,
+proszenia w trakcie pomiaru albo na ekranie wyniku, straszenia, że bez wsparcia
+coś przestanie działać, oraz słowa „premium” w jakimkolwiek kontekście.
+Prośba pojawia się **wyłącznie wtedy, gdy użytkownik sam wejdzie na ten ekran**;
+dyskretnym punktem wejścia jest zakładka w nawigacji i nic ponadto.
 
 ## 6. Powłoka (`js/app.js`, `index.html`)
 
@@ -485,7 +491,9 @@ potwierdzeniem). Ceny i plany zawsze z `billing.PLANS`, nigdy na sztywno.
 ## 7. `sw.js`
 
 Wzoruj się na `docs/v4/sw.js`, ale:
-- nazwa pamięci `ms5-1`, prefiks `ms5-`, kasujemy wyłącznie własne pamięci,
+- prefiks pamięci `ms5-`, numer podbijany przy KAŻDEJ zmianie któregokolwiek
+  pliku z `APP_SHELL` (bez tego użytkownik z zainstalowaną wersją dostanie starą
+  kopię); dziś `ms5-4`. Kasujemy wyłącznie własne pamięci,
 - worker obsługuje **wyłącznie** katalog `/v5/`; wszystko spoza tej ścieżki
   przepuszcza nietknięte (v1–v4 muszą dalej działać). Ikony aplikacji leżą
   w `/v5/icons/`, bo rejestracja ma zasięg `./` — żądanie do katalogu

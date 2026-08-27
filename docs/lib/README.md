@@ -43,10 +43,27 @@ podczas gdy naprawdę znaczyłoby, że kadr jest czarny.
 | `uniformity.js` | Równomierność jako iloraz najciemniejszej i najjaśniejszej komórki siatki, w procentach; jedyna wielkość, w której więcej znaczy lepiej. |
 | `comfort.js` | Indeks komfortu 0–100 składany z pozostałych wielkości wraz z rozbiciem na kary; wagi są jawną oceną redakcyjną projektu. |
 | `zones.js` | Podział wartości na strefy `good` / `warn` / `crit` (z obsługą wielkości odwróconych) oraz domyślne progi wszystkich wielkości. |
-| `catalogue.js` | Katalog siedmiu wielkości: identyfikator, nazwa i opis po polsku, jednostka, zakres, liczba miejsc po przecinku, progi oraz podział na darmowe i płatne. |
+| `catalogue.js` | Katalog siedmiu wielkości: identyfikator, nazwa i opis po polsku, jednostka, zakres, liczba miejsc po przecinku i progi. Wszystkie siedem wielkości jest dostępnych bez warunków — katalog nie dzieli ich na darmowe i płatne. |
 | `frame.js` | Obróbka klatki bez canvasu: kadrowanie środka, uśrednianie w siatce N×N, kalibracja wzmocnieniami kanałów i bufor okna próbek dla migotania. |
 | `package.json` | Sam znacznik `{"type":"module", "private":true}` — żeby Node traktował te pliki `.js` jak moduły ES i żeby nikt nie opublikował katalogu jako paczki. |
 | `*.test.js` | Testy leżące obok sprawdzanego pliku; sprawdzają fizykę i wartości odniesienia, nie zapis implementacji. |
+
+## Wszystkie wielkości są dostępne bez warunków
+
+Do wersji z modelem subskrypcyjnym katalog niósł pole `premium`, a moduł wystawiał listy
+`FREE_IDS` i `PREMIUM_IDS`. **Pole i obie listy zostały usunięte.** Aplikacja przeszła na
+model dobrowolnego wsparcia: siedem wielkości działa dla każdego, od razu, a darowizna
+niczego nie odblokowuje — nie ma więc czego dzielić ani czym warunkować.
+
+Usunięcie jest celowo twardsze niż zostawienie `premium: false` wszędzie. Martwe pole
+podpowiadałoby, że gdzieś bywa `true`, a `PREMIUM_IDS === []` przechodziłoby cicho
+w kodzie, który należy poprawić. Pełne rozumowanie stoi w nagłówku `catalogue.js`.
+
+Jeżeli jakiś kod importował te listy, zamiennik jest jednolinijkowy:
+
+```js
+const wszystkie = CATALOGUE.map((m) => m.id);   // dawne FREE_IDS + PREMIUM_IDS
+```
 
 ## Użycie w przeglądarce
 

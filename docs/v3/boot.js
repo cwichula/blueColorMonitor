@@ -95,8 +95,8 @@
     '01': 'recorder.js',
     '02': 'modules.js', '03': 'modules.js', '04': 'modules.js', '05': 'modules.js',
     '06': 'modules.js', '07': 'modules.js', '08': 'modules.js', '09': 'modules.js',
-    '10': 'offer.js', '11': 'offer.js',
-    '12': 'docs.js', '13': 'docs.js'
+    '10': 'support.js',
+    '11': 'docs.js', '12': 'docs.js'
   };
 
   function missingFiles() {

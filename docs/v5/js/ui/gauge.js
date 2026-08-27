@@ -39,7 +39,7 @@ const SPOKEN_UNIT = {
 /* Wielkość nieznana katalogowi nie może wywrócić ekranu ani — co gorsza —
  * podstawić cudzych progów. Zastępczy opis jest jawnie pusty. */
 const FALLBACK_METRIC = {
-  id: '', namePL: 'Nieznana wielkość', unit: '', premium: false,
+  id: '', namePL: 'Nieznana wielkość', unit: '',
   decimals: 0, min: 0, max: 100, warn: 70, crit: 90, invert: false, icon: 'gauge'
 };
 
@@ -110,13 +110,10 @@ const STYLE = `
   min-height:20px;color:var(--text-2);font-size:var(--fs-sm)}
 :where(.m5-tile__name){flex:1 1 auto;min-width:0;overflow-wrap:anywhere;
   -webkit-hyphens:auto;hyphens:auto}
-:where(.m5-tile__badge){display:inline-flex;align-items:center;gap:var(--sp-1);
-  flex:0 0 auto;color:var(--text-3);font-size:var(--fs-xs);font-weight:600}
 :where(.m5-tile__reading){display:flex;align-items:baseline;gap:var(--sp-1);min-width:0}
 :where(.m5-tile__value){font-family:var(--ff-num);font-variant-numeric:tabular-nums;
   letter-spacing:-.02em;font-size:var(--fs-h1);font-weight:600;color:var(--text-1)}
 :where(.m5-tile__unit){font-family:var(--ff-num);font-size:var(--fs-sm);color:var(--text-2)}
-:where(.m5-tile[data-locked="true"] .m5-tile__reading){filter:blur(7px);opacity:.6}
 `;
 
 function ensureStyles() {
@@ -210,7 +207,7 @@ function unitText(metric, value) {
 
 /* Mniej ruchu: atrybut z ustawień ma pierwszeństwo, bo użytkownik mógł go
  * wybrać wbrew systemowi; poza tym pytamy system. Sprawdzamy przy każdej
- * próbce, żeby zmiana ustawienia działała natychmiast, bez subskrypcji szyny
+ * próbce, żeby zmiana ustawienia działała natychmiast, bez nasłuchu na szynie
  * (ui/gauge.js nie importuje bus.js). */
 function reducedMotion() {
   if (typeof document === 'undefined') return true;
@@ -786,50 +783,41 @@ export function heroGauge({ metricId } = {}) {
 /* ────────────────────────────  metricTile  ───────────────────────────────── */
 
 /**
- * metricTile({metricId, locked, selected, onSelect, onLocked}) ->
- *   {el, update(reading), setLocked(b), setSelected(b), destroy()}
+ * metricTile({metricId, selected, onSelect}) ->
+ *   {el, update(reading), setSelected(b), destroy()}
  *
- * Kafelek jest zawsze <button type="button">, także w wariancie zablokowanym —
- * dzięki temu klawiatura, Enter i spacja działają bez jednej linii obsługi
- * klawiszy, a przełączenie kłódki nie przebudowuje elementu.
+ * Kafelek jest zawsze <button type="button"> — dzięki temu klawiatura, Enter
+ * i spacja działają bez jednej linii obsługi klawiszy.
  *
- * ui/gauge.js nie może importować ui/overlays.js (kolejność w drzewie importów
- * z kontraktu), więc kafelek nie otwiera paywalla sam: woła `onLocked(metricId)`
- * i dodatkowo wypuszcza bąbelkujące zdarzenie 'm5:paywall' ze szczegółem
- * {metricId}. Kafelek odblokowany woła `onSelect(metricId)` i wypuszcza
- * 'm5:metric' — ekran pomiaru robi z tego zmianę wielkości wiodącej.
+ * Kafelek woła `onSelect(metricId)` i wypuszcza bąbelkujące zdarzenie
+ * 'm5:metric' ze szczegółem {metricId} — ekran pomiaru robi z tego zmianę
+ * wielkości wiodącej. Wariantu zablokowanego nie ma: każda z siedmiu wielkości
+ * pokazuje swoją liczbę każdemu, bez warunków.
  */
-export function metricTile({ metricId, locked = false, selected = false, onSelect, onLocked } = {}) {
+export function metricTile({ metricId, selected = false, onSelect } = {}) {
   ensureStyles();
   const metric = metricOf(metricId);
 
   const valueEl = h('span.m5-tile__value.m5-num', { text: DASH });
   const unitEl = h('span.m5-tile__unit', { text: '' });
-  const badge = h('span.m5-tile__badge', { hidden: !locked }, [
-    icon('lock', { size: 14 }),
-    h('span', { text: 'Premium' })
-  ]);
   const bar = zoneBar({ metricId: metric.id, value: null, decorative: true });
 
   const el = h('button.m5-tile', {
     type: 'button',
-    dataset: { metric: metric.id, zone: 'none', locked: String(!!locked), selected: String(!!selected) }
+    dataset: { metric: metric.id, zone: 'none', selected: String(!!selected) }
   }, [
     h('div.m5-tile__head', [
       icon(metric.icon || 'gauge', { size: 16 }),
-      h('span.m5-tile__name', { text: metric.namePL }),
-      badge
+      h('span.m5-tile__name', { text: metric.namePL })
     ]),
     h('div.m5-tile__reading', [valueEl, unitEl]),
     bar.el
   ]);
 
-  let isLocked = !!locked;
   let value = null;
   let zone = 'none';
 
   function label() {
-    if (isLocked) return metric.namePL + ': wielkość premium, zablokowana.';
     return metric.namePL + ': ' + spokenValue(metric, value) +
       ', strefa: ' + (ZONE_LABEL[zone] || ZONE_LABEL.none);
   }
@@ -850,19 +838,9 @@ export function metricTile({ metricId, locked = false, selected = false, onSelec
   }
 
   function paint() {
-    if (isLocked) {
-      // Pod kłódką nie ma ŻADNEJ liczby — ani prawdziwej, ani przykładowej.
-      // Rozmycie bywa wyłączane (wymuszone style, forced-colors, rozszerzenia),
-      // a wtedy próg z katalogu wyglądałby jak odczyt, którego nikt nie zmierzył.
-      setText(valueEl, DASH);
-      setText(unitEl, '');
-      zone = 'none';
-      bar.update(null, 'none');
-    } else {
-      setText(valueEl, value === null ? DASH : metricValue(metric.id, value));
-      setText(unitEl, unitText(metric, value));
-      bar.update(value, zone);
-    }
+    setText(valueEl, value === null ? DASH : metricValue(metric.id, value));
+    setText(unitEl, unitText(metric, value));
+    bar.update(value, zone);
     el.dataset.zone = zone;
     el.style.setProperty('--m5-zone', ZONE_COLOR[zone] || ZONE_COLOR.none);
     syncLabel();
@@ -872,42 +850,20 @@ export function metricTile({ metricId, locked = false, selected = false, onSelec
 
   el.addEventListener('click', () => {
     const detail = { metricId: metric.id };
-    if (isLocked) {
-      if (typeof onLocked === 'function') onLocked(metric.id);
-      el.dispatchEvent(new CustomEvent('m5:paywall', { detail, bubbles: true }));
-      return;
-    }
     if (typeof onSelect === 'function') onSelect(metric.id);
     el.dispatchEvent(new CustomEvent('m5:metric', { detail, bubbles: true }));
   });
 
   function update(reading) {
-    // Kafelek zablokowany ignoruje próbki: pod rozmyciem nie wolno trzymać
-    // prawdziwego pomiaru, bo wystarczyłoby wyłączyć filtr w przeglądarce.
-    if (isLocked) return;
     value = valueFrom(reading, metric.id);
     zone = zoneOf(metric, value, reading);
-    paint();
-  }
-
-  function setLocked(next) {
-    const flag = !!next;
-    if (flag === isLocked) return;
-    isLocked = flag;
-    el.dataset.locked = String(isLocked);
-    badge.hidden = !isLocked;
-    if (isLocked) value = null;
-    // aria-pressed ma sens tylko dla kafelka, który wybiera wielkość wiodącą.
-    if (isLocked) el.removeAttribute('aria-pressed');
-    else el.setAttribute('aria-pressed', el.dataset.selected === 'true' ? 'true' : 'false');
     paint();
   }
 
   function setSelected(next) {
     const flag = !!next;
     el.dataset.selected = String(flag);
-    if (isLocked) el.removeAttribute('aria-pressed');
-    else el.setAttribute('aria-pressed', String(flag));
+    el.setAttribute('aria-pressed', String(flag));
   }
 
   setSelected(selected);
@@ -916,7 +872,6 @@ export function metricTile({ metricId, locked = false, selected = false, onSelec
   return {
     el,
     update,
-    setLocked,
     setSelected,
     destroy() { bar.destroy(); el.remove(); }
   };

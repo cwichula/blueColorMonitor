@@ -103,8 +103,6 @@
       colDirection: 'Kierunek',
       dirNormal: 'niżej znaczy łagodniej',
       dirInvert: 'wyżej znaczy lepiej',
-      availFree: 'bez opłaty',
-      availPremium: 'pakiet Premium',
 
       privacyTitle: 'Dane i prywatność',
       privacyText: 'Obraz z kamery nigdzie nie jest wysyłany ani zapisywany — z każdej klatki zostają tylko trzy liczby. Pomiary, progi i ustawienia leżą w pamięci przeglądarki na tym urządzeniu. Aplikacja nie wykonuje żadnych zapytań sieciowych i działa w trybie offline.',
@@ -112,7 +110,7 @@
       mdrTitle: 'Zastrzeżenie',
       mdrText: 'Żaden wynik nie jest diagnozą ani poradą zdrowotną. Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.',
 
-      demoText: 'Konto i płatności w tej aplikacji są symulacją interfejsu. Nie ma integracji z Google, Facebookiem ani z żadnym systemem płatności; żadna opłata nie zostanie pobrana, a „logowanie” tworzy wyłącznie lokalne konto demonstracyjne na tym urządzeniu.'
+      freeText: 'Aplikacja jest w całości darmowa i taka zostaje: wszystkie siedem wielkości, historia, raporty, eksport i tryb offline działają bez konta, bez opłat i bez limitów. Kto chce podziękować, znajdzie moduł 10 „Wsparcie”.'
     };
 
     /* Module 13 needs a few sentences that 8.x does not list. They are added to
@@ -263,12 +261,12 @@
     /* 6. How to measure sensibly — the three points of 8.4, word for word. */
     put(root, howToSection());
 
-    /* 7. Privacy, the disclaimer, and the standing note about the simulation. */
+    /* 7. Privacy and the disclaimer. */
     var privacy = put(root, section(T('docs.privacyTitle')));
     put(privacy, make('p', '', T('docs.privacyText')));
+    put(privacy, make('p', '', T('docs.freeText')));
 
     put(root, note('limits', T('docs.mdrTitle'), T('docs.mdrText')));
-    put(root, note('demo', T('demo.overline'), T('docs.demoText')));
   }
 
   function metricsSection() {
@@ -282,7 +280,6 @@
 
       var head = put(item, make('div', 'ms3-doc__head'));
       put(head, make('h3', 'ms3-doc__title', m.namePL));
-      if (m.premium) put(head, make('span', 'ms3-badge ms3-badge--premium', T('channels.badgePremium')));
       if (m.id === 'kelvin' || m.id === 'melanopic') {
         put(head, make('span', 'ms3-badge ms3-badge--approx', T('channels.approx')));
       }
@@ -294,7 +291,6 @@
       kvRow(kv, T('help.unit'), m.unit);
       kvRow(kv, T('help.range'), rangeWords(m));
       kvRow(kv, T('docs.colDirection'), m.invert ? T('docs.dirInvert') : T('docs.dirNormal'));
-      kvRow(kv, T('help.availability'), m.premium ? T('docs.availPremium') : T('docs.availFree'));
     }
     return sec;
   }
@@ -445,7 +441,7 @@
     put(about, make('p', '', T('settings.offlineText')));
     var toDocs = put(about, keyBtn(T('settings.docsKey'), 'ms3-key--ghost'));
     toDocs.addEventListener('click', function () {
-      if (global.UI3 && typeof global.UI3.openScreen === 'function') global.UI3.openScreen('12');
+      if (global.UI3 && typeof global.UI3.openScreen === 'function') global.UI3.openScreen('11');
     });
 
     put(root, note('limits', T('note.titleLimits'), T('docs.privacyText')));
@@ -560,16 +556,16 @@
     var meta = (global.Scale && global.Scale.TEXT && global.Scale.TEXT.modules) || {};
 
     global.UI3.registerModule({
-      no: '12',
-      titlePL: (meta['12'] && meta['12'].titlePL) || '',
-      descPL: (meta['12'] && meta['12'].descPL) || '',
+      no: '11',
+      titlePL: (meta['11'] && meta['11'].titlePL) || '',
+      descPL: (meta['11'] && meta['11'].descPL) || '',
       build: buildDocs
     });
 
     global.UI3.registerModule({
-      no: '13',
-      titlePL: (meta['13'] && meta['13'].titlePL) || '',
-      descPL: (meta['13'] && meta['13'].descPL) || '',
+      no: '12',
+      titlePL: (meta['12'] && meta['12'].titlePL) || '',
+      descPL: (meta['12'] && meta['12'].descPL) || '',
       build: buildSettings
     });
   }
