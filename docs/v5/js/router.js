@@ -10,11 +10,16 @@
 
 import { bus } from './bus.js';
 
+/* Trasa niesie KLUCZ etykiety, nie etykietę. Napis powstaje dopiero w miejscu
+ * rysowania (app.js woła t(route.labelKey)), bo tablica jest stałą modułu:
+ * gotowy napis zamarzłby w języku z chwili wczytania pliku i po przełączeniu
+ * języka pasek nawigacji zostałby w starym. Router nie importuje i18n —
+ * klucz jest danymi, nie tekstem. */
 export const ROUTES = [
-  { id: 'measure', path: '/measure', labelPL: 'Pomiar',    icon: 'gauge' },
-  { id: 'history', path: '/history', labelPL: 'Historia',  icon: 'chart' },
-  { id: 'tools',   path: '/tools',   labelPL: 'Narzędzia', icon: 'sliders' },
-  { id: 'support', path: '/support', labelPL: 'Wsparcie',  icon: 'coffee' }
+  { id: 'measure', path: '/measure', labelKey: 'nav.measure', icon: 'gauge' },
+  { id: 'history', path: '/history', labelKey: 'nav.history', icon: 'chart' },
+  { id: 'tools',   path: '/tools',   labelKey: 'nav.tools',   icon: 'sliders' },
+  { id: 'support', path: '/support', labelKey: 'nav.support', icon: 'coffee' }
 ];
 
 const DEFAULT_ROUTE = ROUTES[0];

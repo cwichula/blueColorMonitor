@@ -19,6 +19,9 @@ import { byId } from './metrics.js';
 const KEY = 'ms5.settings.v1';
 
 export const DEFAULTS = {
+  // null znaczy „wg urządzenia”: dopóki użytkownik nie wybierze języka ręcznie,
+  // decyduje navigator.languages, a nie zapis. Rozstrzyga to js/i18n/index.js.
+  language: null,
   theme: 'system',
   accent: 'ocean',
   textScale: 1,
@@ -39,13 +42,17 @@ export const THEMES = ['system', 'light', 'dark'];
    na ekranie, więc jedyne hexy w tym pliku to te pięć par. Są to wartości
    --accent dla danego data-accent z css/tokens.css:
    swatchLight — motyw jasny (kontrast ≥ 4,5:1 na białej karcie),
-   swatchDark  — motyw ciemny (kontrast ≥ 4,5:1 na ciemnym tle). */
+   swatchDark  — motyw ciemny (kontrast ≥ 4,5:1 na ciemnym tle).
+
+   Nazwy palet zostały stąd wyjęte: paleta niesie KLUCZ, a napis bierze ekran
+   przez t(nameKey). Ten moduł nie może zawołać t() sam — i18n/index.js
+   importuje store, więc import w drugą stronę zrobiłby cykl. */
 export const ACCENTS = [
-  { id: 'ocean',  namePL: 'Ocean',    swatchLight: '#0b5fd0', swatchDark: '#79b4ff' },
-  { id: 'violet', namePL: 'Fiolet',   swatchLight: '#6636cf', swatchDark: '#b39bff' },
-  { id: 'amber',  namePL: 'Bursztyn', swatchLight: '#8a5a06', swatchDark: '#e9b45c' },
-  { id: 'mint',   namePL: 'Mięta',    swatchLight: '#0a6f5c', swatchDark: '#4fd3ae' },
-  { id: 'rose',   namePL: 'Róża',     swatchLight: '#b31552', swatchDark: '#ff8aa6' }
+  { id: 'ocean',  nameKey: 'accent.ocean',  swatchLight: '#0b5fd0', swatchDark: '#79b4ff' },
+  { id: 'violet', nameKey: 'accent.violet', swatchLight: '#6636cf', swatchDark: '#b39bff' },
+  { id: 'amber',  nameKey: 'accent.amber',  swatchLight: '#8a5a06', swatchDark: '#e9b45c' },
+  { id: 'mint',   nameKey: 'accent.mint',   swatchLight: '#0a6f5c', swatchDark: '#4fd3ae' },
+  { id: 'rose',   nameKey: 'accent.rose',   swatchLight: '#b31552', swatchDark: '#ff8aa6' }
 ];
 
 /* Listy dopuszczalnych wartości — ekran ustawień buduje z nich kontrolki, dzięki
@@ -109,6 +116,16 @@ function accentIds() {
   return ACCENTS.map((a) => a.id);
 }
 
+/* Kod języka sprawdzamy tu tylko co do KSZTAŁTU (dwie–trzy małe litery albo
+   null), a nie co do listy obsługiwanych języków. Lista mieszka w
+   js/i18n/index.js, a ten moduł importuje store — zaimportowanie jej z
+   powrotem zrobiłoby cykl. Kod spoza listy nie jest groźny: i18n i tak sięgnie
+   po zapas, a ustawienie przestanie istnieć przy pierwszym zapisie. */
+function languageCode(value) {
+  if (typeof value !== 'string') return null;
+  return /^[a-z]{2,3}$/.test(value) ? value : null;
+}
+
 /* ------------------------------------------------------------------
    Walidacja
    ------------------------------------------------------------------ */
@@ -149,6 +166,7 @@ function validCalibration(raw) {
 function validate(raw) {
   const source = isPlainObject(raw) ? raw : {};
   return {
+    language: languageCode(source.language),
     theme: oneOf(source.theme, THEMES, DEFAULTS.theme),
     accent: oneOf(source.accent, accentIds(), DEFAULTS.accent),
     textScale: scale(source.textScale, DEFAULTS.textScale),

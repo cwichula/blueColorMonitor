@@ -1,14 +1,14 @@
 {
-  "name": "Monitor Światła",
-  "short_name": "Monitor Światła",
-  "description": "Mierzy kamerą telefonu siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Wszystkie siedem wielkości jest dostępnych dla każdego, bez konta i bez opłat. Działa offline i niczego nie wysyła do sieci.",
+  "name": "Light Monitor",
+  "short_name": "Light Monitor",
+  "description": "Measures seven quantities of light with a phone camera: blue share, scene brightness, colour temperature, circadian impact, flicker, uniformity and eye comfort. All seven quantities are available to everyone, without an account and without payment. It works offline and sends nothing to the network.",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "lang": "pl",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["utilities", "productivity"],
   "background_color": "#F4F6F9",
@@ -20,30 +20,30 @@
   ],
   "shortcuts": [
     {
-      "name": "Pomiar",
-      "short_name": "Pomiar",
-      "description": "Duży wskaźnik, ocena światła i siedem kafelków.",
+      "name": "Measure",
+      "short_name": "Measure",
+      "description": "The large gauge, the verdict on the light and seven tiles.",
       "url": "./index.html#/measure",
       "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Historia",
-      "short_name": "Historia",
-      "description": "Przebieg pomiaru w czasie, od minuty do trzydziestu dni.",
+      "name": "History",
+      "short_name": "History",
+      "description": "The course of the measurement over time, from a minute to thirty days.",
       "url": "./index.html#/history",
       "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Narzędzia",
-      "short_name": "Narzędzia",
-      "description": "Progi, kalibracja, raporty, eksport i dokumentacja pomiaru.",
+      "name": "Tools",
+      "short_name": "Tools",
+      "description": "Thresholds, calibration, reports, export and the documentation of the measurement.",
       "url": "./index.html#/tools",
       "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Wsparcie",
-      "short_name": "Wsparcie",
-      "description": "Ustawienia aplikacji i dobrowolna darowizna dla autora.",
+      "name": "Support",
+      "short_name": "Support",
+      "description": "App settings and a voluntary donation to the author.",
       "url": "./index.html#/support",
       "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }

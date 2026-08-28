@@ -5,7 +5,8 @@
  * tła, pułapki fokusa, klawisza Esc i powrotu fokusa do elementu, który
  * warstwę otworzył. Arkusz i dialog to ta sama konstrukcja — o tym, czy
  * wjeżdża od dołu, czy stoi na środku, decyduje wyłącznie CSS.
- * Jedyna zależność: ui/dom.js.
+ * Zależności: ui/dom.js po budowę węzłów, i18n po napisy własne warstw
+ * (etykiety zamknięcia, domyślne przyciski) i bus po zmianę języka.
  *
  * Klasy dla autora css/components.css:
  *   m5-scrim              zasłona pod warstwami (element #scrim), [hidden], [data-state="open"|"closing"]
@@ -28,6 +29,42 @@
  */
 
 import { h, icon, trapFocus } from './dom.js';
+import { bus } from '../bus.js';
+import { t } from '../i18n/index.js';
+
+/* ─────────────────────  Napisy, które warstwa wypisuje sama  ──────────── */
+
+/* Warstwa buduje węzeł RAZ i trzyma go tak długo, jak jest otwarta — a język
+ * przełącza się właśnie z otwartego arkusza ustawień. Napisy własne warstwy
+ * (etykieta krzyżyka, domyślny przycisk komunikatu, przyciski dialogu) muszą
+ * więc powstawać w funkcji, a nie w stałej: każda otwarta warstwa zgłasza tu
+ * swoje odświeżenie i po zmianie języka wypisuje napisy od nowa.
+ * bus.js jest liściem drzewa importów, więc ta zależność nie robi cyklu. */
+const relabelers = new Set();
+let offLanguage = null;
+
+function onLanguageChange(relabel) {
+  relabelers.add(relabel);
+  // Jeden nasłuch na cały moduł, zakładany dopiero przy pierwszej warstwie
+  // i zdejmowany po ostatniej — zamknięty interfejs nie zostawia śmiecia.
+  if (!offLanguage) {
+    offLanguage = bus.on('i18n:changed', () => {
+      Array.from(relabelers).forEach((fn) => fn());
+    });
+  }
+  return function stop() {
+    if (!relabelers.delete(relabel)) return;
+    if (relabelers.size === 0 && offLanguage) { offLanguage(); offLanguage = null; }
+  };
+}
+
+/* Etykieta przycisku: gotowy napis od wołającego albo funkcja go zwracająca.
+ * Funkcja jest dla napisów branych ze słownika przez samą warstwę — po
+ * zmianie języka wołamy ją ponownie i przycisk mówi już nowym językiem. */
+function actionLabel(action) {
+  if (typeof action.labelPL === 'function') return String(action.labelPL());
+  return action.labelPL || '';
+}
 
 /* ────────────────────────────  Hosty warstw  ──────────────────────────── */
 
@@ -228,9 +265,11 @@ function showToast(item) {
 
   let timer = 0;
   let closed = false;
+  let stopRelabel = () => {};
   const close = () => {
     if (closed) return;
     closed = true;
+    stopRelabel();
     clearTimeout(timer);
     el.dataset.state = 'closing';
     exitTransition(el, () => {
@@ -242,20 +281,29 @@ function showToast(item) {
   };
   const entry = { close };
 
+  const actionText = () => (action ? actionLabel(action) : '') || t('overlay.toast.action');
+  let actionBtn = null;
   if (action) {
-    el.appendChild(h('button.m5-btn.m5-toast__action', {
+    actionBtn = h('button.m5-btn.m5-toast__action', {
       type: 'button',
       dataset: { tone: 'ghost' },
       on: { click: () => { close(); action.onClick?.(); } }
-    }, action.labelPL || 'Wykonaj'));
+    }, actionText());
+    el.appendChild(actionBtn);
   }
   // Zamknięcie dostaje każdy komunikat, także ten bez akcji: inaczej zdania
   // o błędzie nie da się ani zatrzymać, ani odzyskać — nie ma dziennika.
-  el.appendChild(h('button.m5-btn.m5-btn--icon.m5-toast__close', {
+  const closeBtn = h('button.m5-btn.m5-btn--icon.m5-toast__close', {
     type: 'button',
-    aria: { label: 'Zamknij komunikat' },
+    aria: { label: t('overlay.toast.close') },
     on: { click: close }
-  }, icon('close', { size: 18 })));
+  }, icon('close', { size: 18 }));
+  el.appendChild(closeBtn);
+
+  stopRelabel = onLanguageChange(() => {
+    if (actionBtn) actionBtn.textContent = actionText();
+    closeBtn.setAttribute('aria-label', t('overlay.toast.close'));
+  });
 
   // Błąd i ostrzeżenie niosą radę naprawczą — 3,2 s to za mało, żeby je
   // przeczytać przy powiększeniu albo wolniejszym czytaniu.
@@ -293,7 +341,8 @@ function showToast(item) {
 /**
  * toast('Zapisano', {tone:'success'})
  * tone: 'neutral' | 'success' | 'warn' | 'error'
- * action: {labelPL, onClick} — komunikat z akcją nie znika samoczynnie
+ * action: {labelPL, onClick} — komunikat z akcją nie znika samoczynnie;
+ * labelPL może być funkcją, gdy napis ma nadążać za zmianą języka
  * Zwraca {close}. Na ekranie widoczne są najwyżej trzy naraz, reszta czeka.
  */
 export function toast(text, { tone = 'neutral', action = null, duration = 3200 } = {}) {
@@ -334,7 +383,7 @@ function actionButton(action, api) {
         if (!action.keepOpen && keep !== true) api.close();
       }
     }
-  }, action.labelPL || '');
+  }, actionLabel(action));
   return btn;
 }
 
@@ -342,7 +391,8 @@ function actionButton(action, api) {
  * sheet({title, body, actions, dismissible}) -> {close}
  *
  * body: element / tekst / tablica. actions: lista {labelPL, onClick, tone,
- * keepOpen, disabled, autofocus} albo gotowych elementów.
+ * keepOpen, disabled, autofocus} albo gotowych elementów. labelPL może być
+ * funkcją zwracającą napis — wtedy przycisk nadąża za zmianą języka.
  * Dodatkowo (poza kontraktem, opcjonalnie): className — dodatkowa klasa
  * korpusu, onClose — wywoływane po zamknięciu, labelPL — etykieta dla
  * czytnika, gdy arkusz nie ma widocznego tytułu.
@@ -363,22 +413,24 @@ export function sheet({
     dataset: { state: 'closed' }
   });
   if (title) root.setAttribute('aria-labelledby', titleId);
-  else root.setAttribute('aria-label', labelPL || 'Okno');
+  else root.setAttribute('aria-label', labelPL || t('overlay.sheet.label'));
 
   const api = { close: () => {} };
 
   if (dismissible) root.appendChild(h('div.m5-sheet__grip', { aria: { hidden: 'true' } }));
 
+  const closeBtn = dismissible
+    ? h('button.m5-btn.m5-btn--icon.m5-sheet__close', {
+        type: 'button',
+        aria: { label: t('overlay.sheet.close') },
+        on: { click: () => api.close() }
+      }, icon('close', { size: 22 }))
+    : null;
+
   if (title || dismissible) {
     root.appendChild(h('header.m5-sheet__head', null,
       title ? h('h2.m5-sheet__title', { id: titleId, text: title }) : h('span'),
-      dismissible
-        ? h('button.m5-btn.m5-btn--icon.m5-sheet__close', {
-            type: 'button',
-            aria: { label: 'Zamknij' },
-            on: { click: () => api.close() }
-          }, icon('close', { size: 22 }))
-        : null
+      closeBtn
     ));
   }
 
@@ -386,9 +438,22 @@ export function sheet({
   root.appendChild(bodyEl);
 
   const list = (actions || []).filter(Boolean);
+  // Pary {akcja, przycisk} trzymamy wyłącznie po to, żeby po zmianie języka
+  // wypisać etykiety od nowa; gotowe elementy opisuje sobie wołający.
+  const labelled = [];
   if (list.length) {
-    root.appendChild(h('div.m5-sheet__actions', null, list.map((a) => actionButton(a, api))));
+    root.appendChild(h('div.m5-sheet__actions', null, list.map((a) => {
+      const btn = actionButton(a, api);
+      if (!(a instanceof Node)) labelled.push({ action: a, btn: btn });
+      return btn;
+    })));
   }
+
+  const stopRelabel = onLanguageChange(() => {
+    if (!title) root.setAttribute('aria-label', labelPL || t('overlay.sheet.label'));
+    if (closeBtn) closeBtn.setAttribute('aria-label', t('overlay.sheet.close'));
+    labelled.forEach((pair) => { pair.btn.textContent = actionLabel(pair.action); });
+  });
 
   // Dopóki pod dolną krawędzią została treść, korzeń arkusza nosi
   // data-more="true" — components.css zapala wtedy wygaszenie nad paskiem
@@ -404,6 +469,7 @@ export function sheet({
   const layer = openLayer(root, hosts.sheet, {
     dismissible,
     onClosed: (result) => {
+      stopRelabel();
       if (observer) observer.disconnect();
       if (typeof onClose === 'function') onClose(result);
     }
@@ -432,8 +498,8 @@ export function sheet({
 export function dialog({
   title = '',
   text = '',
-  confirmPL = 'Potwierdź',
-  cancelPL = 'Anuluj',
+  confirmPL = '',
+  cancelPL = '',
   tone = 'primary'
 } = {}) {
   return new Promise((resolve) => {
@@ -448,13 +514,15 @@ export function dialog({
       body: text ? h('p.m5-dialog__text', { id: textId, text }) : null,
       actions: [
         {
-          labelPL: cancelPL,
+          // Funkcja, nie napis: własne napisy dialogu mają nadążyć za zmianą
+          // języka nawet wtedy, gdy okno stoi już otwarte.
+          labelPL: () => cancelPL || t('overlay.dialog.cancel'),
           tone: 'ghost',
           autofocus: danger,
           onClick: () => { answer = false; }
         },
         {
-          labelPL: confirmPL,
+          labelPL: () => confirmPL || t('overlay.dialog.confirm'),
           tone: danger ? 'danger' : 'primary',
           autofocus: !danger,
           onClick: () => { answer = true; }

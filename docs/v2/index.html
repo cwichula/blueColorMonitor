@@ -6,6 +6,12 @@
      read on a notched phone; user-scalable is deliberately NOT disabled — the
      audience of this app zooms. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Trzy ostatnie napisy tego pliku: opis, tytuł ikony na ekranie głównym
+     i tytuł karty. Opis i <title> podmienia wpisany niżej skrypt, jeszcze przed
+     pierwszym rysowaniem strony; wpisana tu polszczyzna jest wyłącznie
+     wartością na wypadek wyłączonego JavaScriptu i dla robotów. Tytułu ikony
+     nie da się przetłumaczyć w czasie działania — system czyta go przy
+     instalacji, tak samo jak manifest.webmanifest, i dlatego zostaje. -->
 <meta name="description" content="Monitor Światła — pomiar udziału światła niebieskiego kamerą telefonu. Siedem wskaźników, wykres, historia. Wszystko dostępne, bez konta i bez opłat.">
 <meta name="color-scheme" content="light dark">
 <!-- Painted by the browser behind the page before the stylesheet applies.
@@ -22,11 +28,21 @@
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
 <link rel="stylesheet" href="styles.css">
 
+<!-- WARSTWA JĘZYKOWA — pierwszy skrypt strony, przed czymkolwiek innym.
+     Wykrywa język, ustawia <html lang> i <html dir>, a słowniki (wspólny
+     ../shared/i18n/<kod>.js i własny tej wersji i18n/<kod>.js) dopisuje do
+     strumienia parsera, więc są w pamięci ZANIM wykona się pierwszy skrypt
+     aplikacji. Bez defer i bez async — na tym stoi cała ta sztuczka.
+     Powód i szczegóły: nagłówek docs/shared/i18n.js. -->
+<script src="../shared/i18n.js"></script>
+
 <script>
-/* The theme attribute must land before the first paint, otherwise a user who
-   chose "Ciemny" gets a white flash on every launch. This is the only inline
-   script in the file and it is deliberately eight lines long: it reads the one
-   settings key that ui-core.js owns and writes one attribute. */
+/* Dwie rzeczy, które muszą trafić na miejsce PRZED pierwszym rysowaniem strony:
+   motyw (inaczej ktoś, kto wybrał „Ciemny”, dostaje białe mignięcie przy każdym
+   uruchomieniu) i tytuł karty w języku użytkownika (inaczej do
+   DOMContentLoaded świeci polski). To jedyny wpisany skrypt w tym pliku:
+   czyta jeden klucz ustawień, którego właścicielem jest ui-core.js, i pyta
+   warstwę językową o dwa napisy. */
 (function () {
   try {
     var raw = localStorage.getItem('ms2.settings.v1');
@@ -35,6 +51,13 @@
       document.documentElement.setAttribute('data-theme', theme);
     }
   } catch (e) { /* private mode: the media query decides, which is correct too */ }
+  try {
+    if (window.I18n) {
+      document.title = window.I18n.t('app.documentTitle');
+      var desc = document.querySelector('meta[name="description"]');
+      if (desc) desc.setAttribute('content', window.I18n.t('app.description'));
+    }
+  } catch (e) { /* zostaje wartość z markupu; ui-core poprawi ją przy starcie */ }
 }());
 </script>
 </head>
@@ -56,21 +79,24 @@
 
 <div class="ms-app" id="appRoot">
 
-  <a class="ms-skip" id="skipLink" href="#appMain">Przejdź do treści</a>
+  <!-- Napisy tej powłoki wstawia ui-core.js (applyStaticText) z warstwy
+       językowej. W markupie zostają puste, bo tylko wtedy nie ma w tym pliku
+       ani jednego zdania w jednym, wybranym z góry języku. -->
+  <a class="ms-skip" id="skipLink" href="#appMain"></a>
 
   <header class="ms-header" id="appHeader">
     <div class="ms-header__inner">
-      <h1 class="ms-header__title" id="appTitle">Monitor Światła</h1>
+      <h1 class="ms-header__title" id="appTitle"></h1>
 
       <!-- Shown only while measuring AND away from the Pomiar screen, where the
            camera preview already says the same thing. -->
       <span class="ms-status ms-status--good" id="measureStatus" hidden>
         <span class="ms-icon ms-icon--play ms-icon--sm" aria-hidden="true"></span>
-        <span>Pomiar trwa</span>
+        <span></span>
       </span>
 
       <div class="ms-header__actions">
-        <button class="ms-iconbtn" id="btnInfo" type="button" aria-label="Dokumentacja i wyjaśnienia">
+        <button class="ms-iconbtn" id="btnInfo" type="button">
           <span class="ms-icon ms-icon--info" aria-hidden="true"></span>
         </button>
       </div>
@@ -113,32 +139,32 @@
        the list and its role="tab" children (aria-required-children), and the
        role overrode the navigation landmark, removing the one shortcut a
        screen-reader user has for jumping to the bar. -->
-  <nav class="ms-nav" id="navBar" aria-label="Główna nawigacja">
-    <div class="ms-nav__list" role="tablist" aria-label="Ekrany aplikacji">
+  <nav class="ms-nav" id="navBar">
+    <div class="ms-nav__list" role="tablist">
       <button class="ms-nav__item" id="navMeasure" type="button" role="tab"
               aria-selected="true" aria-controls="panelMeasure" tabindex="0">
         <span class="ms-nav__icon"><span class="ms-icon ms-icon--monitor" aria-hidden="true"></span></span>
-        <span class="ms-nav__label">Pomiar</span>
+        <span class="ms-nav__label"></span>
       </button>
       <button class="ms-nav__item" id="navHistory" type="button" role="tab"
               aria-selected="false" aria-controls="panelHistory" tabindex="-1">
         <span class="ms-nav__icon"><span class="ms-icon ms-icon--history" aria-hidden="true"></span></span>
-        <span class="ms-nav__label">Historia</span>
+        <span class="ms-nav__label"></span>
       </button>
       <button class="ms-nav__item" id="navTools" type="button" role="tab"
               aria-selected="false" aria-controls="panelTools" tabindex="-1">
         <span class="ms-nav__icon"><span class="ms-icon ms-icon--tune" aria-hidden="true"></span></span>
-        <span class="ms-nav__label">Narzędzia</span>
+        <span class="ms-nav__label"></span>
       </button>
       <button class="ms-nav__item" id="navSupport" type="button" role="tab"
               aria-selected="false" aria-controls="panelSupport" tabindex="-1">
         <span class="ms-nav__icon"><span class="ms-icon ms-icon--cup" aria-hidden="true"></span></span>
-        <span class="ms-nav__label">Wsparcie</span>
+        <span class="ms-nav__label"></span>
       </button>
       <button class="ms-nav__item" id="navMore" type="button" role="tab"
               aria-selected="false" aria-controls="panelMore" tabindex="-1">
         <span class="ms-nav__icon"><span class="ms-icon ms-icon--menu" aria-hidden="true"></span></span>
-        <span class="ms-nav__label">Więcej</span>
+        <span class="ms-nav__label"></span>
       </button>
     </div>
   </nav>
@@ -168,7 +194,10 @@
 <!-- ===================================================================
      SCRIPTS
      ===================================================================
-     Order is a contract, not a preference:
+     Order is a contract, not a preference. Pierwszy skrypt strony,
+     ../shared/i18n.js, stoi wyżej — w <head> — bo słowniki muszą być
+     w pamięci, zanim którykolwiek z modułów poniżej odezwie się do I18n.t()
+     przy ładowaniu. Dalej:
        ../shared/bus.js
                    — the event bus, shared with v3 and v4. First, so the
                      fallback bus inside ui-core.js stays switched off.

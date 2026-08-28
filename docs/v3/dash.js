@@ -59,6 +59,9 @@
   var candCount = 0;
   var culpritAt = 0;
   var verdictPrimed = false;
+  // Czas ostatniej zakończonej sesji — trzymany po to, żeby po zmianie języka
+  // dało się napisać zdanie „Pomiar zakończony…" jeszcze raz, w nowym języku.
+  var lastStoppedMs = null;
 
   // Last value written to each node. Comparing before writing keeps the hot
   // path free of redundant DOM work and, more importantly, keeps class churn
@@ -117,6 +120,24 @@
       return typeof found === 'string' ? found : '';
     }
     return fill(found, vars);
+  }
+
+  /* Nazwa i opisy wielkości z warstwy językowej. Metrics.CATALOGUE jest
+     wspólny dla v2-v4 i wciąż nosi polskie namePL — zostaje ono ostatnią
+     deską ratunku, gdy klucza 'metric.<id>.name' zabrakło w obu słownikach. */
+  function mName(m) {
+    var S = global.Scale;
+    return (m && S && S.metricName) ? S.metricName(m.id) : (m ? m.namePL : '');
+  }
+
+  function mShort(m) {
+    var S = global.Scale;
+    return (m && S && S.metricShort) ? S.metricShort(m.id) : (m ? m.shortPL : '');
+  }
+
+  function mHelp(m) {
+    var S = global.Scale;
+    return (m && S && S.metricHelp) ? S.metricHelp(m.id) : (m ? m.helpPL : '');
   }
 
   /* ------------------------------------------------------------------
@@ -375,7 +396,7 @@
     button.appendChild(shape);
 
     var name = make('span', 'ms3-channel__name');
-    name.appendChild(doc.createTextNode(m.namePL));
+    name.appendChild(doc.createTextNode(mName(m)));
     button.appendChild(name);
 
     var micro = buildMicro(m.id);
@@ -520,7 +541,7 @@
       var m = row.metric;
       var v = lastReading ? lastReading.values[m.id] : null;
       var vars = {
-        name: m.namePL,
+        name: mName(m),
         value: spoken(m.id, v),
         zone: zoneWord(lastReading ? lastReading.zones[m.id] : null).toLowerCase()
       };
@@ -565,10 +586,10 @@
     var m = global.Metrics.byId(leadId);
     if (!m) return;
 
-    setText(el.readoutName, m.namePL);
+    setText(el.readoutName, mName(m));
     // Never clear the attribute: with no text the literal from index.html has
     // to survive, because a key called "?" has no accessible name of its own.
-    var helpLabel = T(['aria.help', 'readout.helpAriaTpl'], { name: m.namePL });
+    var helpLabel = T(['aria.help', 'readout.helpAriaTpl'], { name: mName(m) });
     if (helpLabel) setAttr(el.help, 'aria-label', helpLabel);
 
     // The ≈ sign is decoration for the eye; the word reaches a screen reader
@@ -883,7 +904,7 @@
 
     if (el.scale) {
       var label = T(['aria.scale'], {
-        name: m.namePL,
+        name: mName(m),
         min: spoken(leadId, m.min),
         max: spoken(leadId, m.max),
         value: spoken(leadId, v),
@@ -898,7 +919,7 @@
       var approximate = (leadId === 'kelvin' || leadId === 'melanopic');
       var readoutLabel = T(
         approximate ? ['aria.readoutApprox', 'aria.readout'] : ['aria.readout'],
-        { name: m.namePL, value: spoken(leadId, v), zone: zone }
+        { name: mName(m), value: spoken(leadId, v), zone: zone }
       );
       if (readoutLabel) setAttr(el.readout, 'aria-label', readoutLabel);
     }
@@ -1022,7 +1043,7 @@
     var m = global.Metrics.byId(metricId || leadId);
     if (!m || !global.UI3 || typeof global.UI3.openSheet !== 'function') return;
     global.UI3.openSheet({
-      titlePL: m.namePL,
+      titlePL: mName(m),
       build: function (body) { buildHelp(body, m); }
     });
   }
@@ -1046,8 +1067,8 @@
 
   function buildHelp(body, m) {
     var t = (thresholds && thresholds[m.id]) || {};
-    addLine(body, 'ms3-note__text', m.shortPL);
-    addLine(body, 'ms3-note__text', m.helpPL);
+    addLine(body, 'ms3-note__text', mShort(m));
+    addLine(body, 'ms3-note__text', mHelp(m));
 
     var list = make('dl', 'ms3-kv');
     addPair(list, T(['help.unit']), m.unit);
@@ -1137,7 +1158,8 @@
 
   function onStopped(payload) {
     var session = payload && payload.session;
-    var text = global.Scale.announceStopped(session ? session.durationMs : 0);
+    lastStoppedMs = session ? session.durationMs : 0;
+    var text = global.Scale.announceStopped(lastStoppedMs);
     warmupDone = true;
     if (el.warmup) el.warmup.hidden = true;
     setVerdict(text);
@@ -1160,6 +1182,67 @@
     cache.stampThreshold = null;
     renderReadout();
     renderContext();
+  }
+
+  /* ------------------------------------------------------------------
+     Zmiana języka
+
+     Powłoka wpisuje napisy szkieletu i przebudowuje ekrany modułów; pulpit
+     jest jej poza zasięgiem, bo jego węzły mają jednego właściciela — ten
+     plik. Nic tu nie jest budowane od nowa poza listwą kanałów: reszta to te
+     same funkcje rysujące, które biegną przy zmianie kanału głównego, tylko
+     z wyczyszczoną pamięcią podręczną — bez tego setText porównałby nowy
+     napis ze starym i uznał, że nie ma nic do roboty.
+     ------------------------------------------------------------------ */
+
+  function relabelVerdict() {
+    if (engineState === 'running') {
+      if (!warmupDone) { setVerdict(T(['readout.verdictWarmup', 'verdict.warmup'])); return; }
+      // Ta sama strefa i ten sam winowajca, tylko po nowemu — histereza nie
+      // ma tu nic do rzeczy, bo pomiar się nie zmienił, zmienił się język.
+      if (verdictPrimed && lastReading) {
+        var v = global.Scale.verdict(lastReading, thresholds);
+        if (v) { shownText = v.textPL; setVerdict(shownText); }
+      }
+      return;
+    }
+    if (lastStoppedMs !== null && engineState !== 'error') {
+      setVerdict(global.Scale.announceStopped(lastStoppedMs));
+      return;
+    }
+    renderIdleVerdict();
+  }
+
+  function relabel() {
+    // Każda pozycja pamięci podręcznej trzyma napis w POPRZEDNIM języku,
+    // a porównanie „ta sama wartość” jest jedynym warunkiem zapisu do DOM.
+    cache.approx = null;
+    cache.stampZone = null;
+    cache.stampWord = null;
+    cache.stampThreshold = null;
+    cache.verdict = null;
+    cache.railState = null;
+    cache.railText = null;
+    cache.keyMode = null;
+    cache.rangeNote = null;
+    cache.scaleKey = null;
+
+    // renderRail() wpisuje częstotliwość tylko do pustego pola — inaczej
+    // przepisywałby ją pięć razy na sekundę.
+    if (el.hz) setText(el.hz, '');
+
+    applyLead();        // nazwa kanału, pomoc, jednostka, skala, listwa, odczyt
+    renderKey();
+    renderRail();
+    renderContext();
+    labelRows();
+    labelScale();
+    relabelVerdict();
+
+    var flipLabel = T(['keys.flipAria']);
+    if (el.keyFlip && flipLabel) setAttr(el.keyFlip, 'aria-label', flipLabel);
+    var menuLabel = T(['keys.menuAria']);
+    if (el.keyMenu && menuLabel) setAttr(el.keyMenu, 'aria-label', menuLabel);
   }
 
   /* ------------------------------------------------------------------
@@ -1218,6 +1301,9 @@
     global.Bus.on('engine:error', onError);
     global.Bus.on('engine:thresholds', onThresholds);
     global.Bus.on('ui3:theme', function () { paintScale(true); });
+    /* scale.js przebudował Scale.TEXT, a shell.js wpisał napisy szkieletu —
+       oba stoją w index.html przed tym plikiem, więc tu jest już po wszystkim. */
+    global.Bus.on('i18n:changed', relabel);
     global.Bus.on('ui3:lead', function (data) {
       var id = data && (data.id || data.leadChannel);
       if (id && id !== leadId && global.Metrics.byId(id)) { leadId = id; applyLead(); }

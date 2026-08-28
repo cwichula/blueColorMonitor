@@ -531,6 +531,26 @@
 .m5-seg::-webkit-scrollbar { display: none; }
 .m5-seg--block { width: 100%; }
 
+/* Wariant siatki — dla grupy radiowej, która ma więcej pozycji, niż da się
+   ustawić w rzędzie: trzydzieści języków dzielonych po równo dałoby segmenty
+   węższe od własnych nazw. Liczbę kolumn dobiera przeglądarka do szerokości
+   ekranu, więc na telefonie wychodzą dwie, a na tablecie cztery. Etykieta jest
+   tu dłuższa i wielojęzyczna, więc wolno jej się zawinąć i wyrównuje się do
+   początku wiersza — środkowanie rozjeżdżałoby wzrokową krawędź listy. */
+.m5-seg--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  overflow-x: visible;
+}
+.m5-seg--grid .m5-seg__item {
+  justify-content: flex-start;
+  min-width: 0;
+  padding-block: var(--sp-2);
+  padding-inline: var(--sp-3);
+  text-align: start;
+  white-space: normal;
+}
+
 .m5-seg__item {
   position: relative;
   display: inline-flex;

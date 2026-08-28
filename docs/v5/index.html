@@ -1,17 +1,22 @@
 <!doctype html>
-<html lang="pl" data-accent="ocean">
+<html lang="en" data-accent="ocean">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#eff2f8" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0f1622" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Monitor Światła — mierzy kamerą siedem wielkości światła wokół Ciebie. Wszystko liczy się na tym urządzeniu, nic nie wychodzi do sieci.">
+  <!-- Napisy w tym pliku są po ANGIELSKU celowo: to wersja dla kogoś, kto nie ma
+       JavaScriptu, i punkt wyjścia, zanim ruszy silnik językowy. Po starcie
+       js/app.js podmienia opis, tytuł, kotwicę pominięcia nawigacji i nazwy
+       obu pasków na język interfejsu (klucze app.description, app.name,
+       app.documentTitle, app.skipToContent, app.nav.aria, nav.measure). -->
+  <meta name="description" content="Light Monitor — measures seven qualities of the light around you with your camera. Everything is computed on this device; nothing leaves it.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Monitor Światła">
-  <title>Monitor Światła</title>
+  <meta name="apple-mobile-web-app-title" content="Light Monitor">
+  <title>Light Monitor</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
@@ -68,18 +73,18 @@
 <body>
 
   <!-- Pierwszy element w kolejności tabulacji: skok ponad paski powłoki. -->
-  <a class="m5-skip" href="#main">Przejdź do treści</a>
+  <a class="m5-skip" href="#main">Skip to content</a>
 
   <div class="m5-app">
 
     <!-- Pasek boczny (od 900 px) i pasek zakładek (poniżej) niosą tę samą
          nawigację; widoczny jest zawsze dokładnie jeden, więc czytnik ekranu
          nie dostaje dwóch takich samych list. Wypełnia je js/app.js. -->
-    <nav class="m5-sidenav" id="sidenav" aria-label="Nawigacja główna"></nav>
+    <nav class="m5-sidenav" id="sidenav" aria-label="Main navigation"></nav>
 
     <header class="m5-topbar">
       <div class="m5-topbar__inner">
-        <h1 class="m5-topbar__title" id="screenTitle">Pomiar</h1>
+        <h1 class="m5-topbar__title" id="screenTitle">Measure</h1>
         <!-- Wskaźnik trwającego pomiaru; poza ekranem pomiaru jest jedynym
              śladem, że kamera pracuje. -->
         <div class="m5-topbar__status" id="topbarStatus"></div>
@@ -90,18 +95,22 @@
     <!-- Główny obszar przewijania aplikacji. tabindex="-1", bo po zmianie
          ekranu app.js przenosi tu fokus. -->
     <main class="m5-main" id="main" tabindex="-1">
+      <!-- Ten komunikat zostaje po angielsku NA ZAWSZE: bez JavaScriptu nie ma
+           czym go przetłumaczyć, a angielski jest zapasem całej aplikacji.
+           Klucze app.noscript.title i app.noscript.text trzymają tę samą treść
+           dla reszty tłumaczeń. -->
       <noscript>
         <div class="m5-noscript">
-          <h2>Ta aplikacja potrzebuje JavaScriptu</h2>
-          <p>Cały pomiar odbywa się w tej karcie przeglądarki: to JavaScript odczytuje
-          klatki z kamery i liczy z nich siedem wielkości światła. Bez niego nie ma czym
-          mierzyć. Włącz obsługę JavaScriptu dla tej strony i otwórz ją ponownie —
-          nadal nic nie zostanie wysłane do sieci.</p>
+          <h2>This app needs JavaScript</h2>
+          <p>The whole measurement happens in this browser tab: JavaScript reads the
+          frames from your camera and computes seven qualities of light from them.
+          Without it there is nothing to measure with. Enable JavaScript for this page
+          and open it again — still nothing will be sent over the network.</p>
         </div>
       </noscript>
     </main>
 
-    <nav class="m5-tabbar" id="tabbar" aria-label="Nawigacja główna"></nav>
+    <nav class="m5-tabbar" id="tabbar" aria-label="Main navigation"></nav>
   </div>
 
   <!-- Źródła obrazu dla js/camera.js. Muszą istnieć w dokumencie, zanim ruszy

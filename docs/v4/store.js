@@ -14,6 +14,9 @@
  * Store.persistent() mówi powłoce, czy wolno obiecywać trwałość — app.js pokazuje
  * na tej podstawie UI.T.error.storageBlocked raz na sesję.
  *
+ * Nazwy palet i motywów są napisami dla użytkownika i przychodzą z warstwy
+ * językowej (../shared/i18n.js), która musi być wczytana przed tym plikiem.
+ *
  * Kolory strefy i akcentu żyją w tokens.css. Jedyne hexy poniżej to próbki palet
  * (Store.ACCENTS), bo próbka w ekranie ustawień musi pokazać kolor, którego akurat
  * nie ma na ekranie — dokładnie tak jak miniatura motywu.
@@ -24,22 +27,45 @@
   var KEY = 'ms4.settings.v1';
   var doc = global.document;
 
+  /** Napis spod klucza warstwy językowej. Bez window.I18n zwracamy sam klucz —
+   *  ekran ustawień ma wtedy pokazać, czego brakuje, a nie pustą etykietę. */
+  function T(key) {
+    var I = global.I18n;
+    if (I && typeof I.t === 'function') return I.t(key);
+    return String(key);
+  }
+
   /* Sześć palet z rozdziału 2.4 SPEC.md, w tej samej kolejności.
-     swatch = [wartość --c-accent w motywie jasnym, w motywie ciemnym]. */
+     swatch = [wartość --c-accent w motywie jasnym, w motywie ciemnym].
+     Nazwy palet i motywów są napisami dla użytkownika, więc — jak wszystkie
+     napisy tej wersji — przychodzą z warstwy językowej. Pole nazywa się dalej
+     namePL, bo tak czyta je screen-support.js; nazwa pola to sprawa kodu,
+     a nie języka, i zmiana jej należy do osobnego porządkowania. */
   var ACCENTS = [
-    { id: 'ocean',    namePL: 'Ocean',         swatch: ['#0F6E86', '#35C0DA'] },
-    { id: 'violet',   namePL: 'Fiolet',        swatch: ['#6A35D9', '#A98BFF'] },
-    { id: 'sunset',   namePL: 'Zachód słońca', swatch: ['#C2410C', '#FF9457'] },
-    { id: 'forest',   namePL: 'Las',           swatch: ['#146B3A', '#4FC97A'] },
-    { id: 'graphite', namePL: 'Grafit',        swatch: ['#3E4956', '#A7B4C4'] },
-    { id: 'rose',     namePL: 'Róża',          swatch: ['#BE1F62', '#FF7AAE'] }
+    { id: 'ocean',    namePL: T('accent.ocean'),    swatch: ['#0F6E86', '#35C0DA'] },
+    { id: 'violet',   namePL: T('accent.violet'),   swatch: ['#6A35D9', '#A98BFF'] },
+    { id: 'sunset',   namePL: T('accent.sunset'),   swatch: ['#C2410C', '#FF9457'] },
+    { id: 'forest',   namePL: T('accent.forest'),   swatch: ['#146B3A', '#4FC97A'] },
+    { id: 'graphite', namePL: T('accent.graphite'), swatch: ['#3E4956', '#A7B4C4'] },
+    { id: 'rose',     namePL: T('accent.rose'),     swatch: ['#BE1F62', '#FF7AAE'] }
   ];
 
   var THEMES = [
-    { id: 'system', namePL: 'Jak w systemie' },
-    { id: 'light',  namePL: 'Jasny' },
-    { id: 'dark',   namePL: 'Ciemny' }
+    { id: 'system', namePL: T('settings.themeSystem') },
+    { id: 'light',  namePL: T('settings.themeLight') },
+    { id: 'dark',   namePL: T('settings.themeDark') }
   ];
+
+  /* Po zmianie języka nazwy palet i motywów trzeba przepisać na nowo: obie
+     tablice powstają raz, przy wczytaniu pliku. Woła to app.js. */
+  function relanguage() {
+    var i;
+    var accentKeys = ['accent.ocean', 'accent.violet', 'accent.sunset',
+                      'accent.forest', 'accent.graphite', 'accent.rose'];
+    for (i = 0; i < ACCENTS.length; i += 1) ACCENTS[i].namePL = T(accentKeys[i]);
+    var themeKeys = ['settings.themeSystem', 'settings.themeLight', 'settings.themeDark'];
+    for (i = 0; i < THEMES.length; i += 1) THEMES[i].namePL = T(themeKeys[i]);
+  }
 
   var DEFAULTS = {
     theme: 'system',
@@ -245,6 +271,9 @@
     DEFAULTS: clone(DEFAULTS),
     ACCENTS: ACCENTS,
     THEMES: THEMES,
+
+    /** Przepisanie nazw palet i motywów po zmianie języka. Woła to app.js. */
+    relanguage: relanguage,
 
     get: function () { return clone(state); },
 

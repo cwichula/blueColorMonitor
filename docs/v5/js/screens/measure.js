@@ -16,7 +16,8 @@ import * as camera from '../camera.js';
 import * as history from '../history.js';
 import { CATALOGUE, byId, zoneFor } from '../metrics.js';
 import { get as getSettings, set as saveSettings, thresholdsFor } from '../store.js';
-import { metricValue, metricValueUnit, duration, clock, plural, ZONE_LABEL } from '../format.js';
+import { metricValue, metricValueUnit, duration, clock, plural, zoneLabel } from '../format.js';
+import { t, has as hasKey } from '../i18n/index.js';
 import { h, icon, clear as clearNode, announce, rafThrottle, haptic } from '../ui/dom.js';
 import { heroGauge, metricTile } from '../ui/gauge.js';
 import { toast, sheet } from '../ui/overlays.js';
@@ -232,8 +233,8 @@ function limitsOf(metric) {
 
 function zoneOf(metric, value) {
   if (!num(value)) return 'none';
-  const t = limitsOf(metric);
-  return zoneFor(value, t.warn, t.crit, metric.invert) || 'none';
+  const limits = limitsOf(metric);
+  return zoneFor(value, limits.warn, limits.crit, metric.invert) || 'none';
 }
 
 function reducedMotion() {
@@ -255,10 +256,10 @@ function reducedMotion() {
 function severity(metric, value) {
   const zone = zoneOf(metric, value);
   if (zone === 'none') return null;
-  const t = limitsOf(metric);
+  const limits = limitsOf(metric);
   const span = Math.abs(metric.max - metric.min) || 1;
   // Dodatnie po złej stronie progu, ujemne po dobrej.
-  const past = metric.invert ? (t.warn - value) / span : (value - t.warn) / span;
+  const past = metric.invert ? (limits.warn - value) / span : (value - limits.warn) / span;
   const rank = zone === 'crit' ? 2 : (zone === 'warn' ? 1 : 0);
   const detail = zone === 'good'
     ? 1 - Math.min(1, Math.max(0, -past))
@@ -280,33 +281,27 @@ function adviceFor(metric, value, zone, endedAt) {
   const evening = isEvening(endedAt);
   const shown = metricValueUnit(metric.id, value);
 
-  if (zone === 'good') {
-    return 'Światło trzymało się bezpiecznego zakresu przez całą sesję — zostaw ustawienie lampy tak, jak jest, i sprawdź je ponownie po zmroku, gdy pracuje inne źródło.';
-  }
+  if (zone === 'good') return t('measure.advice.good');
 
+  // Wartość wchodzi wstawką {value}: w części języków liczba stoi w zdaniu
+  // gdzie indziej niż po polsku i sklejanie odebrałoby tłumaczowi szyk.
   switch (metric.id) {
     case 'share':
-      return evening
-        ? 'Udział niebieskiego wyniósł średnio ' + shown + ' — włącz na ekranach tryb nocny i zgaś górne światło, zostawiając jedną ciepłą lampkę na wysokości biurka.'
-        : 'Udział niebieskiego wyniósł średnio ' + shown + ' — w ciągu dnia to do przyjęcia, ale ustaw automatyczne przejście ekranu w tryb ciepły na dwie godziny przed snem.';
+      return t(evening ? 'measure.advice.share.evening' : 'measure.advice.share.day', { value: shown });
     case 'brightness':
-      return 'Kadr był prześwietlony (średnio ' + shown + ') — odsuń się od źródła światła albo zmniejsz jasność mierzonego ekranu, bo przy takiej ekspozycji pozostałe wielkości też tracą dokładność.';
+      return t('measure.advice.brightness', { value: shown });
     case 'kelvin':
-      return evening
-        ? 'Barwa światła trzymała się średnio ' + shown + ' — po zmroku zejdź poniżej 3000 K: przełącz lampę na tryb ciepły albo wkręć żarówkę 2700 K.'
-        : 'Barwa światła trzymała się średnio ' + shown + ' — na dzień to dobra, pobudzająca biel, ale wieczorem przestaw tę samą lampę na 2700 K.';
+      return t(evening ? 'measure.advice.kelvin.evening' : 'measure.advice.kelvin.day', { value: shown });
     case 'melanopic':
-      return evening
-        ? 'Wpływ na rytm dobowy wyniósł średnio ' + shown + ' — na dwie godziny przed snem zejdź poniżej 0,50 ×, przygaszając główne światło i świecąc z wysokości biurka zamiast z sufitu.'
-        : 'Wpływ na rytm dobowy wyniósł średnio ' + shown + ' — o tej porze taka dawka pomaga, ale wieczorem zamień to źródło na słabsze i cieplejsze.';
+      return t(evening ? 'measure.advice.melanopic.evening' : 'measure.advice.melanopic.day', { value: shown });
     case 'flicker':
-      return 'Migotanie sięgało średnio ' + shown + ' — to zwykle ściemniacz albo nisko ustawione podświetlenie: podnieś jasność ekranu powyżej 40 % lub wymień ściemniacz na taki bez modulacji PWM.';
+      return t('measure.advice.flicker', { value: shown });
     case 'uniformity':
-      return 'Światło padało nierówno (średnio ' + shown + ') — ustaw lampę bokiem do blatu i dodaj drugie, słabsze źródło z przeciwnej strony, zamiast jednego mocnego punktu.';
+      return t('measure.advice.uniformity', { value: shown });
     case 'comfort':
-      return 'Komfort wzrokowy wyszedł średnio ' + shown + ' — zacznij od jednej zmiany: przygaś główne źródło o połowę i dopiero potem zajmij się barwą światła.';
+      return t('measure.advice.comfort', { value: shown });
     default:
-      return 'Zmień jedną rzecz w oświetleniu i zmierz je ponownie — porównanie dwóch sesji mówi więcej niż pojedynczy odczyt.';
+      return t('measure.advice.default');
   }
 }
 
@@ -325,7 +320,13 @@ export function create() {
   let lastReadingAt = 0;
   let lastPushAt = 0;
   let summary = null;              // ostatnia zamknięta sesja do podsumowania
-  let errorText = '';
+  /* Błąd kamery pamiętamy KODEM, nie gotowym zdaniem: zdanie zamarzłoby w
+   * języku sprzed przełączenia, a z kodu napis powstaje na nowo przy każdym
+   * rysowaniu. Tak samo faza widoku — plakietka i przycisk pauzy odtwarzają
+   * z niej swoje napisy po zmianie języka. */
+  let errorCode = '';
+  let failNoteMs = 0;              // czas sesji uratowanej przed błędem (0 = brak)
+  let phase = 'starting';
   let leadId = resolveLead(getSettings().leadMetric);
 
   const uiSubs = [];
@@ -344,24 +345,28 @@ export function create() {
   camera.attach({ video, canvas });
 
   /* ---- widok: stan pusty ---- */
+  /* Napis przycisku, który stoi obok ikony, jest osobnym węzłem tekstowym:
+   * po zmianie języka podmieniamy sam tekst, nie ruszając rysunku. */
+  const startBtnLabel = document.createTextNode('');
   const startBtn = h('button.m5-btn.m5-btn--primary.m5-btn--lg.m5-btn--block.m5-measure__cta', {
     type: 'button',
     on: { click: () => startMeasurement() }
-  }, icon('play', { size: 22 }), 'Rozpocznij pomiar');
+  }, icon('play', { size: 22 }), startBtnLabel);
 
-  const introView = h('section.m5-measure__view.m5-measure__intro', {
-    aria: { label: 'Zacznij pomiar' }
-  },
+  const introHeadline = h('h2.m5-measure__headline');
+  const introLead = h('p.m5-measure__lead');
+  const introHint = h('p.m5-measure__hint');
+  const introPrivacy = h('span');
+
+  const introView = h('section.m5-measure__view.m5-measure__intro', null,
     h('span.m5-measure__mark', icon('gauge', { size: 40 })),
-    h('h2.m5-measure__headline', { text: 'Zobacz, czym świecisz' }),
-    h('p.m5-measure__lead', {
-      text: 'Kamera pokazuje, ile niebieskiego jest w świetle, które właśnie na ciebie pada — i czy o tej porze dnia jest go za dużo.'
-    }),
+    introHeadline,
+    introLead,
     startBtn,
-    h('p.m5-measure__hint', { text: 'Przeglądarka poprosi o zgodę na kamerę. Pomiar rusza od razu po jej udzieleniu.' }),
+    introHint,
     h('p.m5-measure__privacy', null,
       icon('lock', { size: 16 }),
-      h('span', { text: 'Obraz z kamery jest przetwarzany w tym urządzeniu i nigdy go nie opuszcza. Nie wysyłamy, nie zapisujemy i nie udostępniamy żadnej klatki.' }))
+      introPrivacy)
   );
 
   /* ---- widok: praca (startowanie / praca / pauza) ---- */
@@ -373,33 +378,37 @@ export function create() {
     h('span.m5-measure__reticle', { aria: { hidden: 'true' } })
   );
 
-  const liveBadge = h('span.m5-badge', { text: 'Uruchamiam' });
+  const liveBadge = h('span.m5-badge');
   const facingLabel = h('span.m5-measure__caption', { text: '' });
+  const staleText = h('span');
   const staleNote = h('p.m5-measure__stale', { hidden: true, aria: { live: 'polite' } },
     icon('alert', { size: 16 }),
-    h('span', { text: 'Czekam na obraz — podgląd zamiera, gdy aplikacja jest w tle.' }));
+    staleText);
+
+  // Odsetek kadru wchodzi wstawką {percent}: sklejanie liczby z napisem nie
+  // przetrwałoby języka, w którym znak procentu stoi przed liczbą.
+  const cropCaption = h('p.m5-measure__caption');
 
   const stage = h('div.m5-measure__stage', null,
     previewFigure,
     h('div.m5-measure__status', null,
       h('div.m5-measure__statusRow', null, liveBadge, facingLabel),
-      h('p.m5-measure__caption', {
-        text: 'Mierzymy środek kadru — zaznaczone ' + CROP_PERCENT + ' % szerokości i wysokości obrazu.'
-      }),
+      cropCaption,
       staleNote)
   );
 
-  const bootPanel = h('div.m5-measure__boot', null,
-    h('p.m5-measure__bootTitle', { text: 'Uruchamiam kamerę…' }),
-    h('p.m5-measure__bootText', {
-      text: 'Jeśli przeglądarka pyta o zgodę, potwierdź ją — bez obrazu nie ma czego zmierzyć. Zgoda dotyczy wyłącznie tej strony i możesz ją później cofnąć.'
-    }),
-    h('button.m5-btn.m5-btn--ghost', { type: 'button', on: { click: () => cancelStart() } }, 'Anuluj')
-  );
+  const bootTitle = h('p.m5-measure__bootTitle');
+  const bootText = h('p.m5-measure__bootText');
+  const bootCancel = h('button.m5-btn.m5-btn--ghost', {
+    type: 'button', on: { click: () => cancelStart() }
+  });
 
+  const bootPanel = h('div.m5-measure__boot', null, bootTitle, bootText, bootCancel);
+
+  const holdText = h('span');
   const holdBanner = h('p.m5-measure__hold', { aria: { role: 'status' } },
     icon('alert', { size: 20 }),
-    h('span', { text: 'Wskazania zamrożone. Kamera pracuje dalej, ale nic nie trafia do historii ani do średnich.' }));
+    holdText);
 
   const hero = heroGauge({ metricId: leadId });
   const heroWrap = h('div.m5-measure__hero', { tabindex: '-1' }, hero.el);
@@ -413,53 +422,105 @@ export function create() {
     })
   }));
 
-  const grid = h('div.m5-measure__grid', null, tiles.map((t) => t.view.el));
-  const gridHint = h('p.m5-measure__gridHint', {
-    text: 'Wybierz kafelek, aby przenieść tę wielkość na duży wskaźnik.'
-  });
+  const grid = h('div.m5-measure__grid', null, tiles.map((tile) => tile.view.el));
+  const gridHint = h('p.m5-measure__gridHint');
 
+  const stopBtnLabel = document.createTextNode('');
   const stopBtn = h('button.m5-btn.m5-btn--primary', {
     type: 'button', on: { click: () => stopMeasurement() }
-  }, icon('stop', { size: 20 }), 'Zatrzymaj');
+  }, icon('stop', { size: 20 }), stopBtnLabel);
 
   const pauseBtn = h('button.m5-btn.m5-btn--ghost', {
     type: 'button', on: { click: () => setPaused(!paused) }
-  }, 'Wstrzymaj');
+  });
 
   const flipBtn = h('button.m5-btn.m5-btn--ghost.m5-btn--icon', {
-    type: 'button', aria: { label: 'Przełącz kamerę' }, on: { click: () => flipCamera() }
+    type: 'button', on: { click: () => flipCamera() }
   }, icon('cameraFlip', { size: 22 }));
 
   const liveView = h('section.m5-measure__view.m5-measure__live', {
-    hidden: true, dataset: { phase: 'starting' }, aria: { label: 'Pomiar w toku' }
+    hidden: true, dataset: { phase: 'starting' }
   }, stage, bootPanel, holdBanner, heroWrap, grid, gridHint,
      h('div.m5-measure__bar', null, stopBtn, pauseBtn, flipBtn));
 
   /* ---- widok: podsumowanie ---- */
-  const summaryView = h('section.m5-measure__view.m5-measure__summary', {
-    hidden: true, aria: { label: 'Podsumowanie sesji' }
-  });
+  const summaryView = h('section.m5-measure__view.m5-measure__summary', { hidden: true });
 
   /* ---- widok: błąd ---- */
   const failText = h('p.m5-measure__failText', { text: '' });
   const failNote = h('p.m5-measure__note', { hidden: true, text: '' });
-  const failView = h('section.m5-measure__view.m5-measure__fail', {
-    hidden: true, aria: { label: 'Błąd kamery' }
-  },
+  const failHeadline = h('h2.m5-measure__headline');
+  const failRetry = h('button.m5-btn.m5-btn--primary.m5-btn--lg.m5-btn--block.m5-measure__cta', {
+    type: 'button', on: { click: () => startMeasurement() }
+  });
+  const failBack = h('button.m5-btn.m5-btn--ghost', {
+    type: 'button', on: { click: () => { errorCode = ''; failNoteMs = 0; setView('empty'); } }
+  });
+  const failView = h('section.m5-measure__view.m5-measure__fail', { hidden: true },
     h('span.m5-measure__mark', icon('alert', { size: 40 })),
-    h('h2.m5-measure__headline', { text: 'Kamera nie ruszyła' }),
+    failHeadline,
     failText,
     failNote,
-    h('button.m5-btn.m5-btn--primary.m5-btn--lg.m5-btn--block.m5-measure__cta', {
-      type: 'button', on: { click: () => startMeasurement() }
-    }, 'Spróbuj ponownie'),
-    h('button.m5-btn.m5-btn--ghost', {
-      type: 'button', on: { click: () => { errorText = ''; setView('empty'); } }
-    }, 'Wróć')
+    failRetry,
+    failBack
   );
 
   const el = h('div.m5-measure', { dataset: { state: 'empty' } },
     introView, liveView, summaryView, failView);
+
+  /* ──────────────────────────────  Napisy  ───────────────────────────────── */
+
+  /* WSZYSTKIE napisy tego ekranu powstają tutaj — raz przy złożeniu widoku i
+   * ponownie po każdej zmianie języka. Gdyby stały w wywołaniach h(), zamarzłyby
+   * w języku aktywnym w chwili budowy: app.js tworzy instancję ekranu RAZ i
+   * trzyma ją do końca działania aplikacji, więc drugiej okazji by nie było. */
+  function applyText() {
+    introView.setAttribute('aria-label', t('measure.intro.aria'));
+    introHeadline.textContent = t('measure.intro.headline');
+    introLead.textContent = t('measure.intro.lead');
+    startBtnLabel.nodeValue = t('measure.intro.start');
+    introHint.textContent = t('measure.intro.hint');
+    introPrivacy.textContent = t('measure.intro.privacy');
+
+    liveView.setAttribute('aria-label', t('measure.live.aria'));
+    staleText.textContent = t('measure.stale');
+    cropCaption.textContent = t('measure.crop', { percent: CROP_PERCENT });
+    bootTitle.textContent = t('measure.boot.title');
+    bootText.textContent = t('measure.boot.text');
+    bootCancel.textContent = t('measure.boot.cancel');
+    holdText.textContent = t('measure.hold');
+    gridHint.textContent = t('measure.gridHint');
+    stopBtnLabel.nodeValue = t('measure.stop');
+    // Wartość wyjściowa; syncFacing() zaraz zastąpi ją opisem kierunku.
+    flipBtn.setAttribute('aria-label', t('measure.flip.aria'));
+
+    summaryView.setAttribute('aria-label', t('measure.summary.aria'));
+
+    failView.setAttribute('aria-label', t('measure.fail.aria'));
+    failHeadline.textContent = t('measure.fail.headline');
+    failRetry.textContent = t('measure.fail.retry');
+    failBack.textContent = t('measure.fail.back');
+
+    setPhase(phase);
+    syncFacing();
+    syncFailText();
+    // Podsumowanie jest w całości zbudowane z napisów — składamy je od nowa.
+    if (summary) renderSummary(summary);
+  }
+
+  /* Napis błędu kamery bierzemy z KODU, a nie z komunikatu przyniesionego przez
+   * szynę — dzięki temu po przełączeniu języka mówi w nowym. */
+  function cameraErrorText() {
+    const key = 'camera.error.' + errorCode;
+    return errorCode && hasKey(key) ? t(key) : t('measure.error.fallback');
+  }
+
+  function syncFailText() {
+    failText.textContent = errorCode ? cameraErrorText() : '';
+    failNote.textContent = failNoteMs > 0
+      ? t('measure.fail.savedSession', { duration: duration(failNoteMs) })
+      : '';
+  }
 
   /* ───────────────────────  Elementy kamery: adopcja  ────────────────────── */
 
@@ -497,23 +558,24 @@ export function create() {
     failView.hidden = state !== 'error';
   }
 
-  function setPhase(phase) {
-    liveView.dataset.phase = phase;
-    previewFigure.dataset.live = String(phase !== 'starting');
-    liveBadge.textContent = phase === 'starting'
-      ? 'Uruchamiam'
-      : (phase === 'paused' ? 'Wstrzymano' : 'Pomiar trwa');
+  function setPhase(next) {
+    phase = next;                   // zapamiętana, żeby przeżyła zmianę języka
+    liveView.dataset.phase = next;
+    previewFigure.dataset.live = String(next !== 'starting');
+    liveBadge.textContent = next === 'starting'
+      ? t('measure.badge.starting')
+      : (next === 'paused' ? t('measure.badge.paused') : t('measure.badge.running'));
     // Zmienna etykieta niesie już stan; aria-pressed=„wciśnięty” przy napisie
     // „Wznów” mówiłoby czytnikowi coś dokładnie odwrotnego.
-    pauseBtn.textContent = phase === 'paused' ? 'Wznów' : 'Wstrzymaj';
+    pauseBtn.textContent = next === 'paused' ? t('measure.resume') : t('measure.pause');
   }
 
   function syncFacing() {
     const front = camera.facing() === 'user';
     previewFigure.dataset.facing = camera.facing();
-    facingLabel.textContent = front ? 'przedni obiektyw' : 'tylny obiektyw';
+    facingLabel.textContent = front ? t('measure.facing.front') : t('measure.facing.back');
     flipBtn.setAttribute('aria-label',
-      front ? 'Przełącz na tylny obiektyw' : 'Przełącz na przedni obiektyw');
+      front ? t('measure.flip.toBack') : t('measure.flip.toFront'));
   }
 
   /* Widok wyprowadzamy ze stanu kamery, nie z historii kliknięć — dzięki temu
@@ -609,8 +671,10 @@ export function create() {
   async function startMeasurement() {
     if (starting || camera.state() === 'running') return;
     starting = true;
-    errorText = '';
+    errorCode = '';
+    failNoteMs = 0;
     failNote.hidden = true;
+    syncFailText();
     summary = null;
     paused = false;
     lastPushAt = 0;
@@ -635,7 +699,7 @@ export function create() {
     stopping = false;
     endSession(Date.now());
     setView(summary ? 'summary' : 'empty');
-    announce('Uruchamianie kamery przerwane.');
+    announce(t('measure.announce.startCancelled'));
   }
 
   function stopMeasurement() {
@@ -654,7 +718,7 @@ export function create() {
       // ani czego odkładać do historii.
       summary = null;
       setView('empty');
-      announce('Pomiar zatrzymany. Nie zebrano żadnej próbki.');
+      announce(t('measure.announce.stoppedNoSamples'));
       return;
     }
 
@@ -663,7 +727,7 @@ export function create() {
     summary = finished;
     renderSummary(finished);
     setView('summary');
-    announce('Pomiar zatrzymany. Podsumowanie sesji jest gotowe.');
+    announce(t('measure.announce.stopped'));
   }
 
   function setPaused(next) {
@@ -678,7 +742,7 @@ export function create() {
     }
     setPhase(paused ? 'paused' : 'running');
     haptic(10);
-    announce(paused ? 'Pomiar wstrzymany. Wskazania zamrożone.' : 'Pomiar wznowiony.');
+    announce(t(paused ? 'measure.announce.paused' : 'measure.announce.resumed'));
     // Po wznowieniu wskazania mają wrócić natychmiast, bez czekania na próbkę.
     if (!paused && lastReading) paintThrottled(lastReading);
   }
@@ -700,9 +764,9 @@ export function create() {
       setPhase('starting');
       await camera.switchCamera();
       syncFacing();
-      announce(camera.facing() === 'user'
-        ? 'Przełączono na przedni obiektyw. Zaczyna się nowa sesja.'
-        : 'Przełączono na tylny obiektyw. Zaczyna się nowa sesja.');
+      announce(t(camera.facing() === 'user'
+        ? 'measure.announce.switchedFront'
+        : 'measure.announce.switchedBack'));
     } finally {
       switching = false;
       flipBtn.disabled = false;
@@ -727,9 +791,9 @@ export function create() {
     leadId = id;
 
     hero.setMetric(id);
-    tiles.forEach((t) => {
-      t.view.setSelected(t.metric.id === id);
-      t.view.el.hidden = t.metric.id === id;   // wiodąca stoi na wskaźniku, nie w siatce
+    tiles.forEach((tile) => {
+      tile.view.setSelected(tile.metric.id === id);
+      tile.view.el.hidden = tile.metric.id === id;   // wiodąca stoi na wskaźniku, nie w siatce
     });
     if (lastReading && !paused) hero.update(lastReading);
 
@@ -743,7 +807,7 @@ export function create() {
     if (opts.silent !== true) {
       saveSettings({ leadMetric: id });
       haptic(8);
-      announce('Wielkość wiodąca: ' + metric.namePL + '.');
+      announce(t('measure.announce.lead', { metric: t('metric.' + metric.id + '.name') }));
       // Kafelek właśnie zniknął z siatki — fokus spadłby na <body>. Przenosimy
       // go na wskaźnik, który niesie pełny odczyt dla czytnika ekranu.
       heroWrap.focus({ preventScroll: true });
@@ -755,9 +819,9 @@ export function create() {
   }
 
   function syncTiles() {
-    tiles.forEach((t) => {
-      t.view.setSelected(t.metric.id === leadId);
-      t.view.el.hidden = t.metric.id === leadId;
+    tiles.forEach((tile) => {
+      tile.view.setSelected(tile.metric.id === leadId);
+      tile.view.el.hidden = tile.metric.id === leadId;
     });
   }
 
@@ -781,9 +845,9 @@ export function create() {
 
     // Historia rośnie tylko wtedy, gdy ekran jest zamontowany — inaczej
     // zbierałaby w tle punkty, o które nikt nie prosił.
-    const t = num(reading.t) ? reading.t : Date.now();
-    if (mounted && t - lastPushAt >= PUSH_MS) {
-      lastPushAt = t;
+    const at = num(reading.t) ? reading.t : Date.now();
+    if (mounted && at - lastPushAt >= PUSH_MS) {
+      lastPushAt = at;
       history.push(reading);
     }
   }
@@ -806,11 +870,12 @@ export function create() {
   }
 
   function onCameraError(payload) {
-    errorText = (payload && payload.messagePL) || 'Nie udało się uruchomić kamery.';
-    failText.textContent = errorText;
+    // camera.js niesie w zdarzeniu kod błędu; zdania szukamy w słowniku sami.
+    errorCode = (payload && payload.code) || '';
     finishUnexpectedly(true);
+    syncFailText();
     setView('error');
-    announce('Błąd kamery. ' + errorText);
+    announce(t('measure.announce.cameraError', { message: cameraErrorText() }));
   }
 
   /* Pomiar przerwany nie z naszej ręki (kamera zabrana przez inną aplikację,
@@ -825,10 +890,8 @@ export function create() {
 
     if (isError) {
       failNote.hidden = !noted;
-      if (noted) {
-        failNote.textContent = 'Sesja sprzed przerwania (' +
-          duration(finished.measuredMs) + ') została zapisana w historii.';
-      }
+      failNoteMs = noted ? finished.measuredMs : 0;
+      syncFailText();
       return;
     }
     if (finished && finished.samples > 0) {
@@ -836,7 +899,7 @@ export function create() {
       summary = finished;
       renderSummary(finished);
       setView('summary');
-      announce('Pomiar przerwany. Podsumowanie sesji jest gotowe.');
+      announce(t('measure.announce.interrupted'));
     } else {
       setView(summary ? 'summary' : 'empty');
     }
@@ -877,33 +940,33 @@ export function create() {
     const measured = shown.filter((m) => num(s.avg[m.id]));
 
     const metaParts = [clock(s.startedAt) + '–' + clock(s.endedAt)];
-    metaParts.push(plural(s.samples, 'próbka', 'próbki', 'próbek'));
-    if (s.pausedMs > 1000) metaParts.push('wstrzymane ' + duration(s.pausedMs));
+    metaParts.push(plural(s.samples, 'unit.sample.plural'));
+    if (s.pausedMs > 1000) {
+      metaParts.push(t('measure.summary.paused', { duration: duration(s.pausedMs) }));
+    }
 
     const stats = h('div.m5-measure__stats', null, shown.map((metric) => {
       const value = s.avg[metric.id];
       const zone = zoneOf(metric, value);
       return h('div.m5-stat', { dataset: { zone } },
-        h('span.m5-stat__label', { text: metric.namePL }),
+        h('span.m5-stat__label', { text: t('metric.' + metric.id + '.name') }),
         h('span.m5-stat__readout', null,
           h('span.m5-stat__value.m5-num', { text: metricValue(metric.id, value) }),
           h('span.m5-stat__unit', { text: metric.unit || '' })),
-        h('span.m5-zone', { dataset: { zone }, text: ZONE_LABEL[zone] || ZONE_LABEL.none }));
+        h('span.m5-zone', { dataset: { zone }, text: zoneLabel(zone) }));
     }));
 
     summaryView.appendChild(h('div.m5-card', null,
       h('header.m5-card__head', null,
-        h('h2.m5-card__title', { text: 'Podsumowanie sesji' }),
+        h('h2.m5-card__title', { text: t('measure.summary.title') }),
         h('span.m5-badge', { text: duration(s.measuredMs) })),
       h('div.m5-card__body', null,
         h('p.m5-measure__meta', { text: metaParts.join(' · ') }),
         stats,
         measured.length === 0
-          ? h('p.m5-measure__note', { text: 'Żadna wielkość nie zebrała pomiaru — kamera nie widziała światła przez całą sesję.' })
+          ? h('p.m5-measure__note', { text: t('measure.summary.nothingMeasured') })
           : null,
-        h('p.m5-measure__note', {
-          text: 'Średnie liczą wyłącznie próbki spoza wstrzymania. Wielkości, których nie zmierzono, są pominięte, a nie liczone jako zero.'
-        }))));
+        h('p.m5-measure__note', { text: t('measure.summary.note') }))));
 
     /* ---- najgorsza wielkość i jedno zdanie zalecenia ---- */
     let worst = null;
@@ -935,17 +998,19 @@ export function create() {
       summaryView.appendChild(h('div.m5-card', null,
         h('header.m5-card__head', null,
           h('h2.m5-card__title', {
-            text: worst.zone === 'good' ? 'Najbliżej progu' : 'Najsłabszy punkt'
+            text: t(worst.zone === 'good'
+              ? 'measure.summary.nearThreshold'
+              : 'measure.summary.worstPoint')
           })),
         h('div.m5-card__body', null,
           h('p.m5-measure__worst', { dataset: { zone: worst.zone } },
-            h('span.m5-measure__worstName', { text: worst.metric.namePL }),
+            h('span.m5-measure__worstName', { text: t('metric.' + worst.metric.id + '.name') }),
             h('span.m5-measure__worstValue.m5-num', {
               text: metricValueUnit(worst.metric.id, worst.value)
             }),
             h('span.m5-zone', {
               dataset: { zone: worst.zone },
-              text: 'średnio ' + (ZONE_LABEL[worst.zone] || ZONE_LABEL.none)
+              text: t('measure.summary.averageZone', { zone: zoneLabel(worst.zone) })
             })),
           h('p.m5-measure__advice', null,
             icon('sparkle', { size: 22 }),
@@ -954,8 +1019,7 @@ export function create() {
 
     if (!s.noted) {
       summaryView.appendChild(h('p.m5-measure__note', {
-        text: 'Sesja trwała ' + duration(s.measuredMs) +
-          ' — za krótko, by trafić do historii sama. Możesz ją zapisać ręcznie.'
+        text: t('measure.summary.tooShort', { duration: duration(s.measuredMs) })
       }));
     }
 
@@ -963,13 +1027,13 @@ export function create() {
     const actionsRow = h('div.m5-measure__bar', null,
       h('button.m5-btn.m5-btn--primary', {
         type: 'button', on: { click: () => startMeasurement() }
-      }, icon('play', { size: 20 }), 'Mierz ponownie'));
+      }, icon('play', { size: 20 }), t('measure.summary.again')));
 
     if (!s.noted) {
       // Sesja krótsza niż pół minuty nie trafia do historii sama — ale bywa
       // dokładnie tym, co użytkownik chciał zapisać. Decyzja należy do niego.
       const saveBtn = h('button.m5-btn.m5-btn--ghost', { type: 'button' },
-        icon('download', { size: 20 }), 'Zapisz do historii');
+        icon('download', { size: 20 }), t('measure.summary.save'));
       saveBtn.addEventListener('click', () => {
         history.noteSession(toNote(s));
         // Średnia zapisana jako jeden punkt zostawia po krótkiej sesji ślad
@@ -977,8 +1041,8 @@ export function create() {
         history.push(Object.assign({ t: s.endedAt }, s.avg));
         s.noted = true;
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Zapisano w historii';
-        toast('Sesja zapisana w historii.', { tone: 'success' });
+        saveBtn.textContent = t('measure.summary.saved');
+        toast(t('measure.summary.savedToast'), { tone: 'success' });
       });
       actionsRow.appendChild(saveBtn);
     }
@@ -986,7 +1050,7 @@ export function create() {
     actionsRow.appendChild(h('button.m5-btn.m5-btn--ghost', {
       type: 'button',
       on: { click: () => { summary = null; setView('empty'); } }
-    }, 'Zamknij'));
+    }, t('measure.summary.close')));
 
     summaryView.appendChild(actionsRow);
   }
@@ -995,15 +1059,17 @@ export function create() {
 
   function openMethodSheet() {
     sheet({
-      title: 'Jak to mierzymy',
+      title: t('measure.method.title'),
       body: [
-        h('p', { text: 'Aplikacja próbkuje obraz z kamery dziesięć razy na sekundę i liczy wielkości ze środkowych ' + CROP_PERCENT + ' % kadru — celownik w podglądzie zaznacza dokładnie ten obszar.' }),
-        h('p', { text: 'Kamera telefonu ma trzy szerokie kanały oraz własną, samoczynną korektę ekspozycji i balansu bieli. Widzi proporcje światła, nie jego widmo.' }),
-        h('p', { text: 'Udział niebieskiego, jasność, migotanie i równomierność są tym, co kamera naprawdę mierzy. Temperatura barwowa i wpływ na rytm dobowy to jawne przybliżenia policzone z podstaw sRGB.' }),
-        h('p', { text: 'Migotanie widać tylko poniżej czterech herców. Sieciowe 100 Hz leży daleko poza zasięgiem próbkowania i nigdy nie zostanie podane jako odczyt.' }),
-        h('p', { text: 'Żadna z tych liczb nie jest pomiarem fotometrycznym ani wynikiem medycznym. Obraz z kamery nie opuszcza urządzenia.' })
+        h('p', { text: t('measure.method.p1', { percent: CROP_PERCENT }) }),
+        h('p', { text: t('measure.method.p2') }),
+        h('p', { text: t('measure.method.p3') }),
+        h('p', { text: t('measure.method.p4') }),
+        h('p', { text: t('measure.method.p5') })
       ],
-      actions: [{ labelPL: 'Rozumiem', tone: 'primary' }]
+      // labelPL jako FUNKCJA: overlays.js woła ją ponownie po zmianie języka,
+      // więc napis nadąża nawet przy otwartym arkuszu.
+      actions: [{ labelPL: () => t('measure.method.ok'), tone: 'primary' }]
     });
   }
 
@@ -1027,7 +1093,7 @@ export function create() {
     setLead(resolveLead(getSettings().leadMetric), { silent: true });
     syncTiles();
     syncFacing();
-    if (errorText) failText.textContent = errorText;
+    if (errorCode) syncFailText();
     syncFromCamera();
     startStaleWatch();
 
@@ -1058,8 +1124,16 @@ export function create() {
   }
 
   function actions() {
-    return [{ icon: 'info', labelPL: 'Jak to mierzymy', onClick: openMethodSheet }];
+    return [{ icon: 'info', labelKey: 'measure.method.title', onClick: openMethodSheet }];
   }
 
-  return { el, titlePL: 'Pomiar', actions, mount, unmount };
+  /* Napisy wpisujemy dopiero teraz i odtwarzamy przy każdej zmianie języka
+   * (zdarzenie z kontraktu §4). Nasłuchu nie zdejmujemy nigdzie: instancja
+   * ekranu żyje tyle, co aplikacja, więc nie ma czego odsubskrybować. */
+  applyText();
+  bus.on('i18n:changed', applyText);
+
+  // Ekran podaje KLUCZ tytułu, nie gotowy napis: app.js rozwija go przez t()
+  // przy każdym wejściu i po zmianie języka.
+  return { el, titleKey: 'measure.title', actions, mount, unmount };
 }

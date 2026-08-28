@@ -18,7 +18,12 @@
  * mode and the promise this application makes on every screen; the cup icon is
  * therefore drawn locally, in styles.css, exactly like every other icon here.
  *
- * Interface strings are Polish; code comments are English. Project rule.
+ * WARSTWA JĘZYKOWA. Wszystkie napisy tego ekranu leżą w docs/v2/i18n/<kod>.js;
+ * tutaj są tylko klucze. Ekran przebudowuje się od nowa po zmianie języka —
+ * słucha zdarzenia 'ui:relocalized', które ui-core.js rozgłasza dopiero PO
+ * przebudowaniu własnych ekranów. Nasłuch wprost na 'i18n:changed' byłby
+ * wyścigiem: kolejność wywołań na szynie to kolejność rejestracji, a ui-core
+ * rejestruje się później niż ten plik i wyczyściłby ekran zaraz po nas.
  */
 (function (global) {
   'use strict';
@@ -33,6 +38,16 @@
   var SUPPORT_URL = '';
 
   var doc = global.document;
+
+  /* Jedno wejście do warstwy językowej. Gdy jej nie ma, oddajemy sam klucz —
+     ekran wygląda wtedy źle, ale nie znika i nie rzuca wyjątkiem. */
+  function t(key, params) {
+    var I = global.I18n;
+    if (I && typeof I.t === 'function') return I.t(key, params);
+    return key;
+  }
+
+  function appName() { return t('app.name'); }
 
   /* ------------------------------------------------------------------
      Address validation — one line, and it earns its keep
@@ -112,10 +127,10 @@
      The screen
      ------------------------------------------------------------------ */
 
-  function card(titlePL, textPL) {
+  function card(titleKey, textKey, params) {
     var box = mk('div', 'ms-card ms-card--flat');
-    box.appendChild(mk('h3', 'ms-card__title', titlePL));
-    box.appendChild(mk('p', 'ms-t-body', textPL));
+    box.appendChild(mk('h3', 'ms-card__title', t(titleKey)));
+    box.appendChild(mk('p', 'ms-t-body', t(textKey, params)));
     return box;
   }
 
@@ -134,25 +149,18 @@
     var heroIcon = mk('span', 'ms-list__icon ms-list__icon--support');
     heroIcon.appendChild(icon('cup'));
     heroHead.appendChild(heroIcon);
-    heroHead.appendChild(mk('h2', 'ms-card__title', 'Wszystko jest dostępne'));
+    heroHead.appendChild(mk('h2', 'ms-card__title', t('support.heroTitle')));
     hero.appendChild(heroHead);
-    hero.appendChild(mk('p', 'ms-card__sub',
-      'Wszystkie siedem wskaźników, historia pomiarów, wykres, wszystkie narzędzia ' +
-      'i tryb offline działają dla każdego, od razu. Bez konta, bez limitów i bez opłat.'));
+    hero.appendChild(mk('p', 'ms-card__sub', t('support.heroText')));
     section.appendChild(hero);
 
     /* --- 2. why the app asks at all --- */
-    section.appendChild(card('Dlaczego o to proszę',
-      'Monitor Światła powstaje po godzinach i nie zarabia na nikim: nie ma reklam, ' +
-      'nie zbiera danych i nie ma czego sprzedać. Utrzymanie i dalszy rozwój — nowe ' +
-      'wskaźniki, poprawki, testy na kolejnych telefonach — kosztują czas. Jeżeli ' +
-      'aplikacja Ci się przydała, możesz się dorzucić. Nie musisz.'));
+    /* Nazwa własna wchodzi jako wstawka, a nie jako sklejenie: w wielu językach
+       stoi w innym przypadku i w innym miejscu zdania. */
+    section.appendChild(card('support.whyTitle', 'support.whyText', { app: appName() }));
 
     /* --- 3. the sentence that has to be said in so many words --- */
-    section.appendChild(card('Co daje darowizna',
-      'Nic. Naprawdę nic nie odblokowuje i niczego nie przyspiesza — aplikacja ' +
-      'wygląda i działa dokładnie tak samo przed nią i po niej. Daje tylko tyle, ' +
-      'że autor wie, że ta praca komuś się przydała.'));
+    section.appendChild(card('support.whatTitle', 'support.whatText'));
 
     /* --- 4. the button, or an honest note in its place --- */
     var url = supportUrl();
@@ -165,7 +173,7 @@
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.appendChild(icon('cup', 'sm'));
-      link.appendChild(mk('span', 'ms-btn__label', 'Postaw mi kawę'));
+      link.appendChild(mk('span', 'ms-btn__label', t('support.button')));
       actions.appendChild(link);
     } else {
       /* An address that is not configured yet is not an error and not a bug
@@ -175,11 +183,8 @@
       pending.id = 'supportPending';
       pending.appendChild(icon('info'));
       var pendingText = mk('div', 'ms-note__text');
-      pendingText.appendChild(mk('span', 'ms-note__title', 'Profil nie jest jeszcze podłączony'));
-      pendingText.appendChild(mk('span', null,
-        'Nie ma tu jeszcze adresu, pod który można przesłać wsparcie. ' +
-        'Pojawi się w tym miejscu, kiedy będzie gotowy — do tego czasu ' +
-        'wszystko w aplikacji działa dokładnie tak samo.'));
+      pendingText.appendChild(mk('span', 'ms-note__title', t('support.pendingTitle')));
+      pendingText.appendChild(mk('span', null, t('support.pendingText')));
       pending.appendChild(pendingText);
       actions.appendChild(pending);
     }
@@ -190,13 +195,7 @@
        screen owes the user that sentence exactly here. */
     var privacy = mk('p', 'ms-t-cap ms-t-muted');
     privacy.id = 'supportPrivacy';
-    privacy.textContent = url
-      ? 'Przycisk otwiera zewnętrzną stronę (na przykład Buy Me a Coffee) w nowej karcie. ' +
-        'To jedyny moment, w którym cokolwiek opuszcza to urządzenie — i dzieje ' +
-        'się dopiero po Twoim kliknięciu. Pomiary, historia i ustawienia zostają tutaj.'
-      : 'Kiedy adres się pojawi, kliknięcie otworzy zewnętrzną stronę w nowej karcie. ' +
-        'Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie. ' +
-        'Pomiary, historia i ustawienia zostają tutaj.';
+    privacy.textContent = t(url ? 'privacy.external' : 'privacy.externalPending');
     actions.appendChild(privacy);
 
     section.appendChild(actions);
@@ -213,6 +212,10 @@
   }
 
   on('app:ready', init);
+
+  /* Zmiana języka: ekran budowany jest raz i trzyma gotowe napisy, więc jedyny
+     uczciwy sposób jego przetłumaczenia to zbudowanie go od nowa. */
+  on('ui:relocalized', buildSupportScreen);
 
   var Support = {
     /* Read-only, and the empty string is a legitimate answer. Nothing in the

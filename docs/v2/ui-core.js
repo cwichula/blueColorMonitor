@@ -23,13 +23,40 @@
  *     requestAnimationFrame, and a draw that finds a zero-width canvas marks
  *     itself dirty instead of drawing garbage.
  *
- * Interface strings are Polish; code comments are English. That split is a
- * project rule, not a preference.
+ * Code comments are English; not one interface string lives in this file any
+ * more. Every napis przechodzi przez t() -> window.I18n, a treści leżą
+ * w docs/shared/i18n/<kod>.js (rzeczy wspólne dla wszystkich wersji) oraz
+ * docs/v2/i18n/<kod>.js (rzeczy tej wersji). Ten plik zna wyłącznie klucze.
  */
 (function (global) {
   'use strict';
 
   var DOC = global.document;
+
+  /* ==================================================================
+     0a. Warstwa językowa
+     ==================================================================
+     Jedno wejście dla całego pliku. Gdyby ../shared/i18n.js się nie wczytał,
+     t() oddaje sam klucz: ekran wygląda wtedy źle, ale stoi i nic nie rzuca.
+     Ani jednego polskiego zdania „na zapas” — zapasem jest angielski, a ten
+     leży w słowniku, nie w kodzie.
+     ------------------------------------------------------------------ */
+
+  function t(key, params) {
+    var I = global.I18n;
+    if (I && typeof I.t === 'function') return I.t(key, params);
+    return String(key);
+  }
+
+  function appName() { return t('app.name'); }
+
+  /* Katalog wielkości (Metrics.CATALOGUE) trzyma liczby: id, zakres, progi,
+     liczbę miejsc po przecinku. Nazwy, opisy i jednostki są treścią, więc
+     przychodzą ze słownika wspólnego pod kluczami wyprowadzonymi z id. */
+  function metricName(m) { return m ? t('metric.' + m.id + '.name') : ''; }
+  function metricShort(m) { return m ? t('metric.' + m.id + '.short') : ''; }
+  function metricHelp(m) { return m ? t('metric.' + m.id + '.help') : ''; }
+  function metricUnit(m) { return m ? t('metric.' + m.id + '.unit') : ''; }
 
   /* ==================================================================
      0. Small utilities
@@ -50,25 +77,14 @@
 
   function setText(el, text) { if (el) el.textContent = text; }
 
-  /* Polish plural, three forms. The exception nobody remembers is 12-14:
-     "22 odczyty" but "12 odczytów". Every count shown to the user goes through
-     this helper — there is no second place where a noun gets an ending. */
-  function pluralPL(n, one, few, many) {
-    var abs = Math.abs(Math.round(n));
-    if (abs === 1) return one;
-    var mod10 = abs % 10;
-    var mod100 = abs % 100;
-    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
-    return many;
-  }
+  /* Liczebniki. Własna reguła odmiany („22 odczyty” kontra „12 odczytów”)
+     stała tu do tej pory i była poprawna — po polsku. Trzydzieści języków ma
+     trzydzieści takich reguł, więc formę wybiera teraz Intl.PluralRules
+     aktywnego języka, a wszystkie formy stoją w słowniku pod jednym kluczem. */
+  function count(key, n) { return t(key, { n: Math.round(n) }); }
 
-  function countPL(n, one, few, many) {
-    var v = Math.round(n);
-    return v + ' ' + pluralPL(v, one, few, many);
-  }
-
-  function samplesPL(n) { return countPL(n, 'próbka', 'próbki', 'próbek'); }
-  function readingsPL(n) { return countPL(n, 'odczyt', 'odczyty', 'odczytów'); }
+  function samples(n) { return count('count.samples', n || 0); }
+  function readings(n) { return count('count.readings', n || 0); }
 
   /* rAF with a timeout fallback: a redraw that never runs looks like a freeze,
      and some embedded browsers stop serving frames in a backgrounded view. */
@@ -252,17 +268,17 @@
   }
 
   function effectiveTheme() {
-    var t = getSetting('theme');
-    if (t === 'light' || t === 'dark') return t;
+    var mode = getSetting('theme');
+    if (mode === 'light' || mode === 'dark') return mode;
     return systemPrefersDark() ? 'dark' : 'light';
   }
 
   function applyTheme(silent) {
-    var t = getSetting('theme');
+    var mode = getSetting('theme');
     var root = DOC.documentElement;
-    if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t);
+    if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode);
     else root.removeAttribute('data-theme');
-    if (!silent) emit('ui:themechange', { theme: t, effective: effectiveTheme() });
+    if (!silent) emit('ui:themechange', { theme: mode, effective: effectiveTheme() });
   }
 
   function setTheme(value) {
@@ -325,9 +341,13 @@
   }
 
   /* ==================================================================
-     4. Formatting helpers (pl-PL, written out rather than Intl-formatted so
-        the output is identical in every browser and offline)
-     ================================================================== */
+     4. Formatting helpers
+     ==================================================================
+     Zegar i data zostają zapisane cyframi i separatorem, bo są odczytem
+     przyrządu, a nie zdaniem: 14:05:30 i 28.08.2026 czyta się tak samo
+     w każdym języku i tak samo w każdej przeglądarce, także bez sieci.
+     Zdania wokół liczb — czas trwania sesji — idą już przez słownik.
+     ------------------------------------------------------------------ */
 
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
@@ -346,14 +366,17 @@
     return pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear();
   }
 
+  /* Trzy warianty zamiast jednego sklejanego napisu: w wielu językach skrót
+     jednostki stoi przed liczbą. Minuty i sekundy idą jako napis, bo mają
+     zero wiodące, którego formatowanie liczb by nie dołożyło. */
   function formatDuration(ms) {
     var total = Math.max(0, Math.round((ms || 0) / 1000));
     var h = Math.floor(total / 3600);
     var m = Math.floor((total % 3600) / 60);
     var s = total % 60;
-    if (h > 0) return h + ' godz. ' + pad2(m) + ' min';
-    if (m > 0) return m + ' min ' + pad2(s) + ' s';
-    return s + ' s';
+    if (h > 0) return t('duration.hm', { h: h, m: pad2(m) });
+    if (m > 0) return t('duration.ms', { m: m, s: pad2(s) });
+    return t('duration.s', { s: s });
   }
 
   /* ==================================================================
@@ -381,33 +404,37 @@
     return el;
   }
 
-  function srOnly(textPL) { return make('span', 'ms-visually-hidden', textPL); }
+  function srOnly(text) { return make('span', 'ms-visually-hidden', text); }
 
   /* ==================================================================
      6. Screen registry
-     ================================================================== */
+     ==================================================================
+     Ekrany trzymają KLUCZ nazwy, a nie gotowy napis: nazwa ekranu pada
+     w trzech miejscach (pasek, nagłówek nakładki, ogłoszenie dla czytnika)
+     i po zmianie języka musi się zmienić we wszystkich naraz.
+     ------------------------------------------------------------------ */
 
   var TABS = [
-    { tabId: 'measure', panelId: 'panelMeasure', navId: 'navMeasure', labelPL: 'Pomiar', iconName: 'monitor' },
-    { tabId: 'history', panelId: 'panelHistory', navId: 'navHistory', labelPL: 'Historia', iconName: 'history' },
-    { tabId: 'tools', panelId: 'panelTools', navId: 'navTools', labelPL: 'Narzędzia', iconName: 'tune' },
-    { tabId: 'support', panelId: 'panelSupport', navId: 'navSupport', labelPL: 'Wsparcie', iconName: 'cup' },
-    { tabId: 'more', panelId: 'panelMore', navId: 'navMore', labelPL: 'Więcej', iconName: 'menu' }
+    { tabId: 'measure', panelId: 'panelMeasure', navId: 'navMeasure', labelKey: 'nav.measure', iconName: 'monitor' },
+    { tabId: 'history', panelId: 'panelHistory', navId: 'navHistory', labelKey: 'nav.history', iconName: 'history' },
+    { tabId: 'tools', panelId: 'panelTools', navId: 'navTools', labelKey: 'nav.tools', iconName: 'tune' },
+    { tabId: 'support', panelId: 'panelSupport', navId: 'navSupport', labelKey: 'nav.support', iconName: 'cup' },
+    { tabId: 'more', panelId: 'panelMore', navId: 'navMore', labelKey: 'nav.more', iconName: 'menu' }
   ];
 
   /* Overlay screens. Most belong to other modules; the shell creates the empty
      panel with its back button and title so navigation works even if a module
      is not loaded yet, and every module can find its container by id. */
   var OVERLAYS = [
-    { panelId: 'panelDocs', titlePL: 'Dokumentacja' },
-    { panelId: 'panelThresholds', titlePL: 'Progi i profile' },
-    { panelId: 'panelReports', titlePL: 'Raporty' },
-    { panelId: 'panelExport', titlePL: 'Eksport danych' },
-    { panelId: 'panelCompare', titlePL: 'Porównywarka A/B' },
-    { panelId: 'panelCalibration', titlePL: 'Kalibracja białą kartką' },
-    { panelId: 'panelScreenCheck', titlePL: 'Sprawdź mój monitor' },
-    { panelId: 'panelSchedule', titlePL: 'Harmonogram' },
-    { panelId: 'panelAlerts', titlePL: 'Alerty ekspozycji' }
+    { panelId: 'panelDocs', titleKey: 'panel.docs' },
+    { panelId: 'panelThresholds', titleKey: 'panel.thresholds' },
+    { panelId: 'panelReports', titleKey: 'panel.reports' },
+    { panelId: 'panelExport', titleKey: 'panel.export' },
+    { panelId: 'panelCompare', titleKey: 'panel.compare' },
+    { panelId: 'panelCalibration', titleKey: 'panel.calibration' },
+    { panelId: 'panelScreenCheck', titleKey: 'panel.screenCheck' },
+    { panelId: 'panelSchedule', titleKey: 'panel.schedule' },
+    { panelId: 'panelAlerts', titleKey: 'panel.alerts' }
   ];
 
   /* panelXxx -> backXxx / titleXxx, the naming convention from chapter 2.2. */
@@ -422,9 +449,13 @@
   function registerPanel(spec) {
     if (!spec || !spec.panelId) return false;
     var existing = panels[spec.panelId] || {};
+    /* titleKey wygrywa z titlePL: obcy moduł wolno zarejestrować ekran gotowym
+       napisem (i taki napis zostanie, jaki podał), ale ekrany tej wersji
+       podają klucz, żeby nazwa zmieniała się razem z językiem. */
     var merged = {
       panelId: spec.panelId,
       tabId: spec.tabId || existing.tabId || null,
+      titleKey: spec.titleKey || existing.titleKey || null,
       titlePL: spec.titlePL || existing.titlePL || '',
       onShow: spec.onShow || existing.onShow || null,
       onHide: spec.onHide || existing.onHide || null
@@ -438,7 +469,9 @@
 
   function panelTitle(panelId) {
     var spec = panels[panelId];
-    return spec && spec.titlePL ? spec.titlePL : '';
+    if (!spec) return '';
+    if (spec.titleKey) return t(spec.titleKey);
+    return spec.titlePL || '';
   }
 
   function isTabPanel(panelId) { return !!tabByPanel[panelId]; }
@@ -488,9 +521,9 @@
     var guard = 0;
     while (navStack.length > depth && guard < 32) { closeTopEntry(); guard += 1; }
     if (pendingTabId) {
-      var t = pendingTabId;
+      var nextTab = pendingTabId;
       pendingTabId = null;
-      showTab(t);
+      showTab(nextTab);
     }
   }
 
@@ -556,8 +589,7 @@
     updateHeaderForView();
     updateNavSelection();
 
-    var title = panelTitle(panelId) || '';
-    announce('Ekran: ' + title);
+    announce(t('a11y.screenAnnounce', { name: panelTitle(panelId) || '' }));
 
     emit('ui:viewchange', {
       kind: kind, id: viewId, panelId: panelId, previousPanelId: previousPanelId
@@ -672,8 +704,8 @@
     var titleEl = byId('appTitle');
     if (titleEl) {
       titleEl.textContent = isTabPanel(currentView.panelId)
-        ? (panelTitle(currentView.panelId) || 'Monitor Światła')
-        : 'Monitor Światła';
+        ? (panelTitle(currentView.panelId) || appName())
+        : appName();
     }
     updateMeasureStatus();
   }
@@ -696,7 +728,7 @@
     // The landmark stays on <nav>; the tablist goes on the element that owns
     // the buttons. Mirrors the markup in index.html — see the note there.
     nav.removeAttribute('role');
-    nav.setAttribute('aria-label', 'Główna nawigacja');
+    nav.setAttribute('aria-label', t('nav.aria'));
 
     var list = nav.querySelector('.ms-nav__list');
     if (!list) {
@@ -704,7 +736,7 @@
       nav.appendChild(list);
     }
     list.setAttribute('role', 'tablist');
-    list.setAttribute('aria-label', 'Ekrany aplikacji');
+    list.setAttribute('aria-label', t('nav.tablistAria'));
 
     for (var i = 0; i < TABS.length; i += 1) {
       var tab = TABS[i];
@@ -720,7 +752,7 @@
       var iconWrap = make('span', 'ms-nav__icon');
       iconWrap.appendChild(icon(tab.iconName));
       btn.appendChild(iconWrap);
-      btn.appendChild(make('span', 'ms-nav__label', tab.labelPL));
+      btn.appendChild(make('span', 'ms-nav__label', t(tab.labelKey)));
       list.appendChild(btn);
     }
 
@@ -1032,18 +1064,18 @@
     return new Promise(function (resolve) {
       var sheet = byId('sheetDialog');
       if (!sheet) { resolve(false); return; }
-      setText(byId('dialogTitle'), opts.titlePL || 'Potwierdzenie');
+      setText(byId('dialogTitle'), opts.titlePL || t('dialog.title'));
       setText(byId('dialogBody'), opts.bodyPL || '');
 
       var confirmBtn = byId('dialogConfirm');
       var cancelBtn = byId('dialogCancel');
       if (confirmBtn) {
         confirmBtn.className = 'ms-btn ' + (opts.danger ? 'ms-btn--danger' : 'ms-btn--filled');
-        confirmBtn.textContent = opts.confirmPL || 'Potwierdzam';
+        confirmBtn.textContent = opts.confirmPL || t('dialog.confirm');
       }
       if (cancelBtn) {
         cancelBtn.hidden = opts.cancelPL === false;
-        cancelBtn.textContent = opts.cancelPL || 'Anuluj';
+        cancelBtn.textContent = opts.cancelPL || t('dialog.cancel');
       }
       dialogResolver = resolve;
       openSheet('sheetDialog', { focusId: opts.danger ? 'dialogCancel' : 'dialogConfirm' });
@@ -1053,47 +1085,52 @@
   function alertDialog(o) {
     var opts = o || {};
     return confirmDialog({
-      titlePL: opts.titlePL || 'Informacja',
+      titlePL: opts.titlePL || t('dialog.infoTitle'),
       bodyPL: opts.bodyPL || '',
-      confirmPL: opts.okPL || 'Rozumiem',
+      confirmPL: opts.okPL || t('dialog.ok'),
       cancelPL: false
     }).then(function () { return undefined; });
   }
 
   function openHelpSheet(metric) {
     if (!metric) return;
-    setText(byId('helpTitle'), metric.namePL);
+    var unit = metricUnit(metric);
+    setText(byId('helpTitle'), metricName(metric));
     var body = byId('helpBody');
     if (body) {
       body.innerHTML = '';
-      body.appendChild(make('p', 'ms-t-body', metric.shortPL));
-      body.appendChild(make('p', 'ms-t-body ms-t-muted', metric.helpPL));
+      body.appendChild(make('p', 'ms-t-body', metricShort(metric)));
+      body.appendChild(make('p', 'ms-t-body ms-t-muted', metricHelp(metric)));
 
+      var th = thresholdFor(metric);
       var kv = make('dl', 'ms-kv');
-      kv.appendChild(kvRow('Jednostka', metric.unit));
-      kv.appendChild(kvRow('Zakres skali', formatMetric(metric.id, metric.min) + ' – ' + formatMetric(metric.id, metric.max)));
-      kv.appendChild(kvRow('Próg ostrzegawczy', formatMetric(metric.id, thresholdFor(metric).warn) + ' ' + metric.unit));
-      kv.appendChild(kvRow('Próg krytyczny', formatMetric(metric.id, thresholdFor(metric).crit) + ' ' + metric.unit));
+      kv.appendChild(kvRow(t('help.unit'), unit));
+      kv.appendChild(kvRow(t('help.scaleRange'), t('range.dash', {
+        min: formatMetric(metric.id, metric.min), max: formatMetric(metric.id, metric.max)
+      })));
+      kv.appendChild(kvRow(t('threshold.warnLabel'), t('value.withUnit', {
+        value: formatMetric(metric.id, th.warn), unit: unit
+      })));
+      kv.appendChild(kvRow(t('threshold.critLabel'), t('value.withUnit', {
+        value: formatMetric(metric.id, th.crit), unit: unit
+      })));
       body.appendChild(kv);
 
       var note = make('div', 'ms-note ms-note--info');
       note.appendChild(icon('info'));
       var noteText = make('div', 'ms-note__text');
-      noteText.appendChild(make('span', 'ms-note__title', 'Czego ta liczba nie mówi'));
-      noteText.appendChild(make('span', null,
-        'Aparat telefonu ma trzy szerokie kanały i nie mierzy widma. Ta wartość jest ' +
-        'wskaźnikiem porównawczym — dobrze pokazuje różnice między światłami i zmiany w czasie, ' +
-        'a nie wynikiem pomiaru laboratoryjnego ani informacją medyczną.'));
+      noteText.appendChild(make('span', 'ms-note__title', t('note.helpTitle')));
+      noteText.appendChild(make('span', null, t('note.helpText')));
       note.appendChild(noteText);
       body.appendChild(note);
     }
     openSheet('sheetHelp', { focusId: 'helpClose' });
   }
 
-  function kvRow(keyPL, valuePL) {
+  function kvRow(keyText, valueText) {
     var row = make('div', 'ms-kv__row');
-    row.appendChild(make('dt', 'ms-kv__key', keyPL));
-    row.appendChild(make('dd', 'ms-kv__val', valuePL));
+    row.appendChild(make('dt', 'ms-kv__key', keyText));
+    row.appendChild(make('dd', 'ms-kv__val', valueText));
     return row;
   }
 
@@ -1126,7 +1163,7 @@
 
   function ensureSkipLink(root) {
     if (byId('skipLink')) return;
-    var a = make('a', 'ms-skip', 'Przejdź do treści');
+    var a = make('a', 'ms-skip', t('app.skipToContent'));
     a.id = 'skipLink';
     a.href = '#appMain';
     root.insertBefore(a, root.firstChild);
@@ -1139,7 +1176,7 @@
       header.id = 'appHeader';
       var inner = make('div', 'ms-header__inner');
 
-      var title = make('h1', 'ms-header__title', 'Monitor Światła');
+      var title = make('h1', 'ms-header__title', appName());
       title.id = 'appTitle';
       inner.appendChild(title);
 
@@ -1147,7 +1184,7 @@
       status.id = 'measureStatus';
       status.hidden = true;
       status.appendChild(icon('play', 'sm'));
-      status.appendChild(make('span', null, 'Pomiar trwa'));
+      status.appendChild(make('span', null, t('app.measuring')));
       inner.appendChild(status);
 
       var actions = make('div', 'ms-header__actions');
@@ -1155,7 +1192,7 @@
       var infoBtn = make('button', 'ms-iconbtn');
       infoBtn.id = 'btnInfo';
       infoBtn.type = 'button';
-      infoBtn.setAttribute('aria-label', 'Dokumentacja i wyjaśnienia');
+      infoBtn.setAttribute('aria-label', t('app.docsButton'));
       infoBtn.appendChild(icon('info'));
       actions.appendChild(infoBtn);
 
@@ -1238,7 +1275,7 @@
     ensureHelpSheet(layer);
   }
 
-  function sheetSkeleton(sheetId, titleId, titlePL) {
+  function sheetSkeleton(sheetId, titleId, titleText) {
     var sheet = make('div', 'ms-sheet');
     sheet.id = sheetId;
     sheet.hidden = true;
@@ -1251,7 +1288,7 @@
 
     var head = make('div', 'ms-sheet__head');
     var titles = make('div', 'ms-sheet__titles');
-    var title = make('h2', 'ms-sheet__title', titlePL);
+    var title = make('h2', 'ms-sheet__title', titleText);
     title.id = titleId;
     titles.appendChild(title);
     head.appendChild(titles);
@@ -1261,7 +1298,7 @@
 
   function ensureDialogSheet(layer) {
     if (byId('sheetDialog')) return;
-    var sheet = sheetSkeleton('sheetDialog', 'dialogTitle', 'Potwierdzenie');
+    var sheet = sheetSkeleton('sheetDialog', 'dialogTitle', t('dialog.title'));
 
     var body = make('div', 'ms-sheet__body');
     var p = make('p', 'ms-t-body');
@@ -1270,10 +1307,10 @@
     sheet.appendChild(body);
 
     var foot = make('div', 'ms-sheet__foot');
-    var cancel = make('button', 'ms-btn ms-btn--text', 'Anuluj');
+    var cancel = make('button', 'ms-btn ms-btn--text', t('dialog.cancel'));
     cancel.id = 'dialogCancel';
     cancel.type = 'button';
-    var confirm = make('button', 'ms-btn ms-btn--filled', 'Potwierdzam');
+    var confirm = make('button', 'ms-btn ms-btn--filled', t('dialog.confirm'));
     confirm.id = 'dialogConfirm';
     confirm.type = 'button';
     foot.appendChild(cancel);
@@ -1295,12 +1332,12 @@
 
   function ensureHelpSheet(layer) {
     if (byId('sheetHelp')) return;
-    var sheet = sheetSkeleton('sheetHelp', 'helpTitle', 'Opis metryki');
+    var sheet = sheetSkeleton('sheetHelp', 'helpTitle', t('help.sheetTitle'));
     var body = make('div', 'ms-sheet__body');
     body.id = 'helpBody';
     sheet.appendChild(body);
     var foot = make('div', 'ms-sheet__foot');
-    var close = make('button', 'ms-btn ms-btn--tonal', 'Zamknij');
+    var close = make('button', 'ms-btn ms-btn--tonal', t('action.close'));
     close.id = 'helpClose';
     close.type = 'button';
     close.addEventListener('click', function () { closeSheet('sheetHelp', undefined); });
@@ -1330,7 +1367,7 @@
       el.setAttribute('role', 'tabpanel');
       el.setAttribute('aria-labelledby', tab.navId);
       el.setAttribute('tabindex', '-1');
-      registerPanel({ panelId: tab.panelId, tabId: tab.tabId, titlePL: tab.labelPL });
+      registerPanel({ panelId: tab.panelId, tabId: tab.tabId, titleKey: tab.labelKey });
     }
 
     for (i = 0; i < OVERLAYS.length; i += 1) {
@@ -1345,7 +1382,7 @@
       el.setAttribute('role', 'region');
       el.setAttribute('tabindex', '-1');
       ensureOverlayHeader(el, spec);
-      registerPanel({ panelId: spec.panelId, titlePL: spec.titlePL });
+      registerPanel({ panelId: spec.panelId, titleKey: spec.titleKey });
     }
   }
 
@@ -1356,20 +1393,27 @@
     var suffix = overlaySuffix(spec.panelId);
     var backId = 'back' + suffix;
     var titleId = 'title' + suffix;
-    if (byId(backId)) return;
+    /* Nagłówek już stoi: to jest wywołanie po zmianie języka, więc jedyne, co
+       trzeba zrobić, to odświeżyć oba napisy. Zbudowanie go drugi raz zerwałoby
+       podpięte zdarzenie przycisku „Wróć”. */
+    if (byId(backId)) {
+      byId(backId).setAttribute('aria-label', t('action.back'));
+      setText(byId(titleId), t(spec.titleKey));
+      return;
+    }
 
     var row = make('div', 'ms-row ms-panel-head');
     var backBtn = make('button', 'ms-iconbtn');
     backBtn.id = backId;
     backBtn.type = 'button';
-    backBtn.setAttribute('aria-label', 'Wróć');
+    backBtn.setAttribute('aria-label', t('action.back'));
     // The chevron glyph points right; a back button must point left.
     var chev = icon('chevron');
     chev.style.transform = 'rotate(180deg)';
     backBtn.appendChild(chev);
     backBtn.addEventListener('click', function () { back(); });
 
-    var title = make('h2', 'ms-section__title', spec.titlePL);
+    var title = make('h2', 'ms-section__title', t(spec.titleKey));
     title.id = titleId;
 
     row.appendChild(backBtn);
@@ -1389,41 +1433,35 @@
 
   var builtMeasure = false;
 
-  function buildMeasureScreen() {
-    var panel = byId('panelMeasure');
-    if (!panel) return;
-    if (byId('tileGrid')) { buildTiles(); return; }
-    builtMeasure = true;
+  /* Podgląd kamery jest jedynym kawałkiem ekranu, którego NIE WOLNO zbudować
+     od nowa przy zmianie języka: engine.js zapamiętuje <video> i <p> zastępczy
+     przy pierwszym uruchomieniu i trzyma na nich strumień. Nowe elementy
+     zostawiłyby silnik z odczepionym obrazem — podgląd byłby czarny, a pomiar
+     wyglądałby na zawieszony. Dlatego przebudowa ekranu odkłada tu cały
+     #cameraStage i wstawia z powrotem ten sam węzeł. */
+  var keptStage = null;
 
-    var section = make('section', 'ms-section');
+  function isCalibrated() {
+    var E = global.Engine;
+    if (!E || typeof E.getCalibration !== 'function') return false;
+    try { return !!E.getCalibration(); } catch (e) { return false; }
+  }
 
-    /* --- first-run instruction (see boot.js) --- */
-    var firstRun = make('div', 'ms-note ms-note--info');
-    firstRun.id = 'firstRunNote';
-    firstRun.hidden = true;
-    firstRun.appendChild(icon('info'));
-    var firstRunText = make('div', 'ms-note__text');
-    firstRunText.appendChild(make('span', 'ms-note__title', 'Jak zmierzyć'));
-    firstRunText.appendChild(make('span', null,
-      'Naciśnij „Start”, skieruj telefon na oświetloną powierzchnię i trzymaj go nieruchomo ' +
-      'przez kilka sekund. Ramka na podglądzie pokazuje wycinek, który aplikacja naprawdę czyta.'));
-    firstRun.appendChild(firstRunText);
-    var firstRunClose = make('button', 'ms-btn ms-btn--icon');
-    firstRunClose.id = 'firstRunNoteClose';
-    firstRunClose.type = 'button';
-    firstRunClose.setAttribute('aria-label', 'Zamknij podpowiedź');
-    firstRunClose.appendChild(icon('close', 'sm'));
-    firstRunClose.addEventListener('click', function () {
-      firstRun.hidden = true;
-      setSetting('firstRunDone', true);
-      var startBtnEl = byId('btnStart');
-      if (startBtnEl) { try { startBtnEl.focus(); } catch (e) { /* ignore */ } }
-    });
-    firstRun.appendChild(firstRunClose);
-    section.appendChild(firstRun);
+  function cameraStage() {
+    if (keptStage) {
+      var kept = keptStage;
+      keptStage = null;
+      /* Napis zastępczy bywa teraz komunikatem silnika („Pomiar zatrzymany…”),
+         więc odświeżamy go tylko wtedy, gdy kamera jest wyłączona. */
+      var keptText = kept.querySelector('#cameraPlaceholderText');
+      var keptBadge = kept.querySelector('#cameraLiveBadge span');
+      if (keptBadge) keptBadge.textContent = t('camera.live');
+      var E = global.Engine;
+      var busy = !!(E && typeof E.state === 'function' && E.state() !== 'idle');
+      if (keptText && !busy) keptText.textContent = t('camera.idle');
+      return kept;
+    }
 
-    /* --- camera --- */
-    var cameraCard = make('div', 'ms-card ms-card--bare');
     var stage = make('div', 'ms-camera');
     stage.id = 'cameraStage';
 
@@ -1444,20 +1482,54 @@
     var badge = make('div', 'ms-camera__badge');
     badge.id = 'cameraLiveBadge';
     badge.hidden = true;
-    badge.appendChild(make('span', null, 'NA ŻYWO'));
+    badge.appendChild(make('span', null, t('camera.live')));
     stage.appendChild(badge);
 
     var placeholder = make('div', 'ms-camera__placeholder');
     placeholder.id = 'cameraPlaceholder';
     placeholder.appendChild(icon('camera', 'xl'));
-    var placeholderText = make('p', null,
-      'Kamera jest wyłączona. Naciśnij „Start”, skieruj telefon na oświetloną powierzchnię ' +
-      'i trzymaj go nieruchomo przez kilka sekund.');
+    var placeholderText = make('p', null, t('camera.idle'));
     placeholderText.id = 'cameraPlaceholderText';
     placeholder.appendChild(placeholderText);
     stage.appendChild(placeholder);
 
-    cameraCard.appendChild(stage);
+    return stage;
+  }
+
+  function buildMeasureScreen() {
+    var panel = byId('panelMeasure');
+    if (!panel) return;
+    if (byId('tileGrid')) { buildTiles(); return; }
+    builtMeasure = true;
+
+    var section = make('section', 'ms-section');
+
+    /* --- first-run instruction (see boot.js) --- */
+    var firstRun = make('div', 'ms-note ms-note--info');
+    firstRun.id = 'firstRunNote';
+    firstRun.hidden = true;
+    firstRun.appendChild(icon('info'));
+    var firstRunText = make('div', 'ms-note__text');
+    firstRunText.appendChild(make('span', 'ms-note__title', t('firstRun.title')));
+    firstRunText.appendChild(make('span', null, t('firstRun.text')));
+    firstRun.appendChild(firstRunText);
+    var firstRunClose = make('button', 'ms-btn ms-btn--icon');
+    firstRunClose.id = 'firstRunNoteClose';
+    firstRunClose.type = 'button';
+    firstRunClose.setAttribute('aria-label', t('firstRun.close'));
+    firstRunClose.appendChild(icon('close', 'sm'));
+    firstRunClose.addEventListener('click', function () {
+      firstRun.hidden = true;
+      setSetting('firstRunDone', true);
+      var startBtnEl = byId('btnStart');
+      if (startBtnEl) { try { startBtnEl.focus(); } catch (e) { /* ignore */ } }
+    });
+    firstRun.appendChild(firstRunClose);
+    section.appendChild(firstRun);
+
+    /* --- camera --- */
+    var cameraCard = make('div', 'ms-card ms-card--bare');
+    cameraCard.appendChild(cameraStage());
     section.appendChild(cameraCard);
 
     /* --- controls: in the normal flow, above everything optional --- */
@@ -1468,21 +1540,21 @@
     startBtn.id = 'btnStart';
     startBtn.type = 'button';
     startBtn.appendChild(icon('play'));
-    startBtn.appendChild(make('span', 'ms-btn__label', 'Start'));
+    startBtn.appendChild(make('span', 'ms-btn__label', t('action.start')));
 
     var stopBtn = make('button', 'ms-btn ms-btn--tonal ms-btn--lg');
     stopBtn.id = 'btnStop';
     stopBtn.type = 'button';
     stopBtn.disabled = true;
     stopBtn.appendChild(icon('stop'));
-    stopBtn.appendChild(make('span', 'ms-btn__label', 'Stop'));
+    stopBtn.appendChild(make('span', 'ms-btn__label', t('action.stop')));
 
     var switchBtn = make('button', 'ms-btn ms-btn--outline ms-btn--lg');
     switchBtn.id = 'btnSwitchCamera';
     switchBtn.type = 'button';
-    switchBtn.setAttribute('aria-label', 'Przełącz kamerę: przednia lub tylna');
+    switchBtn.setAttribute('aria-label', t('action.switchAria'));
     switchBtn.appendChild(icon('flip'));
-    switchBtn.appendChild(make('span', 'ms-btn__label ms-only-wide', 'Przełącz'));
+    switchBtn.appendChild(make('span', 'ms-btn__label ms-only-wide', t('action.switch')));
 
     controls.appendChild(startBtn);
     controls.appendChild(stopBtn);
@@ -1491,8 +1563,8 @@
 
     /* --- tiles --- */
     var head = make('div', 'ms-section__head');
-    head.appendChild(make('h2', 'ms-section__title', 'Siedem wskaźników'));
-    head.appendChild(make('p', 'ms-section__sub', 'Odświeżane 5 razy na sekundę'));
+    head.appendChild(make('h2', 'ms-section__title', t('metrics.sevenTitle')));
+    head.appendChild(make('p', 'ms-section__sub', t('measure.tilesSub')));
     section.appendChild(head);
 
     var grid = make('div', 'ms-grid');
@@ -1503,14 +1575,14 @@
     var summary = make('div', 'ms-card');
     summary.id = 'sessionSummary';
     var sumHead = make('div', 'ms-card__head');
-    sumHead.appendChild(make('h3', 'ms-card__title', 'Ta sesja'));
+    sumHead.appendChild(make('h3', 'ms-card__title', t('session.title')));
     summary.appendChild(sumHead);
     var kv = make('dl', 'ms-kv');
-    kv.appendChild(kvRowWithId('Czas pomiaru', 'sessionDuration', '—'));
-    kv.appendChild(kvRowWithId('Liczba próbek', 'sessionSamples', '—'));
-    kv.appendChild(kvRowWithId('W normie', 'sessionZoneGood', '—'));
-    kv.appendChild(kvRowWithId('Ostrzeżenia', 'sessionZoneWarning', '—'));
-    kv.appendChild(kvRowWithId('Krytyczne', 'sessionZoneCritical', '—'));
+    kv.appendChild(kvRowWithId(t('session.duration'), 'sessionDuration', '—'));
+    kv.appendChild(kvRowWithId(t('session.samples'), 'sessionSamples', '—'));
+    kv.appendChild(kvRowWithId(t('zone.count.good'), 'sessionZoneGood', '—'));
+    kv.appendChild(kvRowWithId(t('zone.count.warning'), 'sessionZoneWarning', '—'));
+    kv.appendChild(kvRowWithId(t('zone.count.critical'), 'sessionZoneCritical', '—'));
     summary.appendChild(kv);
     section.appendChild(summary);
 
@@ -1518,7 +1590,10 @@
     var calib = make('div', 'ms-note ms-note--info');
     calib.id = 'calibrationNotice';
     calib.appendChild(icon('info'));
-    var calibText = make('div', 'ms-note__text', 'Pomiar bez kalibracji — wartości traktuj porównawczo.');
+    /* Stan kalibracji czytamy z silnika, a nie zakładamy „brak”: po przebudowie
+       ekranu (zmiana języka) zdarzenie 'engine:calibration' już nie przyjdzie,
+       a notka nie może wtedy skłamać. */
+    var calibText = make('div', 'ms-note__text', t(isCalibrated() ? 'note.calibrated' : 'note.calibration'));
     calib.appendChild(calibText);
     section.appendChild(calib);
 
@@ -1527,15 +1602,13 @@
     disclaimer.id = 'disclaimerMeasure';
     disclaimer.appendChild(icon('warning'));
     var disc = make('div', 'ms-note__text');
-    disc.appendChild(make('span', 'ms-note__title', 'Czym ten pomiar nie jest'));
+    disc.appendChild(make('span', 'ms-note__title', t('note.dashTitle')));
+    /* Dwa skończone zdania warstwy wspólnej postawione obok siebie, a nie
+       sklejony napis: drugie z nich to sformułowanie, przy którym
+       rozporządzenie (UE) 2017/745 uznaje przeznaczenie medyczne za wykluczone,
+       i musi stać w całości, we własnym kluczu, w każdym z trzydziestu języków. */
     disc.appendChild(make('span', null,
-      'Aparat telefonu ma trzy szerokie kanały barwne i automatyczny balans bieli — nie mierzy widma. ' +
-      'Temperatura barwowa i wpływ na rytm dobowy są przybliżeniami wyliczonymi z barw sRGB. ' +
-      'Aplikacja dobrze pokazuje różnice i zmiany w czasie, nie zastępuje miernika i nie stawia żadnej diagnozy. ' +
-      /* The sentence a health-category reviewer looks for, and the wording the
-         EU MDR expects for ruling out a medical purpose. "Nie stawia diagnozy"
-         is true but is not this statement. */
-      'Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.'));
+      t('note.dashText') + ' ' + t('legal.mdr', { app: appName() })));
     disclaimer.appendChild(disc);
     section.appendChild(disclaimer);
 
@@ -1557,10 +1630,10 @@
     note.hidden = false;
   }
 
-  function kvRowWithId(keyPL, valueId, valuePL) {
+  function kvRowWithId(keyText, valueId, valueText) {
     var row = make('div', 'ms-kv__row');
-    row.appendChild(make('dt', 'ms-kv__key', keyPL));
-    var dd = make('dd', 'ms-kv__val', valuePL);
+    row.appendChild(make('dt', 'ms-kv__key', keyText));
+    var dd = make('dd', 'ms-kv__val', valueText);
     dd.id = valueId;
     row.appendChild(dd);
     return row;
@@ -1572,7 +1645,7 @@
   function wireMeasureControls() {
     bindOnce('btnStart', 'click', function () {
       var E = global.Engine;
-      if (!E) { toast('Moduł pomiaru nie został wczytany.', { kind: 'error' }); return; }
+      if (!E) { toast(t('error.engineMissing'), { kind: 'error' }); return; }
       var state = typeof E.state === 'function' ? E.state() : 'idle';
       if (state === 'starting' || state === 'running') return;
       setBusy('btnStart', true);
@@ -1620,7 +1693,11 @@
      the catalogue appears here with no change to this file.
      ------------------------------------------------------------------ */
 
-  var ZONE_WORD = { good: 'W normie', warning: 'Ostrzeżenie', critical: 'Krytycznie' };
+  /* Nazwa strefy pada w dwóch postaciach: napisem na kafelku (wielką literą)
+     i w środku zdania dla czytnika ekranu (małą). Obie stoją w słowniku, więc
+     nie ma tu ani listy słów, ani toLowerCase(). */
+  function zoneWord(zone) { return zone ? t('zone.' + zone) : ''; }
+  function zoneSpoken(zone) { return zone ? t('zone.spoken.' + zone) : ''; }
   /* Editorial judgement, not a standard: two seconds of a held zone is long
      enough that a reading balanced on a threshold stops chattering, and short
      enough that a real change is still news; twenty seconds between repeats of
@@ -1635,11 +1712,27 @@
     return (global.Metrics && global.Metrics.CATALOGUE) ? global.Metrics.CATALOGUE : [];
   }
 
+  /* Zapis liczby po myśli aktywnego języka: 2,5 po polsku, 2.5 po angielsku,
+     ٢٫٥ po arabsku. Metrics.formatValue jest wspólny dla pięciu wersji i zna
+     tylko polski przecinek, więc służy tu wyłącznie jako siatka bezpieczeństwa
+     na wypadek braku Intl. Grupowanie tysięcy jest WYŁĄCZONE: „5234 K” było
+     i ma zostać jedną liczbą, bez odstępu w środku. */
   function formatMetric(metricId, value) {
+    var m = global.Metrics && typeof global.Metrics.byId === 'function'
+      ? global.Metrics.byId(metricId) : null;
+    if (!isNum(value)) return '—';
+    var I = global.I18n;
+    if (m && I && typeof I.number === 'function') {
+      var d = typeof m.decimals === 'number' ? m.decimals : 0;
+      var out = I.number(value, {
+        minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: false
+      });
+      if (out) return out;
+    }
     if (global.Metrics && typeof global.Metrics.formatValue === 'function') {
       return global.Metrics.formatValue(metricId, value);
     }
-    return isNum(value) ? String(Math.round(value)) : '—';
+    return String(Math.round(value));
   }
 
   function thresholdFor(metric) {
@@ -1681,14 +1774,14 @@
     tile.setAttribute('aria-labelledby', 'tileName-' + metric.id);
 
     var head = make('div', 'ms-tile__head');
-    var name = make('h3', 'ms-tile__name', metric.namePL);
+    var name = make('h3', 'ms-tile__name', metricName(metric));
     name.id = 'tileName-' + metric.id;
     head.appendChild(name);
 
     var help = make('button', 'ms-tile__info');
     help.id = 'tileHelp-' + metric.id;
     help.type = 'button';
-    help.setAttribute('aria-label', 'Co oznacza: ' + metric.namePL);
+    help.setAttribute('aria-label', t('tile.helpAria', { name: metricName(metric) }));
     help.appendChild(icon('help', 'sm'));
     help.addEventListener('click', function () { openHelpSheet(metric); });
     head.appendChild(help);
@@ -1707,7 +1800,7 @@
     var readout = make('div', 'ms-gauge__readout');
     var value = make('span', 'ms-gauge__value', '—');
     value.id = 'tileValue-' + metric.id;
-    var unit = make('span', 'ms-gauge__unit', metric.unit);
+    var unit = make('span', 'ms-gauge__unit', metricUnit(metric));
     unit.id = 'tileUnit-' + metric.id;
     readout.appendChild(value);
     readout.appendChild(unit);
@@ -1720,17 +1813,17 @@
     var mark = make('span', 'ms-mark');
     mark.setAttribute('aria-hidden', 'true');
     status.appendChild(mark);
-    status.appendChild(make('span', null, 'Brak pomiaru'));
+    status.appendChild(make('span', null, t('tile.noMeasurement')));
     tile.appendChild(status);
 
-    var hint = make('p', 'ms-tile__hint', metric.shortPL);
+    var hint = make('p', 'ms-tile__hint', metricShort(metric));
     hint.id = 'tileHint-' + metric.id;
     tile.appendChild(hint);
 
     return tile;
   }
 
-  function setZoneStatus(metricId, zone, wordPL) {
+  function setZoneStatus(metricId, zone, word) {
     var status = byId('tileZone-' + metricId);
     if (!status) return;
     var mark = status.querySelector('.ms-mark');
@@ -1740,7 +1833,7 @@
     } else if (mark) {
       mark.removeAttribute('data-zone');
     }
-    if (label) label.textContent = wordPL;
+    if (label) label.textContent = word;
   }
 
   function drawTiles(reading) {
@@ -1763,7 +1856,7 @@
           gauge.removeAttribute('data-zone');
           gauge.style.setProperty('--ms-gauge-pct', 0);
         }
-        setZoneStatus(metric.id, null, reading ? 'Brak danych' : 'Brak pomiaru');
+        setZoneStatus(metric.id, null, t(reading ? 'zone.none' : 'tile.noMeasurement'));
         continue;
       }
 
@@ -1774,7 +1867,7 @@
         if (zone) gauge.setAttribute('data-zone', zone); else gauge.removeAttribute('data-zone');
       }
       if (zone) tile.setAttribute('data-zone', zone); else tile.removeAttribute('data-zone');
-      setZoneStatus(metric.id, zone, zone ? ZONE_WORD[zone] : 'Poza skalą');
+      setZoneStatus(metric.id, zone, zone ? zoneWord(zone) : t('tile.outOfScale'));
 
       /* A zone change is worth saying out loud once; a value changing five
          times a second is not. Screen readers get the transition, not the
@@ -1791,7 +1884,12 @@
             && now - seen.since >= ZONE_HOLD_MS
             && now - (seen.announcedAt || 0) >= ZONE_REPEAT_MS) {
           seen.announcedAt = now;
-          announce(metric.namePL + ': ' + ZONE_WORD[zone] + ', ' + formatMetric(metric.id, value) + ' ' + metric.unit);
+          announce(t('a11y.zoneAnnounce', {
+            name: metricName(metric),
+            zone: zoneWord(zone),
+            value: formatMetric(metric.id, value),
+            unit: metricUnit(metric)
+          }));
         }
       } else if (zone) {
         lastZones[metric.id] = { zone: zone, since: now, announcedAt: 0 };
@@ -1807,11 +1905,11 @@
     try { s = E.session(); } catch (e) { s = null; }
     if (!s) return;
     setText(byId('sessionDuration'), formatDuration(s.durationMs));
-    setText(byId('sessionSamples'), samplesPL(s.samples || 0));
+    setText(byId('sessionSamples'), samples(s.samples || 0));
     var z = s.zones || { good: 0, warning: 0, critical: 0 };
-    setText(byId('sessionZoneGood'), samplesPL(z.good || 0));
-    setText(byId('sessionZoneWarning'), samplesPL(z.warning || 0));
-    setText(byId('sessionZoneCritical'), samplesPL(z.critical || 0));
+    setText(byId('sessionZoneGood'), samples(z.good || 0));
+    setText(byId('sessionZoneWarning'), samples(z.warning || 0));
+    setText(byId('sessionZoneCritical'), samples(z.critical || 0));
   }
 
   /* The reticle shows the part of the frame that is actually sampled: the
@@ -1855,13 +1953,13 @@
   var HOUR_MS = 3600000;
   var DAY_MS = 86400000;
 
+  // No full stops: "1 godz." wrapped onto two lines in a five-way segment.
   var RANGES = [
-    { id: 'range1m', ms: 60000, labelPL: '1 min' },
-    // No full stops: "1 godz." wrapped onto two lines in a five-way segment.
-    { id: 'range1h', ms: HOUR_MS, labelPL: '1 godz' },
-    { id: 'range24h', ms: 24 * HOUR_MS, labelPL: '24 godz' },
-    { id: 'range7d', ms: 7 * DAY_MS, labelPL: '7 dni' },
-    { id: 'range30d', ms: 30 * DAY_MS, labelPL: '30 dni' }
+    { id: 'range1m', ms: 60000, labelKey: 'range.1m' },
+    { id: 'range1h', ms: HOUR_MS, labelKey: 'range.1h' },
+    { id: 'range24h', ms: 24 * HOUR_MS, labelKey: 'range.24h' },
+    { id: 'range7d', ms: 7 * DAY_MS, labelKey: 'range.7d' },
+    { id: 'range30d', ms: 30 * DAY_MS, labelKey: 'range.30d' }
   ];
 
   var chartMetricId = 'share';
@@ -1890,11 +1988,11 @@
       var section = make('section', 'ms-section');
 
       var head = make('div', 'ms-section__head');
-      head.appendChild(make('h2', 'ms-section__title', 'Przebieg w czasie'));
+      head.appendChild(make('h2', 'ms-section__title', t('history.title')));
       // The reading count belongs here, not in the legend: a legend explains
       // what the ink means, and "0 odczytów" next to a grey swatch pretended
       // to be a fourth series.
-      var headSub = make('p', 'ms-section__sub', 'Wybierz metrykę i zakres');
+      var headSub = make('p', 'ms-section__sub', t('history.pickHint'));
       headSub.id = 'chartCountSub';
       head.appendChild(headSub);
       section.appendChild(head);
@@ -1902,7 +2000,7 @@
       var controls = make('div', 'ms-card');
 
       var field = make('div', 'ms-field');
-      var label = make('label', 'ms-field__label', 'Metryka');
+      var label = make('label', 'ms-field__label', t('history.metricLabel'));
       label.setAttribute('for', 'chartMetricSelect');
       field.appendChild(label);
       var wrap = make('div', 'ms-selectwrap');
@@ -1915,7 +2013,7 @@
       var group = make('div', 'ms-segment');
       group.id = 'chartRangeGroup';
       group.setAttribute('role', 'group');
-      group.setAttribute('aria-label', 'Zakres czasu wykresu');
+      group.setAttribute('aria-label', t('history.rangeAria'));
       controls.appendChild(group);
       section.appendChild(controls);
 
@@ -1937,9 +2035,8 @@
       var emptyIcon = make('div', 'ms-empty__icon');
       emptyIcon.appendChild(icon('chart', 'lg'));
       empty.appendChild(emptyIcon);
-      empty.appendChild(make('p', 'ms-empty__title', 'Brak danych w tym zakresie'));
-      empty.appendChild(make('p', 'ms-empty__text',
-        'Uruchom pomiar na ekranie Pomiar — wykres zapełni się w kilka sekund.'));
+      empty.appendChild(make('p', 'ms-empty__title', t('history.emptyTitle')));
+      empty.appendChild(make('p', 'ms-empty__text', t('history.emptyText')));
       section.appendChild(empty);
 
       var actions = make('div', 'ms-row');
@@ -1947,13 +2044,13 @@
       reportsBtn.id = 'btnOpenReports';
       reportsBtn.type = 'button';
       reportsBtn.appendChild(icon('doc', 'sm'));
-      reportsBtn.appendChild(make('span', 'ms-btn__label', 'Raporty'));
+      reportsBtn.appendChild(make('span', 'ms-btn__label', t('action.reports')));
       reportsBtn.addEventListener('click', function () { openOrExplain('panelReports'); });
       var exportBtn = make('button', 'ms-btn ms-btn--outline');
       exportBtn.id = 'btnOpenExport';
       exportBtn.type = 'button';
       exportBtn.appendChild(icon('download', 'sm'));
-      exportBtn.appendChild(make('span', 'ms-btn__label', 'Eksport CSV'));
+      exportBtn.appendChild(make('span', 'ms-btn__label', t('action.exportCsv')));
       exportBtn.addEventListener('click', function () { openOrExplain('panelExport'); });
       actions.appendChild(reportsBtn);
       actions.appendChild(exportBtn);
@@ -1964,7 +2061,7 @@
          line it was the only bare text link in an application where every
          other action is a pill, and it read as a stray hyperlink. */
       var tableHead = make('div', 'ms-section__head');
-      tableHead.appendChild(make('h2', 'ms-section__title', 'Ostatnie odczyty'));
+      tableHead.appendChild(make('h2', 'ms-section__title', t('history.tableTitle')));
       tableHead.appendChild(make('span', 'ms-spacer'));
 
       var toggle = make('button', 'ms-btn ms-btn--text');
@@ -1972,7 +2069,7 @@
       toggle.type = 'button';
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-controls', 'tableWrap');
-      toggle.appendChild(make('span', 'ms-btn__label', 'Ukryj tabelę'));
+      toggle.appendChild(make('span', 'ms-btn__label', t('history.tableHide')));
       tableHead.appendChild(toggle);
       section.appendChild(tableHead);
 
@@ -1980,8 +2077,7 @@
       tableWrap.id = 'tableWrap';
       var table = make('table', 'ms-table');
       table.id = 'readingsTable';
-      var caption = make('caption', 'ms-visually-hidden',
-        'Ostatnie odczyty pomiaru, najnowszy na górze.');
+      var caption = make('caption', 'ms-visually-hidden', t('history.tableCaption'));
       table.appendChild(caption);
       table.appendChild(make('thead', null));
       var tbody = make('tbody', null);
@@ -2033,7 +2129,7 @@
       var m = list[i];
       var opt = DOC.createElement('option');
       opt.value = m.id;
-      opt.textContent = m.namePL;
+      opt.textContent = metricName(m);
       if (m.id === chartMetricId) opt.selected = true;
       select.appendChild(opt);
     }
@@ -2049,7 +2145,7 @@
       btn.id = r.id;
       btn.type = 'button';
       btn.setAttribute('aria-pressed', r.ms === chartRangeMs ? 'true' : 'false');
-      btn.appendChild(make('span', null, r.labelPL));
+      btn.appendChild(make('span', null, t(r.labelKey)));
       group.appendChild(btn);
     }
     for (var j = 0; j < RANGES.length; j += 1) {
@@ -2099,7 +2195,7 @@
       var open = btn.getAttribute('aria-expanded') !== 'true';
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       wrap.hidden = !open;
-      setText(btn.querySelector('.ms-btn__label'), open ? 'Ukryj tabelę' : 'Pokaż tabelę');
+      setText(btn.querySelector('.ms-btn__label'), t(open ? 'history.tableHide' : 'history.tableShow'));
       setSetting('tableOpen', open);
       if (open) drawTable();
     });
@@ -2109,13 +2205,13 @@
       var open = getSetting('tableOpen') !== false;
       wrapEl.hidden = !open;
       toggleEl.setAttribute('aria-expanded', open ? 'true' : 'false');
-      setText(toggleEl.querySelector('.ms-btn__label'), open ? 'Ukryj tabelę' : 'Pokaż tabelę');
+      setText(toggleEl.querySelector('.ms-btn__label'), t(open ? 'history.tableHide' : 'history.tableShow'));
     }
   }
 
   function openOrExplain(panelId) {
     if (showPanel(panelId)) return;
-    toast('Ten ekran nie jest jeszcze dostępny w tej wersji.', { kind: 'info' });
+    toast(t('toast.screenUnavailable'), { kind: 'info' });
   }
 
   /* ------------------------------------------------------------------
@@ -2250,7 +2346,7 @@
     var plotW = Math.max(10, cssW - padL - padR);
     var plotH = Math.max(10, cssH - padT - padB);
 
-    var rangeLabel = rangeByMs(chartRangeMs).labelPL;
+    var rangeLabel = t(rangeByMs(chartRangeMs).labelKey);
 
     var lo = metric.min, hi = metric.max;
     var now = Date.now();
@@ -2305,11 +2401,11 @@
     ctx.textAlign = 'left';
     ctx.fillText(formatShortTime(tStart), padL, cssH - padB / 2);
     ctx.textAlign = 'right';
-    ctx.fillText('teraz', padL + plotW, cssH - padB / 2);
+    ctx.fillText(t('chart.now'), padL + plotW, cssH - padB / 2);
 
     if (!data.length) {
       canvas.setAttribute('aria-label',
-        metric.namePL + ' — brak danych w zakresie ' + rangeLabel + '.');
+        t('chart.ariaEmpty', { name: metricName(metric), range: rangeLabel }));
       drawLegend(metric, 0);
       return;
     }
@@ -2337,44 +2433,52 @@
     ctx.arc(xFor(last.t), yFor(last.v), 4.5, 0, Math.PI * 2);
     ctx.fill();
 
-    canvas.setAttribute('aria-label',
-      metric.namePL + ', zakres ' + rangeLabel + ', ' + readingsPL(data.length) +
-      ', ostatnia wartość ' + formatMetric(metric.id, last.v) + ' ' + metric.unit +
-      (lastZone ? ', strefa: ' + ZONE_WORD[lastZone].toLowerCase() : '') + '.');
+    /* Dwa całe zdania zamiast jednego z doklejanym ogonkiem: „strefa: …”
+       nie w każdym języku daje się dopiąć na końcu. */
+    var ariaParams = {
+      name: metricName(metric),
+      range: rangeLabel,
+      count: readings(data.length),
+      value: formatMetric(metric.id, last.v),
+      unit: metricUnit(metric),
+      zone: zoneSpoken(lastZone)
+    };
+    canvas.setAttribute('aria-label', t(lastZone ? 'chart.ariaZone' : 'chart.aria', ariaParams));
 
     drawLegend(metric, data.length);
   }
 
-  function drawChartMessage(ctx, w, h, colors, textPL) {
+  function drawChartMessage(ctx, w, h, colors, text) {
     ctx.save();
     ctx.fillStyle = colors.text;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(textPL, w / 2, h / 2);
+    ctx.fillText(text, w / 2, h / 2);
     ctx.restore();
   }
 
-  function drawLegend(metric, count) {
+  function drawLegend(metric, n) {
     var sub = byId('chartCountSub');
     if (sub) {
-      setText(sub, count > 0
-        ? (readingsPL(count) + ' w wybranym zakresie')
-        : 'Wybierz metrykę i zakres');
+      /* Cała fraza odmienia się razem z liczebnikiem — dlatego formy CLDR
+         obejmują też „w wybranym zakresie”, a nie sam rzeczownik. */
+      setText(sub, n > 0 ? count('chart.countSub', n) : t('history.pickHint'));
     }
     var legend = byId('chartLegend');
     if (!legend) return;
     legend.innerHTML = '';
-    legend.appendChild(legendItem(cssVar('--ms-accent', '#2f6df6'), metric.namePL + ' (' + metric.unit + ')'));
-    legend.appendChild(legendItem(cssVar('--ms-warn', '#9a6100'), 'Próg ostrzegawczy'));
-    legend.appendChild(legendItem(cssVar('--ms-crit', '#b3261e'), 'Próg krytyczny'));
+    legend.appendChild(legendItem(cssVar('--ms-accent', '#2f6df6'),
+      t('metric.withUnit', { name: metricName(metric), unit: metricUnit(metric) })));
+    legend.appendChild(legendItem(cssVar('--ms-warn', '#9a6100'), t('threshold.warnLabel')));
+    legend.appendChild(legendItem(cssVar('--ms-crit', '#b3261e'), t('threshold.critLabel')));
   }
 
-  function legendItem(color, textPL) {
+  function legendItem(color, text) {
     var item = make('span', 'ms-legend__item');
     var swatch = make('span', 'ms-legend__swatch');
     swatch.style.background = color;
     item.appendChild(swatch);
-    item.appendChild(make('span', null, textPL));
+    item.appendChild(make('span', null, text));
     return item;
   }
 
@@ -2389,7 +2493,7 @@
     if (!thead) { thead = make('thead', null); table.insertBefore(thead, table.querySelector('tbody')); }
     thead.innerHTML = '';
     var tr = make('tr', null);
-    var th = make('th', null, 'Godzina');
+    var th = make('th', null, t('table.time'));
     th.setAttribute('scope', 'col');
     tr.appendChild(th);
 
@@ -2399,7 +2503,7 @@
       var cell = make('th', null);
       cell.setAttribute('scope', 'col');
       cell.id = 'tableCol-' + m.id;
-      cell.appendChild(make('span', null, m.namePL));
+      cell.appendChild(make('span', null, metricName(m)));
       tr.appendChild(cell);
     }
     thead.appendChild(tr);
@@ -2449,7 +2553,7 @@
 
     if (!rows.length) {
       var emptyRow = make('tr', null);
-      var td = make('td', null, 'Brak odczytów. Uruchom pomiar na ekranie Pomiar.');
+      var td = make('td', null, t('history.tableEmpty'));
       td.setAttribute('colspan', String(list.length + 1));
       emptyRow.appendChild(td);
       body.appendChild(emptyRow);
@@ -2489,8 +2593,8 @@
 
     var section = make('section', 'ms-section');
     var head = make('div', 'ms-section__head');
-    head.appendChild(make('h2', 'ms-section__title', 'Narzędzia'));
-    head.appendChild(make('p', 'ms-section__sub', 'Kreatory i funkcje pomocnicze'));
+    head.appendChild(make('h2', 'ms-section__title', t('nav.tools')));
+    head.appendChild(make('p', 'ms-section__sub', t('tools.sub')));
     section.appendChild(head);
 
     var list = make('div', 'ms-list');
@@ -2499,9 +2603,7 @@
 
     var note = make('div', 'ms-note ms-note--info');
     note.appendChild(icon('info'));
-    note.appendChild(make('div', 'ms-note__text',
-      'Narzędzia pomagają zinterpretować pomiar. Wszystkie są dostępne od razu, ' +
-      'a sam pomiar działa niezależnie od nich.'));
+    note.appendChild(make('div', 'ms-note__text', t('tools.note')));
     section.appendChild(note);
 
     panel.appendChild(section);
@@ -2521,40 +2623,44 @@
     var section = make('section', 'ms-section');
 
     var navHead = make('div', 'ms-section__head');
-    navHead.appendChild(make('h2', 'ms-section__title', 'Ustawienia'));
+    navHead.appendChild(make('h2', 'ms-section__title', t('more.settingsTitle')));
     section.appendChild(navHead);
 
     var list = make('div', 'ms-list');
-    list.appendChild(listRowButton('btnOpenThresholds', 'tune', 'Progi i profile',
-      'Kiedy wartość ma zapalać ostrzeżenie', function () { openOrExplain('panelThresholds'); }));
-    list.appendChild(listRowButton('btnOpenDocs', 'doc', 'Dokumentacja',
-      'Jak mierzyć i czego ten pomiar nie mówi', function () { openOrExplain('panelDocs'); }));
+    list.appendChild(listRowButton('btnOpenThresholds', 'tune', t('panel.thresholds'),
+      t('more.thresholdsSub'), function () { openOrExplain('panelThresholds'); }));
+    list.appendChild(listRowButton('btnOpenDocs', 'doc', t('panel.docs'),
+      t('more.docsSub'), function () { openOrExplain('panelDocs'); }));
     section.appendChild(list);
 
     var lookHead = make('div', 'ms-section__head');
-    lookHead.appendChild(make('h2', 'ms-section__title', 'Wygląd i dostępność'));
+    lookHead.appendChild(make('h2', 'ms-section__title', t('more.appearanceTitle')));
     section.appendChild(lookHead);
 
     var card = make('div', 'ms-card');
 
-    card.appendChild(selectField('themeSelect', 'Motyw', [
-      { value: 'auto', labelPL: 'Jak w systemie' },
-      { value: 'light', labelPL: 'Jasny' },
-      { value: 'dark', labelPL: 'Ciemny' }
+    /* Wybór języka stoi PRZED motywem i rozmiarem tekstu, bo jest od nich
+       ogólniejszy: reszta tej karty jest już napisana w wybranym języku. */
+    card.appendChild(languageField());
+
+    card.appendChild(selectField('themeSelect', t('settings.theme'), [
+      { value: 'auto', label: t('theme.auto') },
+      { value: 'light', label: t('theme.light') },
+      { value: 'dark', label: t('theme.dark') }
     ], String(getSetting('theme'))));
 
-    card.appendChild(selectField('textScaleSelect', 'Rozmiar tekstu', [
-      { value: '1', labelPL: 'Standardowy' },
-      { value: '1.15', labelPL: 'Większy (115%)' },
-      { value: '1.3', labelPL: 'Największy (130%)' }
+    card.appendChild(selectField('textScaleSelect', t('settings.textScale'), [
+      { value: '1', label: t('textScale.100') },
+      { value: '1.15', label: t('textScale.115') },
+      { value: '1.3', label: t('textScale.130') }
     ], String(getSetting('textScale'))));
 
-    card.appendChild(switchRow('contrastToggle', 'Wyższy kontrast',
-      'Mocniejsze obramowania i ciemniejszy tekst pomocniczy.', !!getSetting('contrast')));
-    card.appendChild(switchRow('soundToggle', 'Dźwięk alertów',
-      'Krótki sygnał, gdy alert ekspozycji się włączy.', !!getSetting('sound')));
-    card.appendChild(switchRow('vibrateToggle', 'Wibracja przy alertach',
-      'Działa tylko na urządzeniach, które ją obsługują.', !!getSetting('vibrate')));
+    card.appendChild(switchRow('contrastToggle', t('settings.contrast'),
+      t('settings.contrastSub'), !!getSetting('contrast')));
+    card.appendChild(switchRow('soundToggle', t('settings.sound'),
+      t('settings.soundSub'), !!getSetting('sound')));
+    card.appendChild(switchRow('vibrateToggle', t('settings.vibrate'),
+      t('settings.vibrateSub'), !!getSetting('vibrate')));
 
     section.appendChild(card);
 
@@ -2562,7 +2668,7 @@
        Wired here because this screen belongs to the shell; the control only
        calls the module that owns the data and never touches its storage key. */
     var dataHead = make('div', 'ms-section__head');
-    dataHead.appendChild(make('h2', 'ms-section__title', 'Dane'));
+    dataHead.appendChild(make('h2', 'ms-section__title', t('more.dataTitle')));
     section.appendChild(dataHead);
 
     var dataCard = make('div', 'ms-card');
@@ -2576,9 +2682,8 @@
     clearIcon.appendChild(icon('trash'));
     clearRow.appendChild(clearIcon);
     var clearText = make('span', 'ms-list__text');
-    clearText.appendChild(make('span', 'ms-list__title', 'Wyczyść historię pomiarów'));
-    clearText.appendChild(make('span', 'ms-list__sub',
-      'Kasuje zapisane odczyty z tego urządzenia. Progi, profile i ustawienia zostają.'));
+    clearText.appendChild(make('span', 'ms-list__title', t('more.clearHistory')));
+    clearText.appendChild(make('span', 'ms-list__sub', t('more.clearHistorySub')));
     clearRow.appendChild(clearText);
     dataList.appendChild(clearRow);
 
@@ -2591,15 +2696,15 @@
        Wsparcie tab, where the user goes of their own accord. */
     var supportLine = make('p', 'ms-t-cap ms-t-muted');
     supportLine.id = 'moreSupportLine';
-    supportLine.appendChild(DOC.createTextNode('Aplikacja jest bezpłatna w całości. '));
-    var supportLink = make('button', 'ms-linkbtn', 'Możesz ją wesprzeć dobrowolnie.');
+    supportLine.appendChild(DOC.createTextNode(t('more.freeLine')));
+    var supportLink = make('button', 'ms-linkbtn', t('more.supportLink'));
     supportLink.id = 'btnOpenSupport';
     supportLink.type = 'button';
     supportLink.addEventListener('click', function () { showTab('support'); });
     supportLine.appendChild(supportLink);
     section.appendChild(supportLine);
 
-    var version = make('p', 'ms-t-cap ms-t-muted', 'Monitor Światła — wersja 2');
+    var version = make('p', 'ms-t-cap ms-t-muted', t('app.version', { app: appName() }));
     version.id = 'appVersion';
     section.appendChild(version);
 
@@ -2608,7 +2713,7 @@
     wireDataControls();
   }
 
-  function listRowButton(id, iconName, titlePL, subPL, handler) {
+  function listRowButton(id, iconName, title, sub, handler) {
     var btn = make('button', 'ms-list__item ms-list__item--button');
     btn.id = id;
     btn.type = 'button';
@@ -2616,8 +2721,8 @@
     iconBox.appendChild(icon(iconName));
     btn.appendChild(iconBox);
     var text = make('span', 'ms-list__text');
-    text.appendChild(make('span', 'ms-list__title', titlePL));
-    if (subPL) text.appendChild(make('span', 'ms-list__sub', subPL));
+    text.appendChild(make('span', 'ms-list__title', title));
+    if (sub) text.appendChild(make('span', 'ms-list__sub', sub));
     btn.appendChild(text);
     var end = make('span', 'ms-list__end');
     end.appendChild(icon('chevron'));
@@ -2626,9 +2731,9 @@
     return btn;
   }
 
-  function selectField(id, labelPL, options, selectedValue) {
+  function selectField(id, labelText, options, selectedValue) {
     var field = make('div', 'ms-field');
-    var label = make('label', 'ms-field__label', labelPL);
+    var label = make('label', 'ms-field__label', labelText);
     label.setAttribute('for', id);
     field.appendChild(label);
     var wrap = make('div', 'ms-selectwrap');
@@ -2637,7 +2742,7 @@
     for (var i = 0; i < options.length; i += 1) {
       var opt = DOC.createElement('option');
       opt.value = options[i].value;
-      opt.textContent = options[i].labelPL;
+      opt.textContent = options[i].label;
       if (options[i].value === selectedValue) opt.selected = true;
       select.appendChild(opt);
     }
@@ -2646,9 +2751,41 @@
     return field;
   }
 
+  /* ------------------------------------------------------------------
+     Wybór języka
+     ------------------------------------------------------------------
+     Lista nazw WŁASNYCH (endonimów) — „Deutsch”, a nie „Niemiecki”: czyta ją
+     ten, kto szuka swojego języka, a nie ten, kto rozumie obecny. Pierwsza
+     pozycja oddaje wybór urządzeniu i to ona jest stanem domyślnym; kasuje
+     zapisany wybór, zamiast zapisywać kod wykryty dziś.
+     ------------------------------------------------------------------ */
+
+  function languageOptions() {
+    var I = global.I18n;
+    var out = [{ value: 'auto', label: t('language.auto') }];
+    var langs = (I && I.LANGUAGES) ? I.LANGUAGES : [];
+    for (var i = 0; i < langs.length; i += 1) {
+      out.push({ value: langs[i].code, label: langs[i].endonym });
+    }
+    return out;
+  }
+
+  function currentLanguageValue() {
+    var I = global.I18n;
+    if (!I || typeof I.language !== 'function') return 'auto';
+    return I.isAuto && I.isAuto() ? 'auto' : I.language();
+  }
+
+  function languageField() {
+    var field = selectField('languageSelect', t('language.label'),
+      languageOptions(), currentLanguageValue());
+    field.appendChild(make('p', 'ms-help', t('language.help')));
+    return field;
+  }
+
   /* DOM order is required by the stylesheet's sibling selectors:
      input, then track (with the thumb inside), then the text block. */
-  function switchRow(id, titlePL, subPL, checked) {
+  function switchRow(id, title, sub, checked) {
     var label = make('label', 'ms-switch');
     label.setAttribute('for', id);
     var input = DOC.createElement('input');
@@ -2661,8 +2798,8 @@
     track.appendChild(make('span', 'ms-switch__thumb'));
     label.appendChild(track);
     var text = make('span', 'ms-switch__text');
-    text.appendChild(make('span', 'ms-switch__label', titlePL));
-    if (subPL) text.appendChild(make('span', 'ms-switch__sub', subPL));
+    text.appendChild(make('span', 'ms-switch__label', title));
+    if (sub) text.appendChild(make('span', 'ms-switch__sub', sub));
     label.appendChild(text);
     return label;
   }
@@ -2674,23 +2811,33 @@
     bindOnce('btnClearHistory', 'click', function () {
       var E = global.Engine;
       if (!E || typeof E.clearHistory !== 'function') return;
-      var count = typeof E.historyCount === 'function' ? E.historyCount() : 0;
+      var n = typeof E.historyCount === 'function' ? E.historyCount() : 0;
       confirmDialog({
-        titlePL: 'Usunąć zapisaną historię?',
-        bodyPL: 'Skasujemy ' + countPL(count, 'zapisany punkt', 'zapisane punkty', 'zapisanych punktów') +
-          ' pomiaru z tego urządzenia. Tej operacji nie da się cofnąć. Progi, profile i ustawienia zostaną nietknięte.',
-        confirmPL: 'Usuń historię',
-        cancelPL: 'Zostaw',
+        titlePL: t('dialog.clearHistory.title'),
+        /* Całe zdanie odmienia się z liczebnikiem, więc formy CLDR obejmują je
+           w całości — nie da się odmienić samego rzeczownika i doklejać reszty. */
+        bodyPL: count('dialog.clearHistory.body', n),
+        confirmPL: t('dialog.clearHistory.confirm'),
+        cancelPL: t('dialog.clearHistory.cancel'),
         danger: true
       }).then(function (yes) {
         if (!yes) return;
         E.clearHistory();
-        toast('Historia pomiarów usunięta.', { kind: 'info' });
+        toast(t('toast.historyCleared'), { kind: 'info' });
       });
     });
   }
 
   function wireAppearanceControls() {
+    /* 'auto' kasuje zapisany wybór (setLanguage(null)), a nie zapisuje kodu
+       wykrytego w tej chwili: telefon może zmienić język jutro i wybór „jak
+       w urządzeniu” ma za nim pójść. */
+    bindOnce('languageSelect', 'change', function (ev) {
+      var I = global.I18n;
+      if (!I || typeof I.setLanguage !== 'function') return;
+      var value = ev.target.value;
+      I.setLanguage(value === 'auto' ? null : value);
+    });
     bindOnce('themeSelect', 'change', function (ev) { setTheme(ev.target.value); });
     bindOnce('textScaleSelect', 'change', function (ev) { setTextScale(Number(ev.target.value)); });
     bindOnce('contrastToggle', 'change', function (ev) {
@@ -2703,6 +2850,8 @@
   }
 
   function syncAppearanceControls() {
+    var lang = byId('languageSelect');
+    if (lang) lang.value = currentLanguageValue();
     var theme = byId('themeSelect');
     if (theme) theme.value = String(getSetting('theme'));
     var scale = byId('textScaleSelect');
@@ -2726,44 +2875,43 @@
     section.id = 'docsBody';
 
     var lead = make('div', 'ms-card ms-card--hero');
-    lead.appendChild(make('h3', 'ms-card__title', 'Co ta aplikacja mierzy'));
-    lead.appendChild(make('p', 'ms-card__sub',
-      'Kamera telefonu patrzy na oświetloną powierzchnię, a aplikacja pięć razy na sekundę ' +
-      'liczy średnie kanałów R, G i B ze środkowego wycinka kadru. Z tych trzech liczb ' +
-      'wyprowadza siedem wskaźników.'));
+    lead.appendChild(make('h3', 'ms-card__title', t('docs.leadTitle')));
+    lead.appendChild(make('p', 'ms-card__sub', t('docs.leadText')));
     section.appendChild(lead);
+
+    /* Częstotliwość próbkowania i granica wykrywania migotania są liczbami
+       silnika, nie treścią: bierzemy je stąd, gdzie są ustalone, i wstawiamy
+       w zdanie — inaczej trzydzieści tłumaczeń miałoby wpisane „5 Hz” na
+       sztywno i pierwsza zmiana w engine.js zrobiłaby z nich nieprawdę. */
+    var E = global.Engine;
+    var rate = (E && typeof E.sampleHz === 'function') ? E.sampleHz() : 5;
 
     var warn = make('div', 'ms-note ms-note--warning');
     warn.appendChild(icon('warning'));
     var warnText = make('div', 'ms-note__text');
-    warnText.appendChild(make('span', 'ms-note__title', 'Granice metody'));
+    warnText.appendChild(make('span', 'ms-note__title', t('docs.limitsTitle')));
     warnText.appendChild(make('span', null,
-      'Aparat ma trzy szerokie kanały barwne, automatyczną ekspozycję i automatyczny balans bieli. ' +
-      'Nie mierzy widma i nie zna wartości bezwzględnych, więc jasność jest wskaźnikiem względnym, ' +
-      'a nie luksami. Temperatura barwowa i wpływ na rytm dobowy to przybliżenia liczone z barw sRGB. ' +
-      'Próbkowanie 5 Hz widzi migotanie tylko poniżej 2,5 Hz — sieciowe 100 Hz jest poza zasięgiem ' +
-      'i aplikacja nigdy nie poda go jako wyniku. Żaden wynik nie jest diagnozą ani poradą zdrowotną. ' +
-      'Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.'));
+      t('docs.limitsText', { rate: rate, limit: rate / 2 }) + ' ' +
+      t('legal.noDiagnosis') + ' ' +
+      t('legal.mdr', { app: appName() })));
     warn.appendChild(warnText);
     section.appendChild(warn);
 
     var howHead = make('div', 'ms-section__head');
-    howHead.appendChild(make('h3', 'ms-section__title', 'Jak mierzyć sensownie'));
+    howHead.appendChild(make('h3', 'ms-section__title', t('note.howToTitle')));
     section.appendChild(howHead);
 
+    /* Trzy pierwsze kroki są wspólne dla wszystkich wersji i leżą w warstwie
+       wspólnej; czwarty należy tylko do tej wersji. */
     var steps = make('div', 'ms-list');
-    steps.appendChild(docRow('1', 'Trzymaj telefon nieruchomo',
-      'Automatyka ekspozycji potrzebuje 2–3 sekund, żeby się ustabilizować.'));
-    steps.appendChild(docRow('2', 'Kieruj na oświetloną powierzchnię',
-      'Biała kartka albo jasna ściana. Nie mierz, patrząc prosto w źródło światła.'));
-    steps.appendChild(docRow('3', 'Porównuj, nie oceniaj bezwzględnie',
-      'Ta sama scena przed zmianą i po zmianie oświetlenia mówi więcej niż jedna liczba.'));
-    steps.appendChild(docRow('4', 'Powtórz pomiar',
-      'Pojedynczy odczyt to migawka. Kilkanaście sekund pomiaru daje wiarygodniejszy obraz.'));
+    steps.appendChild(docRow(1, t('note.howTo.hold.title'), t('note.howTo.hold.text')));
+    steps.appendChild(docRow(2, t('note.howTo.aim.title'), t('note.howTo.aim.text')));
+    steps.appendChild(docRow(3, t('note.howTo.compare.title'), t('note.howTo.compare.text')));
+    steps.appendChild(docRow(4, t('note.howTo.repeat.title'), t('note.howTo.repeat.text')));
     section.appendChild(steps);
 
     var metricsHead = make('div', 'ms-section__head');
-    metricsHead.appendChild(make('h3', 'ms-section__title', 'Siedem wskaźników'));
+    metricsHead.appendChild(make('h3', 'ms-section__title', t('metrics.sevenTitle')));
     section.appendChild(metricsHead);
 
     var list = catalogue();
@@ -2771,14 +2919,17 @@
       var m = list[i];
       var card = make('div', 'ms-card ms-card--flat');
       var head = make('div', 'ms-card__head');
-      head.appendChild(make('h4', 'ms-card__title', m.namePL));
+      head.appendChild(make('h4', 'ms-card__title', metricName(m)));
       card.appendChild(head);
-      card.appendChild(make('p', 'ms-card__sub', m.shortPL));
-      card.appendChild(make('p', 'ms-t-body', m.helpPL));
+      card.appendChild(make('p', 'ms-card__sub', metricShort(m)));
+      card.appendChild(make('p', 'ms-t-body', metricHelp(m)));
       var kv = make('dl', 'ms-kv');
-      kv.appendChild(kvRow('Jednostka', m.unit));
-      kv.appendChild(kvRow('Skala', formatMetric(m.id, m.min) + ' – ' + formatMetric(m.id, m.max)));
-      kv.appendChild(kvRow('Kierunek', m.invert ? 'Wyżej znaczy lepiej' : 'Niżej znaczy łagodniej'));
+      kv.appendChild(kvRow(t('help.unit'), metricUnit(m)));
+      kv.appendChild(kvRow(t('docs.scale'), t('range.dash', {
+        min: formatMetric(m.id, m.min), max: formatMetric(m.id, m.max)
+      })));
+      kv.appendChild(kvRow(t('docs.direction'),
+        t(m.invert ? 'docs.directionHigher' : 'docs.directionLower')));
       card.appendChild(kv);
       section.appendChild(card);
     }
@@ -2786,33 +2937,32 @@
     var privacy = make('div', 'ms-note ms-note--info');
     privacy.appendChild(icon('info'));
     var privacyText = make('div', 'ms-note__text');
-    privacyText.appendChild(make('span', 'ms-note__title', 'Dane i prywatność'));
-    privacyText.appendChild(make('span', null,
-      'Obraz z kamery nigdzie nie jest wysyłany ani zapisywany — z każdej klatki zostają tylko trzy ' +
-      'liczby. Pomiary, progi i ustawienia leżą w pamięci przeglądarki na tym urządzeniu. ' +
-      'Aplikacja nie wykonuje żadnych zapytań sieciowych i działa w trybie offline.'));
+    privacyText.appendChild(make('span', 'ms-note__title', t('docs.privacyTitle')));
+    privacyText.appendChild(make('span', null, t('docs.privacyText')));
     privacy.appendChild(privacyText);
     section.appendChild(privacy);
 
     /* Stwierdzenie faktu, nie prośba: bez ramki, bez ikony kubka i bez odsyłania
        do zakładki Wsparcie. Cała aplikacja prosi o wsparcie w jednym miejscu —
        na ekranie Wsparcie — plus jedno zdanie w „Więcej”, i na tym koniec. */
-    var free = make('p', 'ms-t-cap ms-t-muted',
-      'Wszystkie siedem wskaźników, historia, wykres, narzędzia i tryb offline ' +
-      'działają dla każdego, bez konta i bez opłat.');
+    var free = make('p', 'ms-t-cap ms-t-muted', t('docs.freeLine'));
     free.id = 'docsFreeLine';
     section.appendChild(free);
 
     panel.appendChild(section);
   }
 
-  function docRow(numberPL, titlePL, subPL) {
+  /* Numer kroku jest liczbą, nie napisem: w arabskim i hindi ma się zapisać
+     cyframi tego pisma, tak samo jak każda inna liczba w tej aplikacji. */
+  function docRow(number, title, sub) {
     var row = make('div', 'ms-list__item');
-    var iconBox = make('span', 'ms-list__icon ms-list__icon--accent', numberPL);
+    var I = global.I18n;
+    var label = (I && typeof I.number === 'function') ? I.number(number) : String(number);
+    var iconBox = make('span', 'ms-list__icon ms-list__icon--accent', label);
     row.appendChild(iconBox);
     var text = make('span', 'ms-list__text');
-    text.appendChild(make('span', 'ms-list__title', titlePL));
-    text.appendChild(make('span', 'ms-list__sub', subPL));
+    text.appendChild(make('span', 'ms-list__title', title));
+    text.appendChild(make('span', 'ms-list__sub', sub));
     row.appendChild(text);
     return row;
   }
@@ -2882,7 +3032,7 @@
       lastZones = {};
       applyEngineState('running');
       nextFrame(drawOverlay);
-      announce('Pomiar rozpoczęty.');
+      announce(t('a11y.measureStarted'));
     });
 
     on('engine:sample', function (data) {
@@ -2895,20 +3045,22 @@
       applyEngineState('idle');
       updateSessionSummary();
       var text = byId('cameraPlaceholderText');
-      if (text) {
-        text.textContent = 'Pomiar zatrzymany. Naciśnij „Start”, aby zmierzyć ponownie.';
-      }
+      if (text) text.textContent = t('camera.stopped');
       var s = data && data.session ? data.session : null;
       announce(s
-        ? 'Pomiar zatrzymany. Czas: ' + formatDuration(s.durationMs) + ', ' + samplesPL(s.samples || 0) + '.'
-        : 'Pomiar zatrzymany.');
+        ? t('a11y.measureStoppedSummary', {
+            duration: formatDuration(s.durationMs), samples: samples(s.samples || 0)
+          })
+        : t('a11y.measureStopped'));
       historyRefresh();
     });
 
     on('engine:error', function (data) {
       applyEngineState('error');
       var text = byId('cameraPlaceholderText');
-      var messagePL = (data && data.messagePL) || 'Nie udało się uruchomić kamery.';
+      /* Treść komunikatu daje silnik (../shared/engine.js) i on odpowiada za
+         jej język; tutaj jest tylko zdanie na wypadek, gdyby jej nie podał. */
+      var messagePL = (data && data.messagePL) || t('error.cameraStart');
       if (text) text.textContent = messagePL;
       toast(messagePL, { kind: 'error' });
     });
@@ -2925,14 +3077,17 @@
       if (!notice) return;
       var text = notice.querySelector('.ms-note__text') || notice;
       var cal = data && data.calibration;
-      text.textContent = cal
-        ? 'Pomiar skalibrowany białą kartką — kanały wyrównane.'
-        : 'Pomiar bez kalibracji — wartości traktuj porównawczo.';
+      text.textContent = t(cal ? 'note.calibrated' : 'note.calibration');
     });
 
     on('tools:alert', function (data) {
       if (data && data.messagePL) announce(data.messagePL, true);
     });
+
+    /* Rejestracja jest tutaj, a nie przy parsowaniu pliku, bo cała reszta
+       nasłuchów powłoki też jest tutaj — i bo zmiana języka może przyjść
+       najwcześniej z ekranu „Więcej”, czyli długo po starcie. */
+    on('i18n:changed', function () { rebuildForLanguage(); });
   }
 
   /* ==================================================================
@@ -2994,6 +3149,110 @@
   }
 
   /* ==================================================================
+     24a. Zmiana języka
+     ==================================================================
+     Ekrany tej wersji budują się raz i trzymają gotowe napisy w węzłach DOM,
+     więc jedynym uczciwym sposobem przetłumaczenia ich jest zbudowanie ich od
+     nowa. Przeładowanie strony byłoby prostsze, ale zabijałoby trwający pomiar
+     razem z sesją, której użytkownik nie prosił o skasowanie.
+
+     Dwa węzły przeżywają przebudowę nietknięte:
+       #cameraStage  — bo engine.js trzyma na nim strumień (patrz cameraStage());
+       arkusze       — bo mogą być właśnie otwarte, a ich napisy da się podmienić
+                       na miejscu.
+
+     Na koniec idzie 'ui:relocalized'. To NIE jest to samo co 'i18n:changed':
+     tamto zdarzenie mówi „język się zmienił”, to mówi „powłoka jest już
+     przebudowana, można wstawiać swoje ekrany”. Bez tego rozróżnienia
+     tools.js i support.js — zapisane na szynie WCZEŚNIEJ niż ten plik —
+     odbudowałyby swoje ekrany tuż przed tym, jak powłoka je wyczyści.
+     ------------------------------------------------------------------ */
+
+  function clearPanel(panelId) {
+    var el = byId(panelId);
+    if (!el) return;
+    while (el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  function relocalizeSheets() {
+    setText(byId('dialogTitle'), t('dialog.title'));
+    setText(byId('dialogCancel'), t('dialog.cancel'));
+    setText(byId('dialogConfirm'), t('dialog.confirm'));
+    setText(byId('helpTitle'), t('help.sheetTitle'));
+    setText(byId('helpClose'), t('action.close'));
+  }
+
+  /* Napisy, które przyszły gotowe z index.html. Powłoka buduje je sama tylko
+     wtedy, gdy ich w markupie nie ma, więc tu je bezwarunkowo nadpisujemy. */
+  function applyStaticText() {
+    try { DOC.title = t('app.documentTitle'); } catch (e) { /* ignore */ }
+    var desc = DOC.querySelector ? DOC.querySelector('meta[name="description"]') : null;
+    if (desc) desc.setAttribute('content', t('app.description'));
+
+    setText(byId('skipLink'), t('app.skipToContent'));
+
+    var status = byId('measureStatus');
+    if (status) setText(status.querySelector('span:last-child'), t('app.measuring'));
+
+    var info = byId('btnInfo');
+    if (info) info.setAttribute('aria-label', t('app.docsButton'));
+
+    var nav = byId('navBar');
+    if (nav) {
+      nav.setAttribute('aria-label', t('nav.aria'));
+      var navList = nav.querySelector('.ms-nav__list');
+      if (navList) navList.setAttribute('aria-label', t('nav.tablistAria'));
+    }
+    for (var i = 0; i < TABS.length; i += 1) {
+      var btn = byId(TABS[i].navId);
+      if (btn) setText(btn.querySelector('.ms-nav__label'), t(TABS[i].labelKey));
+    }
+
+    updateHeaderForView();
+  }
+
+  function rebuildForLanguage() {
+    var stage = byId('cameraStage');
+    if (stage && stage.parentNode) {
+      stage.parentNode.removeChild(stage);
+      keptStage = stage;
+    }
+    var firstRunWasOpen = !!(byId('firstRunNote') && !byId('firstRunNote').hidden);
+
+    /* #panelSupport nie jest tu czyszczony: ten ekran należy do support.js
+       i to on go opróżnia, kiedy buduje go od nowa. */
+    clearPanel('panelMeasure');
+    clearPanel('panelHistory');
+    clearPanel('panelTools');
+    clearPanel('panelMore');
+    clearPanel('panelDocs');
+    builtMeasure = false;
+
+    ensurePanels();          // odświeża nagłówki dziewięciu nakładek
+    relocalizeSheets();
+    buildMeasureScreen();
+    buildHistoryScreen();
+    buildToolsScreen();
+    buildMoreScreen();
+    buildDocsScreen();
+    wireHeader();
+    applyStaticText();
+    syncAppearanceControls();
+
+    if (firstRunWasOpen) showFirstRunNote();
+
+    var E = global.Engine;
+    applyEngineState(E && typeof E.state === 'function' ? E.state() : 'idle');
+    drawTiles(latestReading);
+
+    emit('ui:relocalized', {
+      code: (global.I18n && typeof global.I18n.language === 'function') ? global.I18n.language() : null
+    });
+
+    redraw();
+  }
+
+  /* ==================================================================
      25. Boot
      ================================================================== */
 
@@ -3014,6 +3273,7 @@
     wireHeader();
     wireGlobalEvents();
     watchSystemTheme();
+    applyStaticText();
     syncAppearanceControls();
 
     try {
@@ -3084,8 +3344,10 @@
     formatDate: formatDate,
     formatTime: formatTime,
     formatDuration: formatDuration,
-    pluralPL: pluralPL,
-    countPL: countPL,
+    /* Liczebnik pod kluczem słownika. Zastąpił UI.pluralPL/UI.countPL: tamte
+       przyjmowały trzy polskie formy, a form jest tyle, ile kategorii CLDR
+       w aktywnym języku. Wywołanie: UI.count('count.points', 12). */
+    count: count,
 
     /* Mounting points for the tools and support modules. */
     panelBody: function (panelId) { return byId(panelId); },

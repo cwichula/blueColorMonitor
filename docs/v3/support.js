@@ -54,34 +54,43 @@
   forgetOldKeys();
 
   /* ------------------------------------------------------------------
-     Texts — registered in Scale.TEXT, the only home of Polish wording (9.3)
+     Napisy — dopisywane do Scale.TEXT, jedynego domu napisów tej wersji (9.3)
+
+     Nie literały, tylko MAPA kluczy warstwy językowej: każdy liść to klucz
+     w ./i18n/<kod>.js albo — gdy zdanie mówi o pomiarze, nie o tym ekranie —
+     w ../shared/i18n/<kod>.js. Scale.registerText zapamiętuje tę mapę, więc
+     po zmianie języka ekran wsparcia przebuduje się razem z resztą.
      ------------------------------------------------------------------ */
+
+  var TEXT_SHAPE = {
+    support: {
+      freeTitle: 'support.freeTitle',
+      freeText: 'support.freeText',
+
+      whyTitle: 'support.whyTitle',
+      whyText: 'support.whyText',
+
+      nothingTitle: 'support.nothingTitle',
+      nothingText: 'support.nothingText',
+
+      keyTitle: 'support.keyTitle',
+      keyLabel: 'support.keyLabel',
+      keyAria: 'support.keyAria',
+      serviceText: 'support.serviceText',
+      /* Nagłówek jest ten sam w każdej wersji aplikacji — klucz wspólny. */
+      privacyTitle: 'privacy.title',
+      privacyText: 'support.privacyText',
+      privacyPendingText: 'support.privacyPendingText',
+
+      emptyTitle: 'support.emptyTitle',
+      emptyText: 'support.emptyText'
+    }
+  };
 
   function installText() {
     var S = global.Scale;
     if (!S || !S.TEXT || S.TEXT.support) return;
-
-    S.TEXT.support = {
-      freeTitle: 'Ta aplikacja jest darmowa',
-      freeText: 'Wszystkie siedem wielkości pokazuje liczby od pierwszego uruchomienia. Rejestrator, progi, kalibracja, raporty, eksport, porównanie sesji i cała historia z trzydziestu dni działają bez konta, bez opłat i bez limitów — tak samo w trybie offline. Nic tu nie jest odłożone za opłatę na później.',
-
-      whyTitle: 'Dlaczego o to proszę',
-      whyText: 'Monitor Światła robię i utrzymuję sam, po godzinach. Wsparcie idzie na czas potrzebny na poprawki, na testy na kolejnych telefonach i na następne narzędzia w spisie modułów. Nic nie przestanie działać, jeśli nikt nic nie wpłaci.',
-
-      nothingTitle: 'Co daje darowizna',
-      nothingText: 'Nic. Żadna liczba, żaden moduł i żadne ustawienie nie odblokowują się po darowiźnie, bo wszystko jest odblokowane od początku. Zostaje tylko tyle, że wiem, że to komuś się przydało.',
-
-      keyTitle: 'Jeśli chcesz pomóc',
-      keyLabel: 'Postaw mi kawę',
-      keyAria: 'Postaw mi kawę — otwiera stronę zewnętrzną w nowej karcie',
-      serviceText: 'Profil darowizn prowadzi zewnętrzny serwis, na przykład Buy Me a Coffee. Aplikacja nie ładuje z niego żadnego skryptu, widżetu ani obrazka — tutaj stoi zwykły odnośnik i nic poza nim.',
-      privacyTitle: 'Co opuszcza to urządzenie',
-      privacyText: 'Naciśnięcie tego klawisza otwiera stronę zewnętrzną w nowej karcie i jest to jedyny moment, w którym cokolwiek opuszcza to urządzenie. Pomiary, historia i ustawienia zostają tam, gdzie były — w pamięci tej przeglądarki.',
-      privacyPendingText: 'Kiedy adres się pojawi, naciśnięcie klawisza otworzy stronę zewnętrzną w nowej karcie i będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie. Pomiary, historia i ustawienia zostają tam, gdzie były — w pamięci tej przeglądarki.',
-
-      emptyTitle: 'Profil nie jest jeszcze podłączony',
-      emptyText: 'Adres profilu darowizn nie został jeszcze wpisany, więc nie ma tu klawisza, który prowadziłby donikąd. Reszta aplikacji działa bez zmian — nic nie czeka na tę darowiznę.'
-    };
+    if (typeof S.registerText === 'function') S.registerText(TEXT_SHAPE);
   }
 
   installText();

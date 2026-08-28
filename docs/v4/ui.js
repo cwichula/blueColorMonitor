@@ -14,8 +14,11 @@
  *      (<button role="switch">, <input type="range">, radiogroup ze strzałkami),
  *      a nie divami z nasłuchem na klik.
  *
- * Cała polszczyzna aplikacji poza Scale.TEXT leży w UI.T (rozdział 7 SPEC.md).
- * Żaden ekran nie ma prawa zawierać własnego literału polskiego.
+ * Całe słownictwo aplikacji poza Scale.TEXT leży w UI.T (rozdział 7 SPEC.md).
+ * Żaden ekran nie ma prawa zawierać własnego literału. Sam UI.T nie zawiera już
+ * napisów, tylko nazwy kluczy: napisy przychodzą z warstwy językowej
+ * (../shared/i18n.js, słowniki ../shared/i18n/ i i18n/). Kształt obiektu jest
+ * ten sam co przedtem, więc ekrany czytają go dokładnie tak jak dotąd.
  *
  * Kolory: wyłącznie tokeny przez CSS. Po przejściu na model darowiznowy nie ma
  * w tym pliku ani jednej wartości barwnej — ostatnie hexy należały do ikon
@@ -36,250 +39,299 @@
 
   /* ==================================================================
      1. Słownik tekstów — rozdział 7 SPEC.md
+
+     Napisy nie stoją już tutaj. UI.T jest budowane z warstwy językowej
+     (window.I18n): treść wspólna wszystkim wersjom przychodzi z
+     docs/shared/i18n/<kod>.js, treść własna tej wersji z docs/v4/i18n/<kod>.js.
+     Kształt obiektu jest dokładnie ten sam co przedtem — te same pola, w tej
+     samej kolejności — więc żaden ekran nie musiał być z tego powodu ruszony.
+
+     Klucz wspólny bierzemy wszędzie tam, gdzie zdanie brzmi identycznie
+     w każdej wersji: nazwy stref ('zone.good'), akapity o prywatności
+     ('privacy.short'), nazwa aplikacji ('app.name'). Reszta to klucze tej
+     wersji — one opisują jej ekrany i nikomu innemu się nie przydadzą.
      ================================================================== */
 
-  UI.T = {
+  var VERSION = '4.0';   /* numer wydania, nie napis do tłumaczenia */
+
+  /* Częstotliwość próbkowania bierze się z silnika, nie ze słownika: to liczba
+     opisująca zachowanie kodu. Sam zapis liczby jest już językowy — '5,0 Hz'
+     po polsku, '5.0 Hz' po angielsku. */
+  var SAMPLE_HZ = (global.Engine && typeof global.Engine.sampleHz === 'function')
+    ? global.Engine.sampleHz() : 5;
+
+  /** Napis spod klucza. Bez window.I18n zwracamy sam klucz — ekran zbudowany
+   *  bez słownika ma pokazać, czego brakuje, a nie puste dziury. */
+  function T(key, params) {
+    var I = global.I18n;
+    if (I && typeof I.t === 'function') return I.t(key, params);
+    return String(key);
+  }
+
+  function N(value, options) {
+    var I = global.I18n;
+    if (I && typeof I.number === 'function') return I.number(value, options);
+    return String(value);
+  }
+
+  function hz() {
+    return N(SAMPLE_HZ, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' ' + T('unit.hertz');
+  }
+
+  function buildT() {
+    return {
     nav: {
-      measure: 'Pomiar',
-      history: 'Historia',
-      tools: 'Narzędzia',
-      support: 'Wsparcie',
-      aria: 'Nawigacja główna',
-      skip: 'Przejdź do treści',
-      brand: 'Monitor Światła',
-      version: 'Wersja 4.0'
+      measure: T('nav.measure'),
+      history: T('nav.history'),
+      tools: T('nav.tools'),
+      support: T('nav.support'),
+      aria: T('nav.aria'),
+      skip: T('nav.skip'),
+      brand: T('app.name'),
+      version: T('nav.version', { v: VERSION })
     },
-
     measure: {
-      title: 'Pomiar',
-      start: 'Start pomiaru',
-      starting: 'Uruchamiam…',
-      stop: 'Zatrzymaj',
-      flip: 'Obróć kamerę',
-      flipAria: 'Przełącz kamerę przednią i tylną',
-      lead: 'Kanał',
-      leadAria: 'Wybierz wielkość na dużym wskaźniku',
-      leadSheetTitle: 'Co pokazać na wskaźniku',
-      leadSheetSub: 'Wskaźnik pokazuje jedną wielkość naraz. Pozostałe sześć widać w kafelkach niżej.',
-      preview: 'Podgląd kontrolny',
-      previewLive: 'Na żywo',
-      previewHide: 'Zwiń podgląd',
-      previewShow: 'Rozwiń podgląd',
-      previewHint: 'Ramka pokazuje dokładnie ten wycinek obrazu, który mierzy aplikacja.',
-      tilesTitle: 'Wszystkie wielkości',
-      tilesSub: 'Dotknij kafelka, żeby przenieść wielkość na duży wskaźnik.',
-      hz: '5,0 Hz',
-      calibrated: 'Skalibrowano',
-      notCalibrated: 'Bez kalibracji',
-      sessionIdle: 'Pomiar nie trwa',
-      firstRun: 'Zacznij od przycisku „Start pomiaru”. Kamera włączy się dopiero po jego naciśnięciu i nic nie opuszcza tego urządzenia.',
-      helpAria: 'Czym jest ten pomiar'
+      title: T('measure.title'),
+      start: T('measure.start'),
+      starting: T('measure.starting'),
+      stop: T('measure.stop'),
+      flip: T('measure.flip'),
+      flipAria: T('measure.flipAria'),
+      lead: T('measure.lead'),
+      leadAria: T('measure.leadAria'),
+      leadSheetTitle: T('measure.leadSheetTitle'),
+      leadSheetSub: T('measure.leadSheetSub'),
+      preview: T('measure.preview'),
+      previewLive: T('measure.previewLive'),
+      previewHide: T('measure.previewHide'),
+      previewShow: T('measure.previewShow'),
+      previewHint: T('measure.previewHint'),
+      tilesTitle: T('measure.tilesTitle'),
+      tilesSub: T('measure.tilesSub'),
+      hz: hz(),
+      calibrated: T('measure.calibrated'),
+      notCalibrated: T('measure.notCalibrated'),
+      sessionIdle: T('measure.sessionIdle'),
+      firstRun: T('measure.firstRun'),
+      helpAria: T('measure.helpAria')
     },
-
     history: {
-      title: 'Historia',
-      rangeAria: 'Zakres czasu',
-      r1min: '1 min',
-      r1h: '1 godz',
-      r24h: '24 godz',
-      r7d: '7 dni',
-      r30d: '30 dni',
-      metricAria: 'Wielkość na wykresie',
-      chartTitle: 'Przebieg w czasie',
-      chartSub: 'Tło pokazuje strefy wyliczone z twoich progów.',
-      statsTitle: 'Statystyka zakresu',
-      statMin: 'Najmniej',
-      statAvg: 'Średnio',
-      statMax: 'Najwięcej',
-      statTime: 'Czas pomiaru',
-      statSamples: 'Próbek',
-      zonesTitle: 'Rozkład stref',
-      zoneGood: 'W normie',
-      zoneWarn: 'Uwaga',
-      zoneCrit: 'Krytycznie',
-      sessionsTitle: 'Sesje pomiarowe',
-      sessionsSub: 'Każde uruchomienie i zatrzymanie pomiaru to jedna sesja.',
-      sessionOpen: 'Pokaż szczegóły sesji',
-      sessionRunning: 'Trwa teraz',
-      coverageTitle: 'Pokrycie doby',
-      exportShort: 'Eksportuj',
-      exportAria: 'Zapisz historię do pliku',
-      clear: 'Wyczyść historię',
-      pointAt: 'Odczyt z {time}'
+      title: T('history.title'),
+      rangeAria: T('history.rangeAria'),
+      r1min: T('history.r1min'),
+      r1h: T('history.r1h'),
+      r24h: T('history.r24h'),
+      r7d: T('history.r7d'),
+      r30d: T('history.r30d'),
+      metricAria: T('history.metricAria'),
+      chartTitle: T('history.chartTitle'),
+      chartSub: T('history.chartSub'),
+      statsTitle: T('history.statsTitle'),
+      statMin: T('history.statMin'),
+      statAvg: T('history.statAvg'),
+      statMax: T('history.statMax'),
+      statTime: T('history.statTime'),
+      statSamples: T('history.statSamples'),
+      zonesTitle: T('history.zonesTitle'),
+      zoneGood: T('zone.good'),
+      zoneWarn: T('zone.warning'),
+      zoneCrit: T('zone.critical'),
+      sessionsTitle: T('history.sessionsTitle'),
+      sessionsSub: T('history.sessionsSub'),
+      sessionOpen: T('history.sessionOpen'),
+      sessionRunning: T('history.sessionRunning'),
+      coverageTitle: T('history.coverageTitle'),
+      exportShort: T('history.exportShort'),
+      exportAria: T('history.exportAria'),
+      clear: T('history.clear'),
+      pointAt: T('history.pointAt')
     },
-
     tools: {
-      title: 'Narzędzia',
-      sub: 'Dziewięć rzeczy, które możesz zrobić z tym, co już zmierzyłeś.',
-      openAria: 'Otwórz narzędzie: {name}',
-      /* Nagłówki czterech grup na ekranie Narzędzia — kolejność jak w screen-tools.js. */
-      groupMeasure: 'Pomiar',
-      groupData: 'Dane i raporty',
-      groupAuto: 'Automatyzacja',
-      groupKnow: 'Wiedza',
-      thresholds: 'Progi',
-      calibration: 'Kalibracja',
-      reports: 'Raporty',
-      export: 'Eksport',
-      compare: 'Porównanie sesji',
-      screentest: 'Test ekranu',
-      schedule: 'Harmonogram',
-      alerts: 'Alerty',
-      docs: 'O pomiarze',
-      docsDesc: 'Czym ten pomiar jest, a czym na pewno nie jest.',
-      copyKey: 'Skopiuj do schowka',
-      clearSessionsConfirm: 'Usunąć zapisane sesje do porównania? Sam przebieg pomiarów w historii zostanie nietknięty.',
-      /* Test ekranu — licznik plansz i przyciski nawigacji. */
-      planeCountTpl: 'Plansza {n} z {total}',
-      planePrev: 'Poprzednia',
-      planeNext: 'Następna',
-      /* Dokumentacja: nagłówki tabeli właściwości i sekcje. */
-      docsColProperty: 'Właściwość',
-      docsColValue: 'Wartość',
-      docsMetricsTitle: 'Siedem wielkości',
-      docsMetricsSub: 'Co oznacza każda liczba, w jakim zakresie się mieści i gdzie stoją twoje progi.',
-      docsGlossaryTitle: 'Słowniczek',
+      title: T('tools.title'),
+      sub: T('tools.sub'),
+      openAria: T('tools.openAria'),
+      groupMeasure: T('tools.groupMeasure'),
+      groupData: T('tools.groupData'),
+      groupAuto: T('tools.groupAuto'),
+      groupKnow: T('tools.groupKnow'),
+      thresholds: T('tools.thresholds'),
+      calibration: T('tools.calibration'),
+      reports: T('tools.reports'),
+      export: T('tools.export'),
+      compare: T('tools.compare'),
+      screentest: T('tools.screentest'),
+      schedule: T('tools.schedule'),
+      alerts: T('tools.alerts'),
+      docs: T('tools.docs'),
+      docsDesc: T('tools.docsDesc'),
+      copyKey: T('tools.copyKey'),
+      clearSessionsConfirm: T('tools.clearSessionsConfirm'),
+      planeCountTpl: T('tools.planeCountTpl'),
+      planePrev: T('tools.planePrev'),
+      planeNext: T('tools.planeNext'),
+      docsColProperty: T('tools.docsColProperty'),
+      docsColValue: T('tools.docsColValue'),
+      docsMetricsTitle: T('tools.docsMetricsTitle'),
+      docsMetricsSub: T('tools.docsMetricsSub'),
+      docsGlossaryTitle: T('tools.docsGlossaryTitle'),
       docsGlossary: [
-        { termPL: 'Odczyt', textPL: 'Jeden komplet siedmiu liczb wyliczony z jednej klatki obrazu. Aplikacja robi pięć odczytów na sekundę.' },
-        { termPL: 'Sesja', textPL: 'Wszystko między naciśnięciem „Start pomiaru” a zatrzymaniem. Historia zapamiętuje sesje osobno.' },
-        { termPL: 'Próg', textPL: 'Granica, od której liczba przestaje być w normie. Masz dwa progi na wielkość: uwagi i krytyczny. Możesz je zmienić w narzędziu Progi.' },
-        { termPL: 'Strefa', textPL: 'Miejsce liczby względem twoich progów: w normie, uwaga albo krytycznie. Kolory stref nie zmieniają się razem z kolorem aplikacji, bo niosą znaczenie.' },
-        { termPL: 'Kalibracja', textPL: 'Poprawka mnożąca wynik, żeby dopasować go do znanego punktu odniesienia. Dotyczy tylko tego urządzenia.' },
-        { termPL: 'Kadr pomiarowy', textPL: 'Środkowy wycinek obrazu, z którego liczone są wielkości. Brzegi kadru są pomijane, bo najczęściej łapią winietowanie obiektywu.' }
+        {
+          termPL: T('tools.docsGlossary.0.term'),
+          textPL: T('tools.docsGlossary.0.text')
+        },
+        {
+          termPL: T('tools.docsGlossary.1.term'),
+          textPL: T('tools.docsGlossary.1.text')
+        },
+        {
+          termPL: T('tools.docsGlossary.2.term'),
+          textPL: T('tools.docsGlossary.2.text')
+        },
+        {
+          termPL: T('tools.docsGlossary.3.term'),
+          textPL: T('tools.docsGlossary.3.text')
+        },
+        {
+          termPL: T('tools.docsGlossary.4.term'),
+          textPL: T('tools.docsGlossary.4.text')
+        },
+        {
+          termPL: T('tools.docsGlossary.5.term'),
+          textPL: T('tools.docsGlossary.5.text')
+        }
       ],
-      exportCsv: 'Zapisz plik CSV',
-      exportJson: 'Zapisz plik JSON',
-      exportHint: 'Plik powstaje w pamięci przeglądarki i zapisuje się na tym urządzeniu. Nic nie jest wysyłane.',
-      exportRange: 'Zakres eksportu',
-      exportCols: 'Opis kolumn',
-      screenTestHint: 'Ustaw telefon naprzeciw monitora, w odległości około 30 cm, i przechodź kolejne plansze.',
-      scheduleHint: 'Harmonogram działa wyłącznie przy otwartej aplikacji. Zamknięcie karty przerywa go.',
-      alertsHint: 'Alert pokazuje się w aplikacji. Nie wysyłamy powiadomień systemowych i nie prosimy o zgodę na nie.'
+      exportCsv: T('tools.exportCsv'),
+      exportJson: T('tools.exportJson'),
+      exportHint: T('tools.exportHint'),
+      exportRange: T('tools.exportRange'),
+      exportCols: T('tools.exportCols'),
+      screenTestHint: T('tools.screenTestHint'),
+      scheduleHint: T('tools.scheduleHint'),
+      alertsHint: T('tools.alertsHint')
     },
-
-    /* Ekran WSPARCIE. Zastąpił dawną zakładkę konta: nie ma tu już ani logowania,
-       ani żadnej opłaty — została jedna, dobrowolna prośba i całe ustawienia aplikacji. */
     support: {
-      title: 'Wsparcie',
-      freeTitle: 'Wszystko działa bez opłat',
-      freeText: 'Wszystkie siedem wielkości z liczbami, cała historia, dziewięć narzędzi i tryb offline są dostępne od razu — bez konta, bez limitów i bez wysyłania czegokolwiek do sieci.',
-      whyTitle: 'Dlaczego o to proszę',
-      whyText: 'Monitor Światła robię i utrzymuję sam, po godzinach. Dobrowolne wsparcie pokrywa ten czas i pozwala dokładać kolejne rzeczy — nic więcej za tym nie stoi.',
-      nothingTitle: 'Co daje darowizna',
-      nothingText: 'Nic w aplikacji. Darowizna niczego nie odblokowuje i niczego nie zmienia — przed nią i po niej wszystko wygląda tak samo. Zostaje tylko tyle, że wiem, że to komuś się przydało.',
-      donate: 'Postaw mi kawę',
-      donateAria: 'Otwórz profil darowizn w nowej karcie',
-      donateVia: 'Odnośnik prowadzi na zewnętrzny profil darowizn (np. Buy Me a Coffee).',
-      privacyNote: 'To jedyne miejsce w całej aplikacji, w którym cokolwiek opuszcza to urządzenie: przycisk otwiera stronę zewnętrzną w nowej karcie i dzieje się to dopiero po jego naciśnięciu. Pomiar, historia i ustawienia zostają tutaj.',
-      privacyNotePending: 'Kiedy adres się pojawi, przycisk otworzy stronę zewnętrzną w nowej karcie. Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie. Pomiar, historia i ustawienia zostają tutaj.',
-      noUrlTitle: 'Profil nie jest jeszcze podłączony',
-      noUrlText: 'Adres profilu darowizn nie został jeszcze ustawiony, więc nie ma dokąd prowadzić — i dlatego nie ma tu przycisku. Cała reszta aplikacji działa bez zmian.',
-      thanks: 'Dziękuję za każde wsparcie — także za samo korzystanie z aplikacji.',
-      thanksPending: 'Dziękuję za samo korzystanie z aplikacji.',
-      settingsTitle: 'Ustawienia',
-      /* Nagłówki dwóch grup ustawień pod kartą wyglądu. */
-      textMotion: 'Tekst i ruch',
-      measureGroup: 'Pomiar',
-      theme: 'Motyw',
-      themeSystem: 'Jak w systemie',
-      themeLight: 'Jasny',
-      themeDark: 'Ciemny',
-      accent: 'Kolor aplikacji',
-      accentSub: 'Zmienia wyłącznie kolor marki. Zielony, bursztynowy i czerwony stref zostają takie same, bo niosą znaczenie.',
-      textScale: 'Rozmiar tekstu',
-      textScale1: 'Zwykły',
-      textScale115: 'Większy',
-      textScale13: 'Największy',
-      textScalePreview: 'Tak będzie wyglądał tekst w całej aplikacji.',
-      motion: 'Ogranicz ruch',
-      motionSub: 'Wyłącza przesunięcia i animacje. Zostaje tylko zmiana przezroczystości.',
-      haptics: 'Wibracje',
-      hapticsSub: 'Krótkie drgnięcie przy starcie i zatrzymaniu pomiaru. Działa tylko na urządzeniach, które to potrafią.',
-      leadMetric: 'Wielkość na wskaźniku',
-      camera: 'Kamera',
-      cameraBack: 'Tylna',
-      cameraFront: 'Przednia',
-      dataTitle: 'Dane',
-      historySize: 'Zebrana historia',
-      /* {count} to liczba odczytów, {span} — słowny czas, który obejmują. */
-      historySizeTpl: '{count} odczytów · {span}',
-      clearHistory: 'Wyczyść historię pomiarów',
-      clearSettings: 'Przywróć ustawienia domyślne',
-      clearSettingsOk: 'Przywrócono ustawienia domyślne.',
-      aboutTitle: 'O aplikacji',
-      version: 'Wersja',
-      versionValue: '4.0',
-      versionSub: 'Wszystkie pomiary i ustawienia zostają na tym urządzeniu.',
-      privacy: 'Prywatność',
-      privacyShort: 'Nic w tej aplikacji nie wysyła niczego do sieci. Wszystkie liczby powstają na tym urządzeniu i tu zostają.',
-      licenses: 'Składniki aplikacji',
-      licensesText: 'Aplikacja nie korzysta z żadnej zewnętrznej biblioteki, kroju pisma ani pliku graficznego. Wszystkie ikony są rysowane w kodzie, cały pomiar liczy własny kod w tej karcie przeglądarki, a strona nie pobiera niczego z sieci — dlatego działa też bez połączenia.',
-      privacyText: 'Aplikacja nie wykonuje żadnych żądań sieciowych. Obraz z kamery jest przetwarzany w tej karcie przeglądarki i nigdzie nie trafia. Historia i ustawienia leżą w pamięci tej przeglądarki i znikają razem z jej danymi.'
+      title: T('support.title'),
+      freeTitle: T('support.freeTitle'),
+      freeText: T('support.freeText'),
+      whyTitle: T('support.whyTitle'),
+      whyText: T('support.whyText'),
+      nothingTitle: T('support.nothingTitle'),
+      nothingText: T('support.nothingText'),
+      donate: T('support.donate'),
+      donateAria: T('support.donateAria'),
+      donateVia: T('support.donateVia'),
+      privacyNote: T('privacy.external'),
+      privacyNotePending: T('privacy.externalPending'),
+      noUrlTitle: T('support.noUrlTitle'),
+      noUrlText: T('support.noUrlText'),
+      thanks: T('support.thanks'),
+      thanksPending: T('support.thanksPending'),
+      settingsTitle: T('support.settingsTitle'),
+      textMotion: T('support.textMotion'),
+      measureGroup: T('support.measureGroup'),
+      theme: T('settings.themeLabel'),
+      themeSystem: T('settings.themeSystem'),
+      themeLight: T('settings.themeLight'),
+      themeDark: T('settings.themeDark'),
+      accent: T('support.accent'),
+      accentSub: T('support.accentSub'),
+      textScale: T('settings.textLabel'),
+      textScale1: T('support.textScale1'),
+      textScale115: T('support.textScale115'),
+      textScale13: T('support.textScale13'),
+      textScalePreview: T('support.textScalePreview'),
+      motion: T('settings.motionLabel'),
+      motionSub: T('support.motionSub'),
+      haptics: T('support.haptics'),
+      hapticsSub: T('support.hapticsSub'),
+      leadMetric: T('support.leadMetric'),
+      camera: T('support.camera'),
+      cameraBack: T('support.cameraBack'),
+      cameraFront: T('support.cameraFront'),
+      dataTitle: T('support.dataTitle'),
+      historySize: T('support.historySize'),
+      historySizeTpl: T('support.historySizeTpl'),
+      clearHistory: T('support.clearHistory'),
+      clearSettings: T('support.clearSettings'),
+      clearSettingsOk: T('support.clearSettingsOk'),
+      aboutTitle: T('support.aboutTitle'),
+      version: T('support.version'),
+      versionValue: VERSION,
+      versionSub: T('support.versionSub'),
+      privacy: T('support.privacy'),
+      privacyShort: T('privacy.short'),
+      licenses: T('support.licenses'),
+      licensesText: T('support.licensesText'),
+      privacyText: T('support.privacyText')
     },
-
     error: {
-      title: 'Coś poszło nie tak',
-      retry: 'Spróbuj ponownie',
-      storageFull: 'Pamięć przeglądarki jest pełna. Najstarsze punkty historii zostały usunięte, żeby pomiar mógł trwać dalej.',
-      storageBlocked: 'Ta przeglądarka nie pozwala nic zapisać (tryb prywatny albo zablokowane dane witryn). Pomiar działa, ale historia zniknie po zamknięciu karty.',
-      noSecure: 'Kamera działa tylko na połączeniu HTTPS. Otwórz aplikację przez adres zaczynający się od „https://”.',
-      fileProtocol: 'Ta strona jest otwarta bezpośrednio z dysku (adres zaczyna się od „file://”), a wtedy przeglądarka nie udostępni kamery. Uruchom serwer testowy: w katalogu projektu wpisz powershell -ExecutionPolicy Bypass -File docs\serve.ps1 i otwórz http://localhost:8000/v4/',
-      startTimeout: 'Kamera nie odpowiedziała przez 15 sekund. Najczęstsze przyczyny: pytanie o zgodę czeka niezauważone w pasku adresu, kamerę trzyma inna aplikacja (zamknij ją i spróbuj ponownie) albo strona jest otwarta pod adresem innym niż „localhost” bez HTTPS — wtedy przeglądarka w ogóle nie udostępni aparatu.',
-      exportEmpty: 'Nie ma czego zapisać — historia jest pusta.',
-      unknown: 'Nie udało się wykonać tej czynności. Spróbuj jeszcze raz.'
+      title: T('error.title'),
+      retry: T('error.retry'),
+      storageFull: T('error.storageFull'),
+      storageBlocked: T('privacy.storageBlocked'),
+      noSecure: T('error.noSecure'),
+      fileProtocol: T('error.fileProtocol'),
+      startTimeout: T('error.startTimeout'),
+      exportEmpty: T('error.exportEmpty'),
+      unknown: T('error.unknown')
     },
-
     empty: {
-      measureTitle: 'Kamera jeszcze nie pracuje',
-      measureText: 'Naciśnij „Start pomiaru”, skieruj telefon na oświetloną powierzchnię i przytrzymaj go nieruchomo przez kilka sekund.',
-      measureKey: 'Start pomiaru',
-      historyTitle: 'Historia jest pusta',
-      historyText: 'Historia zapisuje się w trakcie pomiaru. Uruchom pomiar na minutę i wróć tutaj.',
-      historyKey: 'Przejdź do pomiaru',
-      sessionsTitle: 'Nie ma jeszcze żadnej sesji',
-      sessionsText: 'Sesja powstaje między naciśnięciem „Start pomiaru” a „Zatrzymaj”.',
-      searchTitle: 'Nic tu nie ma',
-      searchText: 'W wybranym zakresie nie było pomiaru. Wybierz szerszy zakres.'
+      measureTitle: T('empty.measureTitle'),
+      measureText: T('empty.measureText'),
+      measureKey: T('empty.measureKey'),
+      historyTitle: T('empty.historyTitle'),
+      historyText: T('empty.historyText'),
+      historyKey: T('empty.historyKey'),
+      sessionsTitle: T('empty.sessionsTitle'),
+      sessionsText: T('empty.sessionsText'),
+      searchTitle: T('empty.searchTitle'),
+      searchText: T('empty.searchText')
     },
-
     confirm: {
-      yes: 'Tak',
-      no: 'Nie',
-      cancel: 'Anuluj',
-      close: 'Zamknij',
-      save: 'Zapisz',
-      reset: 'Przywróć domyślne',
-      'delete': 'Usuń',
-      clearHistory: 'Wyczyścić całą historię pomiarów? Tego nie da się cofnąć.',
-      clearHistoryKey: 'Wyczyść',
-      resetSettings: 'Przywrócić wszystkie ustawienia do stanu początkowego? Historia pomiarów zostanie nietknięta.',
-      leaveSheet: 'Zamknąć bez zapisania zmian?'
+      yes: T('confirm.yes'),
+      no: T('confirm.no'),
+      cancel: T('confirm.cancel'),
+      close: T('confirm.close'),
+      save: T('confirm.save'),
+      reset: T('confirm.reset'),
+      delete: T('confirm.delete'),
+      clearHistory: T('settings.clearConfirm'),
+      clearHistoryKey: T('settings.clearKey'),
+      resetSettings: T('confirm.resetSettings'),
+      leaveSheet: T('confirm.leaveSheet')
     },
-
     toast: {
-      saved: 'Zapisano.',
-      copied: 'Skopiowano do schowka.',
-      exported: 'Zapisano plik {name}.',
-      themeChanged: 'Zmieniono motyw.',
-      accentChangedTpl: 'Kolor aplikacji: {name}.',
-      leadChangedTpl: 'Na wskaźniku: {name}.',
-      offline: 'Brak sieci nic tu nie zmienia — aplikacja i tak z niej nie korzysta.',
-      undo: 'Cofnij'
+      saved: T('toast.saved'),
+      copied: T('toast.copied'),
+      exported: T('toast.exported'),
+      themeChanged: T('toast.themeChanged'),
+      accentChangedTpl: T('toast.accentChangedTpl'),
+      leadChangedTpl: T('toast.leadChangedTpl'),
+      offline: T('toast.offline'),
+      undo: T('toast.undo')
     },
-
     aria: {
-      tabbar: 'Nawigacja główna',
-      viewTpl: 'Ekran: {name}',
-      sheetTpl: 'Okno: {name}',
-      closeSheet: 'Zamknij okno',
-      gaugeTpl: '{name}: {value}, {zone}.',
-      tileTpl: '{name}, {value}, {zone}. Dotknij, aby pokazać na wskaźniku.',
-      swatchTpl: 'Kolor aplikacji: {name}',
-      themeTpl: 'Motyw: {name}',
-      rangeTpl: 'Zakres: {name}',
-      expandPreview: 'Rozwiń podgląd kamery',
-      collapsePreview: 'Zwiń podgląd kamery'
+      tabbar: T('aria.tabbar'),
+      viewTpl: T('aria.viewTpl'),
+      sheetTpl: T('aria.sheetTpl'),
+      closeSheet: T('aria.closeSheet'),
+      gaugeTpl: T('aria.gaugeTpl'),
+      tileTpl: T('aria.tileTpl'),
+      swatchTpl: T('aria.swatchTpl'),
+      themeTpl: T('aria.themeTpl'),
+      rangeTpl: T('aria.rangeTpl'),
+      expandPreview: T('aria.expandPreview'),
+      collapsePreview: T('aria.collapsePreview')
     }
+  };
+  }
+
+  UI.T = buildT();
+
+  /** Przebudowa słownika po zmianie języka. Woła to app.js i tylko app.js. */
+  UI.relanguage = function () {
+    UI.T = buildT();
+    return UI.T;
   };
 
   /* ==================================================================

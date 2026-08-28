@@ -319,6 +319,25 @@ body.has-bottom-nav main {
   color: var(--text-primary);
 }
 
+/* ---- wybór języka (ekran „Więcej”) ----
+   Osobne reguły, a nie .ui-input: tamto pole ma `flex: 1 1 180px`, bo stoi
+   w rzędzie obok przycisku „Zapisz profil”. Tutaj kontener jest kolumną, więc
+   ta sama deklaracja ustawiłaby wysokość listy na 180 px. Wygląd zostaje ten
+   sam, znika tylko udział w układzie rzędu. */
+.ui-lang-row { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 14px; }
+.ui-lang-row > label { display: block; font-size: 19px; font-weight: 700; line-height: 1.3; }
+.ui-lang-select {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
 /* ---------------------------------------------------------------
    6. Zastrzeżenia
    --------------------------------------------------------------- */

@@ -20,7 +20,7 @@
  *
  * Bump CACHE when ANY file below changes. The old cache is deleted on activate.
  */
-var CACHE = 'blue-monitor-v3-7';
+var CACHE = 'blue-monitor-v3-11';
 
 /* Relative paths on purpose: the app must work from /v3/, from a project page
    under /<repo>/docs/v3/ and from a copied directory, without editing a line.
@@ -32,6 +32,22 @@ var APP_SHELL = [
   './tokens.css',
   './base.css',
   './components.css',
+  /* Warstwa językowa. Angielski jest wartością zapasową każdego brakującego
+     klucza, więc jego oba słowniki muszą być w pamięci zawsze — bez nich
+     aplikacja offline pokazałaby same identyfikatory kluczy.
+
+     Pozostałych dwudziestu dziewięciu języków tu NIE MA i to jest wybór:
+     sześćdziesiąt plików w spisie oznaczałoby sześćdziesiąt pobrań przy
+     pierwszym uruchomieniu, żeby obsłużyć jeden język, którego ktoś użyje.
+     Słownik wybranego języka wpada do tej samej pamięci przy pierwszym
+     wczytaniu (patrz assetFirstFromCache niżej) i od tego momentu działa
+     offline. Docelowo — gdy powstaną wszystkie trzydzieści — do spisu wchodzi
+     jeszcze para plików języka wykrytego przy instalacji. */
+  '../shared/i18n.js',
+  '../shared/i18n/en.js',
+  '../shared/i18n/pl.js',
+  './i18n/en.js',
+  './i18n/pl.js',
   '../shared/bus.js',
   '../shared/metrics.js',
   '../shared/scale-core.js',
@@ -145,8 +161,13 @@ function documentFirstFromNetwork(event, request) {
       return cached || caches.match('./index.html', { cacheName: CACHE });
     }).then(function (cached) {
       if (cached) return cached;
-      return new Response('<!doctype html><html lang="pl"><meta charset="utf-8"><title>Monitor Światła</title>' +
-        '<p>Monitor Światła nie jest jeszcze zapisany w pamięci urządzenia. Połącz się z siecią i otwórz go raz.</p>',
+      /* Strona zastępcza jest poza zasięgiem warstwy językowej: worker nie ma
+         dostępu do localStorage, więc nie wie, jaki język ktoś wybrał, a jego
+         słowniki i tak leżą w pamięci, do której właśnie się nie dobiliśmy.
+         Stąd dwa zdania: angielskie (język zapasowy aplikacji) i polskie. */
+      return new Response('<!doctype html><html lang="en"><meta charset="utf-8"><title>Light Monitor</title>' +
+        '<p>Light Monitor is not stored on this device yet. Connect to a network and open it once.</p>' +
+        '<p lang="pl">Monitor Światła nie jest jeszcze zapisany w pamięci urządzenia. Połącz się z siecią i otwórz go raz.</p>',
         { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     });
   });

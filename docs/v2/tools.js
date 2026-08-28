@@ -17,13 +17,29 @@
  *      not measurement; where a number is an editorial judgement rather than a
  *      standard, the comment says so.
  *
- * Interface strings are Polish; comments are English.
+ * Comments are English; not one interface string lives in this file. Wszystkie
+ * napisy siedmiu narzędzi leżą w docs/v2/i18n/<kod>.js, a nazwy i jednostki
+ * siedmiu wielkości w docs/shared/i18n/<kod>.js. Ten plik zna tylko klucze.
+ *
+ * Ekrany narzędzi budują się od nowa przy każdym wejściu (RENDERERS reagują na
+ * 'ui:viewchange'), więc po zmianie języka wystarczy je odbudować raz —
+ * na 'ui:relocalized', czyli po tym, jak powłoka skończy przebudowę własną.
  */
 (function (global) {
   'use strict';
 
   var doc = global.document;
   var Tools = {};
+
+  /* Jedno wejście do warstwy językowej. Bez niej t() oddaje sam klucz:
+     ekran wygląda źle, ale stoi i nic nie rzuca. */
+  function t(key, params) {
+    var I = global.I18n;
+    if (I && typeof I.t === 'function') return I.t(key, params);
+    return String(key);
+  }
+
+  function appName() { return t('app.name'); }
 
   var DAY_MS = 86400000;
   var HOUR_MS = 3600000;
@@ -71,14 +87,14 @@
     try { global.localStorage.removeItem(key); } catch (e) { /* ignore */ }
   }
 
-  function toast(messagePL, kind) {
+  function toast(message, kind) {
     var u = U();
-    if (u && typeof u.toast === 'function') u.toast(messagePL, { kind: kind || 'info' });
+    if (u && typeof u.toast === 'function') u.toast(message, { kind: kind || 'info' });
   }
 
-  function announce(textPL, assertive) {
+  function announce(text, assertive) {
     var u = U();
-    if (u && typeof u.announce === 'function') u.announce(textPL, !!assertive);
+    if (u && typeof u.announce === 'function') u.announce(text, !!assertive);
   }
 
   function setting(key) {
@@ -89,9 +105,47 @@
     return undefined;
   }
 
+  /* Katalog wielkości trzyma liczby; nazwy, opisy i jednostki są treścią
+     i przychodzą ze słownika wspólnego pod kluczami wyprowadzonymi z id. */
+  function metricName(m) { return m ? t('metric.' + m.id + '.name') : ''; }
+  function metricUnit(m) { return m ? t('metric.' + m.id + '.unit') : ''; }
+  /* Nazwa w środku zdania: osobny klucz, a nie toLowerCase() na nazwie —
+     po niemiecku rzeczownik zostaje wielką literą. */
+  function metricNameLower(m) { return m ? t('metric.' + m.id + '.nameLower') : ''; }
+
+  /* Zapis liczby po myśli aktywnego języka. Metrics.formatValue jest wspólny
+     dla pięciu wersji i zna tylko polski przecinek, więc zostaje siatką
+     bezpieczeństwa na wypadek braku Intl. Grupowanie tysięcy wyłączone:
+     „5234 K” było i ma zostać jedną liczbą. */
   function fmtValue(metricId, value) {
     var m = M();
+    var def = m && typeof m.byId === 'function' ? m.byId(metricId) : null;
+    if (typeof value !== 'number' || !isFinite(value)) return '—';
+    var I = global.I18n;
+    if (def && I && typeof I.number === 'function') {
+      var d = typeof def.decimals === 'number' ? def.decimals : 0;
+      var out = I.number(value, {
+        minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: false
+      });
+      if (out) return out;
+    }
     return m && typeof m.formatValue === 'function' ? m.formatValue(metricId, value) : '—';
+  }
+
+  /* Wartość z jednostką — jeden klucz zamiast sklejania w ośmiu miejscach. */
+  function valueUnit(m, value) {
+    return t('value.withUnit', { value: fmtValue(m.id, value), unit: metricUnit(m) });
+  }
+
+  /* Zwykły licznik całkowity (liczba próbek w strefie, numer kroku) w zapisie
+     aktywnego języka — bez grupowania tysięcy, tak jak reszta liczb tutaj. */
+  function plainNumber(value) {
+    var I = global.I18n;
+    if (I && typeof I.number === 'function') {
+      var out = I.number(Number(value) || 0, { useGrouping: false });
+      if (out) return out;
+    }
+    return String(value);
   }
 
   function fmtTime(ms) {
@@ -144,38 +198,38 @@
     while (node.firstChild) node.removeChild(node.firstChild);
   }
 
-  function btn(id, className, labelPL, iconName, onClick) {
+  function btn(id, className, label, iconName, onClick) {
     var b = mk('button', className);
     b.type = 'button';
     if (id) b.id = id;
     if (iconName) b.appendChild(icon(iconName));
-    b.appendChild(mk('span', 'ms-btn__label', labelPL));
+    b.appendChild(mk('span', 'ms-btn__label', label));
     if (onClick) b.addEventListener('click', onClick);
     return b;
   }
 
-  function note(kind, titlePL, textPL) {
+  function note(kind, title, text) {
     var box = mk('div', 'ms-note ms-note--' + kind);
     box.appendChild(icon(kind === 'warning' ? 'warning' : (kind === 'critical' ? 'critical' : 'info')));
     var body = mk('div', 'ms-note__text');
-    if (titlePL) body.appendChild(mk('span', 'ms-note__title', titlePL));
-    if (textPL) body.appendChild(mk('span', null, textPL));
+    if (title) body.appendChild(mk('span', 'ms-note__title', title));
+    if (text) body.appendChild(mk('span', null, text));
     box.appendChild(body);
     return box;
   }
 
-  function section(titlePL, subPL) {
+  function section(title, sub) {
     var s = mk('section', 'ms-section');
-    if (titlePL) {
+    if (title) {
       var head = mk('div', 'ms-section__head');
-      head.appendChild(mk('h2', 'ms-section__title', titlePL));
-      if (subPL) head.appendChild(mk('p', 'ms-section__sub', subPL));
+      head.appendChild(mk('h2', 'ms-section__title', title));
+      if (sub) head.appendChild(mk('p', 'ms-section__sub', sub));
       s.appendChild(head);
     }
     return s;
   }
 
-  function switchRow(id, titlePL, subPL, checked, onChange) {
+  function switchRow(id, title, sub, checked, onChange) {
     var label = mk('label', 'ms-switch');
     label.setAttribute('for', id);
     var input = doc.createElement('input');
@@ -189,15 +243,15 @@
     track.appendChild(mk('span', 'ms-switch__thumb'));
     label.appendChild(track);
     var text = mk('span', 'ms-switch__text');
-    text.appendChild(mk('span', 'ms-switch__label', titlePL));
-    if (subPL) text.appendChild(mk('span', 'ms-switch__sub', subPL));
+    text.appendChild(mk('span', 'ms-switch__label', title));
+    if (sub) text.appendChild(mk('span', 'ms-switch__sub', sub));
     label.appendChild(text);
     return label;
   }
 
-  function selectField(id, labelPL, options, selected, onChange) {
+  function selectField(id, labelText, options, selected, onChange) {
     var field = mk('div', 'ms-field');
-    var label = mk('label', 'ms-field__label', labelPL);
+    var label = mk('label', 'ms-field__label', labelText);
     label.setAttribute('for', id);
     field.appendChild(label);
     var wrap = mk('div', 'ms-selectwrap');
@@ -206,7 +260,7 @@
     for (var i = 0; i < options.length; i += 1) {
       var opt = doc.createElement('option');
       opt.value = String(options[i].value);
-      opt.textContent = options[i].labelPL;
+      opt.textContent = options[i].label;
       if (String(options[i].value) === String(selected)) opt.selected = true;
       select.appendChild(opt);
     }
@@ -216,10 +270,10 @@
     return field;
   }
 
-  function kv(keyPL, valuePL) {
+  function kv(keyText, valueText) {
     var row = mk('div', 'ms-kv__row');
-    row.appendChild(mk('dt', 'ms-kv__key', keyPL));
-    row.appendChild(mk('dd', 'ms-kv__val', valuePL));
+    row.appendChild(mk('dt', 'ms-kv__key', keyText));
+    row.appendChild(mk('dd', 'ms-kv__val', valueText));
     return row;
   }
 
@@ -244,13 +298,13 @@
      lit desk in daylight should not read as a warning all day long. */
   var BUILTIN_PROFILES = [
     {
-      id: 'builtin.default', namePL: 'Domyślny',
-      descPL: 'Progi z katalogu metryk — punkt wyjścia dla wszystkich pomiarów.',
+      id: 'builtin.default', nameKey: 'profile.builtin.default.name',
+      descKey: 'profile.builtin.default.desc',
       builtin: true, map: null   // null = Engine.defaultThresholds()
     },
     {
-      id: 'builtin.evening', namePL: 'Wieczór — łagodny',
-      descPL: 'Ostrzega wcześniej o chłodnej barwie i wpływie na rytm dobowy.',
+      id: 'builtin.evening', nameKey: 'profile.builtin.evening.name',
+      descKey: 'profile.builtin.evening.desc',
       builtin: true,
       map: {
         share: { warn: 20, crit: 26 },
@@ -260,8 +314,8 @@
       }
     },
     {
-      id: 'builtin.work', namePL: 'Praca przy biurku',
-      descPL: 'Dopuszcza jasne, chłodne światło dzienne; pilnuje migotania i równomierności.',
+      id: 'builtin.work', nameKey: 'profile.builtin.work.name',
+      descKey: 'profile.builtin.work.desc',
       builtin: true,
       map: {
         share: { warn: 30, crit: 38 },
@@ -279,17 +333,21 @@
     return Array.isArray(list) ? list : [];
   }
 
+  /* Zwracane pozycje mają pola `namePL`/`descPL` — nazwa została z czasów,
+     gdy była tam polszczyzna. Dziś stoi w nich napis w AKTYWNYM języku,
+     a dla profilu własnego nazwa wpisana ręcznie przez użytkownika: ta jest
+     w jego języku i nie podlega tłumaczeniu. */
   Tools.listProfiles = function () {
     var out = [];
     for (var i = 0; i < BUILTIN_PROFILES.length; i += 1) {
       var b = BUILTIN_PROFILES[i];
-      out.push({ id: b.id, namePL: b.namePL, descPL: b.descPL, builtin: true });
+      out.push({ id: b.id, namePL: t(b.nameKey), descPL: t(b.descKey), builtin: true });
     }
     var custom = customProfiles();
     for (var j = 0; j < custom.length; j += 1) {
       out.push({
         id: custom[j].id, namePL: custom[j].namePL,
-        descPL: 'Własny profil zapisany ' + fmtDate(custom[j].at) + '.',
+        descPL: t('profile.custom.desc', { date: fmtDate(custom[j].at) }),
         builtin: false
       });
     }
@@ -363,20 +421,17 @@
     var list = catalogue();
     var current = engine && typeof engine.getThresholds === 'function' ? engine.getThresholds() : {};
 
-    host.appendChild(note('info', 'Co robią progi. ',
-      'Próg ostrzegawczy zapala żółty stan, próg krytyczny czerwony. Zmiana działa natychmiast — także ' +
-      'na odczycie, który już jest na ekranie. Progi są bezpłatne; płatne jest wyłącznie zapisywanie ' +
-      'własnych zestawów pod nazwą.'));
+    host.appendChild(note('info', t('thresholds.noteTitle'), t('thresholds.noteText')));
 
     /* "Przywróć domyślne" moves ABOVE the sliders. It always existed, but it
        stood underneath roughly 1260px of them, which for the reader is the same
        as not existing. */
     var actions = mk('div', 'ms-row ms-row--end');
-    actions.appendChild(btn('btnThresholdsReset', 'ms-btn ms-btn--outline', 'Przywróć domyślne', 'refresh', function () {
+    actions.appendChild(btn('btnThresholdsReset', 'ms-btn ms-btn--outline', t('action.resetDefaults'), 'refresh', function () {
       if (engine && typeof engine.resetThresholds === 'function') {
         engine.resetThresholds();
         renderThresholds();
-        toast('Przywrócono progi domyślne.', 'info');
+        toast(t('toast.thresholdsReset'), 'info');
       }
     }));
     host.appendChild(actions);
@@ -392,9 +447,9 @@
       var card = mk('div', 'ms-card');
       card.id = 'thCard-' + m.id;
       var cardHead = mk('div', 'ms-card__head');
-      cardHead.appendChild(mk('h3', 'ms-card__title', m.namePL));
+      cardHead.appendChild(mk('h3', 'ms-card__title', metricName(m)));
       cardHead.appendChild(mk('span', 'ms-spacer'));
-      cardHead.appendChild(mk('span', 'ms-card__sub', m.unit));
+      cardHead.appendChild(mk('span', 'ms-card__sub', metricUnit(m)));
       card.appendChild(cardHead);
       card.appendChild(thresholdRow(m, current[m.id] || { warn: m.warn, crit: m.crit }));
       sliders.appendChild(card);
@@ -403,8 +458,8 @@
 
     /* --- profiles --- */
     var profHead = mk('div', 'ms-section__head');
-    profHead.appendChild(mk('h2', 'ms-section__title', 'Profile progów'));
-    profHead.appendChild(mk('p', 'ms-section__sub', 'Trzy wbudowane są bezpłatne'));
+    profHead.appendChild(mk('h2', 'ms-section__title', t('thresholds.profilesTitle')));
+    profHead.appendChild(mk('p', 'ms-section__sub', t('thresholds.profilesSub')));
     host.appendChild(profHead);
 
     var profiles = mk('div', 'ms-list');
@@ -415,7 +470,7 @@
 
     var saveCard = mk('div', 'ms-card');
     var field = mk('div', 'ms-field');
-    var label = mk('label', 'ms-field__label', 'Nazwa własnego profilu');
+    var label = mk('label', 'ms-field__label', t('thresholds.customName'));
     label.setAttribute('for', 'profileNameInput');
     field.appendChild(label);
     var row = mk('div', 'ms-row');
@@ -423,21 +478,21 @@
     input.type = 'text';
     input.id = 'profileNameInput';
     input.setAttribute('autocomplete', 'off');
-    input.setAttribute('placeholder', 'np. Sypialnia wieczorem');
+    input.setAttribute('placeholder', t('thresholds.customPlaceholder'));
     row.appendChild(input);
-    row.appendChild(btn('btnProfileSave', 'ms-btn ms-btn--tonal', 'Zapisz bieżące progi', 'check', function () {
+    row.appendChild(btn('btnProfileSave', 'ms-btn ms-btn--tonal', t('thresholds.save'), 'check', function () {
       var value = el('profileNameInput') ? el('profileNameInput').value : '';
       if (!value.replace(/^\s+|\s+$/g, '')) {
-        toast('Podaj nazwę profilu.', 'error');
+        toast(t('toast.profileNameMissing'), 'error');
         return;
       }
       var saved = Tools.saveProfile(value);
       if (!saved) return;                       // nothing to save
-      toast('Zapisano profil „' + saved.namePL + '”.', 'success');
+      toast(t('toast.profileSaved', { name: saved.namePL }), 'success');
       renderThresholds();
     }));
     field.appendChild(row);
-    field.appendChild(mk('p', 'ms-help', 'Zapisuje dokładnie te progi, które są ustawione powyżej.'));
+    field.appendChild(mk('p', 'ms-help', t('thresholds.saveHelp')));
     saveCard.appendChild(field);
     host.appendChild(saveCard);
   }
@@ -447,15 +502,18 @@
     row.id = 'thRow-' + m.id;
 
     // The card heading above already names the metric and its unit.
-    row.appendChild(mk('span', 'ms-visually-hidden', m.namePL + ' (' + m.unit + ')'));
+    row.appendChild(mk('span', 'ms-visually-hidden',
+      t('metric.withUnit', { name: metricName(m), unit: metricUnit(m) })));
 
     // For an inverted metric (higher is better) the warning threshold sits ABOVE
     // the critical one; the labels say which is which so the order never has to
     // be inferred from the slider positions.
     row.appendChild(oneSlider(m, 'thWarn-' + m.id, 'thWarnLabel-' + m.id,
-      'Ostrzeżenie', current.warn, function (value) { commitThreshold(m, value, null); }));
+      t('threshold.warn'), t('threshold.warnAria', { name: metricName(m) }),
+      current.warn, function (value) { commitThreshold(m, value, null); }));
     row.appendChild(oneSlider(m, 'thCrit-' + m.id, 'thCritLabel-' + m.id,
-      'Krytyczne', current.crit, function (value) { commitThreshold(m, null, value); }));
+      t('threshold.crit'), t('threshold.critAria', { name: metricName(m) }),
+      current.crit, function (value) { commitThreshold(m, null, value); }));
     return row;
   }
 
@@ -469,10 +527,10 @@
   /* Caption and current value share one line, the track gets its own — the
      track is 100% wide, so putting all three in one .ms-row wrapped every
      element onto a separate line and made the screen three times as tall. */
-  function oneSlider(m, inputId, labelId, captionPL, value, onCommit) {
+  function oneSlider(m, inputId, labelId, caption, ariaLabel, value, onCommit) {
     var wrap = mk('div', null);
     var head = mk('div', 'ms-row');
-    var label = mk('label', 'ms-t-cap', captionPL);
+    var label = mk('label', 'ms-t-cap', caption);
     label.setAttribute('for', inputId);
     head.appendChild(label);
     head.appendChild(mk('span', 'ms-spacer'));
@@ -485,14 +543,17 @@
     input.max = String(m.max);
     input.step = String(sliderStep(m));
     input.value = String(value);
-    input.setAttribute('aria-label', m.namePL + ' — próg: ' + captionPL.toLowerCase());
+    /* Etykieta dla czytnika ekranu przychodzi gotowa ze słownika. Wcześniej
+       powstawała z podpisu przepuszczonego przez toLowerCase() — zabieg, który
+       działa po polsku i psuje niemiecki. */
+    input.setAttribute('aria-label', ariaLabel);
 
-    var out = mk('output', 'ms-t-num', fmtValue(m.id, value) + ' ' + m.unit);
+    var out = mk('output', 'ms-t-num', valueUnit(m, value));
     out.id = labelId;
     out.setAttribute('for', inputId);
 
     input.addEventListener('input', function () {
-      out.textContent = fmtValue(m.id, Number(input.value)) + ' ' + m.unit;
+      out.textContent = valueUnit(m, Number(input.value));
     });
     input.addEventListener('change', function () { onCommit(Number(input.value)); });
 
@@ -512,9 +573,7 @@
     if (engine.setThresholds(patch, 'user')) return;
     // Rejected: the engine validates all-or-nothing, so the sliders are put back
     // to what is actually in force rather than left showing a value nobody uses.
-    toast(m.invert
-      ? 'Dla tej metryki próg ostrzegawczy musi być wyższy niż krytyczny.'
-      : 'Próg ostrzegawczy musi być niższy niż krytyczny.', 'error');
+    toast(t(m.invert ? 'toast.thresholdOrderInverted' : 'toast.thresholdOrder'), 'error');
     syncThresholdInputs();
   }
 
@@ -525,14 +584,14 @@
     var list = catalogue();
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
-      var t = map[m.id];
-      if (!t) continue;
+      var th = map[m.id];
+      if (!th) continue;
       var w = el('thWarn-' + m.id), c = el('thCrit-' + m.id);
       var wl = el('thWarnLabel-' + m.id), cl = el('thCritLabel-' + m.id);
-      if (w) w.value = String(t.warn);
-      if (c) c.value = String(t.crit);
-      if (wl) wl.textContent = fmtValue(m.id, t.warn) + ' ' + m.unit;
-      if (cl) cl.textContent = fmtValue(m.id, t.crit) + ' ' + m.unit;
+      if (w) w.value = String(th.warn);
+      if (c) c.value = String(th.crit);
+      if (wl) wl.textContent = valueUnit(m, th.warn);
+      if (cl) cl.textContent = valueUnit(m, th.crit);
     }
   }
 
@@ -547,19 +606,19 @@
     row.appendChild(text);
 
     var end = mk('span', 'ms-list__end');
-    end.appendChild(btn(null, 'ms-btn ms-btn--tonal', 'Zastosuj', null, function () {
+    end.appendChild(btn(null, 'ms-btn ms-btn--tonal', t('action.apply'), null, function () {
       if (Tools.applyProfile(profile.id)) {
         syncThresholdInputs();
-        toast('Zastosowano profil „' + profile.namePL + '”.', 'success');
+        toast(t('toast.profileApplied', { name: profile.namePL }), 'success');
       } else {
-        toast('Nie udało się zastosować tego profilu.', 'error');
+        toast(t('toast.profileApplyFailed'), 'error');
       }
     }));
     if (!profile.builtin) {
-      end.appendChild(btn(null, 'ms-btn ms-btn--text', 'Usuń', 'trash', function () {
+      end.appendChild(btn(null, 'ms-btn ms-btn--text', t('action.delete'), 'trash', function () {
         if (Tools.removeProfile(profile.id)) {
           renderThresholds();
-          toast('Profil usunięty.', 'info');
+          toast(t('toast.profileRemoved'), 'info');
         }
       }));
     }
@@ -645,7 +704,7 @@
         thresholdsBeforeSchedule = null;
         var eng = E();
         if (eng && typeof eng.setThresholds === 'function' && eng.setThresholds(back, 'schedule')) {
-          toast('Harmonogram skończył się — wróciły poprzednie progi.', 'info');
+          toast(t('toast.scheduleEnded'), 'info');
         }
       }
       return;
@@ -661,7 +720,7 @@
       var namePL = rule.profileId;
       var list = Tools.listProfiles();
       for (var i = 0; i < list.length; i += 1) { if (list[i].id === rule.profileId) namePL = list[i].namePL; }
-      toast('Harmonogram włączył profil „' + namePL + '”.', 'info');
+      toast(t('toast.scheduleApplied', { name: namePL }), 'info');
     }
   }
 
@@ -683,13 +742,11 @@
     if (!host) return;
     var s = Tools.getSchedule();
 
-    host.appendChild(note('info', 'Po co harmonogram. ',
-      'Wieczorem sensowne są inne progi niż w południe. Reguła „od–do” podmienia profil sama, ' +
-      'żeby nie trzeba było o tym pamiętać. Harmonogram nigdy nie uruchamia ani nie zatrzymuje pomiaru.'));
+    host.appendChild(note('info', t('schedule.noteTitle'), t('schedule.noteText')));
 
     var card = mk('div', 'ms-card');
-    card.appendChild(switchRow('scheduleToggle', 'Włącz automatyczne przełączanie',
-      'Sprawdzane co minutę na zegarze urządzenia.', s.enabled, function (checked) {
+    card.appendChild(switchRow('scheduleToggle', t('schedule.toggle'),
+      t('schedule.toggleSub'), s.enabled, function (checked) {
         s.enabled = checked;
         Tools.setSchedule(s);
         lastScheduleRuleId = null;
@@ -704,14 +761,14 @@
       var emptyIcon = mk('div', 'ms-empty__icon');
       emptyIcon.appendChild(icon('timer'));
       empty.appendChild(emptyIcon);
-      empty.appendChild(mk('p', 'ms-empty__title', 'Brak reguł'));
-      empty.appendChild(mk('p', 'ms-empty__text', 'Dodaj pierwszą regułę przyciskiem poniżej.'));
+      empty.appendChild(mk('p', 'ms-empty__title', t('schedule.emptyTitle')));
+      empty.appendChild(mk('p', 'ms-empty__text', t('schedule.emptyText')));
       rules.appendChild(empty);
     }
     for (var i = 0; i < s.rules.length; i += 1) rules.appendChild(scheduleRuleRow(s, s.rules[i], i));
     host.appendChild(rules);
 
-    host.appendChild(btn('btnScheduleAdd', 'ms-btn ms-btn--outline ms-btn--block', 'Dodaj regułę', 'timer', function () {
+    host.appendChild(btn('btnScheduleAdd', 'ms-btn ms-btn--outline ms-btn--block', t('schedule.add'), 'timer', function () {
       var next = Tools.getSchedule();
       next.rules.push({ id: 'r' + Date.now().toString(36), fromMin: 20 * 60, toMin: 23 * 60, profileId: 'builtin.evening' });
       Tools.setSchedule(next);
@@ -731,36 +788,36 @@
     fromInput.className = 'ms-input';
     fromInput.id = 'scheduleFrom-' + rule.id;
     fromInput.value = minutesToHm(rule.fromMin);
-    fromInput.setAttribute('aria-label', 'Reguła ' + (index + 1) + ': godzina początku');
+    fromInput.setAttribute('aria-label', t('schedule.fromAria', { n: index + 1 }));
 
     var toInput = doc.createElement('input');
     toInput.type = 'time';
     toInput.className = 'ms-input';
     toInput.id = 'scheduleTo-' + rule.id;
     toInput.value = minutesToHm(rule.toMin);
-    toInput.setAttribute('aria-label', 'Reguła ' + (index + 1) + ': godzina końca');
+    toInput.setAttribute('aria-label', t('schedule.toAria', { n: index + 1 }));
 
     var times = mk('span', 'ms-row');
     times.appendChild(fromInput);
-    times.appendChild(mk('span', 'ms-t-cap', 'do'));
+    times.appendChild(mk('span', 'ms-t-cap', t('schedule.to')));
     times.appendChild(toInput);
     text.appendChild(times);
 
     var options = [];
     var all = Tools.listProfiles();
-    for (var i = 0; i < all.length; i += 1) options.push({ value: all[i].id, labelPL: all[i].namePL });
-    text.appendChild(selectField('scheduleProfile-' + rule.id, 'Profil', options, rule.profileId, function (value) {
+    for (var i = 0; i < all.length; i += 1) options.push({ value: all[i].id, label: all[i].namePL });
+    text.appendChild(selectField('scheduleProfile-' + rule.id, t('schedule.profile'), options, rule.profileId, function (value) {
       rule.profileId = value;
       Tools.setSchedule(schedule);
       lastScheduleRuleId = null;
     }));
 
     function commitTimes() {
-      var f = hmToMinutes(fromInput.value);
-      var t = hmToMinutes(toInput.value);
-      if (f === null || t === null) { toast('Podaj godziny w formacie 22:00.', 'error'); return; }
-      rule.fromMin = f;
-      rule.toMin = t;
+      var from = hmToMinutes(fromInput.value);
+      var to = hmToMinutes(toInput.value);
+      if (from === null || to === null) { toast(t('toast.scheduleTimeFormat'), 'error'); return; }
+      rule.fromMin = from;
+      rule.toMin = to;
       Tools.setSchedule(schedule);
       lastScheduleRuleId = null;
       scheduleTick();
@@ -771,7 +828,7 @@
     row.appendChild(text);
 
     var end = mk('span', 'ms-list__end');
-    end.appendChild(btn(null, 'ms-btn ms-btn--text', 'Usuń', 'trash', function () {
+    end.appendChild(btn(null, 'ms-btn ms-btn--text', t('action.delete'), 'trash', function () {
       var next = Tools.getSchedule();
       var kept = [];
       for (var j = 0; j < next.rules.length; j += 1) {
@@ -848,12 +905,15 @@
 
   function fireAlert(cfg, reading) {
     var m = metric(cfg.metricId);
-    var namePL = m ? m.namePL : cfg.metricId;
     var value = reading.values ? reading.values[cfg.metricId] : null;
-    var messagePL = namePL + ' trzyma strefę ' +
-      (cfg.level === 'warning' ? 'ostrzegawczą' : 'krytyczną') + ' od ' +
-      Math.round((reading.t - alertSince) / 1000) + ' s — teraz ' +
-      fmtValue(cfg.metricId, value) + ' ' + (m ? m.unit : '') + '.';
+    /* Dwa całe zdania w słowniku zamiast jednego z wklejoną nazwą strefy:
+       po polsku strefa stoi tu w bierniku, a szyk innych języków bywa inny. */
+    var messagePL = t(cfg.level === 'warning' ? 'alerts.message.warning' : 'alerts.message.critical', {
+      name: m ? metricName(m) : cfg.metricId,
+      seconds: Math.round((reading.t - alertSince) / 1000),
+      value: fmtValue(cfg.metricId, value),
+      unit: m ? metricUnit(m) : ''
+    });
 
     emit('tools:alert', { metricId: cfg.metricId, level: cfg.level, messagePL: messagePL });
     showAlertBar(messagePL);
@@ -899,10 +959,10 @@
     bar.setAttribute('role', 'status');
     bar.appendChild(icon('warning'));
     var text = mk('div', 'ms-note__text');
-    text.appendChild(mk('span', 'ms-note__title', 'Alert ekspozycji'));
+    text.appendChild(mk('span', 'ms-note__title', t('alerts.barTitle')));
     text.appendChild(mk('span', null, ''));
     bar.appendChild(text);
-    bar.appendChild(btn(null, 'ms-btn ms-btn--text', 'Ukryj', 'close', function () { bar.hidden = true; }));
+    bar.appendChild(btn(null, 'ms-btn ms-btn--text', t('action.hide'), 'close', function () { bar.hidden = true; }));
     // Mounted at the end of the measurement screen: never above the controls,
     // never covering the camera.
     if (u && typeof u.mount === 'function') u.mount('panelMeasure', bar);
@@ -923,32 +983,30 @@
     if (!host) return;
     var cfg = Tools.getAlerts();
 
-    host.appendChild(note('info', 'Co robi alert. ',
-      'Pilnuje jednej metryki i odzywa się dopiero wtedy, gdy trzyma ona wybraną strefę nieprzerwanie ' +
-      'przez ustawiony czas. Nigdy nie zatrzymuje pomiaru i nie zasłania przycisków.'));
+    host.appendChild(note('info', t('alerts.noteTitle'), t('alerts.noteText')));
 
     var card = mk('div', 'ms-card');
-    card.appendChild(switchRow('alertsToggle', 'Włącz alerty ekspozycji',
-      'Działają tylko podczas trwającego pomiaru.', cfg.enabled, function (checked) {
+    card.appendChild(switchRow('alertsToggle', t('alerts.toggle'),
+      t('alerts.toggleSub'), cfg.enabled, function (checked) {
         Tools.setAlerts({ enabled: checked });
       }));
 
     var metricOptions = [];
     var list = catalogue();
     for (var i = 0; i < list.length; i += 1) {
-      metricOptions.push({ value: list[i].id, labelPL: list[i].namePL });
+      metricOptions.push({ value: list[i].id, label: metricName(list[i]) });
     }
-    card.appendChild(selectField('alertsMetricSelect', 'Pilnowana metryka', metricOptions, cfg.metricId, function (value) {
+    card.appendChild(selectField('alertsMetricSelect', t('alerts.metric'), metricOptions, cfg.metricId, function (value) {
       Tools.setAlerts({ metricId: value });
     }));
 
-    card.appendChild(selectField('alertsLevelSelect', 'Od której strefy', [
-      { value: 'warning', labelPL: 'Ostrzegawczej i wyższej' },
-      { value: 'critical', labelPL: 'Tylko krytycznej' }
+    card.appendChild(selectField('alertsLevelSelect', t('alerts.level'), [
+      { value: 'warning', label: t('alerts.level.warning') },
+      { value: 'critical', label: t('alerts.level.critical') }
     ], cfg.level, function (value) { Tools.setAlerts({ level: value }); }));
 
     var field = mk('div', 'ms-field');
-    var label = mk('label', 'ms-field__label', 'Po ilu sekundach nieprzerwanie');
+    var label = mk('label', 'ms-field__label', t('alerts.sustain'));
     label.setAttribute('for', 'alertsSustainInput');
     field.appendChild(label);
     var input = doc.createElement('input');
@@ -963,11 +1021,11 @@
       Tools.setAlerts({ sustainS: Number(input.value) });
     });
     field.appendChild(input);
-    field.appendChild(mk('p', 'ms-help', 'Krótsze czasy dają więcej fałszywych alarmów, gdy przesuwasz telefon.'));
+    field.appendChild(mk('p', 'ms-help', t('alerts.sustainHelp')));
     card.appendChild(field);
 
-    card.appendChild(switchRow('alertsSoundToggle', 'Krótki sygnał dźwiękowy',
-      'Dźwięk generowany lokalnie. Można go też wyłączyć globalnie na ekranie Więcej.',
+    card.appendChild(switchRow('alertsSoundToggle', t('alerts.sound'),
+      t('alerts.soundSub'),
       cfg.sound, function (checked) { Tools.setAlerts({ sound: checked }); }));
 
     host.appendChild(card);
@@ -988,7 +1046,7 @@
     if (slot !== 'A' && slot !== 'B') return null;
     var engine = E();
     if (!engine || typeof engine.snapshot !== 'function') return null;
-    var snap = engine.snapshot(slot === 'A' ? 'Światło A' : 'Światło B');
+    var snap = engine.snapshot(t(slot === 'A' ? 'compare.slotA' : 'compare.slotB'));
     if (!snap) return null;                    // nothing measured yet
     var state = compareState();
     state[slot] = snap;
@@ -1019,23 +1077,29 @@
     }
     var m = metric(key);
     if (typeof a !== 'number' || typeof b !== 'number' || !m) {
-      return { textPL: 'Za mało danych, żeby porównać te dwa pomiary.', metricId: null };
+      return { textPL: t('compare.notEnough'), metricId: null };
     }
     var diff = Math.abs(a - b);
     var span = Math.max(1e-6, m.max - m.min);
     if (diff / span < 0.03) {
       return {
         metricId: key,
-        textPL: 'Oba źródła wychodzą praktycznie tak samo (' + m.namePL.toLowerCase() + ': ' +
-          fmtValue(key, a) + ' i ' + fmtValue(key, b) + ' ' + m.unit + '). Różnica mieści się w szumie pomiaru.'
+        textPL: t('compare.tie', {
+          metric: metricNameLower(m), a: fmtValue(key, a), b: fmtValue(key, b), unit: metricUnit(m)
+        })
       };
     }
+    /* Osobny klucz dla A i dla B zamiast wstawiania litery w środek zdania:
+       w części języków zdanie zaczyna się od tego, co jest lepsze. */
     var betterIsA = higherIsBetter ? a > b : a < b;
     return {
       metricId: key,
-      textPL: 'Łagodniejsze jest światło ' + (betterIsA ? 'A' : 'B') + ' — ' + m.namePL.toLowerCase() +
-        ' wynosi ' + fmtValue(key, betterIsA ? a : b) + ' ' + m.unit + ' wobec ' +
-        fmtValue(key, betterIsA ? b : a) + ' ' + m.unit + '.'
+      textPL: t(betterIsA ? 'compare.betterA' : 'compare.betterB', {
+        metric: metricNameLower(m),
+        better: fmtValue(key, betterIsA ? a : b),
+        worse: fmtValue(key, betterIsA ? b : a),
+        unit: metricUnit(m)
+      })
     };
   }
 
@@ -1044,9 +1108,7 @@
     if (!host) return;
     var state = compareState();
 
-    host.appendChild(note('info', 'Jak porównywać. ',
-      'Uruchom pomiar, skieruj kamerę na pierwsze źródło i zapisz je jako A. Nie zmieniając odległości ' +
-      'ani kąta, przełącz światło i zapisz B. Porównanie ma sens tylko wtedy, gdy scena jest ta sama.'));
+    host.appendChild(note('info', t('compare.noteTitle'), t('compare.noteText')));
 
     var grid = mk('div', 'ms-grid');
     grid.appendChild(compareCard('A', 'compareSlotA', 'btnCaptureA', state.A));
@@ -1058,9 +1120,9 @@
     table.id = 'compareTable';
     var thead = mk('thead', null);
     var htr = mk('tr', null);
-    var h0 = mk('th', null, 'Metryka'); h0.setAttribute('scope', 'col');
-    var h1 = mk('th', null, 'Światło A'); h1.setAttribute('scope', 'col');
-    var h2 = mk('th', null, 'Światło B'); h2.setAttribute('scope', 'col');
+    var h0 = mk('th', null, t('table.metric')); h0.setAttribute('scope', 'col');
+    var h1 = mk('th', null, t('compare.slotA')); h1.setAttribute('scope', 'col');
+    var h2 = mk('th', null, t('compare.slotB')); h2.setAttribute('scope', 'col');
     htr.appendChild(h0); htr.appendChild(h1); htr.appendChild(h2);
     thead.appendChild(htr);
     table.appendChild(thead);
@@ -1070,7 +1132,7 @@
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
       var tr = mk('tr', null);
-      var th = mk('th', null, m.namePL);
+      var th = mk('th', null, metricName(m));
       th.setAttribute('scope', 'row');
       tr.appendChild(th);
       tr.appendChild(compareCell(state.A, m));
@@ -1084,16 +1146,14 @@
     var verdict = mk('div', 'ms-card ms-card--accent');
     verdict.id = 'compareVerdict';
     var v = compareVerdict(state);
-    verdict.appendChild(mk('h3', 'ms-card__title', 'Wynik porównania'));
-    verdict.appendChild(mk('p', 'ms-card__sub', v
-      ? v.textPL
-      : 'Zapisz oba światła, żeby zobaczyć, które jest łagodniejsze.'));
+    verdict.appendChild(mk('h3', 'ms-card__title', t('compare.verdictTitle')));
+    verdict.appendChild(mk('p', 'ms-card__sub', v ? v.textPL : t('compare.verdictEmpty')));
     host.appendChild(verdict);
 
-    host.appendChild(btn('btnCompareClear', 'ms-btn ms-btn--outline ms-btn--block', 'Wyczyść porównanie', 'trash', function () {
+    host.appendChild(btn('btnCompareClear', 'ms-btn ms-btn--outline ms-btn--block', t('compare.clear'), 'trash', function () {
       Tools.clearCompare();
       renderCompare();
-      toast('Porównanie wyczyszczone.', 'info');
+      toast(t('toast.compareCleared'), 'info');
     }));
   }
 
@@ -1101,21 +1161,21 @@
     var card = mk('div', 'ms-card');
     card.id = cardId;
     var head = mk('div', 'ms-card__head');
-    head.appendChild(mk('h3', 'ms-card__title', 'Światło ' + slot));
+    head.appendChild(mk('h3', 'ms-card__title', t(slot === 'A' ? 'compare.slotA' : 'compare.slotB')));
     card.appendChild(head);
     card.appendChild(mk('p', 'ms-card__sub', snapshot
-      ? 'Zapisano ' + fmtDate(snapshot.at) + ', ' + fmtTime(snapshot.at)
-      : 'Jeszcze nic nie zapisano.'));
-    card.appendChild(btn(buttonId, 'ms-btn ms-btn--tonal ms-btn--block', 'Zapisz bieżący odczyt', 'camera', function () {
+      ? t('compare.savedAt', { date: fmtDate(snapshot.at), time: fmtTime(snapshot.at) })
+      : t('compare.empty')));
+    card.appendChild(btn(buttonId, 'ms-btn ms-btn--tonal ms-btn--block', t('compare.save'), 'camera', function () {
       var engine = E();
       if (!engine || typeof engine.isRunning !== 'function' || !engine.isRunning()) {
-        toast('Najpierw uruchom pomiar na ekranie Pomiar.', 'error');
+        toast(t('toast.measureFirst'), 'error');
         return;
       }
       var snap = Tools.captureCompareSlot(slot);
       if (!snap) return;
       renderCompare();
-      toast('Zapisano światło ' + slot + '.', 'success');
+      toast(t(slot === 'A' ? 'toast.compareSavedA' : 'toast.compareSavedB'), 'success');
     }));
     return card;
   }
@@ -1158,13 +1218,13 @@
   Tools.startCalibration = function () {
     var engine = E();
     if (!engine || typeof engine.latest !== 'function') {
-      return Promise.resolve({ ok: false, messagePL: 'Moduł pomiaru nie jest dostępny.' });
+      return Promise.resolve({ ok: false, messagePL: t('calib.error.noEngine') });
     }
     if (typeof engine.isRunning !== 'function' || !engine.isRunning()) {
-      return Promise.resolve({ ok: false, messagePL: 'Najpierw uruchom pomiar i skieruj kamerę na białą kartkę.' });
+      return Promise.resolve({ ok: false, messagePL: t('calib.error.notRunning') });
     }
     if (calibrating) {
-      return Promise.resolve({ ok: false, messagePL: 'Kalibracja już trwa.' });
+      return Promise.resolve({ ok: false, messagePL: t('calib.error.busy') });
     }
 
     calibrating = true;
@@ -1184,25 +1244,25 @@
         global.clearInterval(timer);
         calibrating = false;
         if (n < 5) {
-          resolve({ ok: false, messagePL: 'Za mało próbek. Sprawdź, czy pomiar naprawdę działa.' });
+          resolve({ ok: false, messagePL: t('calib.error.tooFewSamples') });
           renderCalibration();
           return;
         }
         var r = sumR / n, g = sumG / n, b = sumB / n;
         if (r < 8 || g < 8 || b < 8) {
-          resolve({ ok: false, messagePL: 'Obraz jest za ciemny do kalibracji. Doświetl kartkę i spróbuj ponownie.' });
+          resolve({ ok: false, messagePL: t('calib.error.tooDark') });
           renderCalibration();
           return;
         }
         var target = (r + g + b) / 3;
         var ok = engine.setCalibration({ gainR: target / r, gainG: target / g, gainB: target / b, at: Date.now() });
         if (!ok) {
-          resolve({ ok: false, messagePL: 'Odchył kanałów jest za duży, żeby uznać go za kalibrację. Użyj białej kartki w równym świetle.' });
+          resolve({ ok: false, messagePL: t('calib.error.tooSkewed') });
           renderCalibration();
           return;
         }
         renderCalibration();
-        resolve({ ok: true, messagePL: 'Skalibrowano. Temperatura barwowa i wpływ melanopiczny będą teraz dokładniejsze.' });
+        resolve({ ok: true, messagePL: t('calib.ok') });
       }, 200);
     });
   };
@@ -1212,23 +1272,20 @@
     if (!host) return;
     var info = Tools.calibrationInfo();
 
-    host.appendChild(note('info', 'Dlaczego to działa. ',
-      'Matryca aparatu ma stały odchył między kanałami. Zmierzenie białej kartki pokazuje, jak duży, ' +
-      'i pozwala go odjąć. To jedyna funkcja w tej aplikacji, która realnie podnosi dokładność — ' +
-      'i nadal nie zamienia aparatu w spektrometr.'));
+    host.appendChild(note('info', t('calib.noteTitle'), t('calib.noteText')));
 
     var steps = mk('div', 'ms-list');
-    steps.appendChild(calibStep('1', 'Połóż białą kartkę pod mierzonym światłem'));
-    steps.appendChild(calibStep('2', 'Uruchom pomiar i wypełnij kadr kartką'));
-    steps.appendChild(calibStep('3', 'Naciśnij „Kalibruj” i nie ruszaj telefonem przez 3 sekundy'));
+    steps.appendChild(calibStep(1, t('calib.step1')));
+    steps.appendChild(calibStep(2, t('calib.step2')));
+    steps.appendChild(calibStep(3, t('calib.step3')));
     host.appendChild(steps);
 
     var card = mk('div', 'ms-card');
     var status = mk('p', 'ms-t-body');
     status.id = 'calibStatus';
     status.textContent = info.calibrated
-      ? 'Skalibrowano ' + fmtDate(info.at) + ', ' + fmtTime(info.at) + '.'
-      : 'Brak kalibracji. Pomiar działa, wartości traktuj porównawczo.';
+      ? t('calib.done', { date: fmtDate(info.at), time: fmtTime(info.at) })
+      : t('calib.none');
     card.appendChild(status);
 
     var progress = mk('div', 'ms-progress');
@@ -1241,16 +1298,19 @@
     var result = mk('div', 'ms-kv');
     result.id = 'calibResult';
     if (info.calibrated) {
-      result.appendChild(kv('Wzmocnienie R', info.gains.r.toFixed(3).replace('.', ',')));
-      result.appendChild(kv('Wzmocnienie G', info.gains.g.toFixed(3).replace('.', ',')));
-      result.appendChild(kv('Wzmocnienie B', info.gains.b.toFixed(3).replace('.', ',')));
+      /* R, G i B to nazwy kanałów sRGB, nie słowa — zostają jak są, a zmienia
+         się tylko zdanie wokół nich. Sama liczba idzie przez zapis aktywnego
+         języka, tak jak każda inna liczba w aplikacji. */
+      result.appendChild(kv(t('calib.gain', { channel: 'R' }), gainText(info.gains.r)));
+      result.appendChild(kv(t('calib.gain', { channel: 'G' }), gainText(info.gains.g)));
+      result.appendChild(kv(t('calib.gain', { channel: 'B' }), gainText(info.gains.b)));
     } else {
-      result.appendChild(kv('Wzmocnienia kanałów', 'nie ustawione'));
+      result.appendChild(kv(t('calib.gainsLabel'), t('calib.gainsUnset')));
     }
     card.appendChild(result);
 
     var actions = mk('div', 'ms-card__actions');
-    actions.appendChild(btn('btnCalibStart', 'ms-btn ms-btn--filled', 'Kalibruj (3 s)', 'refresh', function () {
+    actions.appendChild(btn('btnCalibStart', 'ms-btn ms-btn--filled', t('calib.start'), 'refresh', function () {
       var button = el('btnCalibStart');
       var u = U();
       if (u && typeof u.setBusy === 'function') u.setBusy(button, true);
@@ -1260,19 +1320,35 @@
         toast(res.messagePL, res.ok ? 'success' : 'error');
       });
     }));
-    actions.appendChild(btn('btnCalibClear', 'ms-btn ms-btn--outline', 'Usuń kalibrację', 'trash', function () {
+    actions.appendChild(btn('btnCalibClear', 'ms-btn ms-btn--outline', t('calib.clear'), 'trash', function () {
       Tools.clearCalibration();
-      toast('Kalibracja usunięta.', 'info');
+      toast(t('toast.calibCleared'), 'info');
     }));
     card.appendChild(actions);
     host.appendChild(card);
   }
 
-  function calibStep(numberPL, titlePL) {
+  function gainText(value) {
+    var I = global.I18n;
+    if (I && typeof I.number === 'function') {
+      var out = I.number(value, { minimumFractionDigits: 3, maximumFractionDigits: 3, useGrouping: false });
+      if (out) return out;
+    }
+    return value.toFixed(3);
+  }
+
+  /* Numer kroku jest liczbą, nie napisem: w arabskim i hindi ma się zapisać
+     cyframi tego pisma. */
+  function stepNumber(n) {
+    var I = global.I18n;
+    return (I && typeof I.number === 'function') ? I.number(n) : String(n);
+  }
+
+  function calibStep(number, title) {
     var row = mk('div', 'ms-list__item');
-    row.appendChild(mk('span', 'ms-list__icon ms-list__icon--accent', numberPL));
+    row.appendChild(mk('span', 'ms-list__icon ms-list__icon--accent', stepNumber(number)));
     var text = mk('span', 'ms-list__text');
-    text.appendChild(mk('span', 'ms-list__title', titlePL));
+    text.appendChild(mk('span', 'ms-list__title', title));
     row.appendChild(text);
     return row;
   }
@@ -1281,18 +1357,12 @@
      6. "Sprawdź mój monitor" wizard
      ================================================================== */
 
-  var SCREEN_STEPS = [
-    { key: 'white100', titlePL: 'Biel przy pełnej jasności',
-      hintPL: 'Otwórz białą stronę na monitorze, ustaw jasność na maksimum i wypełnij kadr ekranem.' },
-    { key: 'white20', titlePL: 'Biel przy niskiej jasności',
-      hintPL: 'Zmniejsz jasność monitora do około jednej piątej i nie zmieniaj kadru.' },
-    { key: 'corners', titlePL: 'Rogi ekranu',
-      hintPL: 'Wróć do pełnej jasności i pokaż kamerze cały ekran — sprawdzamy równomierność podświetlenia.' },
-    { key: 'nightOff', titlePL: 'Tryb nocny wyłączony',
-      hintPL: 'Upewnij się, że filtr światła niebieskiego jest wyłączony.' },
-    { key: 'nightOn', titlePL: 'Tryb nocny włączony',
-      hintPL: 'Włącz filtr światła niebieskiego w systemie i powtórz ten sam kadr.' }
-  ];
+  /* Same identyfikatory kroków; tytuł i podpowiedź wyprowadzamy z klucza,
+     żeby lista nie trzymała gotowych napisów w jednym języku. */
+  var SCREEN_STEPS = ['white100', 'white20', 'corners', 'nightOff', 'nightOn'];
+
+  function stepTitleOf(key) { return t('screencheck.step.' + key + '.title'); }
+  function stepHintOf(key) { return t('screencheck.step.' + key + '.hint'); }
 
   var screenCheck = { index: -1, results: [] };
 
@@ -1312,9 +1382,9 @@
     var engine = E();
     if (!engine || typeof engine.snapshot !== 'function') return null;
     var step = SCREEN_STEPS[screenCheck.index];
-    var snap = engine.snapshot(step.titlePL);
+    var snap = engine.snapshot(stepTitleOf(step));
     if (!snap) return null;
-    screenCheck.results.push({ key: step.key, titlePL: step.titlePL, snapshot: snap });
+    screenCheck.results.push({ key: step, titlePL: stepTitleOf(step), snapshot: snap });
 
     var next = screenCheck.index + 1;
     if (next >= SCREEN_STEPS.length) {
@@ -1338,25 +1408,24 @@
     }
     if (byKey.corners && typeof byKey.corners.values.uniformity === 'number') {
       var u = byKey.corners.values.uniformity;
-      out.notesPL.push(u < 60
-        ? 'Równomierność podświetlenia wynosi ' + fmtValue('uniformity', u) + '% — widać wyraźne różnice jasności w kadrze.'
-        : 'Podświetlenie jest równe (' + fmtValue('uniformity', u) + '%).');
+      out.notesPL.push(t(u < 60 ? 'screencheck.note.uniformityLow' : 'screencheck.note.uniformityOk',
+        { value: fmtValue('uniformity', u) }));
     }
     if (byKey.nightOn && byKey.nightOff) {
       var on = byKey.nightOn.values.share, off = byKey.nightOff.values.share;
       if (typeof on === 'number' && typeof off === 'number') {
         var drop = off - on;
         out.notesPL.push(drop > 3
-          ? 'Tryb nocny obniża udział niebieskiego o ' + fmtValue('share', drop) + ' punktu procentowego — działa.'
-          : 'Tryb nocny zmienia udział niebieskiego tylko o ' + fmtValue('share', Math.abs(drop)) +
-            ' punktu procentowego. To mniej, niż zwykle daje systemowy filtr.');
+          ? t('screencheck.note.nightWorks', { value: fmtValue('share', drop) })
+          : t('screencheck.note.nightWeak', { value: fmtValue('share', Math.abs(drop)) }));
       }
     }
     if (byKey.white100 && byKey.white20) {
       var f100 = byKey.white100.values.flicker, f20 = byKey.white20.values.flicker;
       if (typeof f100 === 'number' && typeof f20 === 'number' && f20 > f100 + 3) {
-        out.notesPL.push('Przy niskiej jasności migotanie rośnie z ' + fmtValue('flicker', f100) + '% do ' +
-          fmtValue('flicker', f20) + '% — to typowy objaw ściemniania impulsowego (PWM).');
+        out.notesPL.push(t('screencheck.note.pwm', {
+          from: fmtValue('flicker', f100), to: fmtValue('flicker', f20)
+        }));
       }
     }
     return out;
@@ -1367,10 +1436,7 @@
     if (!host) return;
     var running = screenCheck.index >= 0;
 
-    host.appendChild(note('info', 'Do czego to służy. ',
-      'Pięć kroków sprawdza monitor tak, jak sprawdza się go w recenzji: biel przy dwóch jasnościach, ' +
-      'równomierność podświetlenia i to, czy systemowy tryb nocny naprawdę coś zmienia. ' +
-      'Kreator czyta trwający pomiar; sam go nie uruchamia.'));
+    host.appendChild(note('info', t('screencheck.noteTitle'), t('screencheck.noteText')));
 
     var card = mk('div', 'ms-card');
     var stepTitle = mk('h3', 'ms-card__title');
@@ -1380,35 +1446,37 @@
 
     if (running) {
       var step = SCREEN_STEPS[screenCheck.index];
-      stepTitle.textContent = 'Krok ' + (screenCheck.index + 1) + ' z ' + SCREEN_STEPS.length + ': ' + step.titlePL;
-      hint.textContent = step.hintPL;
+      stepTitle.textContent = t('screencheck.stepHeading', {
+        n: screenCheck.index + 1, total: SCREEN_STEPS.length, title: stepTitleOf(step)
+      });
+      hint.textContent = stepHintOf(step);
     } else {
-      stepTitle.textContent = 'Kreator nie jest uruchomiony';
-      hint.textContent = 'Uruchom pomiar na ekranie Pomiar, potem wróć tutaj i naciśnij „Rozpocznij”.';
+      stepTitle.textContent = t('screencheck.idleTitle');
+      hint.textContent = t('screencheck.idleHint');
     }
     card.appendChild(stepTitle);
     card.appendChild(hint);
 
     var actions = mk('div', 'ms-card__actions');
     if (running) {
-      actions.appendChild(btn('btnScreenNext', 'ms-btn ms-btn--filled', 'Zapisz krok i przejdź dalej', 'check', function () {
+      actions.appendChild(btn('btnScreenNext', 'ms-btn ms-btn--filled', t('screencheck.next'), 'check', function () {
         var engine = E();
         if (!engine || typeof engine.isRunning !== 'function' || !engine.isRunning()) {
-          toast('Najpierw uruchom pomiar na ekranie Pomiar.', 'error');
+          toast(t('toast.measureFirst'), 'error');
           return;
         }
         if (!Tools.screenCheckNext()) {
-          toast('Kreator zakończony. Wynik jest poniżej.', 'success');
+          toast(t('toast.screencheckDone'), 'success');
         }
       }));
-      actions.appendChild(btn('btnScreenCancel', 'ms-btn ms-btn--text', 'Przerwij', 'close', function () {
+      actions.appendChild(btn('btnScreenCancel', 'ms-btn ms-btn--text', t('screencheck.cancel'), 'close', function () {
         Tools.cancelScreenCheck();
       }));
     } else {
-      actions.appendChild(btn('btnScreenNext', 'ms-btn ms-btn--filled', 'Rozpocznij kreator', 'play', function () {
+      actions.appendChild(btn('btnScreenNext', 'ms-btn ms-btn--filled', t('screencheck.start'), 'play', function () {
         Tools.startScreenCheck();
       }));
-      actions.appendChild(btn('btnScreenCancel', 'ms-btn ms-btn--text', 'Wyczyść wynik', 'trash', function () {
+      actions.appendChild(btn('btnScreenCancel', 'ms-btn ms-btn--text', t('screencheck.clearResult'), 'trash', function () {
         Tools.cancelScreenCheck();
       }));
     }
@@ -1419,11 +1487,11 @@
     for (var i = 0; i < SCREEN_STEPS.length; i += 1) {
       var row = mk('div', 'ms-list__item');
       var iconBox = mk('span', 'ms-list__icon' + (i === screenCheck.index ? ' ms-list__icon--accent' : ''));
-      iconBox.textContent = String(i + 1);
+      iconBox.textContent = stepNumber(i + 1);
       row.appendChild(iconBox);
       var text = mk('span', 'ms-list__text');
-      text.appendChild(mk('span', 'ms-list__title', SCREEN_STEPS[i].titlePL));
-      text.appendChild(mk('span', 'ms-list__sub', SCREEN_STEPS[i].hintPL));
+      text.appendChild(mk('span', 'ms-list__title', stepTitleOf(SCREEN_STEPS[i])));
+      text.appendChild(mk('span', 'ms-list__sub', stepHintOf(SCREEN_STEPS[i])));
       row.appendChild(text);
       stepsList.appendChild(row);
     }
@@ -1431,18 +1499,18 @@
 
     var resultBox = mk('div', 'ms-card');
     resultBox.id = 'screenCheckResult';
-    resultBox.appendChild(mk('h3', 'ms-card__title', 'Wynik'));
+    resultBox.appendChild(mk('h3', 'ms-card__title', t('screencheck.resultTitle')));
     var result = Tools.screenCheckResult();
     if (!result) {
-      resultBox.appendChild(mk('p', 'ms-card__sub', 'Jeszcze nie zapisano żadnego kroku.'));
+      resultBox.appendChild(mk('p', 'ms-card__sub', t('screencheck.resultEmpty')));
     } else {
       for (var n = 0; n < result.notesPL.length; n += 1) {
         resultBox.appendChild(mk('p', 'ms-t-body', result.notesPL[n]));
       }
       if (!result.notesPL.length) {
-        resultBox.appendChild(mk('p', 'ms-card__sub',
-          'Zapisano ' + result.steps.length + ' z ' + SCREEN_STEPS.length +
-          ' kroków. Wnioski pojawią się, gdy będzie co porównać.'));
+        resultBox.appendChild(mk('p', 'ms-card__sub', t('screencheck.resultPartial', {
+          done: result.steps.length, total: SCREEN_STEPS.length
+        })));
       }
     }
     host.appendChild(resultBox);
@@ -1529,26 +1597,22 @@
   function advice(avg, zones, worstHour, worstScore) {
     var out = [];
     if (typeof avg.melanopic === 'number' && avg.melanopic > 0.8) {
-      out.push('Średni wpływ na rytm dobowy wyniósł ' + fmtValue('melanopic', avg.melanopic) +
-        '×. Wieczorem warto zejść poniżej 0,50 — najprościej przez cieplejszą żarówkę lub tryb nocny.');
+      out.push(t('advice.melanopic', { value: fmtValue('melanopic', avg.melanopic) }));
     }
     if (typeof avg.kelvin === 'number' && avg.kelvin > 5000) {
-      out.push('Światło było chłodne (średnio ' + fmtValue('kelvin', avg.kelvin) +
-        ' K). Do pracy to bez zarzutu; na dwie godziny przed snem lepsze jest poniżej 3000 K.');
+      out.push(t('advice.kelvin', { value: fmtValue('kelvin', avg.kelvin) }));
     }
     if (typeof avg.flicker === 'number' && avg.flicker > 8) {
-      out.push('Wykryto zauważalne migotanie (średnio ' + fmtValue('flicker', avg.flicker) +
-        '%). Zwykle odpowiada za nie tani ściemniacz albo zasilacz podświetlenia.');
+      out.push(t('advice.flicker', { value: fmtValue('flicker', avg.flicker) }));
     }
     if (typeof avg.uniformity === 'number' && avg.uniformity < 60) {
-      out.push('Światło rozkłada się nierówno (' + fmtValue('uniformity', avg.uniformity) +
-        '%). Przesunięcie lampy albo zmiana kąta zwykle daje więcej niż wymiana żarówki.');
+      out.push(t('advice.uniformity', { value: fmtValue('uniformity', avg.uniformity) }));
     }
     if (worstHour !== null && worstScore > 0.2) {
-      out.push('Najgorsza pora dnia to godzina ' + worstHour + ':00 — tam skupia się najwięcej odczytów poza normą.');
+      out.push(t('advice.worstHour', { hour: worstHour }));
     }
     if (!out.length) {
-      out.push('W tym okresie nic nie wybija się ponad normę. Najwięcej dałoby teraz porównanie dwóch źródeł światła w porównywarce A/B.');
+      out.push(t('advice.none'));
     }
     return out.slice(0, 3);
   }
@@ -1558,18 +1622,23 @@
     if (!host || !report) return;
     clear(host);
 
+    /* Osobny klucz dla doby i dla tygodnia zamiast wstawiania rzeczownika
+       w zdanie: po polsku „Dzień od…”, ale w wielu językach nazwa okresu
+       odmienia się razem z przyimkiem. */
     host.appendChild(mk('p', 'ms-t-body',
-      (report.kind === 'week' ? 'Tydzień' : 'Dzień') + ' od ' + fmtDate(report.fromMs) +
-      ' do ' + fmtDate(report.atMs) + ' — ' +
-      (U() && U().countPL ? U().countPL(report.samples, 'punkt', 'punkty', 'punktów') : report.samples + ' punktów') + '.'));
+      t(report.kind === 'week' ? 'report.headerWeek' : 'report.headerDay', {
+        from: fmtDate(report.fromMs),
+        to: fmtDate(report.atMs),
+        count: t('count.points', { n: report.samples })
+      })));
 
     if (!report.samples) {
       var empty = mk('div', 'ms-empty');
       var emptyIcon = mk('div', 'ms-empty__icon');
       emptyIcon.appendChild(icon('doc'));
       empty.appendChild(emptyIcon);
-      empty.appendChild(mk('p', 'ms-empty__title', 'Brak danych w tym okresie'));
-      empty.appendChild(mk('p', 'ms-empty__text', 'Uruchom pomiar na ekranie Pomiar — historia zapisuje się sama.'));
+      empty.appendChild(mk('p', 'ms-empty__title', t('report.emptyTitle')));
+      empty.appendChild(mk('p', 'ms-empty__text', t('report.emptyText')));
       host.appendChild(empty);
       return;
     }
@@ -1578,7 +1647,7 @@
     var table = mk('table', 'ms-table');
     var thead = mk('thead', null);
     var htr = mk('tr', null);
-    var cols = ['Metryka', 'Średnia', 'Minimum', 'Maksimum'];
+    var cols = [t('table.metric'), t('report.colAvg'), t('report.colMin'), t('report.colMax')];
     for (var c = 0; c < cols.length; c += 1) {
       var th = mk('th', null, cols[c]);
       th.setAttribute('scope', 'col');
@@ -1592,7 +1661,7 @@
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
       var tr = mk('tr', null);
-      var rowHead = mk('th', null, m.namePL + ' (' + m.unit + ')');
+      var rowHead = mk('th', null, t('metric.withUnit', { name: metricName(m), unit: metricUnit(m) }));
       rowHead.setAttribute('scope', 'row');
       tr.appendChild(rowHead);
       tr.appendChild(mk('td', null, fmtValue(m.id, report.avg[m.id])));
@@ -1605,26 +1674,28 @@
     host.appendChild(wrap);
 
     var zoneCard = mk('div', 'ms-card ms-card--flat');
-    zoneCard.appendChild(mk('h3', 'ms-card__title', 'Rozkład stref'));
+    zoneCard.appendChild(mk('h3', 'ms-card__title', t('report.zonesTitle')));
     var dl = mk('dl', 'ms-kv');
-    dl.appendChild(kv('W normie', String(report.zones.good)));
-    dl.appendChild(kv('Ostrzeżenia', String(report.zones.warning)));
-    dl.appendChild(kv('Krytyczne', String(report.zones.critical)));
-    dl.appendChild(kv('Najgorsza pora dnia', report.worstHour === null ? 'brak wyraźnej' : report.worstHour + ':00'));
+    dl.appendChild(kv(t('zone.count.good'), plainNumber(report.zones.good)));
+    dl.appendChild(kv(t('zone.count.warning'), plainNumber(report.zones.warning)));
+    dl.appendChild(kv(t('zone.count.critical'), plainNumber(report.zones.critical)));
+    dl.appendChild(kv(t('report.worstHour'), report.worstHour === null
+      ? t('report.worstHourNone')
+      : t('report.hour', { hour: report.worstHour })));
     zoneCard.appendChild(dl);
     host.appendChild(zoneCard);
 
     var adviceCard = mk('div', 'ms-card ms-card--accent');
-    adviceCard.appendChild(mk('h3', 'ms-card__title', 'Co z tym zrobić'));
+    adviceCard.appendChild(mk('h3', 'ms-card__title', t('report.adviceTitle')));
     for (var a = 0; a < report.advicePL.length; a += 1) {
       adviceCard.appendChild(mk('p', 'ms-card__sub', report.advicePL[a]));
     }
     host.appendChild(adviceCard);
 
-    host.appendChild(note('warning', 'To nie jest porada zdrowotna. ',
-      'Wnioski wynikają wyłącznie z tego, co zobaczyła kamera tego telefonu. Aplikacja nie mierzy widma, ' +
-      'nie zna luksów i nie stawia żadnej diagnozy. ' +
-      'Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.'));
+    /* Zdanie o rozporządzeniu (UE) 2017/745 stoi we własnym kluczu warstwy
+       wspólnej i dostawiamy je w całości — nie skraca się go dla stylu. */
+    host.appendChild(note('warning', t('report.disclaimerTitle'),
+      t('report.disclaimerText') + ' ' + t('legal.mdr', { app: appName() })));
   };
 
   var reportKind = 'day';
@@ -1633,13 +1704,11 @@
     var host = panelHost('panelReports');
     if (!host) return;
 
-    host.appendChild(note('info', 'Skąd te liczby. ',
-      'Raport liczy się z historii zapisanej na tym urządzeniu — po jednym punkcie na pięć sekund. ' +
-      'Silnik zbiera ją od pierwszego pomiaru, więc raport jest gotowy od razu.'));
+    host.appendChild(note('info', t('reports.noteTitle'), t('reports.noteText')));
 
     var seg = mk('div', 'ms-segment');
     seg.setAttribute('role', 'group');
-    seg.setAttribute('aria-label', 'Zakres raportu');
+    seg.setAttribute('aria-label', t('reports.rangeAria'));
     /* aria-pressed, not aria-selected: aria-selected is only defined for
        gridcell/option/row/tab/columnheader/rowheader/treeitem, so on a plain
        button it was dropped and the chosen range was conveyed by background
@@ -1649,19 +1718,19 @@
     dayBtn.id = 'reportKindDay';
     dayBtn.type = 'button';
     dayBtn.setAttribute('aria-pressed', reportKind === 'day' ? 'true' : 'false');
-    dayBtn.appendChild(mk('span', null, 'Ostatnia doba'));
+    dayBtn.appendChild(mk('span', null, t('reports.day')));
     dayBtn.addEventListener('click', function () { reportKind = 'day'; renderReports(); });
     var weekBtn = mk('button', 'ms-segment__item');
     weekBtn.id = 'reportKindWeek';
     weekBtn.type = 'button';
     weekBtn.setAttribute('aria-pressed', reportKind === 'week' ? 'true' : 'false');
-    weekBtn.appendChild(mk('span', null, 'Ostatnie 7 dni'));
+    weekBtn.appendChild(mk('span', null, t('reports.week')));
     weekBtn.addEventListener('click', function () { reportKind = 'week'; renderReports(); });
     seg.appendChild(dayBtn);
     seg.appendChild(weekBtn);
     host.appendChild(seg);
 
-    var date = mk('p', 'ms-t-cap ms-t-muted', 'Raport na dzień ' + fmtDate(Date.now()) + '.');
+    var date = mk('p', 'ms-t-cap ms-t-muted', t('reports.date', { date: fmtDate(Date.now()) }));
     date.id = 'reportDate';
     host.appendChild(date);
 
@@ -1677,11 +1746,19 @@
      ================================================================== */
 
   var CSV_RANGES = [
-    { value: '3600000', labelPL: 'Ostatnia godzina' },
-    { value: '86400000', labelPL: 'Ostatnia doba' },
-    { value: '604800000', labelPL: 'Ostatnie 7 dni' },
-    { value: '2592000000', labelPL: 'Ostatnie 30 dni' }
+    { value: '3600000', labelKey: 'csv.range.hour' },
+    { value: '86400000', labelKey: 'csv.range.day' },
+    { value: '604800000', labelKey: 'csv.range.week' },
+    { value: '2592000000', labelKey: 'csv.range.month' }
   ];
+
+  function csvRangeOptions() {
+    var out = [];
+    for (var i = 0; i < CSV_RANGES.length; i += 1) {
+      out.push({ value: CSV_RANGES[i].value, label: t(CSV_RANGES[i].labelKey) });
+    }
+    return out;
+  }
 
   function csvNumber(value, decimals) {
     if (typeof value !== 'number' || !isFinite(value)) return '';
@@ -1709,12 +1786,14 @@
       catch (e) { points = []; }
     }
 
-    var head = ['Data', 'Godzina'];
+    /* Nagłówki kolumn są treścią, więc idą przez słownik: plik CSV otwiera
+       człowiek i ma w nim przeczytać to samo, co widzi na ekranie. */
+    var head = [t('csv.colDate'), t('csv.colTime')];
     for (i = 0; i < ids.length; i += 1) {
       var m = metric(ids[i]);
-      head.push(m ? m.namePL + ' [' + m.unit + ']' : ids[i]);
+      head.push(m ? t('csv.colMetric', { name: metricName(m), unit: metricUnit(m) }) : ids[i]);
     }
-    head.push('Strefa');
+    head.push(t('csv.colZone'));
 
     var rows = [head];
     for (i = 0; i < points.length; i += 1) {
@@ -1742,7 +1821,7 @@
   Tools.exportCsv = function (opts) {
     var csv = Tools.buildCsv(opts);
     if (csv.rows.length < 2) {
-      return Promise.resolve({ ok: false, messagePL: 'W wybranym zakresie nie ma żadnych odczytów.' });
+      return Promise.resolve({ ok: false, messagePL: t('toast.exportEmpty') });
     }
     try {
       // BOM first: without it Excel opens a UTF-8 file as Windows-1250 and every
@@ -1758,10 +1837,10 @@
       global.setTimeout(function () { global.URL.revokeObjectURL(url); }, 4000);
       return Promise.resolve({
         ok: true, filename: csv.filename, rows: csv.rows.length - 1,
-        messagePL: 'Zapisano plik ' + csv.filename + ' (' + (csv.rows.length - 1) + ' wierszy).'
+        messagePL: t('toast.exportSaved', { filename: csv.filename, n: csv.rows.length - 1 })
       });
     } catch (e) {
-      return Promise.resolve({ ok: false, messagePL: 'Ta przeglądarka nie pozwoliła zapisać pliku.' });
+      return Promise.resolve({ ok: false, messagePL: t('toast.exportFailed') });
     }
   };
 
@@ -1769,30 +1848,26 @@
     var host = panelHost('panelExport');
     if (!host) return;
 
-    host.appendChild(note('info', 'Format pliku. ',
-      'Średnik jako separator kolumn, przecinek jako separator dziesiętny, kodowanie UTF-8 ze znacznikiem BOM. ' +
-      'Taki plik polski Excel otwiera bez ustawiania czegokolwiek.'));
+    host.appendChild(note('info', t('export.noteTitle'), t('export.noteText')));
 
     var card = mk('div', 'ms-card');
-    card.appendChild(selectField('exportRangeSelect', 'Zakres danych', CSV_RANGES, '86400000', function () {
+    card.appendChild(selectField('exportRangeSelect', t('export.range'), csvRangeOptions(), '86400000', function () {
       renderExportPreview();
     }));
 
     var metricsBox = mk('div', 'ms-field');
-    metricsBox.appendChild(mk('span', 'ms-field__label', 'Kolumny w pliku'));
+    metricsBox.appendChild(mk('span', 'ms-field__label', t('export.columns')));
     var chips = mk('div', 'ms-chipbar');
     chips.id = 'exportMetricList';
     var list = catalogue();
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
-      var chip = mk('span', 'ms-chip ms-chip--filled', m.namePL);
-      chip.appendChild(mk('span', 'ms-visually-hidden', ' — kolumna wypełniona'));
+      var chip = mk('span', 'ms-chip ms-chip--filled', metricName(m));
+      chip.appendChild(mk('span', 'ms-visually-hidden', t('export.chipFilled')));
       chips.appendChild(chip);
     }
     metricsBox.appendChild(chips);
-    metricsBox.appendChild(mk('p', 'ms-help',
-      'Plik zawiera wszystkie siedem kolumn — silnik liczy je od pierwszego pomiaru ' +
-      'i wszystkie trafiają do pliku.'));
+    metricsBox.appendChild(mk('p', 'ms-help', t('export.help')));
     card.appendChild(metricsBox);
     host.appendChild(card);
 
@@ -1801,7 +1876,7 @@
     host.appendChild(preview);
     renderExportPreview();
 
-    host.appendChild(btn('btnExportRun', 'ms-btn ms-btn--filled ms-btn--block', 'Zapisz plik CSV', 'download', function () {
+    host.appendChild(btn('btnExportRun', 'ms-btn ms-btn--filled ms-btn--block', t('export.run'), 'download', function () {
       var select = el('exportRangeSelect');
       Tools.exportCsv({ rangeMs: select ? Number(select.value) : DAY_MS }).then(function (res) {
         toast(res.messagePL, res.ok ? 'success' : 'error');
@@ -1831,7 +1906,7 @@
     var shown = Math.min(5, csv.rows.length - 1);
     if (!shown) {
       var tr = mk('tr', null);
-      var td = mk('td', null, 'Brak odczytów w tym zakresie. Uruchom pomiar — historia zapisuje się sama.');
+      var td = mk('td', null, t('export.previewEmpty'));
       td.setAttribute('colspan', String(csv.rows[0].length));
       tr.appendChild(td);
       tbody.appendChild(tr);
@@ -1851,19 +1926,22 @@
      9. The Narzędzia list
      ================================================================== */
 
+  /* Wiersze listy trzymają KLUCZE, nie napisy: nazwa ekranu pada tu i w jego
+     własnym nagłówku, a wiersz „Harmonogram progów” nazywa się inaczej niż
+     ekran „Harmonogram” — dlatego ma własny klucz tytułu. */
   var TOOL_ROWS = [
     { id: 'btnToolProfiles', panelId: 'panelThresholds', iconName: 'tune',
-      titlePL: 'Progi i profile', subPL: 'Kiedy wartość ma zapalać ostrzeżenie' },
+      titleKey: 'panel.thresholds', subKey: 'tool.thresholds.sub' },
     { id: 'btnToolCompare', panelId: 'panelCompare', iconName: 'grid',
-      titlePL: 'Porównywarka A/B', subPL: 'Które z dwóch świateł jest łagodniejsze' },
+      titleKey: 'panel.compare', subKey: 'tool.compare.sub' },
     { id: 'btnToolCalibration', panelId: 'panelCalibration', iconName: 'refresh',
-      titlePL: 'Kalibracja białą kartką', subPL: 'Jedyna funkcja, która realnie podnosi dokładność' },
+      titleKey: 'panel.calibration', subKey: 'tool.calibration.sub' },
     { id: 'btnToolScreenCheck', panelId: 'panelScreenCheck', iconName: 'monitor',
-      titlePL: 'Sprawdź mój monitor', subPL: 'Pięć kroków i gotowy wniosek o ekranie' },
+      titleKey: 'panel.screenCheck', subKey: 'tool.screenCheck.sub' },
     { id: 'btnToolSchedule', panelId: 'panelSchedule', iconName: 'timer',
-      titlePL: 'Harmonogram progów', subPL: 'Inne progi wieczorem, bez pamiętania o tym' },
+      titleKey: 'tool.schedule.title', subKey: 'tool.schedule.sub' },
     { id: 'btnToolAlerts', panelId: 'panelAlerts', iconName: 'bell',
-      titlePL: 'Alerty ekspozycji', subPL: 'Sygnał, gdy strefa krytyczna trwa zbyt długo' }
+      titleKey: 'panel.alerts', subKey: 'tool.alerts.sub' }
   ];
 
   function renderToolsList() {
@@ -1884,8 +1962,8 @@
     iconBox.appendChild(icon(spec.iconName));
     row.appendChild(iconBox);
     var text = mk('span', 'ms-list__text');
-    text.appendChild(mk('span', 'ms-list__title', spec.titlePL));
-    text.appendChild(mk('span', 'ms-list__sub', spec.subPL));
+    text.appendChild(mk('span', 'ms-list__title', t(spec.titleKey)));
+    text.appendChild(mk('span', 'ms-list__sub', t(spec.subKey)));
     row.appendChild(text);
     var end = mk('span', 'ms-list__end');
     end.appendChild(icon('chevron'));
@@ -1937,10 +2015,18 @@
   on('engine:thresholds', function (data) {
     // A profile or the schedule may have moved the sliders; keep them honest.
     syncThresholdInputs();
-    if (data && data.source === 'profile') announce('Zastosowano profil progów.');
+    if (data && data.source === 'profile') announce(t('a11y.profileApplied'));
   });
 
   on('engine:calibration', function () { renderCalibration(); });
+
+  /* Zmiana języka. Nasłuch jest na 'ui:relocalized', a nie na 'i18n:changed':
+     tamto zdarzenie przychodzi ZANIM powłoka przebuduje ekrany, a przebudowa
+     czyści #panelMeasure razem z paskiem alertu, który mieszka w środku. */
+  on('ui:relocalized', function () {
+    renderAll();
+    ensureAlertBar();
+  });
 
   on('ui:viewchange', function (data) {
     var panelId = data && data.panelId;

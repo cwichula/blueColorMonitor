@@ -10,8 +10,22 @@
      systemu, żeby pasek przeglądarki nie faworyzował żadnej z wersji. -->
 <meta name="theme-color" content="#f2f2f3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icons/icon-512.png" sizes="512x512" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<!-- Adres kanoniczny i karta podglądu. Oba sklepy proszą w formularzach o odsyłacz
+     do witryny aplikacji i do polityki prywatności, a recenzent (i każdy komunikator,
+     w którym ten odsyłacz się pojawi) czyta stąd tytuł, opis i obrazek. Adresy są
+     bezwzględne celowo: podgląd musi działać także tam, gdzie strony nikt nie otworzył. -->
+<link rel="canonical" href="https://cwichula.github.io/blueColorMonitor/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Monitor Światła">
+<meta property="og:title" content="Monitor Światła">
+<meta property="og:description" content="Mierzy kamerą siedem wielkości opisujących światło wokół Ciebie. Wszystko liczy się na Twoim urządzeniu, działa bez internetu i nic nie jest wysyłane do sieci.">
+<meta property="og:url" content="https://cwichula.github.io/blueColorMonitor/">
+<meta property="og:image" content="https://cwichula.github.io/blueColorMonitor/icons/icon-512.png">
+<meta property="og:locale" content="pl_PL">
+<meta name="twitter:card" content="summary">
 <style>
 /* ---------------------------------------------------------------------------
    To jest wyłącznie ROZGAŁĘZIENIE: spis wersji i nic więcej. Żadna wersja nie
@@ -215,6 +229,14 @@ h2 {
     Każda wersja działa pod własnym adresem i tam też się instaluje jako
     aplikacja (Chrome → „Zainstaluj"). Kamera wymaga adresu <code>https://</code>
     albo <code>localhost</code> — to ograniczenie przeglądarki, nie aplikacji.
+  </p>
+
+  <!-- Odnośnik stoi tu, a nie w samych wersjach, bo dokument dotyczy całej
+       witryny i wszystkich pięciu wersji naraz. Sklepy z aplikacjami wymagają
+       stałego, publicznego adresu polityki prywatności — to jest ten adres. -->
+  <p class="note" style="border-top: 0; padding-top: 0; margin-top: 12px;">
+    <a href="./prywatnosc.html">Polityka prywatności</a> — aplikacja nie zbiera
+    żadnych danych, a obraz z kamery nie opuszcza urządzenia.
   </p>
 </div>
 

@@ -25,7 +25,7 @@
  * Numer w nazwie pamięci podbijamy przy KAŻDEJ zmianie któregokolwiek pliku z listy.
  */
 
-var CACHE = 'ms4-11';
+var CACHE = 'ms4-14';
 var CACHE_PREFIX = 'ms4-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v4/, spod
@@ -37,6 +37,20 @@ var APP_SHELL = [
   './base.css',
   './components.css',
   './screens.css',
+  '../shared/i18n.js',
+  /* Warstwa językowa: silnik plus dwa słowniki na język. Zapisujemy TĘ PARĘ,
+     która jest potrzebna zawsze — angielski jest wartością zapasową każdego
+     brakującego klucza, więc wczytuje się przy każdym uruchomieniu, niezależnie
+     od wybranego języka. Słowniki pozostałych języków celowo NIE stoją na tej
+     liście: trzydzieści języków razy dwa pliki to trzydzieści razy więcej
+     pobierania przy instalacji, a każdy z nich i tak wpadnie do pamięci przy
+     pierwszym użyciu — plik słownika idzie tą samą ścieżką co reszta zasobów
+     (stale-while-revalidate) i zostaje w pamięci na tryb offline. Jedyna różnica
+     jest taka, że pierwsze przełączenie na nowy język wymaga sieci. */
+  '../shared/i18n/en.js',
+  '../shared/i18n/pl.js',
+  './i18n/en.js',
+  './i18n/pl.js',
   '../shared/metrics.js',
   '../shared/bus.js',
   '../shared/engine.js',

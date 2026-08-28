@@ -248,6 +248,20 @@
   function S() { return global.Scale || null; }
   function M() { return global.Metrics || null; }
 
+  /* Nazwa i opis wielkości przychodzą z warstwy językowej, nie z katalogu:
+     Metrics.CATALOGUE jest wspólny dla v2-v4 i ma w sobie polskie namePL,
+     a tego pliku nie wolno ruszać. Scale.metricName czyta klucz
+     'metric.<id>.name' i dopiero gdy go nie ma, spada na katalog. */
+  function mName(m) {
+    var s = S();
+    return (m && s && s.metricName) ? s.metricName(m.id) : (m ? m.namePL : '');
+  }
+
+  function mShort(m) {
+    var s = S();
+    return (m && s && s.metricShort) ? s.metricShort(m.id) : (m ? m.shortPL : '');
+  }
+
   function catalogue() {
     var m = M();
     return m && m.CATALOGUE ? m.CATALOGUE : [];
@@ -600,17 +614,17 @@
   }
 
   function thresholdCard(m) {
-    var el = section(m.namePL + ' (' + m.unit + ')');
+    var el = section(mName(m) + ' (' + m.unit + ')');
     var entry = { metric: m };
     thr.rows[m.id] = entry;
 
-    textNode(el, 'p', 'ms3-field__hint', m.shortPL);
+    textNode(el, 'p', 'ms3-field__hint', mShort(m));
 
     // The preview is the same ruler as the dashboard: same bands, same ticks,
     // same needle. Chapter 1 rule 3 — one instrument in three sizes.
     var preview = put(el, make('div', 'ms3-scale'));
     preview.setAttribute('role', 'img');
-    preview.setAttribute('aria-label', T('modules.02.previewAriaTpl', { name: m.namePL }));
+    preview.setAttribute('aria-label', T('modules.02.previewAriaTpl', { name: mName(m) }));
     entry.bands = put(preview, make('div', 'ms3-scale__bands'));
     put(preview, make('div', 'ms3-scale__base'));
     entry.ticks = put(preview, make('div', 'ms3-scale__ticks'));
@@ -645,7 +659,7 @@
     input.max = String(m.max);
     input.step = String(sliderStep(m));
     input.setAttribute('aria-label',
-      T('modules.02.sliderAriaTpl', { name: m.namePL, which: captionPL }));
+      T('modules.02.sliderAriaTpl', { name: mName(m), which: captionPL }));
 
     var out = put(line, make('output', 'ms3-field__value'));
     out.setAttribute('for', id);
@@ -1105,7 +1119,7 @@
       ? T('modules.04.coverageWeekTpl', { done: data.covered, total: data.buckets })
       : T('modules.04.coverageDayTpl', { done: data.covered, total: data.buckets });
     put(panorama, bars(data.slots,
-      T('modules.04.panoramaAriaTpl', { name: lead ? lead.namePL : '', span: spanPL }),
+      T('modules.04.panoramaAriaTpl', { name: lead ? mName(lead) : '', span: spanPL }),
       coverage));
     textNode(panorama, 'p', 'ms3-field__hint', T('modules.04.panoramaHint'));
 
@@ -1116,7 +1130,7 @@
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
       rows.push([
-        { textPL: m.namePL + ' (' + m.unit + ')', head: true },
+        { textPL: mName(m) + ' (' + m.unit + ')', head: true },
         { textPL: fmt(m.id, data.avg[m.id]), num: true },
         { textPL: fmt(m.id, data.min[m.id]), num: true },
         { textPL: fmt(m.id, data.max[m.id]), num: true }
@@ -1129,7 +1143,7 @@
     /* ---- zone distribution ---- */
     var zonesBox = put(rep.body, section(T('modules.04.zonesTitle')));
     textNode(zonesBox, 'p', 'ms3-field__hint',
-      T('modules.04.zonesCaptionTpl', { name: lead ? lead.namePL : '' }));
+      T('modules.04.zonesCaptionTpl', { name: lead ? mName(lead) : '' }));
     var total = data.zones.good + data.zones.warning + data.zones.critical;
     put(zonesBox, zoneRow('good', T('modules.04.zoneGood'), data.zones.good, total));
     put(zonesBox, zoneRow('warning', T('modules.04.zoneWarning'), data.zones.warning, total));
@@ -1237,11 +1251,11 @@
     for (var i = 0; i < list.length; i += 1) {
       var m = list[i];
       var descPL = T('modules.05.descMetricTpl', {
-        short: m.shortPL, unit: m.unit,
+        short: mShort(m), unit: m.unit,
         min: fmt(m.id, m.min), max: fmt(m.id, m.max)
       });
       rows.push([
-        { textPL: m.namePL + ' [' + m.unit + ']', head: true },
+        { textPL: mName(m) + ' [' + m.unit + ']', head: true },
         descPL
       ]);
     }
@@ -1258,7 +1272,7 @@
     var list = catalogue();
     var head = [T('modules.05.colDate'), T('modules.05.colTime')];
     var i, j;
-    for (i = 0; i < list.length; i += 1) head.push(list[i].namePL + ' [' + list[i].unit + ']');
+    for (i = 0; i < list.length; i += 1) head.push(mName(list[i]) + ' [' + list[i].unit + ']');
     head.push(T('modules.05.colZone'));
 
     var rows = [head];
@@ -1337,7 +1351,7 @@
     var i, j;
     for (i = 0; i < list.length; i += 1) {
       columns.push({
-        id: list[i].id, namePL: list[i].namePL, unit: list[i].unit,
+        id: list[i].id, namePL: mName(list[i]), unit: list[i].unit,
         decimals: list[i].decimals
       });
     }
@@ -1514,7 +1528,7 @@
 
     var tape = put(cmp.body, section(T('modules.06.tapeTitle')));
     textNode(tape, 'p', 'ms3-field__hint',
-      T('modules.06.tapeChannelTpl', { name: leadMetric ? leadMetric.namePL : '' }));
+      T('modules.06.tapeChannelTpl', { name: leadMetric ? mName(leadMetric) : '' }));
     put(tape, tapeRow(T('modules.06.slotA'), A, lead));
     put(tape, tapeRow(T('modules.06.slotB'), B, lead));
     textNode(tape, 'p', 'ms3-field__hint', T('modules.06.tapeHint'));
@@ -1527,7 +1541,7 @@
       var a = A.avg ? A.avg[m.id] : null;
       var b = B.avg ? B.avg[m.id] : null;
       rows.push([
-        { textPL: m.namePL + ' (' + m.unit + ')', head: true },
+        { textPL: mName(m) + ' (' + m.unit + ')', head: true },
         { textPL: fmt(m.id, a), num: true },
         { textPL: fmt(m.id, b), num: true },
         { textPL: diffText(m.id, a, b), num: true }
@@ -1570,7 +1584,7 @@
 
     var m = metric(lead);
     put(el, bars(buckets,
-      T('modules.06.tapeAriaTpl', { slot: slotPL, name: m ? m.namePL : '' }), ''));
+      T('modules.06.tapeAriaTpl', { slot: slotPL, name: m ? mName(m) : '' }), ''));
     return el;
   }
 
@@ -1953,7 +1967,7 @@
     var options = [];
     var list = catalogue();
     for (var i = 0; i < list.length; i += 1) {
-      options.push({ value: list[i].id, labelPL: list[i].namePL });
+      options.push({ value: list[i].id, labelPL: mName(list[i]) });
     }
     put(box, field(T('modules.09.metricLabel'),
       selectControl('ms3AlertMetric', options, cfg.metricId, function (v) { setAlerts({ metricId: v }); }),
@@ -1999,7 +2013,7 @@
     if (!cfg.enabled) { setText(alr.status, T('empty.alertsOff')); return; }
     var m = metric(cfg.metricId);
     setText(alr.status, T('modules.09.statusOnTpl', {
-      name: m ? m.namePL : '',
+      name: m ? mName(m) : '',
       level: cfg.level === 'warning' ? T('modules.09.levelWarning') : T('modules.09.levelCritical'),
       sec: cfg.sustainS
     }));
@@ -2049,7 +2063,7 @@
     var m = metric(cfg.metricId);
     var Scale = S();
     var messagePL = T('modules.09.firedTpl', {
-      name: m ? m.namePL : cfg.metricId,
+      name: m ? mName(m) : cfg.metricId,
       zone: Scale ? Scale.stamp(reading.zones[cfg.metricId]).wordPL : '',
       sec: Math.round((reading.t - alertSince) / 1000),
       value: fmtUnit(cfg.metricId, reading.values ? reading.values[cfg.metricId] : null)

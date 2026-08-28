@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Polityka prywatności — Monitor Światła</title>
+<meta name="description" content="Polityka prywatności aplikacji Monitor Światła: aplikacja nie zbiera żadnych danych, obraz z kamery nie opuszcza urządzenia.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f2f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icons/icon-512.png" sizes="512x512" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<!-- Ten adres wpisuje się w Play Console (Privacy policy) i w App Store Connect.
+     Kanoniczny odsyłacz i karta podglądu są tu po to, żeby ten sam adres wklejony
+     w formularz, w e-mail albo w komunikator pokazywał, czym jest ten dokument. -->
+<link rel="canonical" href="https://cwichula.github.io/blueColorMonitor/prywatnosc.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Monitor Światła">
+<meta property="og:title" content="Polityka prywatności — Monitor Światła">
+<meta property="og:description" content="Aplikacja nie zbiera żadnych danych. Obraz z kamery jest przetwarzany wyłącznie na urządzeniu i nigdy go nie opuszcza.">
+<meta property="og:url" content="https://cwichula.github.io/blueColorMonitor/prywatnosc.html">
+<meta property="og:image" content="https://cwichula.github.io/blueColorMonitor/icons/icon-512.png">
+<meta property="og:locale" content="pl_PL">
+<meta property="og:locale:alternate" content="en_GB">
+<meta name="twitter:card" content="summary">
+<style>
+/* ---------------------------------------------------------------------------
+   Dokument prawny, nie ekran aplikacji: jeden plik, zero zależności, zero
+   skryptów. Styl celowo ten sam co na stronie rozgałęzienia (docs/index.html),
+   żeby recenzent sklepu widział, że to ta sama witryna, a nie cudza strona
+   podstawiona pod wymóg regulaminu.
+   --------------------------------------------------------------------------- */
+:root {
+  --bg: #f2f3f5;
+  --card: #ffffff;
+  --border: #d3d4da;
+  --text: #17171a;
+  --muted: #55555e;
+  --accent: #0b5fd0;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 6px 20px rgba(0, 0, 0, .06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1113;
+    --card: #1a1a1d;
+    --border: #3a3a41;
+    --text: #f0f0f2;
+    --muted: #b3b3bc;
+    --accent: #79b4ff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 20px rgba(0, 0, 0, .35);
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: clamp(20px, 5vw, 56px) clamp(16px, 5vw, 24px) 64px;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.wrap { max-width: 720px; margin: 0 auto; }
+
+h1 { font-size: clamp(24px, 6vw, 30px); line-height: 1.2; margin: 0 0 4px; letter-spacing: -.01em; }
+h2 { font-size: clamp(18px, 4.5vw, 21px); margin: 32px 0 8px; line-height: 1.3; }
+h3 { font-size: 16px; margin: 20px 0 6px; }
+
+.updated { margin: 0 0 28px; color: var(--muted); font-size: 14px; }
+p, li { color: var(--text); }
+.muted { color: var(--muted); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 20px 0;
+  box-shadow: var(--shadow);
+}
+
+.card--lead { border-color: var(--accent); }
+.card--lead p { margin: 0; font-size: 17px; }
+
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+
+a { color: var(--accent); }
+a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .92em; }
+
+.back { display: inline-block; margin-bottom: 24px; font-size: 14px; }
+
+hr { border: 0; border-top: 1px solid var(--border); margin: 44px 0 32px; }
+
+.en { color: var(--muted); }
+.en h2, .en h3, .en p, .en li, .en td { color: inherit; }
+
+@media print { body { background: #fff; color: #000; } .card { box-shadow: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a class="back" href="./">← Monitor Światła</a>
+
+  <h1>Polityka prywatności</h1>
+  <p class="updated">Dotyczy aplikacji <strong>Monitor Światła</strong> (wersje 1–5) oraz tej witryny.
+     Ostatnia aktualizacja: 28 sierpnia 2026.</p>
+
+  <div class="card card--lead">
+    <p><strong>Aplikacja nie zbiera o Tobie żadnych danych.</strong> Nie ma serwera, nie ma konta,
+       nie ma reklam, nie ma analityki i nie ma żadnego przesyłania danych. Obraz z kamery jest
+       przetwarzany wyłącznie w pamięci Twojego urządzenia i nigdy go nie opuszcza.</p>
+  </div>
+
+  <h2>1. Kto odpowiada za aplikację</h2>
+  <p>
+    <!-- TU WPISZ DANE ADMINISTRATORA (imię i nazwisko albo nazwa) ORAZ ADRES KONTAKTOWY.
+         Oba sklepy wymagają działającego adresu kontaktowego, a Google Play i App Store
+         Connect proszą o niego osobno w formularzu. Dopóki tu pusto, dokument jest
+         niekompletny w rozumieniu obu regulaminów. -->
+    <span class="muted">[dane administratora do uzupełnienia]</span>,
+    kontakt: <span class="muted">[adres e-mail do uzupełnienia]</span>.
+  </p>
+
+  <h2>2. Jakie dane przetwarzamy</h2>
+  <p>Żadnych, które by do nas trafiały. Poniżej pełna lista tego, czego aplikacja dotyka na
+     Twoim urządzeniu, i co się z tym dzieje.</p>
+
+  <table>
+    <thead>
+      <tr><th>Co</th><th>Po co</th><th>Dokąd trafia</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Obraz z kamery</td>
+        <td>Policzenie siedmiu wielkości opisujących światło (udział niebieskiego, jasność,
+            temperatura barwowa, wpływ na rytm dobowy, migotanie, równomierność, komfort)</td>
+        <td><strong>Nigdzie.</strong> Klatka jest analizowana w pamięci przeglądarki i natychmiast
+            nadpisywana kolejną. Nie jest zapisywana na dysku, nie jest wysyłana i nie da się jej
+            z aplikacji odzyskać. Aplikacja nie wykonuje zdjęć ani nagrań.</td>
+      </tr>
+      <tr>
+        <td>Wyniki pomiarów, progi stref, kalibracja, ustawienia wyglądu</td>
+        <td>Historia pomiarów i zapamiętanie Twoich ustawień między uruchomieniami</td>
+        <td>Wyłącznie pamięć lokalna przeglądarki (<code>localStorage</code>) na tym urządzeniu.
+            Nie synchronizują się, nie są kopiowane i nie są nam znane.</td>
+      </tr>
+      <tr>
+        <td>Pliki samej aplikacji</td>
+        <td>Działanie bez internetu</td>
+        <td>Pamięć podręczna przeglądarki (Cache Storage), na tym urządzeniu.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Uprawnienie do kamery</h2>
+  <p>
+    Aplikacja prosi o dostęp do kamery dopiero wtedy, gdy sam rozpoczniesz pomiar — nigdy przy
+    starcie. Kamera służy wyłącznie do odczytania barwy i jasności światła padającego na obiektyw.
+    Odmowa zgody nie blokuje reszty aplikacji: możesz przeglądać zapisaną historię, ustawienia
+    i wyjaśnienia. Zgodę możesz w każdej chwili cofnąć w ustawieniach przeglądarki lub systemu.
+  </p>
+
+  <h2>4. Czego aplikacja nie robi</h2>
+  <ul>
+    <li>nie wysyła żadnych żądań sieciowych — w kodzie nie ma ani jednego wywołania do
+        zewnętrznego serwera;</li>
+    <li>nie ma kont, logowania ani profili użytkowników;</li>
+    <li>nie wyświetla reklam i nie zawiera żadnych bibliotek reklamowych;</li>
+    <li>nie zawiera analityki, liczników odwiedzin ani narzędzi śledzących;</li>
+    <li>nie używa ciasteczek do śledzenia (nie ustawia żadnych ciasteczek);</li>
+    <li>nie odczytuje położenia, kontaktów, plików ani mikrofonu;</li>
+    <li>nie udostępnia niczego osobom trzecim, bo nie ma czego udostępniać.</li>
+  </ul>
+
+  <h2>5. Twoje dane, Twoje urządzenie</h2>
+  <p>
+    Ponieważ wszystko zostaje u Ciebie, to Ty w pełni panujesz nad tymi danymi. Historię pomiarów
+    i ustawienia usuniesz w samej aplikacji (ekran narzędzi lub ustawień) albo czyszcząc dane
+    witryny w przeglądarce. Odinstalowanie aplikacji usuwa je razem z nią. Nie musisz nas o nic
+    prosić — nie mamy kopii, których moglibyśmy Ci wydać ani usunąć.
+  </p>
+  <p class="muted">
+    Formalnie: skoro żadne dane osobowe do nas nie trafiają, nie prowadzimy ich zbioru w rozumieniu
+    RODO. Prawa z art. 15–22 RODO realizujesz wobec własnego urządzenia, bo tam i tylko tam te dane
+    istnieją. Gdybyś jednak napisał do nas w tej sprawie, odpowiemy w ciągu 30 dni.
+  </p>
+
+  <h2>6. Dzieci</h2>
+  <p>
+    Aplikacja nie jest skierowana do dzieci ani nie zbiera od nikogo danych, więc nie zbiera ich
+    również od dzieci. Nie ma w niej treści przeznaczonych wyłącznie dla dorosłych.
+  </p>
+
+  <h2>7. Darowizny</h2>
+  <p>
+    Aplikacja jest bezpłatna w całości: wszystkie funkcje działają od razu, bez konta i bez opłat.
+    Jeżeli w wersji, której używasz, pojawi się przycisk dobrowolnej darowizny, prowadzi on do
+    zewnętrznego serwisu płatności, otwieranego w przeglądarce. Ten serwis ma własną politykę
+    prywatności i to jemu, a nie nam, podajesz dane płatności. Sama aplikacja nie widzi ani nie
+    zapisuje niczego o płatności — nie wie nawet, czy została wykonana.
+  </p>
+
+  <h2>8. Do czego aplikacja nie służy</h2>
+  <p>
+    Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745. Nie służy
+    do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego
+    i nie zastępuje badania u lekarza ani optometrysty. Kamera telefonu ma trzy szerokie kanały
+    barwne i automatyczny balans bieli — nie mierzy widma. Wyniki są wskaźnikami względnymi,
+    porównywalnymi ze sobą w jednej sesji na jednym urządzeniu, a nie wartościami bezwzględnymi.
+  </p>
+
+  <h2>9. Zmiany polityki</h2>
+  <p>
+    Gdyby aplikacja kiedykolwiek zaczęła cokolwiek wysyłać, ten dokument zostanie zmieniony
+    <em>przed</em> wydaniem takiej wersji, a data u góry zaktualizowana. Historia zmian tego pliku
+    jest jawna w repozytorium projektu.
+  </p>
+
+  <hr>
+
+  <div class="en" lang="en">
+    <h2>Privacy Policy (English summary)</h2>
+    <p>
+      <strong>Monitor Światła (Light Monitor) collects no data whatsoever.</strong> There is no
+      server, no account, no advertising, no analytics and no network transmission of any kind.
+    </p>
+    <h3>Camera</h3>
+    <p>
+      The camera is used only after you start a measurement. Each frame is analysed in the device's
+      memory to derive seven light metrics and is immediately discarded. No photo or video is taken,
+      stored or transmitted. Denying the permission leaves the rest of the app usable.
+    </p>
+    <h3>Local storage</h3>
+    <p>
+      Measurement history, zone thresholds, calibration and appearance settings are kept in the
+      browser's <code>localStorage</code> on your device only. They never leave it and are not
+      accessible to us. Clear them in the app, in your browser's site data, or by uninstalling.
+    </p>
+    <h3>What the app does not do</h3>
+    <p>
+      No network requests, no accounts, no ads or ad SDKs, no analytics or tracking, no tracking
+      cookies, no access to location, contacts, files or microphone, no sharing with third parties.
+    </p>
+    <h3>Donations</h3>
+    <p>
+      The app is entirely free. If a voluntary donation button is present, it opens an external
+      payment service in the browser; that service has its own privacy policy. The app never sees
+      or stores anything about the payment.
+    </p>
+    <h3>Not a medical device</h3>
+    <p>
+      This application is not a medical device under Regulation (EU) 2017/745. It does not diagnose,
+      prevent, monitor or treat any condition and does not replace an examination by a physician or
+      optometrist. A phone camera has three broad colour channels and automatic white balance; it
+      does not measure a spectrum. All readings are relative indicators, comparable within one
+      session on one device.
+    </p>
+    <h3>Contact</h3>
+    <p class="muted">[controller name and contact e-mail to be filled in]</p>
+  </div>
+
+</div>
+
+</body>
+</html>

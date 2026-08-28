@@ -6,7 +6,8 @@
  * oraz kursor odczytu obsługiwany dotykiem, myszą i klawiaturą.
  * Kolory czyta z tokenów CSS przez getComputedStyle, więc motyw i akcent nie
  * mają drugiej palety w JS. Przerysowanie jest zdarzeniowe: refresh(),
- * 'settings:changed', zmiana motywu systemu i ResizeObserver — nigdy pętla.
+ * 'settings:changed', 'i18n:changed', zmiana motywu systemu i ResizeObserver
+ * — nigdy pętla.
  *
  * Kontrakt nie wymienia history.js wśród importów wykresu, ale refresh() nie
  * dostaje danych argumentem, więc po serię sięgamy sami; history stoi w drzewie
@@ -15,16 +16,19 @@
 
 import { h, clear, rafThrottle } from './dom.js';
 import { byId, zoneFor } from '../metrics.js';
-import { nf, metricValueUnit, clock, dateShort, dateTime, duration, plural, ZONE_LABEL } from '../format.js';
+import { nf, metricValueUnit, clock, dateShort, dateTime, duration, plural, zoneLabel } from '../format.js';
 import { thresholdsFor } from '../store.js';
 import { series, RANGES } from '../history.js';
 import { bus } from '../bus.js';
+import { t } from '../i18n/index.js';
 
-/* Znaki pisane kodem, bo w źródle nie odróżniłbyś ich od zwykłego minusa,
-   kropki i spacji. */
-const MINUS = '\u2212';
-const NBSP = '\u00A0';
-const DOT = '\u00B7';
+/* UWAGA dla kolejnych zmian w tym pliku: „t” to funkcja tłumacząca. Znacznik
+   czasu nazywa się tu „ts” — lokalne „t” przesłoniłoby import, a wtedy
+   t('klucz') próbowałoby wywołać liczbę. */
+
+/* Minus, kropka środkowa i spacja nierozdzielająca stoją teraz we wzorcach
+   ze słownika (chart.axis.ago, chart.cursor.badge, chart.sample.*) — razem
+   z napisami, w których się pojawiają. */
 
 const SECOND = 1000;
 const MINUTE = 60000;
@@ -88,6 +92,17 @@ const COLOR_FALLBACK = {
 let seq = 0;
 
 /* ─────────────────────────────  Matematyka osi  ───────────────────────── */
+
+/* Nazwa wielkości i etykieta zakresu powstają przy rysowaniu, nie raz przy
+   tworzeniu wykresu: po przełączeniu języka ten sam wykres ma się opisać na
+   nowo. Katalog i RANGES dają już tylko liczby. */
+function metricName(metric) {
+  return t('metric.' + metric.id + '.name');
+}
+
+function rangeLabel(range) {
+  return t('range.' + range.id);
+}
 
 function rangeById(id) {
   for (let i = 0; i < RANGES.length; i += 1) {
@@ -166,14 +181,14 @@ function pickTimeStep(span, maxLabels) {
 function timeTicks(tMin, tMax, step, mode) {
   const out = [];
   if (mode === 'ago') {
-    for (let t = tMax; t >= tMin; t -= step) out.push(t);
+    for (let ts = tMax; ts >= tMin; ts -= step) out.push(ts);
     return out.reverse();
   }
   // Równanie liczymy w czasie lokalnym: wielokrotność doby w czasie lokalnym
   // to północ u użytkownika, a nie północ UTC.
   const offset = new Date(tMax).getTimezoneOffset() * MINUTE;
-  let t = Math.ceil((tMin - offset) / step) * step + offset;
-  while (t <= tMax) { out.push(t); t += step; }
+  let ts = Math.ceil((tMin - offset) / step) * step + offset;
+  while (ts <= tMax) { out.push(ts); ts += step; }
   return out;
 }
 
@@ -185,29 +200,33 @@ function timeMode(rangeMs) {
   return 'date';
 }
 
-function axisTimeLabel(t, tMax, mode) {
+function axisTimeLabel(ts, tMax, mode) {
   if (mode === 'ago') {
-    const delta = Math.max(0, tMax - t);
-    return delta < SECOND ? 'teraz' : MINUS + duration(delta);
+    const delta = Math.max(0, tMax - ts);
+    return delta < SECOND
+      ? t('chart.time.now')
+      : t('chart.axis.ago', { duration: duration(delta) });
   }
-  return mode === 'clock' ? clock(t) : dateShort(t);
+  return mode === 'clock' ? clock(ts) : dateShort(ts);
 }
 
 /* Etykieta czasu przy kursorze — tu odwrotnie niż na osi: dla krótkich zakresów
    „12 s temu” niesie więcej niż zegar, dla długich potrzebna jest data. */
-function cursorTimeLabel(t, mode) {
+function cursorTimeLabel(ts, mode) {
   if (mode === 'ago') {
-    const delta = Math.max(0, Date.now() - t);
-    return delta < 2 * SECOND ? 'przed chwilą' : duration(delta) + ' temu';
+    const delta = Math.max(0, Date.now() - ts);
+    return delta < 2 * SECOND
+      ? t('chart.time.justNow')
+      : t('chart.time.ago', { duration: duration(delta) });
   }
-  return mode === 'clock' ? clock(t) : dateTime(t);
+  return mode === 'clock' ? clock(ts) : dateTime(ts);
 }
 
 /* Najszersza etykieta danego trybu — po niej liczymy, ile podziałek się mieści,
    zanim je narysujemy. */
 function sampleTimeLabel(mode) {
-  if (mode === 'ago') return MINUS + '30' + NBSP + 'min';
-  return mode === 'clock' ? '00:00' : '30' + NBSP + 'sie';
+  if (mode === 'ago') return t('chart.sample.ago');
+  return mode === 'clock' ? t('chart.sample.clock') : t('chart.sample.date');
 }
 
 /* ─────────────────────────────  Rysowanie  ────────────────────────────── */
@@ -295,7 +314,7 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
     // strzałki. role="slider" opisuje dokładnie to zachowanie, a aria-valuetext
     // niesie odczyt spod kursora (aria-live w #readout byłoby wtedy echem).
     aria: {
-      role: 'slider', label: 'Wykres historii pomiarów', orientation: 'horizontal',
+      role: 'slider', label: t('chart.aria.label'), orientation: 'horizontal',
       valuemin: '0', valuemax: '0', valuenow: '0', describedby: hintId
     },
     // Wygląd kadru stoi w .m5-chart__canvas; stąd idzie tylko wysokość,
@@ -310,11 +329,7 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
 
   const legend = h('ul.m5-chart__legend');
 
-  const hint = h('span.m5-sronly', {
-    id: hintId,
-    text: 'Wykres interaktywny. Strzałki w lewo i w prawo przesuwają kursor odczytu, '
-      + 'Home i End przechodzą na początek i koniec zakresu, Escape ukrywa kursor.'
-  });
+  const hint = h('span.m5-sronly', { id: hintId, text: t('chart.hint') });
 
   const el = h('figure.m5-chart', {
     dataset: { metric: metric.id, range: range.id }
@@ -479,20 +494,20 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
 
     if (!data.count) {
       geo = null;
-      drawMessage(cssW, cssH, 'Brak danych', 'Uruchom pomiar — wykres pojawi się po pierwszych odczytach.');
+      drawMessage(cssW, cssH, t('chart.empty.title'), t('chart.empty.text'));
       return;
     }
     if (data.count < 2) {
       geo = null;
-      drawMessage(cssW, cssH, 'Za mało danych',
-        'Mamy jeden odczyt: ' + metricValueUnit(metric.id, data.points[0].v) + '. Linię rysujemy od dwóch.');
+      drawMessage(cssW, cssH, t('chart.few.title'),
+        t('chart.few.text', { value: metricValueUnit(metric.id, data.points[0].v) }));
       return;
     }
 
     const domain = computeDomain(cssH);
     const valueLabels = domain.ticks.map((v) => nf(v, domain.decimals));
     let labelW = 0;
-    valueLabels.forEach((t) => { labelW = Math.max(labelW, ctx.measureText(t).width); });
+    valueLabels.forEach((label) => { labelW = Math.max(labelW, ctx.measureText(label).width); });
     labelW = Math.max(labelW, ctx.measureText(metric.unit).width);
 
     const padLeft = Math.min(Math.round(cssW * 0.36), Math.round(labelW) + 10);
@@ -506,7 +521,7 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
 
     const tSpan = Math.max(1, tMax - tMin);
     const vSpan = domain.max - domain.min;
-    const xFor = (t) => plot.x + ((t - tMin) / tSpan) * plot.w;
+    const xFor = (ts) => plot.x + ((ts - tMin) / tSpan) * plot.w;
     const yFor = (v) => plot.y + plot.h - ((v - domain.min) / vSpan) * plot.h;
 
     const pts = data.points.map((p) => ({ t: p.t, v: p.v, x: xFor(p.t), y: yFor(p.v) }));
@@ -539,8 +554,8 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
       ctx.moveTo(plot.x, y);
       ctx.lineTo(plot.x + plot.w, y);
     });
-    tTicks.forEach((t) => {
-      const x = crisp(xFor(t));
+    tTicks.forEach((ts) => {
+      const x = crisp(xFor(ts));
       ctx.moveTo(x, plot.y);
       ctx.lineTo(x, plot.y + plot.h);
     });
@@ -641,12 +656,12 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     let occupied = -Infinity;
-    tTicks.forEach((t) => {
-      const label = axisTimeLabel(t, tMax, mode);
+    tTicks.forEach((ts) => {
+      const label = axisTimeLabel(ts, tMax, mode);
       const w = ctx.measureText(label).width;
       // Skrajne etykiety dociskamy do wnętrza wykresu, a te, które po dociśnięciu
       // wchodziłyby na poprzednią, po prostu pomijamy.
-      const x = Math.min(plot.x + plot.w - w / 2, Math.max(plot.x + w / 2, xFor(t)));
+      const x = Math.min(plot.x + plot.w - w / 2, Math.max(plot.x + w / 2, xFor(ts)));
       if (x - w / 2 < occupied + 8) return;
       occupied = x + w / 2;
       ctx.fillText(label, x, plot.y + plot.h + 7);
@@ -655,7 +670,10 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
     /* — plakietka z odczytem, na końcu, żeby nic jej nie zasłoniło — */
     if (active) {
       const zone = zoneOf(active.v);
-      const label = metricValueUnit(metric.id, active.v) + ' ' + DOT + ' ' + cursorTimeLabel(active.t, mode);
+      const label = t('chart.cursor.badge', {
+        value: metricValueUnit(metric.id, active.v),
+        time: cursorTimeLabel(active.t, mode)
+      });
       ctx.font = fs + 'px ' + style.fontFamily;
       const w = Math.min(plot.w - 8, ctx.measureText(label).width + 16);
       const bh2 = fs + 12;
@@ -698,32 +716,37 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
      które jest które, więc każde ma tu nazwę słowną. */
   function renderLegend() {
     clear(legend);
-    legend.appendChild(legendItem('m5-chart__swatch--line', 'pomiar'));
+    legend.appendChild(legendItem('m5-chart__swatch--line', t('chart.legend.line')));
     if (thresholdsFor(metric.id)) {
       ['good', 'warn', 'crit'].forEach((zone) => {
-        legend.appendChild(legendItem('', ZONE_LABEL[zone], zone));
+        legend.appendChild(legendItem('', zoneLabel(zone), zone));
       });
     }
     if (hasGaps) {
-      legend.appendChild(legendItem('m5-chart__swatch--gap', 'przerwa w pomiarze'));
+      legend.appendChild(legendItem('m5-chart__swatch--gap', t('chart.legend.gap')));
     }
   }
 
   function updateAria() {
     // Etykiety zakresów bywają zakończone kropką ('1 godz.') — druga kropka
     // z rzędu brzmi w czytniku ekranu jak usterka.
-    const head = 'Wykres: ' + metric.namePL + ', zakres ' + range.labelPL;
+    const head = t('chart.aria.head', {
+      metric: metricName(metric),
+      range: rangeLabel(range)
+    });
     const parts = [head.endsWith('.') ? head : head + '.'];
     if (!data.count) {
-      parts.push('Brak danych w tym zakresie.');
+      parts.push(t('chart.aria.empty'));
     } else if (data.count === 1) {
-      parts.push('Jeden odczyt: ' + metricValueUnit(metric.id, data.points[0].v) + '.');
+      parts.push(t('chart.aria.one', { value: metricValueUnit(metric.id, data.points[0].v) }));
     } else {
-      parts.push('Od ' + metricValueUnit(metric.id, data.min)
-        + ' do ' + metricValueUnit(metric.id, data.max)
-        + ', średnia ' + metricValueUnit(metric.id, data.avg)
-        + ', ' + plural(data.count, 'punkt', 'punkty', 'punktów') + '.');
-      if (hasGaps) parts.push('W szeregu są przerwy — wtedy nie mierzyliśmy.');
+      parts.push(t('chart.aria.summary', {
+        min: metricValueUnit(metric.id, data.min),
+        max: metricValueUnit(metric.id, data.max),
+        avg: metricValueUnit(metric.id, data.avg),
+        points: plural(data.count, 'unit.chartPoint.plural')
+      }));
+      if (hasGaps) parts.push(t('chart.aria.gaps'));
     }
     canvas.setAttribute('aria-label', parts.join(' '));
   }
@@ -733,17 +756,23 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
   function updateReadout() {
     let text;
     if (!data.count) {
-      text = 'Brak danych w tym zakresie.';
+      text = t('chart.readout.empty');
     } else if (cursor >= 0 && data.points[cursor]) {
       const p = data.points[cursor];
       const zone = zoneOf(p.v);
-      text = metric.namePL + ': ' + metricValueUnit(metric.id, p.v)
-        + (zone ? ', ' + ZONE_LABEL[zone] : '')
-        + ', ' + cursorTimeLabel(p.t, mode);
+      // Strefa bywa nieznana (wielkość bez progów) — stąd dwa osobne wzorce,
+      // a nie doklejany kawałek zdania.
+      const params = {
+        metric: metricName(metric),
+        value: metricValueUnit(metric.id, p.v),
+        time: cursorTimeLabel(p.t, mode)
+      };
+      if (zone) params.zone = zoneLabel(zone);
+      text = t(zone ? 'chart.readout.pointZone' : 'chart.readout.point', params);
     } else if (data.count < 2) {
-      text = 'Za mało danych, aby narysować wykres.';
+      text = t('chart.readout.few');
     } else {
-      text = 'Przeciągnij po wykresie albo użyj strzałek, aby odczytać pojedynczy pomiar.';
+      text = t('chart.readout.hint');
     }
     // Ten sam tekst niesie aria-valuetext: skupiony suwak ogłasza go sam,
     // bez drugiego regionu live.
@@ -769,11 +798,11 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
     scheduleDraw();
   }
 
-  function nearestIndexByTime(t) {
+  function nearestIndexByTime(ts) {
     let best = -1;
     let bestDelta = Infinity;
     for (let i = 0; i < data.points.length; i += 1) {
-      const delta = Math.abs(data.points[i].t - t);
+      const delta = Math.abs(data.points[i].t - ts);
       if (delta < bestDelta) { bestDelta = delta; best = i; }
     }
     return best;
@@ -862,6 +891,19 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
     refresh();
   });
 
+  /* Zmiana języka to nie tylko inne napisy: inaczej formatują się liczby i
+     daty na osiach, a stany puste są rysowane NA CANVASIE, więc sam DOM nie
+     wystarczy — refresh() przerysowuje wszystko. Dwa napisy stoją poza tą
+     ścieżką (opis canvasu i podpowiedź dla klawiatury), więc wypisujemy je
+     tutaj wprost. */
+  const offLanguage = bus.on('i18n:changed', () => {
+    canvas.setAttribute('aria-label', t('chart.aria.label'));
+    hint.textContent = t('chart.hint');
+    lastReadout = '';        // ten sam tekst w nowym języku ma trafić do DOM
+    style = null;
+    refresh();
+  });
+
   let media = null;
   let onMedia = null;
   try {
@@ -927,6 +969,7 @@ export function chart({ metricId = 'share', rangeId = '1h', height = 220 } = {})
     alive = false;
     scheduleDraw.cancel();
     offSettings();
+    offLanguage();
     if (observer) observer.disconnect();
     if (onWindowResize) window.removeEventListener('resize', onWindowResize);
     if (media && onMedia) {

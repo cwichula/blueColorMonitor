@@ -19,25 +19,28 @@ import {
   exportCSV, exportJSON, storage
 } from '../history.js';
 import { CATALOGUE, byId, zoneFor } from '../metrics.js';
-import { metricValue, dateTime, duration, plural, relative, ZONE_LABEL } from '../format.js';
+import { metricValue, dateTime, duration, plural, relative, zoneLabel } from '../format.js';
 import { get as getSettings, set as setSettings, thresholdsFor } from '../store.js';
+import { t } from '../i18n/index.js';
 import { bus } from '../bus.js';
 
 const DASH = '—';
 const NDASH = '–';
 const NBSP = ' ';
-const MIDDOT = '·';
 
 /* Historia dopisuje punkt raz na sekundę, a odświeżenie to przeliczenie serii
    plus pełne przerysowanie canvasa. Dwie sekundy to próg, poniżej którego
    człowiek i tak nie zauważy różnicy, a bateria już tak. */
 const REFRESH_EVERY_MS = 2000;
 
-const TREND_LABEL = {
-  '1': 'rośnie w tym zakresie',
-  '0': 'bez wyraźnej zmiany',
-  '-1': 'spada w tym zakresie'
-};
+/* Kierunek zmiany opisujemy słowem, nie samą strzałką. Funkcja, a nie stała:
+   stała zamarzłaby w języku aktywnym przy wczytaniu modułu, a moduł wczytuje
+   się raz na całe uruchomienie aplikacji. */
+function trendLabel(trendKey) {
+  if (trendKey === '1') return t('history.trend.up');
+  if (trendKey === '-1') return t('history.trend.down');
+  return t('history.trend.flat');
+}
 
 let seq = 0;
 
@@ -56,20 +59,15 @@ function measured(value) {
 
 function zoneOf(metric, value) {
   if (!metric || !measured(value)) return 'none';
-  const t = thresholdsFor(metric.id) || { warn: metric.warn, crit: metric.crit };
-  return zoneFor(value, t.warn, t.crit, metric.invert) || 'none';
+  const limits = thresholdsFor(metric.id) || { warn: metric.warn, crit: metric.crit };
+  return zoneFor(value, limits.warn, limits.crit, metric.invert) || 'none';
 }
 
 /* Znacznik strefy: barwa nigdy nie stoi sama, obok idzie słowo i kształt
    z components.css. */
 function zoneTag(zone) {
-  return h('span.m5-zone', { dataset: { zone: zone } }, ZONE_LABEL[zone] || ZONE_LABEL.none);
+  return h('span.m5-zone', { dataset: { zone: zone } }, zoneLabel(zone));
 }
-
-/* Ten sam komunikat co w ekranie Narzędzia: ta sama porażka ma brzmieć tak samo
-   i mówić, co z nią zrobić. */
-const EXPORT_FAIL_PL = 'Nie udało się przygotować pliku. W trybie prywatnym i w oknie osadzonym w innej '
-  + 'aplikacji przeglądarka blokuje zapis — otwórz stronę w zwykłej karcie.';
 
 function fileStamp(ts) {
   const d = new Date(ts);
@@ -101,26 +99,28 @@ export function create() {
   let lastRefreshAt = 0;
   let pointCount = 0;
   let sessionSignature = '';
-  let storageMessage = '';
   const openSessions = new Set();      // rozwinięcia przeżywają przebudowę listy
   const chipButtons = new Map();
+  const chipLabels = new Map();
   const rangeButtons = new Map();
   const offs = [];
 
   /* ────────────────────────  Żetony wyboru wielkości  ─────────────────── */
 
-  const chips = h('div.m5-chips', {
-    aria: { role: 'group', label: 'Wybór mierzonej wielkości' }
-  });
+  const chips = h('div.m5-chips', { aria: { role: 'group' } });
 
   CATALOGUE.forEach((m) => {
+    // Nazwa wielkości stoi we własnym <span>, żeby po zmianie języka dało się
+    // podmienić sam napis, bez ruszania ikony.
+    const label = h('span');
     const btn = h('button.m5-chip', {
       type: 'button',
       dataset: { metric: m.id },
       aria: { pressed: 'false' },
       on: { click: () => pickMetric(m.id) }
-    }, icon(m.icon, { size: 16 }), h('span', { text: m.namePL }));
+    }, icon(m.icon, { size: 16 }), label);
     chipButtons.set(m.id, btn);
+    chipLabels.set(m.id, label);
     mount(chips, btn);
   });
 
@@ -145,24 +145,26 @@ export function create() {
     // Wiersze sesji pokazują średnią wybranej wielkości, więc lista też jest
     // nieaktualna — podpis zawiera id wielkości i wymusi przebudowę.
     doRefresh();
-    announce('Wielkość: ' + metric.namePL);
+    announce(t('history.announce.metric', { metric: t('metric.' + metric.id + '.name') }));
   }
 
   /* ────────────────────────  Przełącznik zakresu  ─────────────────────── */
 
   const seg = h('div.m5-seg.m5-seg--block', {
-    aria: { role: 'radiogroup', label: 'Zakres czasu' },
+    aria: { role: 'radiogroup' },
     on: { keydown: onSegKey }
   });
 
   RANGES.forEach((r) => {
+    // Etykieta zakresu jest treścią słownika (t('range.' + id)), a nie polem
+    // rekordu w history.js — inaczej lista zakresów mówiłaby jednym językiem.
     const btn = h('button.m5-seg__item', {
       type: 'button',
       tabindex: '-1',
       dataset: { range: r.id },
-      aria: { role: 'radio', checked: 'false', label: 'Ostatnie ' + r.labelPL },
+      aria: { role: 'radio', checked: 'false' },
       on: { click: () => pickRange(r.id) }
-    }, r.labelPL);
+    });
     rangeButtons.set(r.id, btn);
     mount(seg, btn);
   });
@@ -221,24 +223,25 @@ export function create() {
 
   /* ─────────────────────────────  Statystyki  ────────────────────────── */
 
-  function statCard(labelPL, withTrend) {
+  function statCard(withTrend) {
     const value = h('span.m5-stat__value.m5-num', { text: DASH });
     const unit = h('span.m5-stat__unit', { text: '', hidden: true });
     const zone = zoneTag('none');
     const trend = withTrend
-      ? h('span.m5-stat__trend', { dataset: { trend: '0' }, text: TREND_LABEL['0'] })
+      ? h('span.m5-stat__trend', { dataset: { trend: '0' } })
       : null;
+    const label = h('span.m5-stat__label');
     const el = h('div.m5-stat', { dataset: { zone: 'none' } },
-      h('span.m5-stat__label', { text: labelPL }),
+      label,
       h('span.m5-stat__readout', value, unit),
       zone,
       trend);
-    return { el: el, value: value, unit: unit, zone: zone, trend: trend };
+    return { el: el, label: label, value: value, unit: unit, zone: zone, trend: trend };
   }
 
-  const statMin = statCard('Minimum', false);
-  const statAvg = statCard('Średnia', true);
-  const statMax = statCard('Maksimum', false);
+  const statMin = statCard(false);
+  const statAvg = statCard(true);
+  const statMax = statCard(false);
 
   const statsHead = h('p.m5-card__subtitle', { text: '' });
   const statsGrid = h('div.m5-history__stats', {
@@ -247,19 +250,20 @@ export function create() {
     style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));gap:var(--sp-3)'
   }, statMin.el, statAvg.el, statMax.el);
 
-  const statsCard = h('section.m5-card',
-    h('header.m5-card__head',
-      h('h2.m5-card__title', { text: 'Statystyki zakresu' }),
-      statsHead),
-    h('div.m5-card__body', statsGrid,
-      h('p.m5-row__desc', {
-        style: 'display:block;margin-top:var(--sp-3)',
-        text: 'Liczone z tego, co widać na wykresie. Czas bez pomiaru nie jest '
-          + 'wliczany — nie zastępujemy go zerem.'
-      })));
+  const statsTitle = h('h2.m5-card__title');
+  const statsNote = h('p.m5-row__desc', { style: 'display:block;margin-top:var(--sp-3)' });
 
+  const statsCard = h('section.m5-card',
+    h('header.m5-card__head', statsTitle, statsHead),
+    h('div.m5-card__body', statsGrid, statsNote));
+
+  /* Cały podpis jest jednym wzorcem ze wstawkami: myślnik, spacje nierozdzielne
+     i szyk „wielkość — zakres” należą do języka, nie do kodu. */
   function syncStatsHead() {
-    statsHead.textContent = metric.namePL + NBSP + DASH + NBSP + 'ostatnie ' + range.labelPL;
+    statsHead.textContent = t('history.stats.head', {
+      metric: t('metric.' + metric.id + '.name'),
+      range: t('range.' + range.id)
+    });
   }
 
   function fillStat(target, value) {
@@ -270,7 +274,7 @@ export function create() {
     target.unit.hidden = !has;         // „— %” sugerowałoby pomiar, którego nie było
     target.el.dataset.zone = zone;
     target.zone.dataset.zone = zone;
-    target.zone.textContent = ZONE_LABEL[zone];
+    target.zone.textContent = zoneLabel(zone);
   }
 
   function refreshStats() {
@@ -282,7 +286,7 @@ export function create() {
     statAvg.trend.dataset.trend = key;
     // Kierunek zmiany nie jest sam w sobie oceną — przy wielkościach z `invert`
     // wzrost bywa poprawą, więc mówimy tylko, co dzieje się z liczbą.
-    statAvg.trend.textContent = measured(s.avg) ? TREND_LABEL[key] : 'brak danych do porównania';
+    statAvg.trend.textContent = measured(s.avg) ? trendLabel(key) : t('history.trend.none');
   }
 
   /* ───────────────────────────────  Sesje  ───────────────────────────── */
@@ -293,10 +297,10 @@ export function create() {
 
   const sessionsCount = h('p.m5-card__subtitle', { text: '' });
 
+  const sessionsTitle = h('h2.m5-card__title');
+
   const sessionsCard = h('section.m5-card',
-    h('header.m5-card__head',
-      h('h2.m5-card__title', { text: 'Sesje pomiarowe' }),
-      sessionsCount),
+    h('header.m5-card__head', sessionsTitle, sessionsCount),
     h('div.m5-card__body.m5-card__body--flush', sessionsList));
 
   function sessionKey(session, index) {
@@ -326,11 +330,11 @@ export function create() {
       const max = session.max ? session.max[m.id] : null;
       const spread = (measured(min) && measured(max))
         ? metricValue(m.id, min) + NBSP + NDASH + NBSP + metricValue(m.id, max) + NBSP + m.unit
-        : 'brak pomiaru';
+        : t('history.session.noMeasure');
       mount(details, h('div.m5-row',
         h('div.m5-row__main',
-          h('span.m5-row__title', { text: m.namePL }),
-          h('span.m5-row__desc', { text: 'zakres: ' + spread })),
+          h('span.m5-row__title', { text: t('metric.' + m.id + '.name') }),
+          h('span.m5-row__desc', { text: t('history.session.spread', { range: spread }) })),
         h('div.m5-row__control',
           h('span.m5-row__value.m5-num', {
             text: measured(avg) ? metricValue(m.id, avg) + NBSP + m.unit : DASH
@@ -357,9 +361,11 @@ export function create() {
     h('div.m5-row__main',
       h('span.m5-row__title', { text: dateTime(session.startedAt) }),
       h('span.m5-row__desc', {
-        text: duration(lengthMs) + ' ' + MIDDOT + ' '
-          + plural(session.samples || 0, 'próbka', 'próbki', 'próbek')
-          + ' ' + MIDDOT + ' ' + relative(session.startedAt)
+        text: t('history.session.desc', {
+          duration: duration(lengthMs),
+          samples: plural(session.samples || 0, 'unit.sample.plural'),
+          relative: relative(session.startedAt)
+        })
       })),
     h('div.m5-row__control',
       h('span.m5-row__value.m5-num', {
@@ -382,8 +388,8 @@ export function create() {
   function refreshSessions() {
     const list = sessions();
     sessionsCount.textContent = list.length
-      ? plural(list.length, 'sesja', 'sesje', 'sesji') + ', od najnowszej'
-      : 'Jeszcze żadnej sesji';
+      ? t('history.sessions.count', { sessions: plural(list.length, 'unit.session.plural') })
+      : t('history.sessions.empty');
 
     const signature = signatureOf(list);
     if (signature === sessionSignature) return;
@@ -394,7 +400,7 @@ export function create() {
       mount(sessionsList, h('li',
         h('p.m5-row__desc', {
           style: 'display:block;padding:var(--sp-3) var(--sp-4) var(--sp-4)',
-          text: 'Sesja zapisuje się po zatrzymaniu pomiaru.'
+          text: t('history.sessions.hint')
         })));
       return;
     }
@@ -422,38 +428,43 @@ export function create() {
         download('monitor-swiatla-' + fileStamp(Date.now()) + '.json',
           exportJSON(), 'application/json;charset=utf-8');
       }
-      toast('Plik przygotowany do zapisu', { tone: 'success' });
+      toast(t('history.export.ok'), { tone: 'success' });
     } catch (err) {
       // Zapis pliku potrafi odmówić w trybie prywatnym i w widoku osadzonym —
-      // użytkownik ma się dowiedzieć, że nic nie powstało.
-      toast(EXPORT_FAIL_PL, { tone: 'error' });
+      // użytkownik ma się dowiedzieć, że nic nie powstało. Ten sam klucz co w
+      // ekranie Narzędzia: ta sama porażka ma brzmieć tak samo.
+      toast(t('history.export.fail'), { tone: 'error' });
     }
   }
 
+  /* Napisy przycisków z ikoną trzymamy w osobnych węzłach tekstowych — zmiana
+     języka podmienia sam tekst, rysunek zostaje na miejscu. */
+  const btnCsvLabel = document.createTextNode('');
   const btnCsv = h('button.m5-btn.m5-btn--ghost', {
     type: 'button',
     dataset: { tone: 'ghost' },
     on: { click: () => exportFile('csv') }
-  }, icon('download', { size: 18 }), 'Eksportuj CSV');
+  }, icon('download', { size: 18 }), btnCsvLabel);
 
+  const btnJsonLabel = document.createTextNode('');
   const btnJson = h('button.m5-btn.m5-btn--ghost', {
     type: 'button',
     dataset: { tone: 'ghost' },
     on: { click: () => exportFile('json') }
-  }, icon('download', { size: 18 }), 'Eksportuj JSON');
+  }, icon('download', { size: 18 }), btnJsonLabel);
 
+  const btnClearLabel = document.createTextNode('');
   const btnClear = h('button.m5-btn.m5-btn--danger', {
     type: 'button',
     dataset: { tone: 'danger' },
     on: { click: askClear }
-  }, icon('trash', { size: 18 }), 'Wyczyść historię');
+  }, icon('trash', { size: 18 }), btnClearLabel);
+
+  const dataTitle = h('h2.m5-card__title');
+  const dataSubtitle = h('p.m5-card__subtitle');
 
   const dataCard = h('section.m5-card',
-    h('header.m5-card__head',
-      h('h2.m5-card__title', { text: 'Dane' }),
-      h('p.m5-card__subtitle', {
-        text: 'Historia jest zapisana wyłącznie na tym urządzeniu.'
-      })),
+    h('header.m5-card__head', dataTitle, dataSubtitle),
     h('div.m5-card__body', storageNote,
       h('div.m5-card__actions', {
         style: 'display:flex;flex-wrap:wrap;gap:var(--sp-2)'
@@ -462,14 +473,16 @@ export function create() {
   async function askClear() {
     const sessionCount = sessions().length;
     const ok = await dialog({
-      title: 'Wyczyścić historię?',
+      title: t('history.clear.title'),
       // Liczba mówi wprost, co znika — „na pewno?" bez liczby jest pytaniem
-      // o zgodę w ciemno.
-      text: 'Usuniemy ' + plural(pointCount, 'pomiar', 'pomiary', 'pomiarów')
-        + ' i ' + plural(sessionCount, 'sesję', 'sesje', 'sesji')
-        + '. Tego nie da się cofnąć — jeśli chcesz zachować dane, najpierw je wyeksportuj.',
-      confirmPL: 'Wyczyść',
-      cancelPL: 'Anuluj',
+      // o zgodę w ciemno. Obie liczby wchodzą wstawkami: policzalniki odmienia
+      // Intl.PluralRules aktywnego języka, a szyk zdania należy do tłumaczenia.
+      text: t('history.clear.text', {
+        points: plural(pointCount, 'unit.measurement.plural'),
+        sessions: plural(sessionCount, 'unit.session.accusative.plural')
+      }),
+      confirmPL: t('history.clear.confirm'),
+      cancelPL: t('common.cancel'),
       tone: 'danger'
     });
     if (!ok) return;
@@ -478,48 +491,93 @@ export function create() {
     openSessions.clear();
     sessionSignature = '';
     doRefresh();
-    announce('Historia wyczyszczona.');
-    toast('Historia wyczyszczona', { tone: 'success' });
+    announce(t('history.clear.announce'));
+    toast(t('history.clear.toast'), { tone: 'success' });
   }
 
   function openExportSheet() {
     sheet({
-      title: 'Eksport historii',
-      body: h('p.m5-dialog__text', {
-        text: 'CSV otwiera się w arkuszu kalkulacyjnym (średnik, przecinek dziesiętny). '
-          + 'JSON zachowuje wszystko, łącznie z listą sesji i brakami pomiaru.'
-      }),
+      title: t('history.export.sheet.title'),
+      body: h('p.m5-dialog__text', { text: t('history.export.sheet.text') }),
+      // labelPL jako FUNKCJA: overlays.js woła ją ponownie po zmianie języka,
+      // więc napisy nadążają nawet przy otwartym arkuszu.
       actions: [
-        { labelPL: 'CSV', tone: 'primary', onClick: () => exportFile('csv') },
-        { labelPL: 'JSON', tone: 'ghost', onClick: () => exportFile('json') },
-        { labelPL: 'Anuluj', tone: 'quiet' }
+        { labelPL: () => t('history.export.sheet.csv'), tone: 'primary', onClick: () => exportFile('csv') },
+        { labelPL: () => t('history.export.sheet.json'), tone: 'ghost', onClick: () => exportFile('json') },
+        { labelPL: () => t('common.cancel'), tone: 'quiet' }
       ]
     });
   }
 
   /* ─────────────────────────────  Stan pusty  ────────────────────────── */
 
+  const emptyTitle = h('p.m5-empty__title');
+  const emptyText = h('p.m5-empty__text');
+  const emptyActionLabel = document.createTextNode('');
+
   const empty = h('section.m5-card.m5-card--flat',
     h('div.m5-card__body',
       h('div.m5-empty',
         h('span.m5-empty__icon', icon('chart', { size: 28 })),
-        h('p.m5-empty__title', { text: 'Nie ma jeszcze czego pokazać' }),
-        h('p.m5-empty__text', {
-          text: 'Historia zapełnia się w trakcie pomiaru — jeden punkt na sekundę. '
-            + 'Wszystko zostaje na tym urządzeniu.'
-        }),
+        emptyTitle,
+        emptyText,
         h('div.m5-empty__actions',
           h('button.m5-btn.m5-btn--primary.m5-btn--lg', {
             type: 'button',
             dataset: { tone: 'primary' },
             on: { click: goMeasure }
-          }, icon('play', { size: 20 }), 'Przejdź do pomiaru')))));
+          }, icon('play', { size: 20 }), emptyActionLabel)))));
 
   /* ──────────────────────────────  Korzeń  ───────────────────────────── */
 
   const el = h('div.m5-screen.m5-history', {
     style: 'display:flex;flex-direction:column;gap:var(--sp-4)'
   }, empty, controlsCard, chartCard, statsCard, sessionsCard, dataCard);
+
+  /* ──────────────────────────────  Napisy  ───────────────────────────────── */
+
+  /* WSZYSTKIE napisy tego ekranu powstają tutaj — raz przy złożeniu widoku i
+   * ponownie po każdej zmianie języka. Gdyby stały w wywołaniach h(), zamarzłyby
+   * w języku aktywnym w chwili budowy: app.js tworzy instancję ekranu RAZ i
+   * trzyma ją do końca działania aplikacji, więc drugiej okazji by nie było. */
+  function applyText() {
+    chips.setAttribute('aria-label', t('history.metricGroup.aria'));
+    chipLabels.forEach((label, id) => { label.textContent = t('metric.' + id + '.name'); });
+
+    seg.setAttribute('aria-label', t('history.rangeGroup.aria'));
+    rangeButtons.forEach((btn, id) => {
+      const name = t('range.' + id);
+      btn.textContent = name;
+      btn.setAttribute('aria-label', t('history.range.aria', { range: name }));
+    });
+
+    statsTitle.textContent = t('history.stats.title');
+    statsNote.textContent = t('history.stats.note');
+    statMin.label.textContent = t('history.stat.min');
+    statAvg.label.textContent = t('history.stat.avg');
+    statMax.label.textContent = t('history.stat.max');
+
+    sessionsTitle.textContent = t('history.sessions.title');
+
+    dataTitle.textContent = t('history.data.title');
+    dataSubtitle.textContent = t('history.data.subtitle');
+    btnCsvLabel.nodeValue = t('history.export.csv');
+    btnJsonLabel.nodeValue = t('history.export.json');
+    btnClearLabel.nodeValue = t('history.clear');
+
+    emptyTitle.textContent = t('history.empty.title');
+    emptyText.textContent = t('history.empty.text');
+    emptyActionLabel.nodeValue = t('history.empty.action');
+
+    syncStatsHead();
+    // Wiersze sesji i kafelki statystyk niosą napisy w środku, więc muszą
+    // powstać od nowa; podpis listy zerujemy, żeby refreshSessions() nie uznał
+    // jej za niezmienioną i naprawdę ją przebudował.
+    sessionSignature = '';
+    refreshStorageNote();
+    refreshStats();
+    refreshSessions();
+  }
 
   /* ───────────────────────  Odświeżanie (dławione)  ──────────────────── */
 
@@ -537,9 +595,9 @@ export function create() {
   function refreshStorageNote() {
     const state = storage();
     if (state === 'ok') { storageNote.hidden = true; return; }
-    const text = storageMessage || (state === 'full'
-      ? 'Pamięć urządzenia jest pełna — nowe pomiary nie są już zapisywane.'
-      : 'Przeglądarka nie pozwala zapisać historii — dane znikną po zamknięciu karty.');
+    // Napis bierzemy ze STANU pamięci, a nie z komunikatu przyniesionego przez
+    // szynę: gotowe zdanie zamarzłoby w języku sprzed przełączenia.
+    const text = state === 'full' ? t('storage.full') : t('storage.blocked');
     clearNode(storageNote);
     mount(storageNote, icon('alert', { size: 18 }), h('span', { text: text }));
     storageNote.hidden = false;
@@ -585,7 +643,6 @@ export function create() {
 
     offs.push(bus.on('history:changed', (payload) => {
       if (payload && typeof payload.count === 'number') pointCount = payload.count;
-      storageMessage = (payload && payload.messagePL) || '';
       scheduleRefresh();
     }));
     // Zamknięta sesja to zdarzenie rzadkie i widoczne — na nie odświeżamy od razu.
@@ -619,11 +676,19 @@ export function create() {
     sessionSignature = '';             // lista przy powrocie ma się złożyć na nowo
   }
 
+  /* Napisy wpisujemy dopiero teraz i odtwarzamy przy każdej zmianie języka
+   * (zdarzenie z kontraktu §4). Nasłuchu nie zdejmujemy nigdzie: instancja
+   * ekranu żyje tyle, co aplikacja, więc nie ma czego odsubskrybować. */
+  applyText();
+  bus.on('i18n:changed', applyText);
+
+  // Ekran podaje KLUCZE, nie gotowe napisy: app.js rozwija je przez t() przy
+  // każdym wejściu i po zmianie języka.
   return {
     el: el,
-    titlePL: 'Historia',
+    titleKey: 'history.title',
     actions: () => ([
-      { icon: 'download', labelPL: 'Eksportuj historię', onClick: openExportSheet }
+      { icon: 'download', labelKey: 'history.action.export', onClick: openExportSheet }
     ]),
     mount: mountScreen,
     unmount: unmountScreen

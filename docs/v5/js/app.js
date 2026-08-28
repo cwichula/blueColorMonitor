@@ -10,6 +10,7 @@
 
 import { ROUTES, start as startRouter, go } from './router.js';
 import { bus } from './bus.js';
+import { init as initLanguage, t } from './i18n/index.js';
 import * as store from './store.js';
 import * as camera from './camera.js';
 import { metricValueUnit } from './format.js';
@@ -72,6 +73,9 @@ function ensureStyles() {
 
 const shell = {
   main: document.getElementById('main'),
+  // Kotwica „przejdź do treści” stoi w HTML po angielsku (tak zobaczy ją ktoś
+  // bez JS); po starcie silnika językowego wypełnia ją paintDocumentChrome().
+  skip: document.querySelector('.m5-skip'),
   title: document.getElementById('screenTitle'),
   status: document.getElementById('topbarStatus'),
   actions: document.getElementById('topbarActions'),
@@ -96,7 +100,12 @@ const LOADERS = {
 const screens = new Map();
 const navLinks = [];
 
+/* Nazwa marki w pasku bocznym jest napisem ze słownika, więc jej węzeł musi być
+   osiągalny po zbudowaniu paska — inaczej po zmianie języka zostałby stary. */
+const brandLabel = h('span');
+
 let activeId = null;
+let activeRoute = null;
 let mountToken = 0;
 
 /* ─────────────────────────────  Nawigacja  ─────────────────────────────── */
@@ -113,15 +122,18 @@ function buildNav() {
   ROUTES.forEach((route) => {
     // Zwykłe kotwice, nie przyciski: działa środkowy przycisk myszy, działa
     // „otwórz w nowej karcie”, a klawiatura dostaje wszystko za darmo.
+    const tabLabel = h('span.m5-tab__label');
+    const itemLabel = h('span.m5-navitem__label');
+
     const tab = h('a.m5-tab', { href: '#' + route.path },
-      icon(route.icon, { size: 24 }),
-      h('span.m5-tab__label', { text: route.labelPL }));
+      icon(route.icon, { size: 24 }), tabLabel);
 
     const item = h('a.m5-navitem', { href: '#' + route.path },
-      icon(route.icon, { size: 22 }),
-      h('span.m5-navitem__label', { text: route.labelPL }));
+      icon(route.icon, { size: 22 }), itemLabel);
 
-    navLinks.push({ id: route.id, nodes: [tab, item] });
+    // Etykiety zostają puste: wypełni je paintNav(), ta sama funkcja, która
+    // przepisuje je po zmianie języka. Jedno miejsce, jeden napis.
+    navLinks.push({ id: route.id, labelKey: route.labelKey, nodes: [tab, item], labels: [tabLabel, itemLabel] });
     mount(tabs, tab);
     mount(items, item);
   });
@@ -130,8 +142,18 @@ function buildNav() {
   mount(shell.sidenav,
     h('div.m5-sidenav__brand', null,
       icon('gauge', { size: 22 }),
-      h('span', { text: 'Monitor Światła' })),
+      brandLabel),
     items);
+}
+
+/* Wszystkie napisy nawigacji naraz — przy budowie paska i po każdej zmianie
+   języka. */
+function paintNav() {
+  brandLabel.textContent = t('app.name');
+  navLinks.forEach((entry) => {
+    const label = t(entry.labelKey);
+    entry.labels.forEach((node) => { node.textContent = label; });
+  });
 }
 
 function markActiveNav(id) {
@@ -145,6 +167,21 @@ function markActiveNav(id) {
 
 /* ────────────────────────  Górny pasek: akcje ekranu  ──────────────────── */
 
+/* Ekran podaje KLUCZ etykiety (labelKey) — wtedy akcja mówi w bieżącym języku
+   także po jego zmianie, bo actions() wołane jest przy każdym rysowaniu paska.
+   Gotowy napis (label / labelPL) przyjmujemy przejściowo, dopóki wszystkie
+   ekrany nie przejdą na klucze. */
+function actionLabel(action) {
+  if (action.labelKey) return t(action.labelKey);
+  // Funkcja w polu etykiety to konwencja ui/overlays.js (napis liczony przy
+  // rysowaniu); przyjmujemy ją tutaj tak samo, żeby akcja dała się przekazać
+  // do warstwy i do paska bez przerabiania.
+  if (typeof action.labelPL === 'function') return String(action.labelPL());
+  if (action.label) return action.label;
+  if (action.labelPL) return action.labelPL;
+  return t('shell.action.fallback');
+}
+
 function renderActions(api) {
   clear(shell.actions);
   let list = [];
@@ -157,7 +194,7 @@ function renderActions(api) {
     return;
   }
   list.filter(Boolean).forEach((action) => {
-    const label = action.labelPL || 'Akcja ekranu';
+    const label = actionLabel(action);
     mount(shell.actions, h('button.m5-iconbtn', {
       type: 'button',
       title: label,
@@ -170,7 +207,7 @@ function renderActions(api) {
 /* ─────────────────  Wskaźnik trwającego pomiaru (topbar)  ───────────────── */
 
 const liveDot = h('span.m5-livechip__dot', { aria: { hidden: 'true' } });
-const liveLabel = h('span.m5-livechip__label', { text: 'Pomiar trwa' });
+const liveLabel = h('span.m5-livechip__label');
 const liveValue = h('span.m5-livechip__value', { text: '—' });
 const liveChip = h('button.m5-livechip', {
   type: 'button',
@@ -200,9 +237,12 @@ function paintChip(reading, force) {
   const metric = byId(leadId);
   const value = reading && typeof reading[leadId] === 'number' ? reading[leadId] : null;
   liveValue.textContent = metricValueUnit(leadId, value);
-  liveChip.setAttribute('aria-label',
-    'Pomiar trwa. ' + (metric ? metric.namePL : 'Wielkość wiodąca') + ': ' +
-    liveValue.textContent + '. Wróć do ekranu pomiaru.');
+  // Jedno zdanie ze wstawkami zamiast trzech sklejonych kawałków: szyk zdania
+  // bywa w innym języku zupełnie inny i sklejania nie da się przetłumaczyć.
+  liveChip.setAttribute('aria-label', t('shell.live.aria', {
+    metric: metric ? t('metric.' + metric.id + '.name') : t('shell.live.metricFallback'),
+    value: liveValue.textContent
+  }));
 }
 
 function setupLiveChip() {
@@ -222,6 +262,65 @@ function setupLiveChip() {
   });
 
   bus.on('camera:reading', ({ reading }) => paintChip(reading, false));
+}
+
+/* ──────────────────────  Napisy powłoki i dokumentu  ───────────────────── */
+
+/* HTML niesie wersję ANGIELSKĄ tych napisów — to, co zobaczy ktoś z wyłączonym
+   JavaScriptem. Po starcie silnika językowego podmieniamy je na język
+   interfejsu; ta sama funkcja wykonuje się po każdej zmianie języka. */
+function setMeta(name, content) {
+  const tag = document.head.querySelector('meta[name="' + name + '"]');
+  if (tag) tag.setAttribute('content', content);
+}
+
+function paintDocumentChrome() {
+  if (shell.skip) shell.skip.textContent = t('app.skipToContent');
+  // Oba paski niosą tę samą nawigację, więc i tę samą nazwę dla czytnika ekranu.
+  const navAria = t('app.nav.aria');
+  if (shell.sidenav) shell.sidenav.setAttribute('aria-label', navAria);
+  if (shell.tabbar) shell.tabbar.setAttribute('aria-label', navAria);
+  setMeta('description', t('app.description'));
+  setMeta('apple-mobile-web-app-title', t('app.name'));
+}
+
+function routeLabel(route) {
+  return t(route.labelKey);
+}
+
+/* Tytuł ekranu bierzemy z KLUCZA, który podaje ekran (titleKey). Gotowy napis
+   (title / titlePL) przyjmujemy przejściowo, dopóki wszystkie ekrany nie przejdą
+   na klucze; ekran jeszcze niedociągnięty pożycza nazwę trasy. */
+function screenTitle(route) {
+  const entry = screens.get(route.id);
+  const api = entry && entry.api;
+  if (api) {
+    if (api.titleKey) return t(api.titleKey);
+    if (api.title) return api.title;
+    if (api.titlePL) return api.titlePL;
+  }
+  return routeLabel(route);
+}
+
+function paintTitles() {
+  if (!activeRoute) return;
+  shell.title.textContent = screenTitle(activeRoute);
+  // Karta w przeglądarce nazywa się od TRASY, nie od tytułu ekranu: przy wolnym
+  // łączu ekranu jeszcze nie ma, a nazwa karty ma już być właściwa.
+  document.title = t('app.documentTitle', { screen: routeLabel(activeRoute) });
+}
+
+/* Jedyne miejsce, które zna wszystkie napisy powłoki. Woła je start i każde
+   'i18n:changed' — bez tego po przełączeniu języka zostałyby stare teksty
+   w węzłach zbudowanych raz: w nawigacji, w plakietce i w górnym pasku. */
+function paintShell() {
+  paintDocumentChrome();
+  paintNav();
+  liveLabel.textContent = t('shell.live.label');
+  paintTitles();
+  paintChip(camera.last(), true);
+  const entry = activeId ? screens.get(activeId) : null;
+  if (entry) renderActions(entry.api);
 }
 
 /* ────────────────────────────  Montaż ekranów  ─────────────────────────── */
@@ -261,13 +360,13 @@ async function showRoute(route) {
   const token = ++mountToken;
   detachCurrent();
   activeId = route.id;
+  activeRoute = route;
   markActiveNav(route.id);
   refreshChipVisibility();
 
   // Tytuł ustawiamy przed dociągnięciem modułu: przy wolnym łączu pasek ma
   // od razu mówić, dokąd się idzie, a nie zostawać na poprzedniej nazwie.
-  shell.title.textContent = route.labelPL;
-  document.title = route.labelPL + ' — Monitor Światła';
+  paintTitles();
   clear(shell.actions);
 
   const placeholder = loadingPlaceholder();
@@ -286,8 +385,8 @@ async function showRoute(route) {
   } catch (err) {
     clearPlaceholder();
     if (token !== mountToken) return;
-    showFatal('Nie udało się wczytać ekranu „' + route.labelPL + '”',
-      'Prawdopodobnie zabrakło części plików w pamięci urządzenia. Połącz się z siecią i odśwież stronę.', err);
+    showFatal(t('shell.loadFail.title', { screen: routeLabel(route) }),
+      t('shell.loadFail.text'), err);
     return;
   }
   // W międzyczasie ktoś mógł dotknąć innej zakładki — wtedy ten montaż jest
@@ -296,7 +395,7 @@ async function showRoute(route) {
   if (token !== mountToken) return;
 
   mount(shell.main, entry.api.el);
-  shell.title.textContent = entry.api.titlePL || route.labelPL;
+  paintTitles();
   renderActions(entry.api);
 
   try { entry.api.mount(); }
@@ -306,10 +405,18 @@ async function showRoute(route) {
   // preventScroll: fokus ma trafić na <main> bez cofania właśnie przywróconej
   // pozycji przewijania.
   shell.main.focus({ preventScroll: true });
-  announce(entry.api.titlePL || route.labelPL);
+  announce(screenTitle(route));
 }
 
 /* ─────────────────────────────  Onboarding  ────────────────────────────── */
+
+/* Akcja arkusza albo komunikatu. Napis oddajemy FUNKCJĄ, bo ui/overlays.js
+   trzyma otwartą warstwę i po zmianie języka woła etykiety ponownie — gotowy
+   napis zostałby w starym języku na przycisku, który wciąż stoi na ekranie.
+   Klucz podajemy obok, tak samo jak robią to ekrany. */
+function overlayAction(key, rest) {
+  return Object.assign({ labelKey: key, labelPL: () => t(key) }, rest);
+}
 
 function maybeOnboard() {
   if (store.get().onboarded) return;
@@ -319,13 +426,13 @@ function maybeOnboard() {
   store.set({ onboarded: true });
 
   sheet({
-    title: 'Zanim zaczniesz',
+    title: t('onboarding.title'),
     body: [
-      h('p.m5-screen__lead', { text: 'Monitor Światła patrzy kamerą na światło wokół Ciebie i liczy z niego siedem wielkości — od udziału niebieskiego po komfort wzrokowy.' }),
-      h('p.m5-screen__note', { text: 'Obraz nie opuszcza tego urządzenia: nie ma serwera, nie ma konta i nie ma wysyłki. Wszystkie siedem wielkości działa od razu, bez logowania i bez opłat.' }),
-      h('p.m5-screen__note', { text: 'To orientacja, a nie przyrząd pomiarowy ani badanie lekarskie. Czego nie da się zmierzyć, tego nie pokazujemy — zamiast liczby zobaczysz pauzę.' })
+      h('p.m5-screen__lead', { text: t('onboarding.lead') }),
+      h('p.m5-screen__note', { text: t('onboarding.privacy') }),
+      h('p.m5-screen__note', { text: t('onboarding.honesty') })
     ],
-    actions: [{ labelPL: 'Zaczynamy', tone: 'primary', autofocus: true }]
+    actions: [overlayAction('onboarding.start', { tone: 'primary', autofocus: true })]
   });
 }
 
@@ -337,15 +444,14 @@ function offerUpdate(worker) {
   if (!worker) return;
   // Komunikat z akcją nie znika sam — decyzję zostawiamy użytkownikowi,
   // bo przeładowanie w trakcie pomiaru zabrałoby trwającą sesję.
-  toast('Dostępna nowa wersja', {
+  toast(t('shell.update.title'), {
     tone: 'neutral',
-    action: {
-      labelPL: 'Odśwież',
+    action: overlayAction('shell.update.action', {
       onClick: () => {
         try { worker.postMessage({ type: 'SKIP_WAITING' }); }
         catch (err) { window.location.reload(); }
       }
-    }
+    })
   });
 }
 
@@ -397,15 +503,14 @@ function showFatal(title, text, err) {
       h('button.m5-btn.m5-btn--primary', {
         type: 'button',
         on: { click: () => window.location.reload() }
-      }, 'Odśwież stronę'))));
+      }, t('shell.fatal.reload')))));
   announce(title);
 }
 
 function onFatalError(event) {
   const err = event && (event.error || event.reason);
   if (!shell.main || !shell.main.querySelector(SCREEN_ROOTS)) {
-    showFatal('Coś poszło nie tak',
-      'Aplikacja nie zdołała złożyć ekranu. Odświeżenie strony zwykle wystarcza — zapisane pomiary i ustawienia zostają na miejscu.', err);
+    showFatal(t('shell.fatal.title'), t('shell.fatal.text'), err);
     return;
   }
   // Ekran stoi, więc awaria dotknęła fragmentu, nie całości. Zabranie
@@ -415,9 +520,9 @@ function onFatalError(event) {
   if (now - lastFailToastAt < 10000) return;
   lastFailToastAt = now;
   console.error('[app] nieprzechwycony błąd:', err);
-  toast('Coś się popsuło w tle', {
+  toast(t('shell.background.error'), {
     tone: 'error',
-    action: { labelPL: 'Odśwież', onClick: () => window.location.reload() }
+    action: overlayAction('shell.background.action', { onClick: () => window.location.reload() })
   });
 }
 
@@ -444,6 +549,12 @@ function boot() {
 
   buildNav();
   setupLiveChip();
+  paintShell();
+
+  // Przełączenie języka w Narzędziach nie przeładowuje strony, a pasek boczny,
+  // zakładki i plakietka pomiaru powstają raz — bez tego zostałyby w starym
+  // języku aż do odświeżenia.
+  bus.on('i18n:changed', paintShell);
 
   // Kamera dostaje elementy z powłoki raz, na starcie: dzięki temu istnieje
   // dokładnie jeden strumień i jeden canvas próbkujący, niezależnie od tego,
@@ -467,9 +578,16 @@ function boot() {
 window.addEventListener('error', onFatalError);
 window.addEventListener('unhandledrejection', onFatalError);
 
-try {
-  boot();
-} catch (err) {
-  showFatal('Nie udało się uruchomić aplikacji',
-    'Powłoka nie wystartowała. Odśwież stronę — zapisane pomiary i ustawienia zostają na miejscu.', err);
-}
+/* Powłoka czeka na słownik, bo napisy dociągają się z osobnego pliku: gdyby
+ * boot() ruszył wcześniej, pierwszy ekran złożyłby się z nazw kluczy i mrugnął
+ * właściwym językiem chwilę później. i18n.init() nigdy nie odrzuca — brak
+ * słownika daje gorszy interfejs, ale nie zatrzymuje startu — więc `catch`
+ * poniżej łapie wyłącznie awarię samego boot(), dokładnie jak wcześniejsze
+ * try/catch. */
+initLanguage()
+  .then(boot)
+  .catch((err) => {
+    // Słownik jest tu już wczytany (init() nigdy nie odrzuca), więc komunikat
+    // awarii mówi w języku interfejsu — mimo że awaria dotyczy samego startu.
+    showFatal(t('shell.boot.failTitle'), t('shell.boot.failText'), err);
+  });

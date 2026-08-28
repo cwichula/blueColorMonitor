@@ -1,14 +1,14 @@
 {
-  "name": "Monitor Światła",
-  "short_name": "Monitor Światła",
-  "description": "Mierzy kamerą telefonu siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Działa offline i niczego nie wysyła do sieci. Wszystkie funkcje są darmowe, bez konta i bez limitów.",
+  "name": "Light Monitor",
+  "short_name": "Light Monitor",
+  "description": "Measures seven quantities of light with a phone camera: blue share, scene brightness, colour temperature, circadian impact, flicker, uniformity and eye comfort. It works offline and sends nothing to the network. Every feature is free, without an account and without limits.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "lang": "pl",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["utilities", "productivity"],
   "background_color": "#DCE0E6",
@@ -20,16 +20,16 @@
   ],
   "shortcuts": [
     {
-      "name": "Rejestrator",
-      "short_name": "Rejestrator",
-      "description": "Przebieg pomiaru w czasie, od minuty do trzydziestu dni.",
+      "name": "Recorder",
+      "short_name": "Recorder",
+      "description": "The course of the measurement over time, from a minute to thirty days.",
       "url": "./?modul=01",
       "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Dokumentacja",
-      "short_name": "Dokumentacja",
-      "description": "Czym ten pomiar jest, a czym na pewno nie jest.",
+      "name": "Documentation",
+      "short_name": "Documentation",
+      "description": "What this measurement is, and what it certainly is not.",
       "url": "./?modul=11",
       "icons": [{ "src": "../icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }

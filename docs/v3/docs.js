@@ -26,112 +26,143 @@
   var VERSION = '3.0';
 
   /* ------------------------------------------------------------------
-     Wording — registered into Scale.TEXT, the single home for Polish (9.3).
-     Chapter 8 has no table for the documentation screen; these sentences come
-     from v2's buildDocsScreen (already proof-read) and from metrics.js.
+     Napisy — dopisywane do Scale.TEXT, jedynego domu napisów tej wersji (9.3).
+
+     Rozdział 8 nie ma tabeli dla ekranu dokumentacji; te zdania pochodzą
+     z buildDocsScreen wersji v2 (już zredagowanego) i z metrics.js.
+
+     Od wprowadzenia trzydziestu języków to nie są literały, tylko MAPA kluczy
+     warstwy językowej — liściem jest klucz w ./i18n/<kod>.js albo, gdy zdanie
+     mówi o pomiarze lub o prawie, w ../shared/i18n/<kod>.js. Nazwa wzoru jest
+     nazwą wielkości, więc pięć z siedmiu wskazuje wprost na katalog wspólny;
+     dwie mają własne, bo dopisują nazwę przybliżenia.
+
+     Scale.registerText zapamiętuje mapę, więc po zmianie języka dokumentacja
+     przebuduje się razem z resztą aplikacji.
      ------------------------------------------------------------------ */
+
+  function mdrSentence() {
+    var t = global.I18n ? global.I18n.t.bind(global.I18n) : function (k) { return k; };
+    return t('legal.noDiagnosis') + ' ' + t('legal.mdr', { app: t('app.name') });
+  }
+
+  var TEXT_SHAPE = {
+
+    docs: {
+
+      notTitle: 'docs.notTitle',
+      notList: [
+        'docs.notList.1', 'docs.notList.2', 'docs.notList.3',
+        'docs.notList.4', 'docs.notList.5', 'docs.notList.6'
+      ],
+
+      whatTitle: 'docs.whatTitle',
+      whatLead: 'docs.whatLead',
+      whatCrop: 'docs.whatCrop',
+      whatRate: 'docs.whatRate',
+
+      metricsTitle: 'docs.metricsTitle',
+
+      formulasTitle: 'docs.formulasTitle',
+      formulas: [
+        {
+          titlePL: 'metric.share.name',
+          formulaPL: 'docs.formula.share.formula',
+          textPL: 'docs.formula.share.text'
+        },
+        {
+          titlePL: 'metric.brightness.name',
+          formulaPL: 'docs.formula.brightness.formula',
+          textPL: 'docs.formula.brightness.text'
+        },
+        {
+          titlePL: 'docs.formula.kelvin.title',
+          formulaPL: 'docs.formula.kelvin.formula',
+          textPL: 'docs.formula.kelvin.text'
+        },
+        {
+          titlePL: 'docs.formula.melanopic.title',
+          formulaPL: 'docs.formula.melanopic.formula',
+          textPL: 'docs.formula.melanopic.text'
+        },
+        {
+          titlePL: 'metric.flicker.name',
+          formulaPL: 'docs.formula.flicker.formula',
+          textPL: 'docs.formula.flicker.text'
+        },
+        {
+          titlePL: 'metric.uniformity.name',
+          formulaPL: 'docs.formula.uniformity.formula',
+          textPL: 'docs.formula.uniformity.text'
+        },
+        {
+          titlePL: 'metric.comfort.name',
+          formulaPL: 'docs.formula.comfort.formula',
+          textPL: 'docs.formula.comfort.text'
+        }
+      ],
+
+      rangesTitle: 'docs.rangesTitle',
+      rangesLead: 'docs.rangesLead',
+      colMetric: 'col.metric',
+      colUnit: 'col.unit',
+      colRange: 'col.range',
+      /* Nagłówki dwóch kolumn to nazwy stref — te same, które stoją
+         na stemplu pulpitu. Klucz wspólny. */
+      colWarn: 'zone.warning',
+      colCrit: 'zone.critical',
+      colDirection: 'col.direction',
+      dirNormal: 'docs.dirNormal',
+      dirInvert: 'docs.dirInvert',
+
+      privacyTitle: 'docs.privacyTitle',
+      privacyText: 'docs.privacyText',
+
+      mdrTitle: 'docs.mdrTitle',
+      /* Zdanie o braku diagnozy plus formuła z rozporządzenia (UE) 2017/745.
+         Obie części są wspólne dla wszystkich wersji i tłumaczy się je raz. */
+      mdrText: mdrSentence,
+
+      freeText: 'docs.freeText'
+    },
+
+    /* Moduł 12 potrzebuje kilku zdań, których 8.x nie wymienia. Dokładają się
+       do istniejącej tabeli `settings`, a nie do drugiej — autor modułu szuka
+       napisu ustawień w jednym miejscu. Scale.registerText nie nadpisuje tego,
+       co już w Scale.TEXT stoi, więc kolejność wczytania niczego nie psuje. */
+    settings: {
+      appearanceTitle: 'settings.appearanceTitle',
+      motionGroup: 'settings.motionGroup',
+      themeHint: 'settings.themeHint',
+      textHint: 'settings.textHint',
+      motionHint: 'settings.motionHint',
+      dataTitle: 'settings.dataTitle',
+      clearHintTpl: 'settings.clearHintTpl',
+      clearHintEmpty: 'settings.clearHintEmpty',
+      clearTitle: 'settings.clearTitle',
+      aboutTitle: 'settings.aboutTitle',
+      /* Nazwa aplikacji jest wstawką, a nie częścią zdania: w kilku językach
+         stoi w innym przypadku niż mianownik i tłumacz musi móc ją przestawić.
+         {version} zostaje niewypełniony — wpisuje go buildSettings. */
+      versionTpl: function () {
+        var t = global.I18n ? global.I18n.t.bind(global.I18n) : function (k) { return k; };
+        return t('settings.versionTpl', { app: t('app.name') });
+      },
+      offlineText: 'settings.offlineText',
+      docsKey: 'settings.docsKey',
+      /* Wybór języka. Wszystkie cztery zdania są wspólne dla wersji — v4 i v5
+         pytają o to samo tymi samymi słowami. */
+      langLabel: 'language.label',
+      langHelp: 'language.help',
+      langAuto: 'language.auto',
+      langAutoHint: 'language.autoHint'
+    }
+  };
 
   function installText() {
     var S = global.Scale;
     if (!S || !S.TEXT || S.TEXT.docs) return;
-
-    S.TEXT.docs = {
-
-      notTitle: 'Czego ta aplikacja NIE mierzy',
-      notList: [
-        'Nie mierzy widma. Aparat ma trzy szerokie kanały barwne, automatyczną ekspozycję i automatyczny balans bieli.',
-        'Nie mierzy wartości bezwzględnych. Jasność sceny jest wskaźnikiem względnym, a nie wynikiem pomiaru fotometrycznego.',
-        'Nie mierzy temperatury barwowej wprost. Temperatura barwowa i wpływ na rytm dobowy to przybliżenia liczone z barw sRGB.',
-        'Nie widzi migotania sieciowego. Próbkowanie 5 Hz widzi pulsowanie tylko poniżej 2,5 Hz — sieciowe 100 Hz jest poza zasięgiem i aplikacja nigdy nie poda go jako wyniku.',
-        'Nie stawia diagnozy i nie daje porady zdrowotnej. Żaden wynik nie jest ani jednym, ani drugim.',
-        'Nie porównuje twojego światła z żadnym urzędowym wzorcem. Progi to ustawienia, które możesz zmienić w module 02.'
-      ],
-
-      whatTitle: 'Co mierzy i jak',
-      whatLead: 'Kamera telefonu patrzy na oświetloną powierzchnię, a aplikacja pięć razy na sekundę liczy średnie kanałów R, G i B ze środkowego wycinka kadru. Z tych trzech liczb wyprowadza siedem wskaźników.',
-      whatCrop: 'Wycinek to środkowe 60% szerokości i 60% wysokości klatki — dokładnie ten prostokąt, który obrysowuje celownik na ekranie CELOWANIE. Poza nim nic nie jest liczone.',
-      whatRate: 'Jedna próbka co 200 ms, czyli 5 razy na sekundę. Ostatnia minuta leży w pamięci w pełnej rozdzielczości; wszystko starsze jest zapisywane co 5 sekund i sięga trzydziestu dni wstecz.',
-
-      metricsTitle: 'Siedem wielkości',
-
-      formulasTitle: 'Wzory',
-      formulas: [
-        {
-          titlePL: 'Udział niebieskiego',
-          formulaPL: 'udział = B / (R + G + B) × 100%',
-          textPL: 'Liczony na wartościach sRGB bez odwracania gamma — celowo, bo to ta sama definicja co w poprzedniej wersji aplikacji i progi ustawione kiedyś dalej znaczą to samo. Izoluje barwę od jasności.'
-        },
-        {
-          titlePL: 'Jasność sceny',
-          formulaPL: 'jasność = (R + G + B) / 3 / 255 × 100%',
-          textPL: 'Średnia wartość kanałów w procentach zakresu. Automatyka ekspozycji przesuwa ją pod spodem, więc to wskaźnik względny — porównuj dwie sceny, nie odczytuj jednej liczby jako pomiaru.'
-        },
-        {
-          titlePL: 'Temperatura barwowa — przybliżenie McCamy’ego',
-          formulaPL: 'n = (x − 0,3320) / (y − 0,1858)\nCCT = −449 n³ + 3525 n² − 6823,3 n + 5520,33',
-          textPL: 'Najpierw odwracamy gamma sRGB, potem przechodzimy macierzą na CIE XYZ dla bieli D65 i liczymy chromatyczność x, y. Wzór McCamy’ego jest wiarygodny mniej więcej między 2000 K a 12500 K. Poza tym zakresem sześcian rozjeżdża się, więc wynik jest ucinany i oznaczany jako niewiarygodny — wtedy linia bazowa skali robi się kreskowana i pada zdanie „poza zakresem metody”.'
-        },
-        {
-          titlePL: 'Wpływ na rytm dobowy — współczynnik melanopiczny',
-          formulaPL: 'mel = 0,0016 R + 0,3110 G + 0,8460 B\nY = 0,2127 R + 0,7152 G + 0,0722 B\nwynik = (mel / Y) × normalizacja do 1,00 dla neutralnej bieli',
-          textPL: 'Wszystkie trzy kanały w wartościach liniowych. Prawdziwa wielkość to całka widma z krzywą czułości melanopsyny (szczyt około 490 nm); aparat ma trzy szerokie kanały, więc ważymy prymarne barwy sRGB czułością melanopiczną przy ich przybliżonych długościach fali (R 612 nm, G 549 nm, B 465 nm). Kierunek zmian jest wiarygodny, wartość bezwzględna nie jest — dlatego przy tej liczbie stoi znak „≈”.'
-        },
-        {
-          titlePL: 'Migotanie',
-          formulaPL: 'migotanie = (max − min) / (max + min) × 100%',
-          textPL: 'Definicja IES, liczona z okna próbek jasności. Częstotliwość szacujemy z liczby przejść sygnału przez wartość średnią. Próbkowanie 5 Hz widzi modulację tylko poniżej 2,5 Hz (granica Nyquista), a za wiarygodną uznajemy dopiero częstotliwość między 0,2 a 2 Hz przy amplitudzie od 0,5% — poniżej tego progu przejścia przez średnią to szum czujnika, nie pulsowanie źródła.'
-        },
-        {
-          titlePL: 'Równomierność',
-          formulaPL: 'równomierność = najciemniejsze pole / najjaśniejsze pole × 100%',
-          textPL: 'Wycinek dzielimy na dziewięć pól w siatce 3×3 i porównujemy skrajne. 100% to światło rozłożone idealnie równo. Niska wartość na ekranie oznacza przeświecanie podświetlenia albo odbicie, na biurku — źle ustawioną lampę. To jedyna wielkość, przy której wyżej znaczy lepiej razem z komfortem.'
-        },
-        {
-          titlePL: 'Komfort wzrokowy',
-          formulaPL: '100 punktów minus kary:\nrytm dobowy powyżej 0,75 — do 35 pkt\nbarwa powyżej 4000 K — do 25 pkt\nmigotanie powyżej 5% — do 25 pkt\nrównomierność poniżej 60% — do 15 pkt',
-          textPL: 'Jedna ocena zamiast sześciu liczb. Wielkość, której nie dało się zmierzyć, nie daje żadnej kary — brak danych nigdy nie udaje dobrego wyniku. Wagi są naszą oceną redakcyjną, nie normą; dlatego moduł 01 pokazuje rozbicie na składniki, żeby dało się z tą oceną nie zgodzić.'
-        }
-      ],
-
-      rangesTitle: 'Zakresy i progi',
-      rangesLead: 'Progi poniżej są tymi, które obowiązują w tej chwili — jeśli zmieniłeś je w module 02, tabela pokazuje twoje wartości, nie fabryczne.',
-      colMetric: 'Wielkość',
-      colUnit: 'Jednostka',
-      colRange: 'Zakres',
-      colWarn: 'Uwaga',
-      colCrit: 'Krytycznie',
-      colDirection: 'Kierunek',
-      dirNormal: 'niżej znaczy łagodniej',
-      dirInvert: 'wyżej znaczy lepiej',
-
-      privacyTitle: 'Dane i prywatność',
-      privacyText: 'Obraz z kamery nigdzie nie jest wysyłany ani zapisywany — z każdej klatki zostają tylko trzy liczby. Pomiary, progi i ustawienia leżą w pamięci przeglądarki na tym urządzeniu. Aplikacja nie wykonuje żadnych zapytań sieciowych i działa w trybie offline.',
-
-      mdrTitle: 'Zastrzeżenie',
-      mdrText: 'Żaden wynik nie jest diagnozą ani poradą zdrowotną. Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.',
-
-      freeText: 'Aplikacja jest w całości darmowa i taka zostaje: wszystkie siedem wielkości, historia, raporty, eksport i tryb offline działają bez konta, bez opłat i bez limitów. Kto chce podziękować, znajdzie moduł 10 „Wsparcie”.'
-    };
-
-    /* Module 13 needs a few sentences that 8.x does not list. They are added to
-       the existing `settings` table rather than to a second one, so a module
-       author looking for a settings string finds all of them in one place. */
-    var st = S.TEXT.settings;
-    if (st) {
-      if (!st.appearanceTitle) st.appearanceTitle = 'Wygląd';
-      if (!st.motionGroup) st.motionGroup = 'Ruch';
-      if (!st.themeHint) st.themeHint = 'Motyw „jak w systemie” zmienia się razem z ustawieniem telefonu.';
-      if (!st.textHint) st.textHint = 'Powiększa cały interfejs, nie tylko litery — klawisze i wiersze rosną razem z tekstem.';
-      if (!st.motionHint) st.motionHint = 'Wyłącza wszystkie przejścia. Wskazówka skali przeskakuje wtedy raz na sekundę zamiast płynąć.';
-      if (!st.dataTitle) st.dataTitle = 'Dane';
-      if (!st.clearHintTpl) st.clearHintTpl = 'W historii jest teraz {count} zapisanych punktów.';
-      if (!st.clearHintEmpty) st.clearHintEmpty = 'Historia jest pusta.';
-      if (!st.clearTitle) st.clearTitle = 'Wyczyścić historię?';
-      if (!st.aboutTitle) st.aboutTitle = 'O aplikacji';
-      if (!st.versionTpl) st.versionTpl = 'Monitor Światła, wersja {version}.';
-      if (!st.offlineText) st.offlineText = 'Aplikacja działa bez sieci. Po pierwszym otwarciu wszystkie jej pliki leżą w pamięci przeglądarki, więc tryb samolotowy niczego nie zmienia. Nic nie jest wysyłane na żaden serwer, bo aplikacja nie wykonuje zapytań sieciowych.';
-      if (!st.docsKey) st.docsKey = 'Otwórz dokumentację';
-    }
+    if (typeof S.registerText === 'function') S.registerText(TEXT_SHAPE);
   }
 
   installText();
@@ -174,6 +205,30 @@
   function TLIST(path) {
     var found = resolve(path);
     return (found && found.length) ? found : [];
+  }
+
+  /* ------------------------------------------------------------------
+     Nazwy i opisy siedmiu wielkości
+
+     Metrics.CATALOGUE jest wspólny dla v2-v4 i nosi w sobie polskie namePL,
+     shortPL i helpPL. Katalogu nie ruszamy, więc napisy bierzemy z warstwy
+     językowej (klucze 'metric.<id>.*'); polski z katalogu został ostatnią
+     deską ratunku i nigdy nie powinien być widoczny.
+     ------------------------------------------------------------------ */
+
+  function mName(m) {
+    var S = global.Scale;
+    return (m && S && S.metricName) ? S.metricName(m.id) : (m ? m.namePL : '');
+  }
+
+  function mShort(m) {
+    var S = global.Scale;
+    return (m && S && S.metricShort) ? S.metricShort(m.id) : (m ? m.shortPL : '');
+  }
+
+  function mHelp(m) {
+    var S = global.Scale;
+    return (m && S && S.metricHelp) ? S.metricHelp(m.id) : (m ? m.helpPL : '');
   }
 
   /* ------------------------------------------------------------------
@@ -279,13 +334,13 @@
       var item = put(list, make('div', 'ms3-doc__item'));
 
       var head = put(item, make('div', 'ms3-doc__head'));
-      put(head, make('h3', 'ms3-doc__title', m.namePL));
+      put(head, make('h3', 'ms3-doc__title', mName(m)));
       if (m.id === 'kelvin' || m.id === 'melanopic') {
         put(head, make('span', 'ms3-badge ms3-badge--approx', T('channels.approx')));
       }
 
-      put(item, make('p', 'ms3-doc__text', m.shortPL));
-      put(item, make('p', 'ms3-doc__text', m.helpPL));
+      put(item, make('p', 'ms3-doc__text', mShort(m)));
+      put(item, make('p', 'ms3-doc__text', mHelp(m)));
 
       var kv = put(item, make('dl', 'ms3-kv'));
       kvRow(kv, T('help.unit'), m.unit);
@@ -348,7 +403,7 @@
       var m = cat[i];
       var t = (th2 && th2[m.id]) ? th2[m.id] : { warn: m.warn, crit: m.crit };
       var tr = put(tbody, make('tr'));
-      var name = put(tr, make('th', null, m.namePL));
+      var name = put(tr, make('th', null, mName(m)));
       name.setAttribute('scope', 'row');
       put(tr, make('td', null, m.unit));
       put(tr, make('td', 'ms3-num', rangeWords(m)));
@@ -384,6 +439,15 @@
   var settingsView = null;
 
   function buildSettings(root) {
+    /* Ekran buduje się od nowa po każdej zmianie języka, więc stan trzymany
+       między wywołaniami trzeba wyzerować — inaczej sync() pisałby po węzłach
+       poprzedniego wcielenia ekranu. */
+    groups = [];
+
+    /* Język — pierwsza sekcja, przed wyglądem: to ona decyduje o tym, w czym
+       jest napisana reszta ekranu. */
+    put(root, languageSection());
+
     var look = put(root, section(T('settings.appearanceTitle')));
 
     /* Theme. Three states, and "system" is one of them — a two-way switch
@@ -452,9 +516,73 @@
     // The history count changes while the screen is open (a measurement is
     // still running underneath it), so the hint refreshes on the engine's own
     // event rather than on a timer.
-    if (global.Bus && typeof global.Bus.on === 'function') {
+    // Raz na życie karty, nie raz na zbudowanie ekranu: po zmianie języka
+    // ekran buduje się ponownie, a druga subskrypcja liczyłaby historię dwa
+    // razy przy każdej próbce.
+    if (!historyWatched && global.Bus && typeof global.Bus.on === 'function') {
+      historyWatched = true;
       global.Bus.on('engine:history', renderSettings);
     }
+  }
+
+  var historyWatched = false;
+
+  /* ------------------------------------------------------------------
+     Wybór języka (moduł 12)
+
+     Trzydzieści pozycji to za dużo na przełącznik segmentowy z 5.13, więc
+     tutaj stoi zwykły <select>: jedna kontrolka, którą czytnik ekranu, gest
+     przewijania i klawiatura już znają, i która na telefonie otwiera systemową
+     listę wyboru. Nazwy języków są ich WŁASNYMI nazwami (endonimami) i celowo
+     nie są tłumaczone — listy szuka ten, kto szuka swojego języka.
+
+     Nic się przy tym nie pobiera: wszystkie słowniki leżą już w pamięci
+     przeglądarki razem z resztą aplikacji.
+     ------------------------------------------------------------------ */
+
+  var AUTO = 'auto';
+
+  function languageSection() {
+    var sec = section(T('settings.langLabel'));
+    var I18n = global.I18n;
+
+    /* Nagłówek sekcji JEST etykietą listy — druga etykieta nad kontrolką
+       powtarzałaby to samo słowo dwa razy pod rząd, a czytnik ekranu
+       przeczytałby je dwa razy. Tak samo rozwiązany jest przełącznik ruchu
+       niżej: nazwę nosi grupa, nie kontrolka. */
+    var heading = sec.firstChild;
+    if (heading) heading.id = 'ms3LangTitle';
+
+    var field = put(sec, make('div', 'ms3-field'));
+
+    var select = put(field, make('select', 'ms3-field__input'));
+    select.id = 'ms3Lang';
+    if (heading) select.setAttribute('aria-labelledby', 'ms3LangTitle');
+
+    var list = (I18n && I18n.LANGUAGES) ? I18n.LANGUAGES : [];
+    var auto = put(select, make('option', null, T('settings.langAuto')));
+    auto.value = AUTO;
+    for (var i = 0; i < list.length; i += 1) {
+      var opt = put(select, make('option', null, list[i].endonym));
+      opt.value = list[i].code;
+      /* lang na <option> mówi czytnikowi ekranu, jakim głosem przeczytać tę
+         jedną pozycję — bez tego lista trzydziestu nazw brzmi jak bełkot. */
+      opt.setAttribute('lang', list[i].code);
+    }
+
+    select.value = (I18n && I18n.isAuto && I18n.isAuto()) ? AUTO
+      : ((I18n && I18n.language && I18n.language()) || AUTO);
+
+    select.addEventListener('change', function () {
+      if (!I18n || typeof I18n.setLanguage !== 'function') return;
+      I18n.setLanguage(select.value === AUTO ? null : select.value);
+    });
+
+    /* Dwa akapity, nie jedno zdanie sklejone spacją: pierwszy mówi, czego
+       dotyczy lista, drugi — co znaczy jej pierwsza pozycja. */
+    put(field, make('p', 'ms3-field__hint', T('settings.langHelp')));
+    put(field, make('p', 'ms3-field__hint', T('settings.langAutoHint')));
+    return sec;
   }
 
   function setting(key, fallback) {

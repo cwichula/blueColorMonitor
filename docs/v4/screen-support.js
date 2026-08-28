@@ -5,14 +5,16 @@
  *      na zewnętrzny profil. Nic tu nie jest sprzedawane, nic się nie odblokowuje
  *      i nic nie jest zamknięte: wszystkie siedem wielkości działa dla każdego
  *      od pierwszego uruchomienia.
- *   2. ustawienia: motyw, paleta, tekst, ruch, pomiar, dane, o aplikacji.
+ *   2. ustawienia: język, motyw, paleta, tekst, ruch, pomiar, dane, o aplikacji.
  *
  * Ten plik zastąpił dawny screen-account.js. Razem z nim zniknęły billing.js
  * i auth.js: nie ma już ani symulowanego konta, ani symulowanej płatności,
  * ani arkusza sprzedażowego, który ten plik kiedyś trzymał.
  *
  * Zasady, które ten plik trzyma świadomie:
- *   — ani jednego polskiego literału: każde zdanie pochodzi z UI.T albo Scale.TEXT;
+ *   — ani jednego literału językowego: każde zdanie pochodzi z UI.T, ze Scale.TEXT
+ *     albo wprost z warstwy językowej (funkcja L niżej) — a te trzy źródła i tak
+ *     sprowadzają się do jednego, do słowników w ../shared/i18n/ oraz i18n/;
  *   — ani jednego koloru: jedyne wartości barwne to próbki palet z Store.ACCENTS,
  *     wstawiane inline w gradient dysku, bo próbka musi pokazać kolor, którego
  *     akurat nie ma na ekranie (rozdział 5.K specyfikacji);
@@ -68,7 +70,8 @@
     swatches: {},
     themes: {},
     leadValue: null,
-    historyValue: null
+    historyValue: null,
+    languageValue: null
   };
   var offs = [];
 
@@ -97,6 +100,15 @@
 
   function S(path) {
     return read(window.Scale && window.Scale.TEXT, path);
+  }
+
+  /** Napis wprost z warstwy językowej, po kluczu kropkowanym. UI.T i Scale.TEXT
+   *  same z niej pochodzą; L() jest dla kluczy, których żaden z tych dwóch
+   *  słowników nie przepisuje do siebie — a taki jest cały wybór języka. */
+  function L(key, params) {
+    var I = window.I18n;
+    if (I && typeof I.t === 'function') return I.t(key, params);
+    return String(key);
   }
 
   function fill(template, map) {
@@ -267,6 +279,7 @@
     refs.themes = {};
 
     host.appendChild(nodeOf(UI.section(T('support.settingsTitle'))));
+    host.appendChild(languageCard());
     host.appendChild(themeCard());
     host.appendChild(accentCard());
     host.appendChild(nodeOf(UI.section(T('support.textMotion', 'support.settingsTitle'))));
@@ -278,6 +291,94 @@
     host.appendChild(nodeOf(UI.section(T('support.aboutTitle'))));
     host.appendChild(aboutCard());
     syncSettings();
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* E.1 Język                                                           */
+  /*                                                                     */
+  /* Wybór języka stoi na samej górze ustawień, przed motywem i paletą,   */
+  /* z jednego powodu: kto nie rozumie napisów na tym ekranie, ma dojść   */
+  /* do tego wiersza jak najkrócej. Nazwy języków są zapisane w nich      */
+  /* samych (endonimy) — szuka ich ten, kto szuka swojego, a nie ten, kto */
+  /* rozumie polski albo angielski.                                      */
+  /* ------------------------------------------------------------------ */
+
+  function languageName() {
+    var I = window.I18n;
+    if (!I) return '';
+    if (typeof I.isAuto === 'function' && I.isAuto()) return L('language.auto');
+    var code = I.language();
+    var list = I.LANGUAGES || [];
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i].code === code) return list[i].endonym;
+    }
+    return code;
+  }
+
+  function languageCard() {
+    var card = UI.card({ className: 'ms4-card' });
+    var body = card.body || nodeOf(card);
+    var list = el('div', 'ms4-list ms4-list--inset');
+
+    var row = nodeOf(UI.row({
+      icon: 'book',
+      title: L('language.label'),
+      subtitle: L('language.help'),
+      value: languageName(),
+      chevron: true,
+      onClick: openLanguageSheet
+    }));
+    refs.languageValue = row.querySelector('.ms4-row__value');
+    list.appendChild(row);
+
+    body.appendChild(list);
+    return nodeOf(card);
+  }
+
+  /** Lista trzydziestu języków plus pozycja „zgodnie z urządzeniem”. Wybór
+   *  zapisuje I18n.setLanguage(); co dalej dzieje się z ekranem, rozstrzyga
+   *  app.js na zdarzeniu 'i18n:changed' — ten plik o przerysowaniu nie decyduje. */
+  function openLanguageSheet() {
+    var I = window.I18n;
+    if (!I) return;
+
+    var body = el('div', 'ms4-stack');
+    body.appendChild(el('p', 'ms4-card__subtitle', L('language.help')));
+
+    var list = el('div', 'ms4-list');
+    var auto = typeof I.isAuto === 'function' ? I.isAuto() : false;
+    var current = I.language();
+
+    list.appendChild(nodeOf(UI.row({
+      icon: 'settings',
+      title: L('language.auto'),
+      subtitle: L('language.autoHint'),
+      control: auto ? icon('check', 20) : null,
+      onClick: function () { pickLanguage(null); }
+    })));
+
+    var langs = I.LANGUAGES || [];
+    for (var i = 0; i < langs.length; i += 1) {
+      (function (lang) {
+        list.appendChild(nodeOf(UI.row({
+          title: lang.endonym,
+          control: (!auto && lang.code === current) ? icon('check', 20) : null,
+          onClick: function () { pickLanguage(lang.code); }
+        })));
+      }(langs[i]));
+    }
+    body.appendChild(list);
+
+    var sheet = UI.sheet({
+      title: L('language.label'),
+      size: 'full',
+      body: body
+    });
+
+    function pickLanguage(code) {
+      sheet.close();
+      if (window.I18n && typeof I18n.setLanguage === 'function') I18n.setLanguage(code);
+    }
   }
 
   function themeCard() {
@@ -657,6 +758,7 @@
       }
     }
     if (refs.leadValue) refs.leadValue.textContent = leadName();
+    if (refs.languageValue) refs.languageValue.textContent = languageName();
     updateHistoryValue();
   }
 

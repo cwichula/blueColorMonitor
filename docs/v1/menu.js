@@ -21,6 +21,20 @@
   var STORAGE_KEY = 'blueMonitor.nav.v1';
   var MAX_STACK = 10;
 
+  // Numer wersji stoi w jednym miejscu i wchodzi do napisów jako wstawka —
+  // nie jest tłumaczony, ale zdanie wokół niego owszem.
+  var APP_VERSION = '1.0';
+
+  /* ------------------------------------------------------------------
+     Warstwa językowa. T() zamiast I18n.t() wprost: gdyby shared/i18n.js się
+     nie wczytał, dolny pasek ma pokazać klucze, a nie zniknąć — nawigacja
+     jest jedyną drogą do ekranu pomiaru.
+     ------------------------------------------------------------------ */
+  function T(key, params) {
+    var i18n = window.I18n;
+    return (i18n && typeof i18n.t === 'function') ? i18n.t(key, params) : String(key);
+  }
+
   /* ------------------------------------------------------------------
      Inline SVG icons. No external assets anywhere in this app — the
      service worker has to be able to serve everything offline.
@@ -55,15 +69,22 @@
   /* ------------------------------------------------------------------
      Screen registry
      ------------------------------------------------------------------ */
+  // labelKey, nie gotowy napis: nazwa ekranu jest odczytywana przy każdym
+  // budowaniu paska i przy każdym ogłoszeniu zmiany ekranu, a między tymi
+  // chwilami język mógł się zmienić.
   var SCREENS = [
-    { id: 'camera',     labelPL: 'Kamera',                 kind: 'tab',     panelId: 'panelCamera',     inBar: true,  iconSvg: ICON_CAMERA, btnId: 'navBtnCamera' },
-    { id: 'monitoring', labelPL: 'Monitoring',             kind: 'tab',     panelId: 'panelMonitoring', inBar: true,  iconSvg: ICON_GAUGE,  btnId: 'navBtnMonitoring' },
-    { id: 'support',    labelPL: 'Wsparcie',               kind: 'overlay', panelId: 'panelSupport',    inBar: true,  iconSvg: ICON_CUP,    btnId: 'navBtnSupport' },
-    { id: 'more',       labelPL: 'Więcej',                 kind: 'overlay', panelId: 'panelMore',       inBar: true,  iconSvg: ICON_MORE,   btnId: 'navBtnMore' },
-    { id: 'docs',       labelPL: 'Dokumentacja',           kind: 'overlay', panelId: 'panelMethodology', inBar: false },
-    { id: 'about',      labelPL: 'O aplikacji i kontakt',  kind: 'overlay', panelId: 'panelAbout',      inBar: false },
-    { id: 'settings',   labelPL: 'Progi ostrzegania',      kind: 'alias',   target: 'monitoring',       inBar: false }
+    { id: 'camera',     labelKey: 'nav.camera',     kind: 'tab',     panelId: 'panelCamera',      inBar: true,  iconSvg: ICON_CAMERA, btnId: 'navBtnCamera' },
+    { id: 'monitoring', labelKey: 'nav.monitoring', kind: 'tab',     panelId: 'panelMonitoring',  inBar: true,  iconSvg: ICON_GAUGE,  btnId: 'navBtnMonitoring' },
+    { id: 'support',    labelKey: 'nav.support',    kind: 'overlay', panelId: 'panelSupport',     inBar: true,  iconSvg: ICON_CUP,    btnId: 'navBtnSupport' },
+    { id: 'more',       labelKey: 'nav.more',       kind: 'overlay', panelId: 'panelMore',        inBar: true,  iconSvg: ICON_MORE,   btnId: 'navBtnMore' },
+    { id: 'docs',       labelKey: 'nav.docs',       kind: 'overlay', panelId: 'panelMethodology', inBar: false },
+    { id: 'about',      labelKey: 'nav.about',      kind: 'overlay', panelId: 'panelAbout',       inBar: false },
+    { id: 'settings',   labelKey: 'nav.settings',   kind: 'alias',   target: 'monitoring',        inBar: false }
   ];
+
+  function screenLabel(screen) {
+    return screen ? T(screen.labelKey || screen.id) : '';
+  }
 
   /* ------------------------------------------------------------------
      Module state
@@ -144,7 +165,7 @@
     }
     navEl.className = 'nav-bar';
     navEl.setAttribute('role', 'navigation');
-    navEl.setAttribute('aria-label', 'Menu główne');
+    navEl.setAttribute('aria-label', T('nav.aria'));
 
     liveEl = byId('navLive');
     if (!liveEl) {
@@ -187,7 +208,7 @@
 
     var label = document.createElement('span');
     label.className = 'nav-btn-label';
-    label.textContent = screen.labelPL;
+    label.textContent = screenLabel(screen);
 
     btn.appendChild(icon);
     btn.appendChild(label);
@@ -251,7 +272,7 @@
   /* ------------------------------------------------------------------
      "Więcej" screen
      ------------------------------------------------------------------ */
-  function makeListItem(id, titlePL, subPL, onClick) {
+  function makeListItem(id, titleKey, subKey, onClick) {
     var li = document.createElement('li');
     var btn = document.createElement('button');
     btn.type = 'button';
@@ -263,11 +284,11 @@
 
     var title = document.createElement('span');
     title.className = 'ui-list-item-title';
-    title.textContent = titlePL;
+    title.textContent = T(titleKey);
 
     var sub = document.createElement('span');
     sub.className = 'ui-list-item-sub';
-    sub.textContent = subPL;
+    sub.textContent = T(subKey);
 
     body.appendChild(title);
     body.appendChild(sub);
@@ -284,12 +305,12 @@
     return li;
   }
 
-  function makeSection(headingId, titlePL, items) {
+  function makeSection(headingId, titleKey, items) {
     var frag = document.createDocumentFragment();
     var h = document.createElement('h3');
     h.id = headingId;
     h.className = 'ui-section-title';
-    h.textContent = titlePL;
+    h.textContent = T(titleKey);
     frag.appendChild(h);
 
     var ul = document.createElement('ul');
@@ -310,23 +331,24 @@
     h2.id = 'moreTitle';
     h2.className = 'ui-screen-title';
     h2.tabIndex = -1;
-    h2.textContent = 'Więcej';
+    h2.textContent = T('more.title');
     panel.appendChild(h2);
 
-    // A) USTAWIENIA
-    panel.appendChild(makeSection('moreSectionSettings', 'USTAWIENIA', [
-      makeListItem('moreBtnThresholds', 'Progi ostrzegania',
-        'Ustaw granice stref bezpiecznej, umiarkowanej i szkodliwej.',
+    // A) USTAWIENIA. Wybór języka stoi tu, a nie w „Ustawieniach progów stref”:
+    //    progi są cechą pomiaru, język jest cechą człowieka i musi być
+    //    znajdowalny również wtedy, gdy ktoś nie rozumie żadnego napisu wokół —
+    //    dlatego lista pokazuje nazwy własne języków (endonimy).
+    panel.appendChild(makeSection('moreSectionSettings', 'more.section.settings', [
+      makeListItem('moreBtnThresholds', 'more.thresholds.title', 'more.thresholds.sub',
         function (btn) { go('settings', { from: btn }); })
     ]));
+    panel.appendChild(buildLanguageRow());
 
     // B) POMOC
-    panel.appendChild(makeSection('moreSectionHelp', 'POMOC', [
-      makeListItem('moreBtnDocs', 'Dokumentacja',
-        'Jak działa pomiar, jednostki, normy i strefy.',
+    panel.appendChild(makeSection('moreSectionHelp', 'more.section.help', [
+      makeListItem('moreBtnDocs', 'more.docs.title', 'more.docs.sub',
         function (btn) { go('docs', { from: btn }); }),
-      makeListItem('moreBtnAbout', 'O aplikacji i kontakt',
-        'Wersja, prywatność i kontakt.',
+      makeListItem('moreBtnAbout', 'more.about.title', 'more.about.sub',
         function (btn) { go('about', { from: btn }); })
     ]));
 
@@ -336,12 +358,12 @@
     var supportLine = document.createElement('p');
     supportLine.id = 'moreSupportLine';
     supportLine.className = 'ui-muted';
-    supportLine.appendChild(document.createTextNode('Aplikacja jest w całości bezpłatna. '));
+    supportLine.appendChild(document.createTextNode(T('more.free') + ' '));
     var supportBtn = document.createElement('button');
     supportBtn.type = 'button';
     supportBtn.id = 'moreSupportBtn';
     supportBtn.className = 'btn-link';
-    supportBtn.textContent = 'Możesz ją dobrowolnie wesprzeć.';
+    supportBtn.textContent = T('more.supportLink');
     supportBtn.addEventListener('click', function () { go('support', { from: supportBtn }); });
     supportLine.appendChild(supportBtn);
     panel.appendChild(supportLine);
@@ -349,29 +371,97 @@
     var version = document.createElement('p');
     version.id = 'moreVersionLine';
     version.className = 'ui-muted';
-    version.textContent = 'Wersja 1.0 · Wszystkie funkcje dostępne bez konta i bez opłat';
+    version.textContent = T('more.version', { version: APP_VERSION });
     panel.appendChild(version);
+  }
+
+  /* ------------------------------------------------------------------
+     Wybór języka
+
+     Zwykły <select>, a nie własna lista: na telefonie system pokazuje go
+     jako pełnoekranowy wybór z własnym przewijaniem i wyszukiwaniem po
+     pierwszej literze, w piśmie każdego z trzydziestu języków. Ręcznie
+     zrobiona lista trzydziestu przycisków byłaby gorsza w każdym z nich.
+
+     Pozycje są podpisane NAZWĄ WŁASNĄ języka (endonimem) z I18n.LANGUAGES —
+     tej listy szuka ktoś, kto nie rozumie języka, w którym aplikacja właśnie
+     mówi, więc „Deutsch”, a nie „niemiecki”.
+     ------------------------------------------------------------------ */
+  function buildLanguageRow() {
+    var wrap = document.createElement('div');
+    wrap.id = 'moreLanguageRow';
+    wrap.className = 'ui-lang-row';
+
+    var label = document.createElement('label');
+    label.id = 'moreLangLabel';
+    label.setAttribute('for', 'moreLangSelect');
+    label.textContent = T('language.label');
+    wrap.appendChild(label);
+
+    var select = document.createElement('select');
+    select.id = 'moreLangSelect';
+    select.className = 'ui-lang-select';
+
+    var i18n = window.I18n;
+    var languages = (i18n && i18n.LANGUAGES) ? i18n.LANGUAGES : [];
+    var isAuto = !!(i18n && typeof i18n.isAuto === 'function' && i18n.isAuto());
+    var active = (i18n && typeof i18n.language === 'function') ? i18n.language() : '';
+
+    // Pierwsza pozycja to brak wyboru, nie osobny język: dopóki nikt nic nie
+    // wybrał, aplikacja idzie za ustawieniem telefonu i ma za nim iść dalej,
+    // gdy ono się zmieni.
+    var auto = document.createElement('option');
+    auto.value = 'auto';
+    auto.textContent = T('language.auto');
+    if (isAuto) auto.selected = true;
+    select.appendChild(auto);
+
+    for (var i = 0; i < languages.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = languages[i].code;
+      opt.textContent = languages[i].endonym;
+      opt.lang = languages[i].code;
+      if (!isAuto && languages[i].code === active) opt.selected = true;
+      select.appendChild(opt);
+    }
+
+    select.addEventListener('change', function () {
+      if (window.I18nDom && typeof window.I18nDom.setLanguage === 'function') {
+        window.I18nDom.setLanguage(select.value);
+      }
+    });
+    wrap.appendChild(select);
+
+    var help = document.createElement('p');
+    help.id = 'moreLangHelp';
+    help.className = 'ui-muted';
+    help.textContent = T('language.help');
+    wrap.appendChild(help);
+
+    return wrap;
   }
 
   /* ------------------------------------------------------------------
      "O aplikacji i kontakt" screen
      ------------------------------------------------------------------ */
-  function makeCard(id, paragraphs) {
+  // Każdy akapit jest osobnym kluczem: to jednostka, którą tłumacz dostaje
+  // do przetłumaczenia, i jednostka, którą czytnik ekranu czyta jako całość.
+  function makeCard(id, paragraphKeys, params) {
     var section = document.createElement('section');
     section.className = 'card';
     if (id) section.id = id;
-    for (var i = 0; i < paragraphs.length; i++) {
+    for (var i = 0; i < paragraphKeys.length; i++) {
       var p = document.createElement('p');
-      p.textContent = paragraphs[i];
+      p.textContent = T(paragraphKeys[i], params);
       section.appendChild(p);
     }
     return section;
   }
 
-  function makeSectionTitle(titlePL) {
+  function makeSectionTitle(titleKey) {
     var h = document.createElement('h3');
     h.className = 'ui-section-title';
-    h.textContent = titlePL;
+    h.textContent = T(titleKey);
     return h;
   }
 
@@ -383,8 +473,8 @@
     btn.id = id;
     btn.className = 'ui-back-btn';
     btn.setAttribute('data-nav-back', '');
-    btn.setAttribute('aria-label', 'Wróć do poprzedniego ekranu');
-    btn.textContent = '← Wróć';
+    btn.setAttribute('aria-label', T('action.back.aria'));
+    btn.textContent = T('action.back');
     row.appendChild(btn);
     return row;
   }
@@ -400,7 +490,7 @@
     h2.id = 'aboutTitle';
     h2.className = 'ui-screen-title';
     h2.tabIndex = -1;
-    h2.textContent = 'O aplikacji i kontakt';
+    h2.textContent = T('about.title');
     panel.appendChild(h2);
 
     // Zastrzeżenie medyczne pierwsze — to najważniejsza rzecz na tym ekranie.
@@ -409,48 +499,36 @@
     disclaimer.className = 'card ui-disclaimer';
     disclaimer.setAttribute('role', 'note');
     var dHead = document.createElement('h3');
-    dHead.innerHTML = '<span class="ui-icon-warn" aria-hidden="true">' + ICON_WARN + '</span> To nie jest wyrób medyczny';
+    // Ikona jest osobnym elementem, a nie częścią napisu: gdyby weszła do
+    // wartości klucza, każdy z trzydziestu tłumaczy dostałby do przetłumaczenia
+    // kawałek SVG. Napis dokładamy tekstem, więc żaden przekład nie może
+    // wstrzyknąć znaczników do dokumentu.
+    var dIcon = document.createElement('span');
+    dIcon.className = 'ui-icon-warn';
+    dIcon.setAttribute('aria-hidden', 'true');
+    dIcon.innerHTML = ICON_WARN;
+    dHead.appendChild(dIcon);
+    dHead.appendChild(document.createTextNode(' ' + T('disclaimer.title')));
     disclaimer.appendChild(dHead);
     var dText = document.createElement('p');
-    dText.textContent = 'Ta aplikacja nie jest wyrobem medycznym. Nie służy do diagnozowania, ' +
-      'leczenia ani zapobiegania jakimkolwiek chorobom. Wyniki pomiaru kamerą telefonu mają ' +
-      'charakter orientacyjny i nie zastępują badania ani porady lekarza. W sprawach zdrowia ' +
-      'wzroku skonsultuj się z lekarzem lub optometrystą. Progi stref w tej aplikacji nie ' +
-      'odwzorowują żadnej normy bezpieczeństwa — szczegóły w Dokumentacji, rozdział 3.';
+    dText.textContent = T('disclaimer.body.about');
     disclaimer.appendChild(dText);
     panel.appendChild(disclaimer);
 
-    panel.appendChild(makeSectionTitle('Czym jest ta aplikacja'));
-    panel.appendChild(makeCard('aboutWhat', [
-      'Monitoring Światła Szkodliwego mierzy kamerą telefonu, ile niebieskiego światła ' +
-      'rejestruje sensor, i pokazuje to na dwóch gałkach oraz wykresach ze strefami. ' +
-      'Wszystkie funkcje — pomiar, historia, raporty, profile progów, alert progowy, ' +
-      'eksport CSV i Dokumentacja — są dostępne dla każdego, bez konta i bez opłat.',
-      'Aplikacja jest udostępniana „tak jak jest”, do użytku informacyjnego. Wynik pomiaru ' +
-      'ma charakter orientacyjny i nie jest podstawą do decyzji zdrowotnych.'
-    ]));
+    panel.appendChild(makeSectionTitle('about.what.title'));
+    panel.appendChild(makeCard('aboutWhat', ['about.what.p1', 'about.what.p2'],
+      { app: T('app.name') }));
 
-    panel.appendChild(makeSectionTitle('Prywatność i dane'));
-    panel.appendChild(makeCard('aboutPrivacy', [
-      'Obraz z kamery jest analizowany wyłącznie na Twoim urządzeniu i nigdy nie jest ' +
-      'wysyłany na żaden serwer. Nie tworzymy kont i nie zbieramy Twoich danych. ' +
-      'Ustawienia progów, profile i historia pomiarów są zapisywane tylko w pamięci tego ' +
-      'urządzenia i tej przeglądarki.',
-      'Aplikacja nie wyświetla reklam i nie odzywa się do sieci. Jedyny wyjątek to ' +
-      'przycisk na ekranie „Wsparcie”: gdy go klikniesz, przeglądarka otworzy stronę ' +
-      'zewnętrzną w nowej karcie. Nic się nie dzieje, dopóki sam tego nie zrobisz.'
-    ]));
+    panel.appendChild(makeSectionTitle('about.privacy.title'));
+    panel.appendChild(makeCard('aboutPrivacy', ['about.privacy.p1', 'about.privacy.p2']));
 
-    panel.appendChild(makeSectionTitle('Kontakt'));
-    panel.appendChild(makeCard('aboutContact', [
-      'Uwagi, błędy i propozycje: [E-MAIL]. Odpowiadamy, gdy tylko się da — to ' +
-      'projekt utrzymywany po godzinach.'
-    ]));
+    panel.appendChild(makeSectionTitle('about.contact.title'));
+    panel.appendChild(makeCard('aboutContact', ['about.contact.p1']));
 
     var version = document.createElement('p');
     version.id = 'aboutVersionLine';
     version.className = 'ui-muted';
-    version.textContent = 'Wersja 1.0';
+    version.textContent = T('about.version', { version: APP_VERSION });
     panel.appendChild(version);
   }
 
@@ -559,7 +637,7 @@
       }
     }
 
-    announce('Ekran: ' + screen.labelPL);
+    announce(T('nav.announce', { screen: screenLabel(screen) }));
     emit('change', { from: from, to: screen.id });
   }
 
@@ -596,7 +674,7 @@
       // Aliases never take focus from the settings summary they open.
       navigate(target, { focus: false }, opts.replace ? 'replace' : 'push');
       openSettingsCard();
-      announce('Ekran: ' + screen.labelPL);
+      announce(T('nav.announce', { screen: screenLabel(screen) }));
       return true;
     }
 
@@ -622,12 +700,12 @@
     return true;
   }
 
-  function announce(messagePL) {
+  function announce(message) {
     if (!liveEl) liveEl = byId('navLive');
     if (!liveEl) return;
     // Re-announce the same text reliably by clearing first.
     liveEl.textContent = '';
-    var text = String(messagePL || '');
+    var text = String(message || '');
     window.setTimeout(function () { liveEl.textContent = text; }, 30);
   }
 
@@ -718,7 +796,7 @@
         currentId = id;
         updateBarState();
         if (id !== 'support') writeStore({ lastScreen: id });
-        announce('Ekran: ' + screen.labelPL);
+        announce(T('nav.announce', { screen: screenLabel(screen) }));
         emit('change', { from: null, to: id });
       });
     }
@@ -731,6 +809,33 @@
         go('about', { from: discLink });
       });
     }
+  }
+
+  /* ------------------------------------------------------------------
+     Zmiana języka
+
+     Pasek i oba ekrany są budowane od nowa, a nie tłumaczone na miejscu:
+     nie niosą kluczy, tylko gotowe napisy. Rzecz, o którą trzeba tu zadbać
+     osobno, to fokus — listę języków przebudowujemy dokładnie w chwili,
+     gdy stoi na niej kursor, więc bez tego przeniesienia użytkownik
+     klawiatury po każdej zmianie języka lądowałby na <body>.
+     ------------------------------------------------------------------ */
+  function wireLanguageChange() {
+    if (!window.I18nDom || typeof window.I18nDom.onChange !== 'function') return;
+    window.I18nDom.onChange(function () {
+      var hadFocus = !!(document.activeElement && document.activeElement.id === 'moreLangSelect');
+      ensureShell();
+      buildBar();
+      updateBarState();
+      buildMore();
+      buildAbout();
+      if (hadFocus) {
+        var select = byId('moreLangSelect');
+        if (select) {
+          try { select.focus(); } catch (e) { /* odpięty z DOM */ }
+        }
+      }
+    });
   }
 
   /* ------------------------------------------------------------------
@@ -754,6 +859,7 @@
 
     registerOverlays();
     wireGlobalHandlers();
+    wireLanguageChange();
 
     // Wybór ekranu startowego. Wygrywa link bezpośredni, potem ostatnio
     // używany ekran. Ekran „Wsparcie” nigdy nie jest przywracany — aplikacja

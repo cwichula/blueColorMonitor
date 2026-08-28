@@ -17,8 +17,18 @@
     warning: '<path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>',
     critical: '<path fill="currentColor" d="M12 2 1 12l11 10 11-10L12 2zm-1 5h2v6h-2V7zm0 8h2v2h-2v-2z"/>'
   };
-  const ZONE_LABEL = { good: 'BEZPIECZNA', warning: 'UMIARKOWANA', critical: 'SZKODLIWA' };
   const ZONE_VAR = { good: '--status-good', warning: '--status-warning', critical: '--status-critical' };
+
+  // Warstwa językowa. Skrót przez własną funkcję, a nie przez I18n.t wprost:
+  // gdyby shared/i18n.js się nie wczytał, pomiar ma działać dalej i pokazywać
+  // klucze — nigdy nie wywrócić się na braku słownika.
+  const T = (key, params) => (window.I18n && typeof window.I18n.t === 'function')
+    ? window.I18n.t(key, params) : String(key);
+  // Liczba zapisana po myśli aktywnego języka: 2,5 po polsku, ٢٫٥ po arabsku,
+  // z separatorem tysięcy tego języka.
+  const N = (value) => (window.I18n && typeof window.I18n.number === 'function')
+    ? window.I18n.number(value) : String(value);
+  const zoneBadge = (zone) => T('zone.badge.' + zone);
 
   // ---- DOM: camera ----
   const video = document.getElementById('video');
@@ -49,12 +59,17 @@
   const shareWarnLabel = document.getElementById('shareWarnLabel');
   const shareCritLabel = document.getElementById('shareCritLabel');
   const infoBtn = document.getElementById('infoBtn');
+  const chartsTitle = document.getElementById('chartsTitle');
 
   // ---- state ----
   let stream = null;
   let facingMode = 'environment';
   let sampleTimer = null;
   let history = []; // {t, raw, share, brightness, zoneRaw, zoneShare}
+  // Ostatnia jasność sceny — trzymana osobno, bo po zmianie języka trzeba
+  // przepisać jej liczbę (separator dziesiętny bywa inny), a bufor historii
+  // może być pusty, gdy pomiar właśnie stoi.
+  let lastBrightness = null;
 
   // Populated from localStorage further down, once HISTORY_STORAGE_KEY and the
   // codec below it exist (they are `const`, so they cannot be touched earlier).
@@ -260,12 +275,16 @@
   function setStatus(g, zone, value) {
     const cls = zone == null ? 'idle' : zone;
     g.badge.className = `status-badge status-${cls}`;
-    g.label.textContent = zone == null ? 'Brak danych' : ZONE_LABEL[zone];
+    g.label.textContent = zone == null ? T('zone.none') : zoneBadge(zone);
     g.icon.innerHTML = zone == null ? '' : ICONS[zone];
     g.icon.style.color = zone == null ? '' : `var(${ZONE_VAR[zone]})`;
   }
   function updateGauge(g, zone, value) {
-    g.valueEl.textContent = value == null ? '--' : `${Math.round(value)}%`;
+    // Ostatnia para (strefa, wartość) zostaje na gałce, bo po zmianie języka
+    // trzeba przepisać jej etykietę, nie znając już bieżącej próbki.
+    g.lastZone = zone;
+    g.lastValue = value;
+    g.valueEl.textContent = value == null ? '--' : `${N(Math.round(value))}%`;
     setNeedle(g, value == null ? 0 : value);
     setStatus(g, zone, value);
   }
@@ -283,7 +302,7 @@
     return { w: canvas.width, h: canvas.height };
   }
 
-  function drawChart(canvas, ctx, accessor, emptyMessage, t) {
+  function drawChart(canvas, ctx, accessor, t) {
     const { w, h } = resizeCanvas(canvas);
     ctx.clearRect(0, 0, w, h);
 
@@ -315,7 +334,7 @@
       ctx.moveTo(padL, y);
       ctx.lineTo(padL + plotW, y);
       ctx.stroke();
-      ctx.fillText(String(tick), padL - 6, y);
+      ctx.fillText(N(tick), padL - 6, y);
     });
 
     ctx.strokeStyle = css('--baseline');
@@ -333,7 +352,7 @@
       ctx.fillStyle = css('--text-muted');
       ctx.textAlign = 'center';
       ctx.font = `${16 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
-      ctx.fillText(emptyMessage, padL + plotW / 2, padT + plotH / 2);
+      ctx.fillText(T('chart.empty'), padL + plotW / 2, padT + plotH / 2);
     } else {
       const xFor = (t) => padL + ((t - windowStart) / WINDOW_MS) * plotW;
       ctx.strokeStyle = css('--series-1');
@@ -366,9 +385,9 @@
     ctx.font = `${14 * (window.devicePixelRatio || 1)}px system-ui, sans-serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText('-60s', padL, h - 6);
+    ctx.fillText(T('chart.axis.past', { seconds: WINDOW_MS / 1000 }), padL, h - 6);
     ctx.textAlign = 'right';
-    ctx.fillText('teraz', padL + plotW, h - 6);
+    ctx.fillText(T('chart.axis.now'), padL + plotW, h - 6);
   }
 
   const chartRawCanvas = document.getElementById('chartRaw');
@@ -377,8 +396,8 @@
   const chartShareCtx = chartShareCanvas.getContext('2d');
 
   function drawCharts() {
-    drawChart(chartRawCanvas, chartRawCtx, (p) => ({ value: p.raw, zone: p.zoneRaw }), 'Uruchom kamerę, aby zobaczyć wykres', thresholds.raw);
-    drawChart(chartShareCanvas, chartShareCtx, (p) => ({ value: p.share, zone: p.zoneShare }), 'Uruchom kamerę, aby zobaczyć wykres', thresholds.share);
+    drawChart(chartRawCanvas, chartRawCtx, (p) => ({ value: p.raw, zone: p.zoneRaw }), thresholds.raw);
+    drawChart(chartShareCanvas, chartShareCtx, (p) => ({ value: p.share, zone: p.zoneShare }), thresholds.share);
   }
 
   function drawOverlay() {
@@ -393,13 +412,30 @@
     octx.strokeRect(x, y, cw, ch);
   }
 
+  const TABLE_ROWS_MAX = 60;
+
   function pushTableRow(p) {
-    const time = new Date(p.t).toLocaleTimeString('pl-PL', { hour12: false });
+    // Godzina w zapisie aktywnego języka. hour12 zostaje wyłączone celowo:
+    // w tabeli pomiarowej „14:03:07” czyta się szybciej niż „2:03:07 PM”,
+    // niezależnie od tego, co dany język uważa za domyślne.
+    const time = new Date(p.t).toLocaleTimeString(
+      (window.I18n && window.I18n.locale) ? window.I18n.locale() : undefined,
+      { hour12: false }
+    );
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${time}</td><td>${Math.round(p.raw)}%</td><td>${Math.round(p.share)}%</td>` +
-      `<td><span class="zone-dot" style="background:var(${ZONE_VAR[p.zoneShare]})"></span>${ZONE_LABEL[p.zoneShare]}</td>`;
+    tr.innerHTML = `<td>${time}</td><td>${N(Math.round(p.raw))}%</td><td>${N(Math.round(p.share))}%</td>` +
+      `<td><span class="zone-dot" style="background:var(${ZONE_VAR[p.zoneShare]})"></span>${zoneBadge(p.zoneShare)}</td>`;
     readingsBody.prepend(tr);
-    while (readingsBody.rows.length > 60) readingsBody.deleteRow(-1);
+    while (readingsBody.rows.length > TABLE_ROWS_MAX) readingsBody.deleteRow(-1);
+  }
+
+  // Po zmianie języka wiersze już wypisane zostałyby w starym języku, a nie da
+  // się ich przetłumaczyć na miejscu — nie niosą strefy ani liczb, tylko gotowy
+  // tekst. Dlatego budujemy je od nowa z bufora historii.
+  function rebuildTableRows() {
+    while (readingsBody.firstChild) readingsBody.removeChild(readingsBody.firstChild);
+    const recent = history.slice(-TABLE_ROWS_MAX);
+    for (const p of recent) pushTableRow(p);
   }
 
   // ---- sampling ----
@@ -450,7 +486,8 @@
 
     updateGauge(gaugeRaw, zoneRaw, raw);
     updateGauge(gaugeShare, zoneShare, share);
-    overallBrightnessEl.textContent = `${Math.round(brightness)}%`;
+    lastBrightness = brightness;
+    overallBrightnessEl.textContent = `${N(Math.round(brightness))}%`;
     pushTableRow(point);
     drawCharts();
     notify(sampleListeners, point);
@@ -466,6 +503,16 @@
   // matching what the native camera app shows; the "Dokumentacja" tab already covers
   // the measurement-noise trade-off this implies.
 
+  // Napis na zasłonie podglądu bywa zaproszeniem („Naciśnij Start”) albo
+  // komunikatem błędu kamery. Zapamiętujemy klucz i wstawki, bo po zmianie
+  // języka trzeba go odtworzyć w nowym — nie znając już przyczyny błędu.
+  let placeholderMsg = { key: 'camera.pressStart', params: null };
+  function setPlaceholderMessage(key, params) {
+    placeholderMsg = { key: key, params: params || null };
+    const p = placeholder.querySelector('p');
+    if (p) p.textContent = T(key, params);
+  }
+
   async function startCamera() {
     startBtn.disabled = true;
     try {
@@ -479,7 +526,7 @@
 
       stopBtn.disabled = false;
       switchBtn.disabled = false;
-      startBtn.textContent = 'Start';
+      startBtn.textContent = T('camera.start');
 
       // Księgowanie sesji na potrzeby podsumowania po zatrzymaniu pomiaru.
       // Nic w aplikacji nie ma prawa opóźnić ani zatrzymać kamery.
@@ -491,8 +538,9 @@
       sampleTimer = setInterval(takeSample, SAMPLE_MS);
     } catch (err) {
       placeholder.classList.remove('hidden');
-      placeholder.querySelector('p').textContent =
-        'Nie udało się uruchomić kamery. Sprawdź uprawnienia przeglądarki do kamery i spróbuj ponownie. (' + (err && err.message ? err.message : err) + ')';
+      // Komunikat przeglądarki (err.message) jest wstawką, a nie sklejeniem:
+      // w językach pisanych od prawej nawias musi stanąć po drugiej stronie.
+      setPlaceholderMessage('camera.error', { message: String(err && err.message ? err.message : err) });
       startBtn.disabled = false;
     }
   }
@@ -506,12 +554,13 @@
     }
     video.srcObject = null;
     placeholder.classList.remove('hidden');
-    placeholder.querySelector('p').textContent = 'Naciśnij „Start”.';
+    setPlaceholderMessage('camera.pressStart');
     startBtn.disabled = false;
     stopBtn.disabled = true;
     switchBtn.disabled = true;
     updateGauge(gaugeRaw, null, null);
     updateGauge(gaugeShare, null, null);
+    lastBrightness = null;
     overallBrightnessEl.textContent = '--%';
 
     if (historyDirty) persistHistoryLong();
@@ -559,8 +608,8 @@
     const t = thresholds[kind];
     ui.warnSlider.value = String(t.warn);
     ui.critSlider.value = String(t.crit);
-    ui.warnLabel.textContent = `${t.warn}%`;
-    ui.critLabel.textContent = `${t.crit}%`;
+    ui.warnLabel.textContent = `${N(t.warn)}%`;
+    ui.critLabel.textContent = `${N(t.crit)}%`;
     drawGaugeBands(ui.gauge, t);
   }
 
@@ -584,11 +633,14 @@
   shareCritSlider.addEventListener('input', onShareThresholdChange);
 
   // ---- table toggle ----
+  function syncTableToggle() {
+    tableToggle.textContent = T(tableWrap.hidden ? 'table.show' : 'table.hide');
+  }
   tableToggle.addEventListener('click', () => {
     const showing = !tableWrap.hidden;
     tableWrap.hidden = showing;
     tableToggle.setAttribute('aria-pressed', String(!showing));
-    tableToggle.textContent = showing ? 'Pokaż jako tabelę' : 'Ukryj tabelę';
+    syncTableToggle();
   });
 
   // ---- panels: two tabs + any number of overlay screens ----
@@ -652,7 +704,45 @@
   // ---- resize ----
   window.addEventListener('resize', () => { drawOverlay(); drawCharts(); });
 
+  // ---- warstwa językowa ----
+  // Nagłówek wykresów niesie długość okna, a ta jest stałą tego pliku, więc
+  // nie da się jej wpisać do znacznika w index.html — musi być wstawką.
+  function syncChartsTitle() {
+    if (chartsTitle) chartsTitle.textContent = T('chart.title', { seconds: WINDOW_MS / 1000 });
+  }
+
+  // Co trzeba przepisać po zmianie języka. Przebieg po znacznikach data-i18n
+  // zrobił już I18nDom — tutaj zostaje to, czego w znacznikach nie ma, bo
+  // zależy od stanu pomiaru: etykiety gałek, wiersze tabeli, napis na zasłonie
+  // podglądu i wszystko, co jest rysowane na kanwie.
+  function relabelAfterLanguageChange() {
+    syncChartsTitle();
+    syncTableToggle();
+    syncThresholdUi('raw');
+    syncThresholdUi('share');
+    setPlaceholderMessage(placeholderMsg.key, placeholderMsg.params);
+    updateGauge(gaugeRaw, gaugeRaw.lastZone, gaugeRaw.lastValue);
+    updateGauge(gaugeShare, gaugeShare.lastZone, gaugeShare.lastValue);
+    overallBrightnessEl.textContent = lastBrightness == null ? '--%' : `${N(Math.round(lastBrightness))}%`;
+    rebuildTableRows();
+    drawCharts();
+  }
+
+  if (window.I18nDom && typeof window.I18nDom.onChange === 'function') {
+    window.I18nDom.onChange(relabelAfterLanguageChange);
+  }
+
   // ---- init ----
+  // Przebieg po znacznikach data-i18n jeszcze przed pierwszym malowaniem.
+  // I18nDom robi go sam na DOMContentLoaded, ale ten skrypt wykonuje się
+  // wcześniej — a od tego momentu ekran jest już zbudowany i nie ma powodu,
+  // żeby choć jedna klatka pokazała pusty nagłówek.
+  if (window.I18nDom && typeof window.I18nDom.apply === 'function') {
+    window.I18nDom.apply(document);
+  }
+  syncChartsTitle();
+  syncTableToggle();
+
   // Sync the slider controls/labels to whatever thresholds we ended up with
   // (restored from localStorage, or the defaults) — the HTML's hardcoded
   // `value` attributes only match the defaults by coincidence.

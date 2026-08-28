@@ -1,23 +1,43 @@
 /* Monitor Światła v4 — scale.js
  *
- * ROLA PLIKU: słownik Scale.TEXT — jedyne miejsce w tej wersji, w którym
- * wolno napisać polskie zdanie widoczne dla użytkownika. Rozdział 7 pliku
- * SPEC.md (dokument wiążący TEJ wersji; DESIGN.md należy do v3), przepisany
- * słowo w słowo. Żaden inny plik v4 nie zawiera
- * polskiego literału — to właśnie trzyma całe słownictwo w jednym miejscu
- * i nie pozwala czterem autorom wymyślić czterech różnych wokabularzy.
+ * ROLA PLIKU: budowa Scale.TEXT — słownika, z którego cała ta wersja bierze
+ * każde swoje zdanie. Do etapu warstwy językowej stały tu polskie napisy
+ * wypisane wprost; dziś stoją tu WYŁĄCZNIE NAZWY KLUCZY, a napisy przychodzą
+ * z warstwy językowej (window.I18n). Kształt obiektu nie zmienił się o jotę:
+ * Scale.TEXT ma dokładnie te same pola co przedtem, w tej samej kolejności,
+ * więc żaden plik czytający ten słownik nie musiał być ruszony.
  *
- * SKĄD: druga połowa dawnego docs/v4/scale.js (od tego samego komentarza
- * „Scale.TEXT — chapter 8”), przeniesiona BEZ ZMIAN. Pierwsza połowa — cała
- * geometria skali i formatowanie liczb — przeprowadziła się do
- * ../shared/scale-core.js, bo jest identyczna w v3 i v4. Napisy zostały
- * tutaj, bo opisują ekrany TEJ wersji i z natury nie dają się współdzielić.
+ * GDZIE SĄ TERAZ NAPISY:
+ *   docs/shared/i18n/<kod>.js  — treść wspólna wszystkim wersjom: nazwy i opisy
+ *                                siedmiu wielkości, nazwy stref, zdania
+ *                                oceniające, zastrzeżenie medyczne, prywatność;
+ *   docs/v4/i18n/<kod>.js      — treść własna tej wersji: nazwy jej ekranów,
+ *                                klawiszy i dziewięciu narzędzi.
+ * Plik wersji dokłada się do warstwy wspólnej i może ją nadpisać — i tylko
+ * w tę stronę. Rozdział 7 SPEC.md opisuje te napisy dalej; zmieniło się
+ * miejsce, w którym leżą, a nie ich treść.
  *
- * KOLEJNOŚĆ ŁADOWANIA: ../shared/scale-core.js MUSI być wczytany wcześniej —
- * to on tworzy obiekt window.Scale, a ten plik tylko dokłada do niego pole
- * TEXT. Funkcje z scale-core.js sięgają po Scale.TEXT dopiero w chwili
- * wywołania, a nie w chwili definicji, więc taka kolejność wystarcza.
- * Odwrotna kolejność nie zadziała i strażnik niżej powie o tym wprost.
+ * KLUCZ WSPÓLNY CZY WŁASNY: jeżeli zdanie brzmi identycznie we wszystkich
+ * wersjach (a tak jest z wszystkim, co opisuje sam pomiar), wołamy klucz
+ * wspólny — 'zone.good', 'verdict.warning.share', 'note.helpText'. Własne
+ * klucze tej wersji opisują wyłącznie jej układ: 'keys.start', 'modules.07.planes.*'.
+ * Dzięki temu jedno zdanie tłumaczy się raz na trzydzieści języków, a nie pięć
+ * razy — po razie na wersję.
+ *
+ * SKŁADANIE W KODZIE: cztery napisy powstają z dwóch kluczy albo z liczby.
+ * Powód jest za każdym razem ten sam — inaczej trzydziestu tłumaczy dostałoby
+ * do przepisania zdanie, które już przetłumaczyli gdzie indziej, albo liczbę
+ * zapisaną po polsku ('2,5') wklejoną w środek arabskiego zdania. Patrz hz(),
+ * mdr() i N() niżej.
+ *
+ * KOLEJNOŚĆ ŁADOWANIA. Muszą stać wcześniej:
+ *   ../shared/i18n.js       — bo stąd bierze się każdy napis (window.I18n);
+ *   ../shared/scale-core.js — bo to on tworzy window.Scale, a ten plik tylko
+ *                             dokłada do niego pole TEXT;
+ *   ../shared/metrics.js    — bo localizeCatalogue() podmienia w nim napisy.
+ * Funkcje ze scale-core.js sięgają po Scale.TEXT dopiero w chwili wywołania,
+ * więc taka kolejność wystarcza. Odwrotna nie zadziała i strażnik niżej powie
+ * o tym wprost.
  */
 (function (global) {
   'use strict';
@@ -35,562 +55,648 @@
   }
 
   /* ==================================================================
-     Scale.TEXT — chapter 7 of SPEC.md, word for word.
-     The single source of Polish in this application.
+     Dostęp do warstwy językowej
+
+     Brak window.I18n nie jest tu stanem do obsłużenia „ładnie”: bez słownika
+     nie ma z czego zbudować ekranu. Zwracamy wtedy sam klucz — widać wtedy
+     od razu, czego brakuje, i widać to w każdym miejscu ekranu naraz, zamiast
+     pustych dziur, które wyglądają jak błąd układu.
      ================================================================== */
 
-  Scale.TEXT = {
+  function T(key, params) {
+    var I = global.I18n;
+    if (I && typeof I.t === 'function') return I.t(key, params);
+    return String(key);
+  }
 
-    /* ---- 8.1 status rail and keys ---- */
+  /** Liczba w zapisie aktywnego języka: 1,15 po polsku, 1.15 po angielsku,
+   *  ١٫١٥ po arabsku. */
+  function N(value, options) {
+    var I = global.I18n;
+    if (I && typeof I.number === 'function') return I.number(value, options);
+    return String(value);
+  }
 
-    app: {
-      name: 'MONITOR ŚWIATŁA',
-      title: 'Monitor Światła'
-    },
+  /* Częstotliwość próbkowania bierzemy z silnika, a nie z napisu: to jedna
+     liczba opisująca zachowanie kodu i nie ma powodu, żeby stała w słowniku
+     trzydzieści razy. */
+  var SAMPLE_HZ = (global.Engine && typeof global.Engine.sampleHz === 'function')
+    ? global.Engine.sampleHz() : 5;
 
-    state: {
-      idle: 'Gotowy',
-      starting: 'Uruchamiam',
-      running: 'Pomiar',
-      runningTpl: 'Pomiar {time}',
-      stopped: 'Zatrzymany',
-      error: 'Błąd kamery',
-      hz: '5,0 Hz'
-    },
+  /** '5,0 Hz' po polsku, '5.0 Hz' po angielsku. Jednostka jest kluczem
+   *  wspólnym, bo hertz nazywa się tak samo w każdym ekranie tej aplikacji. */
+  function hz() {
+    return N(SAMPLE_HZ, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' ' + T('unit.hertz');
+  }
 
-    keys: {
-      start: 'Start pomiaru',
-      starting: 'Uruchamiam…',
-      stop: 'Stop',
-      flip: 'Obróć',
-      flipAria: 'Przełącz kamerę przód/tył',
-      menu: 'Menu',
-      menuAria: 'Spis modułów',
-      back: '‹ Wróć',
-      backAria: 'Wróć do pulpitu',
-      dash: 'Pulpit',
-      zoom: 'Powiększ podgląd',
-      retry: 'Spróbuj ponownie',
-      refresh: 'Odśwież',
-      close: 'Zamknij'
-    },
-
-    monitor: {
-      legend: 'Podgląd kontrolny',
-      badge: 'Na żywo',
-      open: 'Powiększ podgląd'
-    },
-
-    /* Full-screen aiming view. The instruction line is not spelled out in
-       chapter 8; it repeats what the reticle actually promises (0.4). */
-    aim: {
-      titlePL: 'Celowanie',
-      hintPL: 'Ramka pokazuje dokładnie ten wycinek obrazu, który mierzy aplikacja.',
-      close: 'Zamknij',
-      flip: 'Obróć'
-    },
-
-    /* ---- 8.2 the readout well ---- */
-
-    readout: {
-      legend: 'Kanał główny',
-      helpAriaTpl: 'Co oznacza: {name}',
-      thresholdTpl: '(próg {value})',
-      contextTpl: 'min {min} · śr. {avg} · maks {max} — ostatnie 60 s',
-      contextEmpty: 'brak danych z ostatnich 60 s',
-      approxSign: '≈'
-    },
-
-    stamp: {
-      good: 'W normie',
-      warning: 'Uwaga',
-      critical: 'Krytycznie',
-      none: 'Brak danych',
-      settling: 'Ustalam'
-    },
-
-    /* ---- 8.3 verdicts, keyed [zone][culprit] ---- */
-
-    verdict: {
-      /* Situations that are not a reading at all (8.2). */
-      idle: 'Naciśnij „Start pomiaru”, skieruj telefon na oświetloną powierzchnię i trzymaj nieruchomo kilka sekund.',
-      warmup: 'Ustalam ocenę — trzymaj telefon nieruchomo jeszcze chwilę.',
-      noValue: 'Ta wielkość nie daje się teraz zmierzyć. Sprawdź, czy obiektyw nie jest zasłonięty.',
-      stoppedTpl: 'Pomiar zakończony · {time} · zapisano w historii.',
-
-      good: {
-        any: 'To światło jest w porządku — nic nie przekracza ustawionych progów.'
-      },
-
-      warning: {
-        share: 'Sporo tego światła przypada na kanał niebieski. Wieczorem warto je przyciemnić.',
-        brightness: 'Scena jest jasna — kamera pracuje blisko górnej granicy pomiaru.',
-        kelvin: 'Światło jest dość chłodne. Wieczorem łagodniejsza bywa żarówka około 2700 K.',
-        melanopic: 'To światło dość mocno działa na zegar biologiczny.',
-        flicker: 'Źródło światła wyraźnie pulsuje.',
-        uniformity: 'Światło rozkłada się nierówno w kadrze.',
-        comfort: 'Komfort wzrokowy jest obniżony — złożyło się na to kilka rzeczy naraz.'
-      },
-
-      critical: {
-        share: 'Bardzo dużo niebieskiego. Wieczorem włącz tryb nocny albo zmień źródło światła.',
-        brightness: 'Scena jest bardzo jasna. Nie mierz, patrząc prosto w źródło światła.',
-        kelvin: 'Światło jest zimne. Wieczorem to najbardziej męczy oczy — cieplejsza żarówka albo tryb nocny pomogą.',
-        melanopic: 'To światło mocno działa na zegar biologiczny. Wieczorem warto zejść poniżej 0,50.',
-        flicker: 'Źródło światła mocno pulsuje. To bywa przyczyną zmęczenia oczu i bólu głowy.',
-        uniformity: 'Światło rozkłada się bardzo nierówno. Sprawdź ustawienie lampy albo odbicia na ekranie.',
-        comfort: 'Komfort wzrokowy jest niski. Zajrzyj do modułu 01, żeby zobaczyć, co go obniża.'
-      }
-    },
-
-    /* ---- 8.4 notes about the limits of the measurement ---- */
-
-    note: {
-      titleLimits: 'Czego ta liczba nie mówi',
-      titleWarning: 'Uwaga',
-
-      dashTitle: 'Czym ten pomiar nie jest',
-      dashText: 'Aparat telefonu ma trzy szerokie kanały barwne i automatyczny balans bieli — nie mierzy widma. Temperatura barwowa i wpływ na rytm dobowy są przybliżeniami wyliczonymi z barw sRGB. Aplikacja dobrze pokazuje różnice i zmiany w czasie, nie zastępuje miernika i nie stawia żadnej diagnozy. Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.',
-
-      approxLegend: '≈ wartość przybliżona — wyliczona z barw sRGB, nie z pomiaru widma.',
-      kelvinOutOfRange: 'Poza zakresem metody — przy tej barwie wzór na temperaturę barwową przestaje być wiarygodny.',
-      flickerOutOfRange: 'Poza zakresem metody — próbkowanie 5 Hz widzi pulsowanie tylko poniżej 2,5 Hz. Sieciowe 100 Hz jest poza zasięgiem i aplikacja nigdy nie poda go jako wyniku.',
-
-      helpTitle: 'Czego ta liczba nie mówi',
-      helpText: 'Aparat telefonu ma trzy szerokie kanały i nie mierzy widma. Ta wartość jest wskaźnikiem porównawczym — dobrze pokazuje różnice między światłami i zmiany w czasie, a nie wynikiem pomiaru laboratoryjnego ani informacją medyczną.',
-
-      calibration: 'Pomiar bez kalibracji — wartości traktuj porównawczo.',
-
-      howToTitle: 'Jak mierzyć sensownie',
-      howTo: [
-        { titlePL: 'Trzymaj telefon nieruchomo', textPL: 'Automatyka ekspozycji potrzebuje 2–3 sekund, żeby się ustabilizować.' },
-        { titlePL: 'Kieruj na oświetloną powierzchnię', textPL: 'Biała kartka albo jasna ściana. Nie mierz, patrząc prosto w źródło światła.' },
-        { titlePL: 'Porównuj, nie oceniaj bezwzględnie', textPL: 'Ta sama scena przed zmianą i po zmianie oświetlenia mówi więcej niż jedna liczba.' }
-      ]
-    },
-
-    /* ---- 8.5 transient messages ---- */
-
-    transient: {
-      firstRun: 'Zacznij od klawisza „Start pomiaru” na dole ekranu. Kamera włączy się dopiero po naciśnięciu.',
-      measureStopped: 'Pomiar zakończony · {time} · zapisano w historii.',
-      leadChanged: 'Kanał główny: {name}, {value}, {zone}.',
-      warmupDone: 'Ocena gotowa. {name} {value}, {zone}.',
-      newVersion: 'Jest nowa wersja aplikacji.',
-      newVersionKey: 'Odśwież',
-      thresholdsSaved: 'Zapisano progi.',
-      thresholdsRejected: 'Nie zapisano — próg uwagi i próg krytyczny nie mogą się mijać.',
-      historyCleared: 'Wyczyszczono historię.'
-    },
-
-    /* Live-region wording (7.6). Same sentences as above, kept under their own
-       key so the announcer does not have to know it is quoting 8.5. */
-    live: {
-      lead: 'Kanał główny: {name}, {value}, {zone}.',
-      ready: 'Ocena gotowa. {name} {value}, {zone}.',
-      started: 'Pomiar rozpoczęty.',
-      stopped: 'Pomiar zakończony · {time} · zapisano w historii.'
-    },
-
-    /* How a screen reader should hear a value. The '%' sign and the '×' are
-       symbols; spoken they need a word. */
-    spoken: {
-      noValue: 'brak danych',
-      units: {
-        share: 'procent',
-        brightness: 'procent',
-        kelvin: 'kelwinów',
-        melanopic: 'razy',
-        flicker: 'procent',
-        uniformity: 'procent',
-        comfort: 'punktów'
-      },
-      zones: {
-        good: 'w normie',
-        warning: 'uwaga',
-        critical: 'krytycznie',
-        none: 'brak danych'
-      }
-    },
-
-    /* ---- 8.6 empty screens ---- */
-
-    empty: {
-      recorderNoHistory: 'Nie ma jeszcze żadnych zapisów. Historia zapisuje się w trakcie pomiaru — uruchom pomiar na minutę i wróć tutaj.',
-      recorderNoRange: 'W tym zakresie nie było pomiaru.',
-      coverageTpl: 'Pomiar objął {done} z {total} godzin.',
-      reportsNoData: 'Raport dobowy powstanie po pierwszym pełnym dniu z pomiarami.',
-      compareOneSession: 'Do porównania potrzebne są dwie zakończone sesje. Masz na razie jedną.',
-      exportNoData: 'Nie ma czego wyeksportować. Uruchom pomiar, żeby historia miała treść.',
-      alertsOff: 'Alerty są wyłączone. Po włączeniu zadziałają tylko wtedy, gdy aplikacja jest otwarta.',
-      scheduleEmpty: 'Nie ustawiono żadnej pory. Harmonogram działa tylko przy otwartej aplikacji.',
-      historyEmpty: 'Historia jest pusta.'
-    },
-
-    /* ---- 8.8 the module index ---- */
-
-    menu: {
-      titlePL: 'Spis modułów'
-    },
-
-    modules: {
-      '01': { no: '01', titlePL: 'Rejestrator', descPL: 'Przebieg pomiaru w czasie, od minuty do trzydziestu dni.' },
-      '02': { no: '02', titlePL: 'Progi', descPL: 'Ustaw własne granice ostrzeżenia i alarmu dla każdej wielkości.' },
-      '03': { no: '03', titlePL: 'Kalibracja', descPL: 'Odniesienie do znanego źródła światła i to, czego kalibracja nie naprawi.' },
-      '04': { no: '04', titlePL: 'Raporty', descPL: 'Zestawienia dobowe i tygodniowe w formie wydruku.' },
-      '05': { no: '05', titlePL: 'Eksport', descPL: 'Zapis odczytów do pliku CSV lub JSON z opisem kolumn.' },
-      '06': { no: '06', titlePL: 'Porównanie', descPL: 'Dwie sesje obok siebie, z różnicą podaną liczbowo.' },
-      '07': { no: '07', titlePL: 'Test ekranu', descPL: 'Plansze do sprawdzenia własnego monitora, krok po kroku.' },
-      '08': { no: '08', titlePL: 'Harmonogram', descPL: 'Automatyczne pomiary o zadanych porach.' },
-      '09': { no: '09', titlePL: 'Alerty', descPL: 'Powiadomienie po przekroczeniu progu — i kiedy ono nie zadziała.' },
-      '10': { no: '10', titlePL: 'Wsparcie', descPL: 'Dobrowolna darowizna — i to, że niczego nie odblokowuje.' },
-      '12': { no: '12', titlePL: 'Dokumentacja', descPL: 'Czym ten pomiar jest, a czym na pewno nie jest.' },
-      '13': { no: '13', titlePL: 'Ustawienia', descPL: 'Motyw, rozmiar tekstu, ograniczenie ruchu, czyszczenie historii.' }
-    },
-
-    /* ---- wording the components need, derived from chapters 4-7 ---- */
-
-    errata: {
-      titlePL: 'Błąd kamery',
-      retry: 'Spróbuj ponownie'
-    },
-
-    channels: {
-      groupAria: 'Kanały pomiarowe',
-      pick: 'Pokaż na dużym wyświetlaczu',
-      stale: 'brak danych',
-      approx: 'wartość przybliżona'
-    },
-
-    /* Accessible names for the dashboard (5.1, 5.3, 5.4, 7.6). The eye gets the
-       shape, the colour and the micro scale; a screen reader gets the same three
-       facts as words, and only from here. Every {value}, {min}, {max}, {warn}
-       and {crit} arrives already spoken — Scale.spoken() puts the unit into
-       words and turns a missing number into 'brak danych', so no accessible name
-       ever contains '———' or a bare '%'. */
-    aria: {
-      help: 'Co oznacza: {name}',
-      channel: '{name}, {value}, {zone}. Pokaż na dużym wyświetlaczu.',
-      channelStale: '{name}, brak danych. Pokaż na dużym wyświetlaczu.',
-      scale: 'Skala: {name}, od {min} do {max}. Teraz {value}, {zone}. Próg uwagi {warn}, próg krytyczny {crit}.',
-      readout: '{name}: {value}, {zone}.',
-      readoutApprox: '{name}: około {value}, {zone}. Wartość przybliżona.'
-    },
-
-    livebar: {
-      stopped: 'Pomiar zatrzymany',
-      key: 'Pulpit'
-    },
-
-    help: {
-      titleTpl: 'Co oznacza: {name}',
-      unit: 'Jednostka',
-      range: 'Zakres',
-      thresholds: 'Progi',
-      warn: 'Próg uwagi',
-      crit: 'Próg krytyczny',
-      availability: 'Dostępność',
-      free: 'Dla wszystkich, bez opłat',
-      now: 'teraz'
-    },
-
-    recorder: {
-      rangeAria: 'Zakres czasu',
-      ranges: {
-        '60s': '60 s',
-        '15min': '15 min',
-        '1h': '1 godz',
-        '24h': '24 godz',
-        '30d': '30 dni'
-      },
-      gap: 'brak pomiaru',
-      sessionTitle: 'Statystyka sesji',
-      zonesCaption: 'Rozkład stref dla udziału niebieskiego',
-      tableCaption: 'Odczyty z wybranego zakresu',
-      crosshair: 'Krzyż odczytu',
-      prevAria: 'Wcześniejszy punkt',
-      nextAria: 'Późniejszy punkt',
-      colTime: 'Godzina'
-    },
-
-    settings: {
-      themeLabel: 'Motyw',
-      themeSystem: 'Jak w systemie',
-      themeLight: 'Jasny',
-      themeDark: 'Ciemny',
-      textLabel: 'Rozmiar tekstu',
-      text1: '×1',
-      text115: '×1,15',
-      text13: '×1,3',
-      motionLabel: 'Ogranicz ruch',
-      clearLabel: 'Wyczyść historię',
-      clearConfirm: 'Wyczyścić całą historię pomiarów? Tego nie da się cofnąć.',
-      clearKey: 'Wyczyść'
-    },
-
-    common: {
-      /* One em dash, not three. Three in a row are not a placeholder, they are a
-         RULE: at readout size they paint a black bar across the well and at row
-         size they draw a line where the value should be. A single em dash is the
-         typographic mark for "no value" and cannot be mistaken for anything else. */
-      noValue: '—',
-      close: 'Zamknij',
-      cancel: 'Anuluj',
-      save: 'Zapisz',
-      reset: 'Przywróć domyślne',
-      yes: 'Tak',
-      no: 'Nie',
-      on: 'Włączone',
-      off: 'Wyłączone',
-      sep: ' · '
-    }
-  };
+  /** Zdanie o rozporządzeniu (UE) 2017/745. Stoi w dwóch miejscach tej wersji
+   *  (nota na pulpicie i stopka raportu) i jest identyczne we wszystkich
+   *  wersjach, więc ma jeden klucz wspólny i jedno tłumaczenie. */
+  function mdr() {
+    return T('legal.mdr', { app: T('app.name') });
+  }
 
   /* ==================================================================
-     Scale.TEXT.modules — wording owned by modules.js (modules 02-09).
+     Scale.TEXT — rozdział 7 SPEC.md, klucz po kluczu.
 
-     Chapter 7 of SPEC.md has no table for these screens, so the sentences
-     below follow its language rules (taken over from v3 8.9): second person,
-     imperative, no promise of an outcome and none of the forbidden words. Where v2 already had a proven Polish sentence
-     for the same function (docs/v2/tools.js) it is carried over verbatim.
-
-     Each module keeps its wording under its own number, next to the {no,
-     titlePL, descPL} triple the module index already reads.
+     Kolejność pól jest kolejnością z poprzedniej wersji tego pliku i ma taka
+     zostać: mapa kluczy na końcu pliku opisuje ją jako umowę z autorami modułów.
      ================================================================== */
 
-  (function (M) {
+  function buildText() {
+    return {
+    app: {
+      name: T('app.wordmark'),
+      title: T('app.name')
+    },
+    state: {
+      idle: T('state.idle'),
+      starting: T('state.starting'),
+      running: T('state.running'),
+      runningTpl: T('state.runningTpl'),
+      stopped: T('state.stopped'),
+      error: T('state.error'),
+      hz: hz()
+    },
+    keys: {
+      start: T('keys.start'),
+      starting: T('keys.starting'),
+      stop: T('keys.stop'),
+      flip: T('keys.flip'),
+      flipAria: T('keys.flipAria'),
+      menu: T('keys.menu'),
+      menuAria: T('keys.menuAria'),
+      back: T('keys.back'),
+      backAria: T('keys.backAria'),
+      dash: T('keys.dash'),
+      zoom: T('keys.zoom'),
+      retry: T('keys.retry'),
+      refresh: T('keys.refresh'),
+      close: T('keys.close')
+    },
+    monitor: {
+      legend: T('monitor.legend'),
+      badge: T('monitor.badge'),
+      open: T('monitor.open')
+    },
+    aim: {
+      titlePL: T('aim.title'),
+      hintPL: T('aim.hint'),
+      close: T('aim.close'),
+      flip: T('aim.flip')
+    },
+    readout: {
+      legend: T('readout.legend'),
+      helpAriaTpl: T('readout.helpAriaTpl'),
+      thresholdTpl: T('readout.thresholdTpl'),
+      contextTpl: T('readout.contextTpl'),
+      contextEmpty: T('readout.contextEmpty'),
+      approxSign: T('readout.approxSign')
+    },
+    stamp: {
+      good: T('zone.good'),
+      warning: T('zone.warning'),
+      critical: T('zone.critical'),
+      none: T('zone.none'),
+      settling: T('zone.settling')
+    },
+    verdict: {
+      idle: T('verdict.idle'),
+      warmup: T('verdict.warmup'),
+      noValue: T('verdict.noValue'),
+      stoppedTpl: T('verdict.stoppedTpl'),
+      good: {
+        any: T('verdict.good')
+      },
+      warning: {
+        share: T('verdict.warning.share'),
+        brightness: T('verdict.warning.brightness'),
+        kelvin: T('verdict.warning.kelvin'),
+        melanopic: T('verdict.warning.melanopic'),
+        flicker: T('verdict.warning.flicker'),
+        uniformity: T('verdict.warning.uniformity'),
+        comfort: T('verdict.warning.comfort')
+      },
+      critical: {
+        share: T('verdict.critical.share'),
+        brightness: T('verdict.critical.brightness'),
+        kelvin: T('verdict.critical.kelvin'),
+        melanopic: T('verdict.critical.melanopic'),
+        flicker: T('verdict.critical.flicker'),
+        uniformity: T('verdict.critical.uniformity'),
+        comfort: T('verdict.critical.comfort')
+      }
+    },
+    note: {
+      titleLimits: T('note.limitsTitle'),
+      titleWarning: T('note.warningTitle'),
+      dashTitle: T('note.dashTitle'),
+      dashText: T('note.dashText') + ' ' + mdr(),
+      approxLegend: T('note.approxLegend'),
+      kelvinOutOfRange: T('note.kelvinOutOfRange'),
+      flickerOutOfRange: T('note.flickerOutOfRange', { rate: SAMPLE_HZ, limit: SAMPLE_HZ / 2 }),
+      helpTitle: T('note.helpTitle'),
+      helpText: T('note.helpText'),
+      calibration: T('note.calibration'),
+      howToTitle: T('note.howToTitle'),
+      howTo: [
+        {
+          titlePL: T('note.howTo.hold.title'),
+          textPL: T('note.howTo.hold.text')
+        },
+        {
+          titlePL: T('note.howTo.aim.title'),
+          textPL: T('note.howTo.aim.text')
+        },
+        {
+          titlePL: T('note.howTo.compare.title'),
+          textPL: T('note.howTo.compare.text')
+        }
+      ]
+    },
+    transient: {
+      firstRun: T('transient.firstRun'),
+      measureStopped: T('transient.measureStopped'),
+      leadChanged: T('transient.leadChanged'),
+      warmupDone: T('transient.warmupDone'),
+      newVersion: T('transient.newVersion'),
+      newVersionKey: T('transient.newVersionKey'),
+      thresholdsSaved: T('transient.thresholdsSaved'),
+      thresholdsRejected: T('transient.thresholdsRejected'),
+      historyCleared: T('transient.historyCleared')
+    },
+    live: {
+      lead: T('live.lead'),
+      ready: T('live.ready'),
+      started: T('live.started'),
+      stopped: T('live.stopped')
+    },
+    spoken: {
+      noValue: T('zone.spoken.none'),
+      units: {
+        share: T('metric.share.unitSpoken'),
+        brightness: T('metric.brightness.unitSpoken'),
+        kelvin: T('metric.kelvin.unitSpoken'),
+        melanopic: T('metric.melanopic.unitSpoken'),
+        flicker: T('metric.flicker.unitSpoken'),
+        uniformity: T('metric.uniformity.unitSpoken'),
+        comfort: T('metric.comfort.unitSpoken')
+      },
+      zones: {
+        good: T('zone.spoken.good'),
+        warning: T('zone.spoken.warning'),
+        critical: T('zone.spoken.critical'),
+        none: T('zone.spoken.none')
+      }
+    },
+    empty: {
+      recorderNoHistory: T('empty.recorderNoHistory'),
+      recorderNoRange: T('empty.recorderNoRange'),
+      coverageTpl: T('empty.coverageTpl'),
+      reportsNoData: T('empty.reportsNoData'),
+      compareOneSession: T('empty.compareOneSession'),
+      exportNoData: T('empty.exportNoData'),
+      alertsOff: T('empty.alertsOff'),
+      scheduleEmpty: T('empty.scheduleEmpty'),
+      historyEmpty: T('empty.historyEmpty')
+    },
+    menu: {
+      titlePL: T('menu.title')
+    },
+    modules: {
+      '10': {
+        no: '10',
+        titlePL: T('modules.10.title'),
+        descPL: T('modules.10.desc')
+      },
+      '12': {
+        no: '12',
+        titlePL: T('modules.12.title'),
+        descPL: T('modules.12.desc')
+      },
+      '13': {
+        no: '13',
+        titlePL: T('modules.13.title'),
+        descPL: T('modules.13.desc')
+      },
+      '01': {
+        no: '01',
+        titlePL: T('modules.01.title'),
+        descPL: T('modules.01.desc')
+      },
+      '02': {
+        no: '02',
+        titlePL: T('modules.02.title'),
+        descPL: T('modules.02.desc'),
+        introTitle: T('modules.02.introTitle'),
+        intro: T('modules.02.intro'),
+        warnLabel: T('modules.02.warnLabel'),
+        critLabel: T('modules.02.critLabel'),
+        orderNormal: T('modules.02.orderNormal'),
+        orderInvert: T('modules.02.orderInvert'),
+        sliderAriaTpl: T('modules.02.sliderAriaTpl'),
+        previewAriaTpl: T('modules.02.previewAriaTpl'),
+        nowTpl: T('modules.02.nowTpl'),
+        resetDone: T('modules.02.resetDone'),
+        profilesTitle: T('modules.02.profilesTitle'),
+        profilesHint: T('modules.02.profilesHint'),
+        profileApply: T('modules.02.profileApply'),
+        profileRemove: T('modules.02.profileRemove'),
+        profileSaveKey: T('modules.02.profileSaveKey'),
+        profileNameLabel: T('modules.02.profileNameLabel'),
+        profileNameHint: T('modules.02.profileNameHint'),
+        profileNameEmpty: T('modules.02.profileNameEmpty'),
+        profileSavedTpl: T('modules.02.profileSavedTpl'),
+        profileAppliedTpl: T('modules.02.profileAppliedTpl'),
+        profileRemovedTpl: T('modules.02.profileRemovedTpl'),
+        profileFailed: T('modules.02.profileFailed'),
+        profileCustomTpl: T('modules.02.profileCustomTpl'),
+        builtin: [
+          {
+            id: 'builtin.default',
+            namePL: T('modules.02.builtin.default.name'),
+            descPL: T('modules.02.builtin.default.desc')
+          },
+          {
+            id: 'builtin.evening',
+            namePL: T('modules.02.builtin.evening.name'),
+            descPL: T('modules.02.builtin.evening.desc')
+          },
+          {
+            id: 'builtin.work',
+            namePL: T('modules.02.builtin.work.name'),
+            descPL: T('modules.02.builtin.work.desc')
+          }
+        ]
+      },
+      '03': {
+        no: '03',
+        titlePL: T('modules.03.title'),
+        descPL: T('modules.03.desc'),
+        whyTitle: T('modules.03.whyTitle'),
+        why: T('modules.03.why'),
+        stepsTitle: T('modules.03.stepsTitle'),
+        steps: [
+          T('modules.03.steps.0'),
+          T('modules.03.steps.1'),
+          T('modules.03.steps.2')
+        ],
+        runKey: T('modules.03.runKey'),
+        clearKey: T('modules.03.clearKey'),
+        busyTpl: T('modules.03.busyTpl'),
+        statusNone: T('modules.03.statusNone'),
+        statusOnTpl: T('modules.03.statusOnTpl'),
+        gainsTitle: T('modules.03.gainsTitle'),
+        colChannel: T('modules.03.colChannel'),
+        colGain: T('modules.03.colGain'),
+        gainR: T('modules.03.gainR'),
+        gainG: T('modules.03.gainG'),
+        gainB: T('modules.03.gainB'),
+        gainsNone: T('modules.03.gainsNone'),
+        needRunning: T('modules.03.needRunning'),
+        tooFew: T('modules.03.tooFew'),
+        tooDark: T('modules.03.tooDark'),
+        refused: T('modules.03.refused'),
+        done: T('modules.03.done'),
+        cleared: T('modules.03.cleared'),
+        limitsTitle: T('modules.03.limitsTitle'),
+        limits: [
+          T('modules.03.limits.0'),
+          T('modules.03.limits.1'),
+          T('modules.03.limits.2')
+        ]
+      },
+      '04': {
+        no: '04',
+        titlePL: T('modules.04.title'),
+        descPL: T('modules.04.desc'),
+        rangeAria: T('modules.04.rangeAria'),
+        rangeDay: T('modules.04.rangeDay'),
+        rangeWeek: T('modules.04.rangeWeek'),
+        headTpl: T('modules.04.headTpl'),
+        tableTitle: T('modules.04.tableTitle'),
+        tableCaption: T('modules.04.tableCaption'),
+        colMetric: T('modules.04.colMetric'),
+        colAvg: T('modules.04.colAvg'),
+        colMin: T('modules.04.colMin'),
+        colMax: T('modules.04.colMax'),
+        panoramaTitle: T('modules.04.panoramaTitle'),
+        panoramaAriaTpl: T('modules.04.panoramaAriaTpl'),
+        panoramaSpanDay: T('modules.04.panoramaSpanDay'),
+        panoramaSpanWeek: T('modules.04.panoramaSpanWeek'),
+        panoramaHint: T('modules.04.panoramaHint'),
+        coverageDayTpl: T('modules.04.coverageDayTpl'),
+        coverageWeekTpl: T('modules.04.coverageWeekTpl'),
+        zonesTitle: T('modules.04.zonesTitle'),
+        zonesCaptionTpl: T('modules.04.zonesCaptionTpl'),
+        zoneGood: T('zone.good'),
+        zoneWarning: T('zone.warning'),
+        zoneCritical: T('zone.critical'),
+        worstTpl: T('modules.04.worstTpl'),
+        worstNone: T('modules.04.worstNone'),
+        worstHourTpl: T('modules.04.worstHourTpl'),
+        adviceTitle: T('modules.04.adviceTitle'),
+        adviceMelanopicTpl: T('modules.04.adviceMelanopicTpl'),
+        adviceKelvinTpl: T('modules.04.adviceKelvinTpl'),
+        adviceFlickerTpl: T('modules.04.adviceFlickerTpl'),
+        adviceUniformityTpl: T('modules.04.adviceUniformityTpl'),
+        adviceWorstTpl: T('modules.04.adviceWorstTpl'),
+        adviceNone: T('modules.04.adviceNone'),
+        limitsTitle: T('modules.04.limitsTitle'),
+        limits: T('modules.04.limits') + ' ' + mdr(),
+        printHint: T('modules.04.printHint')
+      },
+      '05': {
+        no: '05',
+        titlePL: T('modules.05.title'),
+        descPL: T('modules.05.desc'),
+        rangeAria: T('modules.05.rangeAria'),
+        range1h: T('modules.05.range1h'),
+        range24h: T('modules.05.range24h'),
+        range7d: T('modules.05.range7d'),
+        range30d: T('modules.05.range30d'),
+        csvKey: T('modules.05.csvKey'),
+        jsonKey: T('modules.05.jsonKey'),
+        formatTitle: T('modules.05.formatTitle'),
+        formatCsv: T('modules.05.formatCsv'),
+        formatJson: T('modules.05.formatJson'),
+        resolution: T('modules.05.resolution'),
+        offline: T('modules.05.offline'),
+        columnsTitle: T('modules.05.columnsTitle'),
+        columnsCaption: T('modules.05.columnsCaption'),
+        colName: T('modules.05.colName'),
+        colMeaning: T('modules.05.colMeaning'),
+        colDate: T('modules.05.colDate'),
+        colTime: T('modules.05.colTime'),
+        colZone: T('modules.05.colZone'),
+        descDate: T('modules.05.descDate'),
+        descTime: T('modules.05.descTime'),
+        descZone: T('modules.05.descZone'),
+        descMetricTpl: T('modules.05.descMetricTpl'),
+        previewTitle: T('modules.05.previewTitle'),
+        previewHint: T('modules.05.previewHint'),
+        savedTpl: T('modules.05.savedTpl'),
+        failed: T('modules.05.failed')
+      },
+      '06': {
+        no: '06',
+        titlePL: T('modules.06.title'),
+        descPL: T('modules.06.desc'),
+        intro: T('modules.06.intro'),
+        noSessions: T('modules.06.noSessions'),
+        slotA: T('modules.06.slotA'),
+        slotB: T('modules.06.slotB'),
+        sessionTpl: T('modules.06.sessionTpl'),
+        tapeTitle: T('modules.06.tapeTitle'),
+        tapeAriaTpl: T('modules.06.tapeAriaTpl'),
+        tapeHint: T('modules.06.tapeHint'),
+        tapeChannelTpl: T('modules.06.tapeChannelTpl'),
+        diffTitle: T('modules.06.diffTitle'),
+        diffCaption: T('modules.06.diffCaption'),
+        colMetric: T('modules.06.colMetric'),
+        colA: T('modules.06.colA'),
+        colB: T('modules.06.colB'),
+        colDiff: T('modules.06.colDiff'),
+        clearKey: T('modules.06.clearKey'),
+        cleared: T('modules.06.cleared'),
+        savedTpl: T('modules.06.savedTpl'),
+        limitsTitle: T('modules.06.limitsTitle'),
+        limits: T('modules.06.limits'),
+        keepTpl: T('modules.06.keepTpl')
+      },
+      '07': {
+        no: '07',
+        titlePL: T('modules.07.title'),
+        descPL: T('modules.07.desc'),
+        intro: T('modules.07.intro'),
+        stepsTitle: T('modules.07.stepsTitle'),
+        steps: [
+          T('modules.07.steps.0'),
+          T('modules.07.steps.1'),
+          T('modules.07.steps.2'),
+          T('modules.07.steps.3')
+        ],
+        planesTitle: T('modules.07.planesTitle'),
+        exitKey: T('modules.07.exitKey'),
+        showKey: T('modules.07.showKey'),
+        showAriaTpl: T('modules.07.showAriaTpl'),
+        planeAriaTpl: T('modules.07.planeAriaTpl'),
+        planes: [
+          {
+            id: 'white',
+            namePL: T('modules.07.planes.white.name'),
+            hintPL: T('modules.07.planes.white.hint')
+          },
+          {
+            id: 'gray75',
+            namePL: T('modules.07.planes.gray75.name'),
+            hintPL: T('modules.07.planes.gray75.hint')
+          },
+          {
+            id: 'gray50',
+            namePL: T('modules.07.planes.gray50.name'),
+            hintPL: T('modules.07.planes.gray50.hint')
+          },
+          {
+            id: 'gray25',
+            namePL: T('modules.07.planes.gray25.name'),
+            hintPL: T('modules.07.planes.gray25.hint')
+          },
+          {
+            id: 'black',
+            namePL: T('modules.07.planes.black.name'),
+            hintPL: T('modules.07.planes.black.hint')
+          },
+          {
+            id: 'red',
+            namePL: T('modules.07.planes.red.name'),
+            hintPL: T('modules.07.planes.red.hint')
+          },
+          {
+            id: 'green',
+            namePL: T('modules.07.planes.green.name'),
+            hintPL: T('modules.07.planes.green.hint')
+          },
+          {
+            id: 'blue',
+            namePL: T('modules.07.planes.blue.name'),
+            hintPL: T('modules.07.planes.blue.hint')
+          },
+          {
+            id: 'grid',
+            namePL: T('modules.07.planes.grid.name'),
+            hintPL: T('modules.07.planes.grid.hint')
+          }
+        ],
+        warnTitle: T('note.warningTitle'),
+        warn: T('modules.07.warn'),
+        cameraTitle: T('modules.07.cameraTitle'),
+        camera: T('modules.07.camera')
+      },
+      '08': {
+        no: '08',
+        titlePL: T('modules.08.title'),
+        descPL: T('modules.08.desc'),
+        intro: T('modules.08.intro'),
+        onlyOpenTitle: T('modules.08.onlyOpenTitle'),
+        onlyOpen: T('modules.08.onlyOpen'),
+        enableLabel: T('modules.08.enableLabel'),
+        timesTitle: T('modules.08.timesTitle'),
+        timeAriaTpl: T('modules.08.timeAriaTpl'),
+        addKey: T('modules.08.addKey'),
+        removeKey: T('modules.08.removeKey'),
+        removeAriaTpl: T('modules.08.removeAriaTpl'),
+        addedTpl: T('modules.08.addedTpl'),
+        removedTpl: T('modules.08.removedTpl'),
+        badTime: T('modules.08.badTime'),
+        nextTpl: T('modules.08.nextTpl'),
+        nextNone: T('modules.08.nextNone'),
+        dueTpl: T('modules.08.dueTpl'),
+        dueKey: T('modules.08.dueKey')
+      },
+      '09': {
+        no: '09',
+        titlePL: T('modules.09.title'),
+        descPL: T('modules.09.desc'),
+        intro: T('modules.09.intro'),
+        enableLabel: T('modules.09.enableLabel'),
+        metricLabel: T('modules.09.metricLabel'),
+        levelLabel: T('modules.09.levelLabel'),
+        levelWarning: T('modules.09.levelWarning'),
+        levelCritical: T('modules.09.levelCritical'),
+        sustainLabel: T('modules.09.sustainLabel'),
+        sustainHint: T('modules.09.sustainHint'),
+        soundLabel: T('modules.09.soundLabel'),
+        soundHint: T('modules.09.soundHint'),
+        cooldownHint: T('modules.09.cooldownHint'),
+        whenNotTitle: T('modules.09.whenNotTitle'),
+        whenNot: T('modules.09.whenNot'),
+        firedTpl: T('modules.09.firedTpl'),
+        saved: T('modules.09.saved'),
+        statusOnTpl: T('modules.09.statusOnTpl')
+      }
+    },
+    errata: {
+      titlePL: T('errata.title'),
+      retry: T('errata.retry')
+    },
+    channels: {
+      groupAria: T('channels.groupAria'),
+      pick: T('channels.pick'),
+      stale: T('zone.spoken.none'),
+      approx: T('channels.approx')
+    },
+    aria: {
+      help: T('aria.help'),
+      channel: T('aria.channel'),
+      channelStale: T('aria.channelStale'),
+      scale: T('aria.scale'),
+      readout: T('aria.readout'),
+      readoutApprox: T('aria.readoutApprox')
+    },
+    livebar: {
+      stopped: T('livebar.stopped'),
+      key: T('livebar.key')
+    },
+    help: {
+      titleTpl: T('help.titleTpl'),
+      unit: T('help.unit'),
+      range: T('help.range'),
+      thresholds: T('help.thresholds'),
+      warn: T('help.warn'),
+      crit: T('help.crit'),
+      availability: T('help.availability'),
+      free: T('help.free'),
+      now: T('help.now')
+    },
+    recorder: {
+      rangeAria: T('recorder.rangeAria'),
+      ranges: {
+        '60s': T('recorder.ranges.60s'),
+        '15min': T('recorder.ranges.15min'),
+        '1h': T('recorder.ranges.1h'),
+        '24h': T('recorder.ranges.24h'),
+        '30d': T('recorder.ranges.30d')
+      },
+      gap: T('recorder.gap'),
+      sessionTitle: T('recorder.sessionTitle'),
+      zonesCaption: T('recorder.zonesCaption'),
+      tableCaption: T('recorder.tableCaption'),
+      crosshair: T('recorder.crosshair'),
+      prevAria: T('recorder.prevAria'),
+      nextAria: T('recorder.nextAria'),
+      colTime: T('recorder.colTime')
+    },
+    settings: {
+      themeLabel: T('settings.themeLabel'),
+      themeSystem: T('settings.themeSystem'),
+      themeLight: T('settings.themeLight'),
+      themeDark: T('settings.themeDark'),
+      textLabel: T('settings.textLabel'),
+      text1: '\u00d7' + N(1),
+      text115: '\u00d7' + N(1.15),
+      text13: '\u00d7' + N(1.3),
+      motionLabel: T('settings.motionLabel'),
+      clearLabel: T('settings.clearLabel'),
+      clearConfirm: T('settings.clearConfirm'),
+      clearKey: T('settings.clearKey')
+    },
+    common: {
+      noValue: T('common.noValue'),
+      close: T('common.close'),
+      cancel: T('common.cancel'),
+      save: T('common.save'),
+      reset: T('common.reset'),
+      yes: T('common.yes'),
+      no: T('common.no'),
+      on: T('common.on'),
+      off: T('common.off'),
+      sep: T('common.sep')
+    }
+  };
+  }
 
-    /* ---- 02 Progi ---- */
+  Scale.TEXT = buildText();
 
-    M['02'].introTitle = 'Po co własne progi';
-    M['02'].intro = 'Próg decyduje, kiedy aplikacja mówi „Uwaga”, a kiedy „Krytycznie”. Wartości domyślne są naszą oceną redakcyjną, nie normą — jeśli mierzysz w innych warunkach, przesuń je pod siebie. Ocena i zdanie na pulpicie liczą się od razu z nowych progów.';
-    M['02'].warnLabel = 'Próg uwagi';
-    M['02'].critLabel = 'Próg krytyczny';
-    M['02'].orderNormal = 'Próg uwagi musi leżeć poniżej krytycznego.';
-    M['02'].orderInvert = 'Tu wyższa wartość jest lepsza, więc próg uwagi leży powyżej krytycznego.';
-    M['02'].sliderAriaTpl = '{name} — {which}';
-    M['02'].previewAriaTpl = 'Podgląd skali: {name}';
-    M['02'].nowTpl = 'teraz {value}';
-    M['02'].resetDone = 'Przywrócono progi domyślne.';
-    M['02'].profilesTitle = 'Profile';
-    M['02'].profilesHint = 'Profil to zapisany komplet progów wszystkich siedmiu wielkości. Zastosowanie profilu podmienia je naraz.';
-    M['02'].profileApply = 'Zastosuj';
-    M['02'].profileRemove = 'Usuń';
-    M['02'].profileSaveKey = 'Zapisz bieżące progi';
-    M['02'].profileNameLabel = 'Nazwa nowego profilu';
-    M['02'].profileNameHint = 'Nazwa zostaje na tym urządzeniu. Maksymalnie 40 znaków.';
-    M['02'].profileNameEmpty = 'Podaj nazwę profilu.';
-    M['02'].profileSavedTpl = 'Zapisano profil „{name}”.';
-    M['02'].profileAppliedTpl = 'Zastosowano profil „{name}”.';
-    M['02'].profileRemovedTpl = 'Usunięto profil „{name}”.';
-    M['02'].profileFailed = 'Nie udało się zastosować tego profilu.';
-    M['02'].profileCustomTpl = 'Własny profil zapisany {date}.';
-    M['02'].builtin = [
-      { id: 'builtin.default', namePL: 'Domyślny',
-        descPL: 'Progi z katalogu wielkości — punkt wyjścia dla wszystkich pomiarów.' },
-      { id: 'builtin.evening', namePL: 'Wieczór — łagodny',
-        descPL: 'Ostrzega wcześniej o chłodnej barwie i wpływie na rytm dobowy.' },
-      { id: 'builtin.work', namePL: 'Praca przy biurku',
-        descPL: 'Dopuszcza jasne, chłodne światło dzienne; pilnuje migotania i równomierności.' }
-    ];
+  /* ==================================================================
+     Nazwy siedmiu wielkości w Metrics.CATALOGUE
 
-    /* ---- 03 Kalibracja ---- */
+     Katalog wielkości jest wspólny (../shared/metrics.js) i jego napisy też —
+     leżą pod kluczami 'metric.<id>.name', '.unit', '.short' i '.help'
+     w docs/shared/i18n/. Zamiast przerabiać czterdzieści miejsc, które czytają
+     m.namePL, podmieniamy te cztery pola w katalogu raz, przy starcie: katalog
+     dalej jest jedynym domem opisów wielkości, a warstwa językowa dostarcza mu
+     słowa. Pola liczbowe (min, max, warn, crit, decimals, invert) są nietykalne
+     — to one, a nie napisy, rozstrzygają o pomiarze.
 
-    M['03'].whyTitle = 'Dlaczego to działa';
-    M['03'].why = 'Matryca aparatu ma stały odchył między kanałami. Zmierzenie białej kartki pokazuje, jak duży on jest, i pozwala go odjąć. To jedyna funkcja w tej aplikacji, która realnie podnosi dokładność — i nadal nie zamienia aparatu w spektrometr.';
-    M['03'].stepsTitle = 'Krok po kroku';
-    M['03'].steps = [
-      'Połóż białą kartkę pod mierzonym światłem.',
-      'Naciśnij „Start pomiaru” na pulpicie i wypełnij kadr kartką.',
-      'Wróć tutaj, naciśnij „Kalibruj” i nie ruszaj telefonem przez trzy sekundy.'
-    ];
-    M['03'].runKey = 'Kalibruj (3 s)';
-    M['03'].clearKey = 'Usuń kalibrację';
-    M['03'].busyTpl = 'Mierzę kartkę… zostało {sec} s';
-    M['03'].statusNone = 'Brak kalibracji. Pomiar działa, wartości traktuj porównawczo.';
-    M['03'].statusOnTpl = 'Skalibrowano {date} o {time}.';
-    M['03'].gainsTitle = 'Wzmocnienia kanałów';
-    M['03'].colChannel = 'Kanał';
-    M['03'].colGain = 'Wzmocnienie';
-    M['03'].gainR = 'Czerwony';
-    M['03'].gainG = 'Zielony';
-    M['03'].gainB = 'Niebieski';
-    M['03'].gainsNone = 'nie ustawione';
-    M['03'].needRunning = 'Najpierw uruchom pomiar i skieruj kamerę na białą kartkę.';
-    M['03'].tooFew = 'Za mało próbek. Sprawdź, czy pomiar naprawdę działa.';
-    M['03'].tooDark = 'Obraz jest za ciemny do kalibracji. Doświetl kartkę i spróbuj ponownie.';
-    M['03'].refused = 'Odchył kanałów jest za duży, żeby uznać go za kalibrację. Użyj białej kartki w równym świetle.';
-    M['03'].done = 'Skalibrowano. Temperatura barwowa i wpływ na rytm dobowy będą teraz dokładniejsze.';
-    M['03'].cleared = 'Kalibracja usunięta.';
-    M['03'].limitsTitle = 'Czego kalibracja nie naprawia';
-    M['03'].limits = [
-      'Kalibracja wyrównuje trzy kanały aparatu i nic poza tym. Nie daje aparatowi widma, więc temperatura barwowa i wpływ na rytm dobowy zostają przybliżeniami wyliczonymi z barw sRGB.',
-      'Nie zamienia jasności sceny w wielkość bezwzględną — ta liczba pozostaje względna. Nie wyłącza automatyki ekspozycji ani balansu bieli, które przesuwają odczyt pod spodem.',
-      'Nie przenosi się na inne światło: kalibracja zrobiona pod żarówką opisuje tę żarówkę. Przy innym źródle powtórz ją. I nie zmienia niczego w tym, czym ten pomiar nie jest — nadal nie jest badaniem ani podstawą do rozpoznania choroby.'
-    ];
+     Robi to WYŁĄCZNIE wersja, która wczytała warstwę językową; wersja bez niej
+     zobaczy w katalogu polskie napisy zapisane w metrics.js i będzie działać
+     tak jak dotąd.
+     ================================================================== */
 
-    /* ---- 04 Raporty ---- */
+  function localizeCatalogue() {
+    var M = global.Metrics;
+    if (!M || !M.CATALOGUE || !global.I18n) return;
+    for (var i = 0; i < M.CATALOGUE.length; i += 1) {
+      var m = M.CATALOGUE[i];
+      var base = 'metric.' + m.id + '.';
+      if (global.I18n.has(base + 'name')) m.namePL = T(base + 'name');
+      if (global.I18n.has(base + 'unit')) m.unit = T(base + 'unit');
+      if (global.I18n.has(base + 'short')) m.shortPL = T(base + 'short');
+      if (global.I18n.has(base + 'help')) m.helpPL = T(base + 'help');
+    }
+  }
 
-    M['04'].rangeAria = 'Okres raportu';
-    M['04'].rangeDay = 'Doba';
-    M['04'].rangeWeek = 'Tydzień';
-    M['04'].headTpl = 'Od {from} do {to} · {count} punktów historii.';
-    M['04'].tableTitle = 'Zestawienie';
-    M['04'].tableCaption = 'Średnia, minimum i maksimum w wybranym okresie';
-    M['04'].colMetric = 'Wielkość';
-    M['04'].colAvg = 'Średnia';
-    M['04'].colMin = 'Minimum';
-    M['04'].colMax = 'Maksimum';
-    M['04'].panoramaTitle = 'Panorama';
-    M['04'].panoramaAriaTpl = 'Panorama: {name}, {span}.';
-    M['04'].panoramaSpanDay = 'ostatnia doba w podziale na godziny';
-    M['04'].panoramaSpanWeek = 'ostatni tydzień w podziale na dni';
-    M['04'].panoramaHint = 'Wysokość i barwa słupka mówią to samo: w normie — niski, uwaga — średni, krytycznie — pełny. Kreska przy podstawie oznacza godzinę bez pomiaru.';
-    M['04'].coverageDayTpl = 'Pomiar objął {done} z {total} godzin.';
-    M['04'].coverageWeekTpl = 'Pomiar objął {done} z {total} dni.';
-    M['04'].zonesTitle = 'Rozkład stref';
-    M['04'].zonesCaptionTpl = 'Liczone dla kanału głównego: {name}.';
-    M['04'].zoneGood = 'W normie';
-    M['04'].zoneWarning = 'Uwaga';
-    M['04'].zoneCritical = 'Krytycznie';
-    M['04'].worstTpl = 'Najtrudniejsza pora: {value}.';
-    M['04'].worstNone = 'brak wyraźnej';
-    M['04'].worstHourTpl = 'godzina {hour}';
-    M['04'].adviceTitle = 'Co z tym zrobić';
-    M['04'].adviceMelanopicTpl = 'Średni wpływ na rytm dobowy wyniósł {value}×. Wieczorem warto zejść poniżej 0,50 — najprościej przez cieplejszą żarówkę albo tryb nocny.';
-    M['04'].adviceKelvinTpl = 'Światło było chłodne (średnio {value} K). Do pracy to bez zarzutu; na dwie godziny przed snem łagodniejsze jest poniżej 3000 K.';
-    M['04'].adviceFlickerTpl = 'Widać zauważalne migotanie (średnio {value}%). Zwykle odpowiada za nie tani ściemniacz albo zasilacz podświetlenia.';
-    M['04'].adviceUniformityTpl = 'Światło rozkłada się nierówno ({value}%). Przesunięcie lampy albo zmiana kąta zwykle daje więcej niż wymiana żarówki.';
-    M['04'].adviceWorstTpl = 'Najwięcej odczytów poza progami skupia się o godzinie {hour}.';
-    M['04'].adviceNone = 'W tym okresie nic nie wybija się ponad ustawione progi.';
-    M['04'].limitsTitle = 'To nie jest porada zdrowotna';
-    M['04'].limits = 'Wnioski wynikają wyłącznie z tego, co zobaczyła kamera tego telefonu. Aplikacja nie mierzy widma i nie stawia żadnego rozpoznania. Monitor Światła nie jest wyrobem medycznym w rozumieniu rozporządzenia (UE) 2017/745, nie służy do diagnozowania, zapobiegania, monitorowania ani leczenia jakiegokolwiek stanu chorobowego i nie zastępuje badania u lekarza ani optometrysty.';
-    M['04'].printHint = 'Ta strona jest pomyślana jak wydruk: tabela i podpisy czytają się tak samo na papierze, w lupie systemowej i w czytniku ekranu.';
+  localizeCatalogue();
 
-    /* ---- 05 Eksport ---- */
+  /** Przebudowa całego słownictwa po zmianie języka. Wołana z app.js —
+   *  i tylko stamtąd, bo to on decyduje, co dalej dzieje się z ekranem. */
+  Scale.relanguage = function () {
+    Scale.TEXT = buildText();
+    localizeCatalogue();
+    return Scale.TEXT;
+  };
 
-    M['05'].rangeAria = 'Zakres danych';
-    M['05'].range1h = 'Godzina';
-    M['05'].range24h = 'Doba';
-    M['05'].range7d = '7 dni';
-    M['05'].range30d = '30 dni';
-    M['05'].csvKey = 'Zapisz plik CSV';
-    M['05'].jsonKey = 'Zapisz plik JSON';
-    M['05'].formatTitle = 'Format pliku';
-    M['05'].formatCsv = 'CSV: średnik rozdziela kolumny, przecinek jest separatorem dziesiętnym, kodowanie UTF-8 ze znacznikiem BOM. Taki plik polski Excel otwiera bez ustawiania czegokolwiek.';
-    M['05'].formatJson = 'JSON: te same dane w polu „points”, z kropką dziesiętną i znacznikiem czasu w milisekundach — tego wymaga format.';
-    M['05'].resolution = 'Historia zapisuje jeden punkt co 5 sekund i sięga 30 dni wstecz. Pełnej rozdzielczości pięciu próbek na sekundę plik nie zawiera — silnik trzyma ją tylko przez minutę.';
-    M['05'].offline = 'Plik powstaje w urządzeniu i zostaje w urządzeniu. Eksport nie łączy się z siecią.';
-    M['05'].columnsTitle = 'Opis kolumn';
-    M['05'].columnsCaption = 'Kolumny pliku i ich znaczenie';
-    M['05'].colName = 'Kolumna';
-    M['05'].colMeaning = 'Co zawiera';
-    M['05'].colDate = 'Data';
-    M['05'].colTime = 'Godzina';
-    M['05'].colZone = 'Strefa';
-    M['05'].descDate = 'Data punktu z zegara urządzenia, w zapisie dzień-miesiąc-rok.';
-    M['05'].descTime = 'Godzina punktu z dokładnością do sekundy.';
-    M['05'].descZone = 'Strefa udziału niebieskiego w chwili zapisu. Silnik zapisuje strefę tylko dla tej jednej wielkości — dla pozostałych policz ją z progów.';
-    M['05'].descMetricTpl = '{short} Jednostka: {unit}. Zakres {min}–{max}.';
-    M['05'].previewTitle = 'Podgląd';
-    M['05'].previewHint = 'Pierwsze pięć wierszy pliku, dokładnie tak, jak zostaną zapisane.';
-    M['05'].savedTpl = 'Zapisano plik {name} — {rows} wierszy.';
-    M['05'].failed = 'Ta przeglądarka nie pozwoliła zapisać pliku.';
-
-    /* ---- 06 Porównanie ---- */
-
-    M['06'].intro = 'Aplikacja zapisuje każdą zakończoną sesję pomiaru na tym urządzeniu. Wybierz dwie, żeby zobaczyć je na jednej taśmie i przeczytać różnicę liczbowo.';
-    M['06'].noSessions = 'Nie ma jeszcze żadnej zakończonej sesji. Uruchom pomiar, zatrzymaj go i wróć tutaj.';
-    M['06'].slotA = 'Sesja A';
-    M['06'].slotB = 'Sesja B';
-    M['06'].sessionTpl = '{date}, {time} · {dur}';
-    M['06'].tapeTitle = 'Taśma';
-    M['06'].tapeAriaTpl = 'Przebieg sesji {slot}, wielkość {name}.';
-    M['06'].tapeHint = 'Obie sesje rozciągnięte na tę samą szerokość: słupek to ta sama część czasu trwania, nie ta sama godzina. Wysokość i barwa mówią to samo co na pulpicie.';
-    M['06'].tapeChannelTpl = 'Taśma pokazuje kanał główny: {name}.';
-    M['06'].diffTitle = 'Różnica';
-    M['06'].diffCaption = 'Średnie obu sesji i różnica między nimi';
-    M['06'].colMetric = 'Wielkość';
-    M['06'].colA = 'A';
-    M['06'].colB = 'B';
-    M['06'].colDiff = 'B − A';
-    M['06'].clearKey = 'Usuń zapisane sesje';
-    M['06'].cleared = 'Usunięto zapisane sesje.';
-    M['06'].savedTpl = 'Zapisano sesję: {dur}.';
-    M['06'].limitsTitle = 'Czego to porównanie nie mówi';
-    M['06'].limits = 'Porównujesz dwa pomiary, nie dwa źródła światła. Jeżeli między sesjami zmienił się kadr, odległość, pora dnia albo ustawienie telefonu, różnica jest także o tym. Najuczciwsze porównanie to ta sama scena przed zmianą i po zmianie oświetlenia.';
-    M['06'].keepTpl = 'Pamiętanych jest najwyżej {count} ostatnich sesji.';
-
-    /* ---- 07 Test ekranu ---- */
-
-    M['07'].intro = 'Plansze kontrolne wyświetlają się na całym ekranie tego urządzenia. Służą do obejrzenia ekranu okiem: czy biel jest równa, czy szarości nie wpadają w kolor i czy podświetlenie nie przecieka po rogach.';
-    M['07'].stepsTitle = 'Krok po kroku';
-    M['07'].steps = [
-      'Ustaw jasność ekranu na taką, przy której zwykle pracujesz, i wyłącz systemowy tryb nocny.',
-      'Wybierz planszę z listy poniżej. Wypełni cały ekran.',
-      'Patrz z odległości mniej więcej sześćdziesięciu centymetrów, prostopadle do ekranu. Potem obejrzyj tę samą planszę pod kątem.',
-      'Wyjdź klawiszem „Zamknij planszę” albo klawiszem Escape i przejdź do następnej.'
-    ];
-    M['07'].planesTitle = 'Plansze';
-    M['07'].exitKey = 'Zamknij planszę';
-    M['07'].showKey = 'Pokaż';
-    M['07'].showAriaTpl = 'Pokaż planszę: {name}';
-    M['07'].planeAriaTpl = 'Plansza kontrolna: {name}. Klawisz zamknięcia na dole ekranu.';
-    M['07'].planes = [
-      { id: 'white', namePL: 'Biel', hintPL: 'Szukaj plam, przebarwień i pojaśnień przy krawędziach. Biel powinna być jednym kolorem na całej powierzchni.' },
-      { id: 'gray75', namePL: 'Szarość 75%', hintPL: 'Szarość ma być szara. Zielonkawy albo różowy odcień oznacza rozjechany balans bieli ekranu.' },
-      { id: 'gray50', namePL: 'Szarość 50%', hintPL: 'Najlepsza plansza do oceny odcienia. Porównaj środek z rogami.' },
-      { id: 'gray25', namePL: 'Szarość 25%', hintPL: 'Ciemna szarość pokazuje przecieki podświetlenia i pasy na tanich matrycach.' },
-      { id: 'black', namePL: 'Czerń', hintPL: 'W ciemnym pokoju widać tu każdą nieszczelność podświetlenia i rozjaśnione rogi.' },
-      { id: 'red', namePL: 'Czysta czerwień', hintPL: 'Jednolita czerwień ujawnia martwe subpiksele i nierówności matrycy.' },
-      { id: 'green', namePL: 'Czysta zieleń', hintPL: 'Zieleń niesie najwięcej jasności — na niej najłatwiej wypatrzyć uszkodzony piksel.' },
-      { id: 'blue', namePL: 'Czysty błękit', hintPL: 'Błękit pokazuje brud i smugi na powierzchni ekranu lepiej niż biel.' },
-      { id: 'grid', namePL: 'Siatka', hintPL: 'Linie mają być równie ostre w rogach jak w środku. Rozmycie na brzegach to sprawa skalowania obrazu.' }
-    ];
-    M['07'].warnTitle = 'Uwaga';
-    M['07'].warn = 'Plansza zasłania cały ekran, także pulpit sterowania z klawiszem pomiaru. To jedyne miejsce w aplikacji, gdzie tak się dzieje, i dlatego klawisz wyjścia jest duży i zawsze widoczny. Dopóki plansza jest na ekranie, pomiar biegnie dalej i nie da się go zatrzymać — zamknij planszę, żeby wrócić do klawiszy.';
-    M['07'].cameraTitle = 'Czego tu nie zrobisz';
-    M['07'].camera = 'Telefon nie widzi własnego ekranu, więc tych plansz nie zmierzysz tym samym urządzeniem. Żeby zmierzyć monitor, wyświetl planszę na monitorze, a pomiar prowadź telefonem — to dwa różne urządzenia i dwie różne role.';
-
-    /* ---- 08 Harmonogram ---- */
-
-    M['08'].intro = 'Harmonogram przypomina o pomiarze o ustalonej porze. Kamery nie włącza sam: o wyznaczonej godzinie pokazuje przypomnienie, a pomiar uruchamiasz klawiszem „Start pomiaru” na pulpicie. Tak samo jak za pierwszym razem.';
-    M['08'].onlyOpenTitle = 'Kiedy to nie zadziała';
-    M['08'].onlyOpen = 'Harmonogram działa tylko przy otwartej aplikacji. Zamknięta karta przeglądarki nie liczy czasu i o niczym nie przypomni. Nie prosimy o zgodę na powiadomienia systemowe i niczego nie wysyłamy do sieci.';
-    M['08'].enableLabel = 'Włącz przypomnienia';
-    M['08'].timesTitle = 'Pory';
-    M['08'].timeAriaTpl = 'Pora {n}: godzina przypomnienia';
-    M['08'].addKey = 'Dodaj porę';
-    M['08'].removeKey = 'Usuń';
-    M['08'].removeAriaTpl = 'Usuń porę {time}';
-    M['08'].addedTpl = 'Dodano porę {time}.';
-    M['08'].removedTpl = 'Usunięto porę {time}.';
-    M['08'].badTime = 'Podaj godzinę w formacie 22:00.';
-    M['08'].nextTpl = 'Najbliższe przypomnienie: {time}.';
-    M['08'].nextNone = 'Przypomnienia są wyłączone.';
-    M['08'].dueTpl = 'Zaplanowana pora pomiaru: {time}.';
-    M['08'].dueKey = 'Pokaż pulpit';
-
-    /* ---- 09 Alerty ---- */
-
-    M['09'].intro = 'Alert pilnuje jednej wielkości i odzywa się dopiero wtedy, gdy trzyma ona wybraną strefę nieprzerwanie przez ustawiony czas. Nigdy nie zatrzymuje pomiaru i nigdy nie zasłania klawiszy.';
-    M['09'].enableLabel = 'Włącz alerty';
-    M['09'].metricLabel = 'Pilnowana wielkość';
-    M['09'].levelLabel = 'Od której strefy';
-    M['09'].levelWarning = 'Od uwagi w górę';
-    M['09'].levelCritical = 'Tylko krytyczna';
-    M['09'].sustainLabel = 'Po ilu sekundach nieprzerwanie';
-    M['09'].sustainHint = 'Krótsze czasy dają więcej fałszywych alarmów, gdy przesuwasz telefon. Poniżej pięciu sekund nie schodzimy.';
-    M['09'].soundLabel = 'Krótki sygnał dźwiękowy';
-    M['09'].soundHint = 'Dźwięk powstaje w urządzeniu. Nic nie jest pobierane z sieci.';
-    M['09'].cooldownHint = 'Najwyżej jeden alert na dwie minuty. Alarm powtarzany co próbkę to alarm, który się wyłącza na stałe.';
-    M['09'].whenNotTitle = 'Kiedy alert nie zadziała';
-    M['09'].whenNot = 'Powiadomienie jest wewnątrz aplikacji, nie w systemie. Nie zadziała, gdy aplikacja jest zamknięta albo schowana w tle, gdy pomiar nie działa oraz gdy pilnowana wielkość nie daje się w danej chwili zmierzyć. Nie prosimy o zgodę na powiadomienia systemowe.';
-    M['09'].firedTpl = '{name}: {zone} od {sec} s — teraz {value}.';
-    M['09'].saved = 'Zapisano ustawienia alertu.';
-    M['09'].statusOnTpl = 'Pilnuję: {name}, {level}, po {sec} s.';
-
-  }(Scale.TEXT.modules));
 
   /* ------------------------------------------------------------------
      Key map — what a module author may reach for.
@@ -651,7 +757,12 @@
        .common     noValue close cancel save reset yes no on off sep
 
      Metric names, units, ranges and help texts are NOT here — they come from
-     Metrics.CATALOGUE, which is their only home.
+     Metrics.CATALOGUE, which is their only home. Their WORDS come from the
+     shared dictionary ('metric.<id>.name' and friends); localizeCatalogue()
+     above puts them into the catalogue at start-up and after a language change.
+
+       Scale.relanguage()                   -> rebuilds TEXT in the new language;
+                                               app.js is the only caller.
      ------------------------------------------------------------------ */
 
 }(typeof window !== 'undefined' ? window : globalThis));

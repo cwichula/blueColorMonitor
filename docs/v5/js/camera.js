@@ -25,6 +25,7 @@ import {
   CATALOGUE
 } from './metrics.js';
 import { get as getSettings, thresholdsFor } from './store.js';
+import { t, has } from './i18n/index.js';
 
 /* ------------------------------------------------------------------
    Stałe — kontrakt próbkowania
@@ -59,20 +60,35 @@ const LIN = new Array(256);
 for (let i = 0; i < 256; i += 1) LIN[i] = toLinear(i);
 
 /* ------------------------------------------------------------------
-   Błędy — kod i gotowy polski komunikat
+   Błędy — kod i komunikat w języku interfejsu
    ------------------------------------------------------------------ */
 
 /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po angielsku
- * i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie diagnozy i jedno
- * zdanie rady. */
-const ERROR_TEXT = {
-  denied: 'Brak zgody na dostęp do kamery. Zezwól na kamerę w ustawieniach przeglądarki dla tej strony i spróbuj ponownie.',
-  notfound: 'Nie znaleziono kamery. Sprawdź, czy urządzenie ma aparat i czy nie jest wyłączony w systemie.',
-  inuse: 'Kamera jest zajęta przez inną aplikację. Zamknij tamtą aplikację lub zakładkę i spróbuj ponownie.',
-  insecure: 'Kamera działa tylko przez HTTPS albo na localhost. Otwórz tę stronę pod adresem zaczynającym się od „https://”.',
-  unsupported: 'Ta przeglądarka nie udostępnia tutaj kamery. Spróbuj w Chrome albo w Safari, w zwykłym oknie — nie w podglądzie wbudowanym w inną aplikację.',
-  unknown: 'Nie udało się uruchomić kamery.'
-};
+ * i bez rady, co zrobić dalej. Każdy kod ma w słowniku jedno zdanie diagnozy
+ * i jedno zdanie rady, pod kluczem 'camera.error.<kod>'.
+ *
+ * Kształt wyniku jest jeden dla trzech odbiorców: stanu modułu (lastError),
+ * zdarzenia 'camera:error' i wartości zwracanej ze start(). Napis jest
+ * GETTEREM, a nie gotowym tekstem, bo ekran pomiaru zapamiętuje komunikat
+ * u siebie i rysuje go długo po samym błędzie — po przełączeniu języka ma
+ * pokazać nowe zdanie, a nie stare. */
+function cameraError(code) {
+  const key = 'camera.error.' + code;
+  const read = () => t(has(key) ? key : 'camera.error.unknown');
+  return {
+    ok: false,
+    code,
+    get message() { return read(); },
+    /* Alias przejściowy: screens/measure.js czyta jeszcze pole messagePL. */
+    get messagePL() { return read(); }
+  };
+}
+
+/* Powodzenie ma ten sam kształt co porażka — wywołujący nie musi zgadywać,
+   które pola dostał. */
+function cameraOk() {
+  return { ok: true, code: null, message: null, messagePL: null };
+}
 
 /* Czy strona działa w kontekście, w którym getUserMedia w ogóle wolno pytać.
  * Ma znaczenie, bo iOS na http:// rzuca NotAllowedError — tym samym błędem, co
@@ -183,11 +199,10 @@ function setMode(next, error) {
 }
 
 function fail(code) {
-  const messagePL = ERROR_TEXT[code] || ERROR_TEXT.unknown;
-  const error = { code, messagePL };
+  const error = cameraError(code);
   setMode('error', error);
   bus.emit('camera:error', error);
-  return { ok: false, code, messagePL };
+  return error;
 }
 
 /* ------------------------------------------------------------------
@@ -325,7 +340,7 @@ function releaseStream() {
 export async function start(facingWanted = 'environment') {
   if (facingWanted === 'user' || facingWanted === 'environment') facingMode = facingWanted;
 
-  if (mode === 'running') return { ok: true, code: null, messagePL: null };
+  if (mode === 'running') return cameraOk();
   // Drugie dotknięcie „Start”, gdy pytanie o zgodę jeszcze wisi, dołącza do
   // pierwszej próby zamiast otwierać drugą — inaczej zostałyby dwa strumienie
   // i dwie zapalone diody kamery.
@@ -350,7 +365,7 @@ export async function start(facingWanted = 'environment') {
     try {
       fresh = await media.getUserMedia(constraintsFor(wanted));
     } catch (err) {
-      if (token !== startToken) return { ok: false, code: 'unknown', messagePL: ERROR_TEXT.unknown };
+      if (token !== startToken) return cameraError('unknown');
       releaseStream();
       return fail(mapError(err));
     }
@@ -360,7 +375,7 @@ export async function start(facingWanted = 'environment') {
     // osierocony i natychmiast zamykany.
     if (token !== startToken) {
       killTracks(fresh);
-      return { ok: false, code: 'unknown', messagePL: ERROR_TEXT.unknown };
+      return cameraError('unknown');
     }
 
     // Gdyby mimo tokenu został stary strumień, ginie tutaj: dwie żywe ścieżki
@@ -386,7 +401,7 @@ export async function start(facingWanted = 'environment') {
 
     if (token !== startToken) {
       killTracks(fresh);
-      return { ok: false, code: 'unknown', messagePL: ERROR_TEXT.unknown };
+      return cameraError('unknown');
     }
 
     // Kamera odebrana przez inną aplikację kończy ścieżkę bez żadnego wyjątku;
@@ -409,7 +424,7 @@ export async function start(facingWanted = 'environment') {
     requestWakeLock();
 
     setMode('running');
-    return { ok: true, code: null, messagePL: null };
+    return cameraOk();
   })();
 
   const result = await startPromise;
@@ -449,7 +464,7 @@ export function stop() {
 export function toggle() {
   if (mode === 'running' || mode === 'starting') {
     stop();
-    return Promise.resolve({ ok: true, code: null, messagePL: null });
+    return Promise.resolve(cameraOk());
   }
   return start(facingMode);
 }
@@ -461,7 +476,7 @@ export async function switchCamera() {
     // o tym, bo przycisk kamery pokazuje bieżącą stronę obiektywu.
     facingMode = next;
     bus.emit('camera:state', { state: mode, facing: facingMode });
-    return { ok: true, code: null, messagePL: null };
+    return cameraOk();
   }
   // Inny obiektyw to inna optyka i inna krzywa ekspozycji, więc jest to nowa
   // sesja, a nie ciąg dalszy starej: jedna średnia z obu opisywałaby scenę,

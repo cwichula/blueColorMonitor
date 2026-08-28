@@ -28,7 +28,7 @@
  * z listy poniżej.
  */
 
-var CACHE = 'ms5-8';
+var CACHE = 'ms5-10';
 var CACHE_PREFIX = 'ms5-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v5/, spod
@@ -54,6 +54,42 @@ var APP_SHELL = [
   './js/support.js',
   './js/router.js',
   './js/app.js',
+
+  /* Warstwa językowa. Silnik wchodzi do grafu importów przez js/format.js,
+     więc bez niego nie ma czym narysować ani jednej liczby — i dlatego stoi
+     na tej liście bezwarunkowo.
+
+     ZAPISUJEMY TU TYLKO DWA SŁOWNIKI Z TRZYDZIESTU — i to jest decyzja, nie
+     przeoczenie. Angielski, bo jest wartością zapasową każdego brakującego
+     klucza i wczytuje się przy każdym uruchomieniu niezależnie od wybranego
+     języka. Polski, bo jest źródłem treści i pierwszym językiem tej aplikacji.
+
+     Powód pominięcia pozostałych dwudziestu ośmiu jest policzony: trzydzieści
+     słowników waży 1,4 MB, podczas gdy CAŁA reszta powłoki — znaczniki, arkusze
+     stylów, moduły, biblioteka pomiarowa i ikony — mieści się w 740 kB.
+     Pobieranie kompletu przy instalacji potroiłoby wagę aplikacji, żeby dać
+     coś, z czego jeden człowiek korzysta w jednej trzydziestej: nikt nie czyta
+     interfejsu w trzydziestu językach naraz.
+
+     Jak w takim razie działa offline. Silnik sięga po słownik dynamicznym
+     import('./locales/<kod>.js'), a ten adres leży wewnątrz /v5/, więc wpada
+     w inScope i idzie przez stale-while-revalidate: przy PIERWSZYM użyciu
+     zostaje zapisany w pamięci i od tej pory jest dostępny bez sieci. Język
+     wykryty z ustawień urządzenia wczytuje się już przy pierwszym otwarciu
+     aplikacji, czyli wtedy, gdy sieć jeszcze jest.
+
+     Cena tej decyzji, wypowiedziana wprost: pierwsze przełączenie na język,
+     którego użytkownik nigdy wcześniej nie otworzył, wymaga sieci. Bez niej
+     import się nie powiedzie, a silnik zostanie przy angielskim — po cichu,
+     bez komunikatu. Uznajemy to za mniejsze zło niż 1,4 MB pobierania u kogoś,
+     kto nigdy nie zmieni języka. Ta sama zasada obowiązuje w v2, v3 i v4.
+
+     Kolejność wpisów jak w katalogu locales/. */
+  './js/i18n/index.js',
+  './js/i18n/locales/en.js',
+  './js/i18n/locales/pl.js',
+  /* keys.test.js z tego katalogu NIE należy do aplikacji — to narzędzie
+     deweloperskie dla `node --test` i nie ma go po co wozić na urządzenie. */
 
   './js/ui/dom.js',
   './js/ui/overlays.js',
@@ -219,9 +255,16 @@ function documentFirstFromNetwork(event, request) {
       return cached || caches.match('./index.html', { cacheName: CACHE });
     }).then(function (cached) {
       if (cached) return cached;
+      /* Jedyny napis dla człowieka, jaki powstaje w tym pliku — i dlatego jest
+         PO ANGIELSKU, tak samo jak zapas silnika językowego. Worker nie ma
+         dostępu do słowników (są modułami ES ładowanymi przez stronę, a ta
+         właśnie się nie wczytała), a w chwili, gdy ta odpowiedź jest potrzebna,
+         nie wiadomo nawet, jaki język wybrał użytkownik: wybór leży w
+         localStorage, którego worker nie widzi. Angielski jest wtedy jedynym
+         uczciwym wyborem. */
       return new Response(
-        '<!doctype html><html lang="pl"><meta charset="utf-8"><title>Monitor Światła</title>' +
-        '<p>Monitor Światła nie jest jeszcze zapisany w pamięci urządzenia. Połącz się z siecią i otwórz go raz.</p>',
+        '<!doctype html><html lang="en"><meta charset="utf-8"><title>Light Monitor</title>' +
+        '<p>Light Monitor is not stored on this device yet. Connect to the network and open it once.</p>',
         { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
       );
     });

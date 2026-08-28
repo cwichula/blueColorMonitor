@@ -13,8 +13,14 @@ pliku, ale nie zmieniaj tego, co jest.
   klasy, `?.`, `??`). Bez transpilacji.
 - **Ścieżki względne** wszędzie (`./`, `../`) — aplikacja musi działać spod
   `/v5/`, spod `/blueColorMonitor/docs/v5/` i z lokalnego katalogu.
-- **Język interfejsu: polski.** Liczby formatowane po polsku (przecinek
-  dziesiętny, spacja jako separator tysięcy) — wyłącznie przez `js/format.js`.
+- **Język interfejsu: trzydzieści języków**, przełączane w ustawieniach,
+  domyślnie językiem urządzenia. **Zapasem jest ANGIELSKI, nie polski**: język
+  spoza listy i klucz brakujący w słowniku schodzą na angielski, a dopiero
+  potem na samą nazwę klucza. Polski jest jednym z trzydziestu — jest za to
+  źródłem treści (`js/i18n/locales/pl.js`).
+  **W kodzie nie ma napisów dla człowieka** — jest klucz i `t('klucz')`.
+  Liczby, daty i odmianę liczebnika formatuje wyłącznie `js/format.js`, wedle
+  aktywnego języka (`Intl` + wzorce ze słownika).
 - **Komentarze w kodzie: po polsku**, zwięzłe, tłumaczą *dlaczego*, nie *co*.
   Bez komentarzy-oczywistości. Nagłówek pliku: 3–8 linii o roli pliku.
 - **Prywatność**: pomiar w całości lokalny. Nic nie wychodzi do sieci. Żadnych
@@ -48,6 +54,10 @@ docs/v5/
   icons/                     ikony PWA (192, 512, maskable 512)
   js/format.js               formatowanie liczb, jednostek, dat, czasu
   js/bus.js                  szyna zdarzeń
+  js/i18n/index.js           silnik językowy: lista 30 języków, wykrycie, t(), dir
+  js/i18n/locales/pl.js      słownik polski — ŹRÓDŁO TREŚCI
+  js/i18n/locales/en.js      słownik angielski — ZAPAS dla brakujących kluczy
+  js/i18n/locales/<kod>.js   pozostałe 28 języków
   js/metrics.js              adapter do ../lib: re-eksport + trzy zgodności z v5
   js/store.js                ustawienia (localStorage) + atrybuty na <html>
   js/history.js              bufor i trwałość historii pomiarów
@@ -68,8 +78,10 @@ docs/v5/
 Kolejność importów jest drzewem — moduł niższy nigdy nie importuje wyższego:
 
 ```
-format, bus, metrics        (liść, bez importów)
-store        -> bus
+bus, metrics                (liść, bez importów)
+store        -> bus, metrics
+i18n         -> bus, store          (słowniki dociągane dynamicznie)
+format       -> i18n, bus           (+ ../lib/catalogue.js)
 history      -> bus, metrics, format
 camera       -> bus, metrics, store
 support      -> (liść, bez importów)
@@ -150,24 +162,62 @@ wszystkie `--dur-*` schodzą do `1ms`.
 
 Wszystkie moduły eksportują **nazwane** eksporty (bez `export default`).
 
+### js/i18n/index.js
+Jedyne miejsce, które wie cokolwiek o językach. Żaden inny moduł nie zagląda do
+`locales/` i nie zna kodów języków.
+```js
+export const LANGUAGES = [{code, name, dir}, …]   // 30 pozycji, `name` to ENDONIM ('Deutsch', '日本語'), dir 'ltr'|'rtl' (rtl: ar, ur, fa)
+export const DEFAULT_LANGUAGE = 'en'
+export function init() -> Promise<code>        // raz, PRZED pierwszym rysowaniem; nigdy nie odrzuca
+export function ready() -> Promise<code>       // ta sama obietnica dla spóźnionych modułów
+export function t(key, params) -> string       // wstawki {nazwa}; wartość-obiekt = formy CLDR wybierane przez Intl.PluralRules po params.n (albo params.count)
+export function has(key) -> boolean
+export function locale() -> 'pl'               // znacznik dla Intl (liczby, daty, odmiana)
+export function dir() -> 'ltr'|'rtl'
+export function setLanguage(code) -> Promise<code>   // null albo 'system' = wg urządzenia
+export function detect() -> code               // wybór użytkownika -> navigator.languages -> 'en'
+export function isSupported(code) -> boolean
+export function languageInfo(code) -> {code, name, dir}|null
+```
+Wykrycie: zapis w `store` → `navigator.languages` po kolei, z dopasowaniem po
+samym kodzie języka (`de-AT` → `de`, `zh-TW` → `zh`) → **angielski**.
+Szukanie klucza: aktywny język → angielski → sam klucz (+ `console.warn` na
+localhost). `setLanguage` ustawia `lang` i `dir` na `<html>`, zapisuje wybór
+przez `store.set({language})` i emituje `'i18n:changed'`.
+Słowniki: `export default { … }` — **płaska** mapa kluczy kropkowanych na
+napisy albo na obiekty form CLDR (`{one, few, many, other}`). Nazwy wstawek są
+takie same we wszystkich językach.
+
 ### js/format.js
 ```js
-export function nf(value, decimals = 0) -> string   // pl-PL, przecinek, spacja tysięcy, '—' dla null/NaN
+export function nf(value, decimals = 0) -> string   // wg aktywnego języka, '—' dla null/NaN
 export function metricValue(metricId, value) -> string      // używa decimals z katalogu
 export function metricValueUnit(metricId, value) -> string  // '27 %', '5200 K', '0,84 ×'
-export function clock(ts) -> '14:07'
-export function dateShort(ts) -> '24 sie'
+export function clock(ts) -> '14:07' / '2:07 PM'
+export function dateShort(ts) -> '24 sie' / 'Aug 24'
 export function dateTime(ts) -> '24 sie, 14:07'
 export function duration(ms) -> '1 godz. 12 min' / '45 s'
 export function relative(ts, now = Date.now()) -> 'przed chwilą' / '3 min temu' / 'wczoraj'
-export function plural(n, one, few, many) -> string   // 1 pomiar / 2 pomiary / 5 pomiarów
-export const ZONE_LABEL = {good:'bezpiecznie', warn:'umiarkowanie', crit:'szkodliwie', none:'brak danych'}
+export function plural(n, key) -> string   // klucz form CLDR: '1 pomiar' / '2 pomiary' / '5 pomiarów'
+export function zoneLabel(zone) -> 'bezpiecznie' | 'umiarkowanie' | 'szkodliwie' | 'brak danych'
+export const ZONE_LABEL = {good, warn, crit, none}   // PRZEJŚCIOWE: gettery na zoneLabel(), znika w etapie 3
 ```
+Ani jednego napisu w tym pliku: wzorce (`'{day} {month}'`, `'{minutes} min
+temu'`, formy mnogie) siedzą w słownikach, a moduł wstawia w nie liczby.
+Skróty miesięcy bierze ze słownika (`date.month.short.1…12`), a nie z
+`Intl.DateTimeFormat`, bo ICU zwraca dla polskiego raz „sie”, raz „sie.”
+zależnie od przeglądarki. Zegar odwrotnie — bierze z `Intl`, bo wzorzec
+`{hours}:{minutes}` nie umie powiedzieć „2:07 PM”. Pamięć podręczna instancji
+`Intl` jest kluczowana **językiem** i czyszczona na `'i18n:changed'`.
+
+`plural(n, one, few, many)` z trzema polskimi słowami jest **przejściowy**
+(czternaście wywołań w ekranach, znikają w etapie 3) i odmienia po polsku.
+
 `format.js` nie importuje `metrics.js` — mapy `DECIMALS` i `UNITS` buduje
-pętlą z katalogu wielkości, importowanego wprost z `../../lib/catalogue.js`.
-Tamten plik sam nic nie importuje, więc `format.js` pozostaje liściem drzewa
-importów z sekcji 1, a liczby miejsc po przecinku i jednostki nie są przepisane
-drugi raz z ręki.
+pętlą z katalogu wielkości, importowanego wprost z `../../lib/catalogue.js`,
+więc liczby miejsc po przecinku i jednostki nie są przepisane drugi raz z ręki.
+Liściem drzewa importów przestał być z chwilą wprowadzenia tłumaczeń: doszedł
+`i18n/index.js`, bo bez znajomości języka nie da się sformatować liczby.
 
 ### js/bus.js
 ```js
@@ -182,6 +232,7 @@ Zdarzenia (pełna lista, nikt nie wymyśla nowych bez dopisania tutaj):
 'history:session' {session}
 'settings:changed'{settings}
 'route:changed'   {route, previous}
+'i18n:changed'    {lang, dir, previous}   // język przełączony; ekrany rysują się od nowa
 ```
 
 ### js/metrics.js
@@ -232,6 +283,7 @@ Klucz `ms5.settings.v1`. Zapisuje wyłącznie ten moduł. Odporny na tryb
 prywatny (każdy dostęp do `localStorage` w `try/catch`).
 ```js
 export const DEFAULTS = {
+  language:null,          // null = wg urządzenia; kod języka = wybór użytkownika
   theme:'system', accent:'ocean', textScale:1, density:'comfortable', motion:'system',
   leadMetric:'share', historyRange:'1h', keepAwake:true, haptics:true,
   thresholds:{},          // { [metricId]: {warn, crit} } — nadpisania użytkownika
@@ -248,6 +300,10 @@ export const THEMES = ['system','light','dark']
 ```
 `store.js` importuje `metrics.js` wyłącznie po to, by `thresholdsFor` mogło
 sięgnąć do katalogu; to jedyny wyjątek od drzewa z sekcji 1.
+Pole `language` sprawdza wyłącznie co do KSZTAŁTU (dwie–trzy małe litery albo
+`null`), a nie wobec listy trzydziestu języków: lista mieszka w
+`js/i18n/index.js`, który importuje `store` — import w drugą stronę zrobiłby
+cykl. Kod spoza listy rozstrzyga i18n, schodząc na zapas.
 
 ### js/history.js
 ```js
@@ -526,3 +582,8 @@ skróty do `#/measure`, `#/history`, `#/tools`.
 - Nie blokować głównego wątku: wykres przelicza się na `refresh()`, nie na
   `camera:reading`.
 - Nie pokazywać liczb, których nie zmierzono. `null` to `—`.
+- Nie wpisywać napisów dla człowieka do kodu — ani polskich, ani angielskich.
+  Napis ma klucz w `js/i18n/locales/pl.js` **i** w `en.js`, a kod woła `t()`.
+- Nie zaszywać w kodzie niczego, co zależy od języka: kolejności dnia i
+  miesiąca, zegara 24-godzinnego, własnych reguł odmiany liczebnika ani
+  znacznika `'pl-PL'` w `Intl`. Od tego jest `format.js` i `locale()`.

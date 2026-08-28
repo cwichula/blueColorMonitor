@@ -17,10 +17,18 @@
  * and it never reloads the page on its own — a reload during a measurement
  * would throw the session away.
  *
- * The one place in v3 that carries Polish literals rather than reading
+ * The one place in v3 that carries built-in wording rather than reading
  * Scale.TEXT: the census message. Its whole purpose is to work on the run
  * where scale.js is the file that failed to load, so it prefers Scale.TEXT
  * when that exists and falls back to the sentences below when it does not.
+ *
+ * TE ZDANIA SĄ PO ANGIELSKU, NIE PO POLSKU — i to jest cała rzecz, jaka się
+ * tu zmieniła wraz z trzydziestoma językami. Ich polskie brzmienie leży
+ * w ./i18n/pl.js pod kluczami 'boot.*' i normalnie właśnie stamtąd przychodzi.
+ * Literały poniżej widać wyłącznie wtedy, gdy nie wczytał się ani scale.js,
+ * ani warstwa językowa — a wtedy nie wiadomo, jakim językiem mówić do tego,
+ * kto patrzy na ekran, więc mówi się angielskim: tym samym, który jest
+ * zapasowym językiem całej aplikacji.
  */
 (function (global) {
   'use strict';
@@ -32,15 +40,24 @@
      ------------------------------------------------------------------ */
 
   var TEXT = {
-    title: 'Aplikacja wczytała się niekompletnie',
-    filesTpl: 'Nie wczytały się pliki: {list}.',
-    modulesTpl: 'Nie zgłosiły się moduły: {list} — te pozycje nie otworzą się ze spisu.',
-    modulesRangeTpl: 'moduły {from}–{to}',
-    tail: 'Odśwież stronę. Jeżeli to nie pomoże, pliki na serwerze są niekompletne.',
-    newVersion: 'Jest nowa wersja aplikacji.',
-    refresh: 'Odśwież',
-    firstRun: 'Zacznij od klawisza „Start pomiaru” na dole ekranu. Kamera włączy się dopiero po naciśnięciu.',
-    close: 'Zamknij'
+    title: 'The application did not load completely',
+    filesTpl: 'These files did not load: {list}.',
+    modulesTpl: 'These modules did not report in: {list} — they will not open from the index.',
+    modulesRangeTpl: 'modules {from}–{to}',
+    tail: 'Reload the page. If that does not help, the files on the server are incomplete.',
+    newVersion: 'A new version of the application is available.',
+    refresh: 'Reload',
+    firstRun: 'Start with the "Start" key at the bottom of the screen. The camera turns on only after you press it.',
+    close: 'Close',
+    loss: {
+      bus: 'the modules will stop seeing each other and the measurement will not start',
+      metrics: 'no value will be computed',
+      scaleCore: 'the scale geometry and the number formatting disappear',
+      scaleText: 'every interface caption disappears',
+      shell: 'no module can be opened',
+      engine: 'the camera and the measurement will not start',
+      dash: 'the dashboard stays empty'
+    }
   };
 
   // Prefer chapter 8 where it is available; fall back to the literal above.
@@ -74,9 +91,9 @@
 
   // [global name | probe, file, what stops working]
   var REQUIRED = [
-    { name: 'Bus', filePL: '../shared/bus.js', lossPL: 'moduły przestaną się widzieć i pomiar nie ruszy' },
-    { name: 'Metrics', filePL: '../shared/metrics.js', lossPL: 'żadna wartość nie zostanie policzona' },
-    { name: 'Scale', filePL: '../shared/scale-core.js', lossPL: 'zniknie geometria skali i formatowanie liczb' },
+    { name: 'Bus', file: '../shared/bus.js', lossKey: 'boot.loss.bus', lossEn: TEXT.loss.bus },
+    { name: 'Metrics', file: '../shared/metrics.js', lossKey: 'boot.loss.metrics', lossEn: TEXT.loss.metrics },
+    { name: 'Scale', file: '../shared/scale-core.js', lossKey: 'boot.loss.scaleCore', lossEn: TEXT.loss.scaleCore },
     /* Drugi wiersz na TEN SAM obiekt, bo skala stoi teraz w dwóch plikach:
        ../shared/scale-core.js tworzy `window.Scale`, a lokalny scale.js dokłada
        do niego wyłącznie słownik Scale.TEXT. Gdy nie wczyta się ten drugi plik,
@@ -85,10 +102,10 @@
        Scale.verdict i Scale.stamp rzucają wtedy TypeError), w miejscu, które nic
        nie mówi o przyczynie. Dlatego pytamy tu o sam słownik, nie o globalne. */
     { probe: function () { return !!(global.Scale && global.Scale.TEXT); },
-      filePL: 'scale.js', lossPL: 'znikną wszystkie napisy interfejsu' },
-    { name: 'UI3', filePL: 'shell.js', lossPL: 'nie da się otworzyć żadnego modułu' },
-    { name: 'Engine', filePL: '../shared/engine.js', lossPL: 'kamera i pomiar nie ruszą' },
-    { probe: dashPresent, filePL: 'dash.js', lossPL: 'pulpit zostanie pusty' }
+      file: 'scale.js', lossKey: 'boot.loss.scaleText', lossEn: TEXT.loss.scaleText },
+    { name: 'UI3', file: 'shell.js', lossKey: 'boot.loss.shell', lossEn: TEXT.loss.shell },
+    { name: 'Engine', file: '../shared/engine.js', lossKey: 'boot.loss.engine', lossEn: TEXT.loss.engine },
+    { probe: dashPresent, file: 'dash.js', lossKey: 'boot.loss.dash', lossEn: TEXT.loss.dash }
   ];
 
   /* dash.js exports no global — by design, nothing calls into it. Its proof of
@@ -118,7 +135,7 @@
       } else {
         present = !!global[row.name];
       }
-      if (!present) out.push(row.filePL + ' — ' + row.lossPL);
+      if (!present) out.push(row.file + ' — ' + T(row.lossKey, row.lossEn));
     }
     return out;
   }
@@ -152,7 +169,7 @@
       if (nos.length === 1) {
         labelPL = (meta[nos[0]] && meta[nos[0]].titlePL) ? meta[nos[0]].titlePL : nos[0];
       } else {
-        labelPL = fill(TEXT.modulesRangeTpl, { from: nos[0], to: nos[nos.length - 1] });
+        labelPL = fill(T('boot.modulesRangeTpl', TEXT.modulesRangeTpl), { from: nos[0], to: nos[nos.length - 1] });
       }
       out.push(order[i] + ' — ' + labelPL);
     }
@@ -160,15 +177,15 @@
   }
 
   /* A missing file is a broken build, not a user error — but the user is the
-     one looking at the screen, so the message is Polish, names the file and
-     says what still works. It goes into the standing notes column of the
+     one looking at the screen, so the message is in the reader's own language,
+     names the file and says what still works. It goes into the standing notes column of the
      dashboard, never into a modal: a modal would cover the measurement. */
   function reportMissing(files, modules) {
     var lines = [];
-    if (files.length) lines.push(fill(TEXT.filesTpl, { list: files.join('; ') }));
-    if (modules.length) lines.push(fill(TEXT.modulesTpl, { list: modules.join('; ') }));
+    if (files.length) lines.push(fill(T('boot.filesTpl', TEXT.filesTpl), { list: files.join('; ') }));
+    if (modules.length) lines.push(fill(T('boot.modulesTpl', TEXT.modulesTpl), { list: modules.join('; ') }));
     if (!lines.length) return;
-    lines.push(TEXT.tail);
+    lines.push(T('boot.tail', TEXT.tail));
 
     if (global.console && global.console.error) {
       global.console.error('boot.js: ' + lines.join(' ') + ' Sprawdź kolejność i ścieżki <script> w index.html.');
@@ -187,7 +204,7 @@
       box.appendChild(title);
       var head = doc.createElement('p');
       head.className = 'ms3-note__text';
-      head.textContent = TEXT.title;
+      head.textContent = T('boot.title', TEXT.title);
       box.appendChild(head);
 
       var host = doc.getElementById('ms3Notes') || doc.getElementById('ms3Scroll') ||

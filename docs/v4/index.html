@@ -1,16 +1,25 @@
 <!doctype html>
-<html lang="pl" data-accent="ocean">
+<!-- lang i dir ustawia ../shared/i18n.js jeszcze w trakcie parsowania; wartość
+     poniżej to język zapasowy aplikacji, czyli ten, który zobaczy ktoś bez
+     JavaScriptu i bez wczytanego słownika. -->
+<html lang="en" data-accent="ocean">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#F4F6F9" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0E1116" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Monitor Światła — pomiar światła kamerą telefonu.">
+  <!-- Opis dla wyszukiwarki i dla ekranu instalacji. Czyta go robot i system
+       operacyjny, zanim wykona się jakikolwiek skrypt, więc warstwa językowa nie
+       ma jak go podmienić — jest jednojęzyczny, a jedynym uczciwym wyborem jest tu
+       angielski, język zapasowy całej aplikacji. -->
+  <meta name="description" content="Light Monitor — light measurement with your phone camera.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Monitor Światła">
+  <!-- Nazwa pod ikoną na ekranie głównym. Wpisuje ją system przy instalacji, zanim
+       ruszy jakikolwiek skrypt — więc tak samo jak opis powyżej stoi po angielsku. -->
+  <meta name="apple-mobile-web-app-title" content="Light Monitor">
   <title>Monitor Światła</title>
 
   <link rel="manifest" href="manifest.webmanifest">
@@ -23,8 +32,18 @@
   <link rel="stylesheet" href="components.css">
   <link rel="stylesheet" href="screens.css">
 
+  <!-- Warstwa językowa. MUSI stać przed każdym plikiem, który woła I18n przy
+       ładowaniu — a robią to scale.js, store.js i ui.js. Ten skrypt dopisuje
+       (przez document.write, w trakcie parsowania) znaczniki dwóch słowników:
+       ../shared/i18n/<kod>.js i i18n/<kod>.js. Parser zatrzymuje się na nich tak
+       samo jak na metrics.js, więc kiedy rusza pierwszy skrypt aplikacji, napisy
+       są już w pamięci i nic nie musi czekać na wywołanie zwrotne.
+       Brak pliku danego języka nie jest awarią: I18n.t() spada wtedy na angielski,
+       a w ostateczności zwraca sam klucz. -->
+  <script src="../shared/i18n.js"></script>
+
   <script>
-  /* Jedyny skrypt wpisany w stronę i jedyny, który wykonuje się przed pierwszym
+  /* Drugi i ostatni skrypt wpisany w stronę, i jedyny, który wykonuje się przed pierwszym
      malowaniem. Czyta zapisane ustawienia i ustawia atrybuty na <html>, żeby
      ktoś, kto wybrał motyw ciemny albo większy tekst, nie zobaczył błysku
      ustawień domyślnych. Ten skrypt TYLKO CZYTA — zapis i cała reszta logiki
@@ -50,25 +69,33 @@
 <body>
 
   <!-- 1. Skok do treści: pierwszy element w kolejności tabulacji -->
-  <a class="ms4-skip" href="#viewRoot">Przejdź do treści</a>
+  <!-- Napis wstawia app.js z klucza 'nav.skip'. Pusty w znaczniku, bo nie ma
+       jednego języka, w którym miałby tu stać. -->
+  <a class="ms4-skip" href="#viewRoot" id="skipLink"></a>
 
+  <!-- Jedyne zdania tej wersji, które nie przechodzą przez warstwę językową.
+       Widać je wyłącznie wtedy, gdy JavaScript jest wyłączony — a wtedy nie ma czym
+       wczytać słownika ani czym podstawić tekstu, więc języka użytkownika nie da się
+       tu ani rozpoznać, ani użyć. Stoi tu zatem angielski — język zapasowy całej
+       aplikacji, ten sam, na który spada I18n.t() przy braku klucza. -->
   <noscript>
     <div class="ms4-noscript">
-      <p class="ms4-note__title">Ta aplikacja potrzebuje JavaScriptu</p>
-      <p class="ms4-note__text">Pomiar odbywa się w całości na tym urządzeniu, w tej karcie
-      przeglądarki — bez JavaScriptu nie ma czym liczyć obrazu z kamery. Włącz obsługę
-      JavaScriptu dla tej strony i otwórz ją ponownie. Nic nie jest wysyłane do sieci.</p>
+      <p class="ms4-note__title">This app needs JavaScript</p>
+      <p class="ms4-note__text">The measurement happens entirely on this device, in this
+      browser tab — without JavaScript there is nothing to compute the camera image with.
+      Enable JavaScript for this page and open it again. Nothing is sent over the network.</p>
     </div>
   </noscript>
 
   <!-- 2. Powłoka. app.js wypełnia topbar, sidenav, tabbar i viewRoot. -->
   <div class="ms4-app" id="appRoot">
 
-    <aside class="ms4-sidenav" id="sideNav" aria-label="Nawigacja główna" hidden></aside>
+    <aside class="ms4-sidenav" id="sideNav" hidden></aside>
 
     <header class="ms4-topbar" id="topBar">
       <div class="ms4-topbar__inner">
-        <h1 class="ms4-topbar__title" id="topBarTitle">Pomiar</h1>
+        <!-- Nazwę ekranu wpisuje app.js przy każdym wejściu w widok. -->
+        <h1 class="ms4-topbar__title" id="topBarTitle"></h1>
         <div class="ms4-topbar__status" id="topBarStatus" aria-live="off"></div>
         <div class="ms4-topbar__actions" id="topBarActions"></div>
       </div>
@@ -76,14 +103,15 @@
 
     <main class="ms4-app__main" id="viewRoot" tabindex="-1"></main>
 
-    <nav class="ms4-tabbar" id="tabBar" aria-label="Nawigacja główna"></nav>
+    <!-- aria-label obu nawigacji ustawia app.js z klucza 'aria.tabbar'. -->
+    <nav class="ms4-tabbar" id="tabBar"></nav>
   </div>
 
   <!-- 3. Kamera. MUSI istnieć przed DOMContentLoaded — engine.js szuka tych trzech ID.
           screen-measure.js przenosi #cameraStage do swojej karty przez appendChild. -->
   <div class="ms4-camera__stage" id="cameraStage" hidden>
-    <video class="ms4-camera__video" id="cameraVideo" playsinline muted
-           aria-label="Podgląd z kamery"></video>
+    <!-- aria-label ustawia app.js z klucza 'camera.previewAria'. -->
+    <video class="ms4-camera__video" id="cameraVideo" playsinline muted></video>
     <div class="ms4-camera__placeholder" id="cameraPlaceholder">
       <p class="ms4-camera__placeholder-text" id="cameraPlaceholderText"></p>
     </div>

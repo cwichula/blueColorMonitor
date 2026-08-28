@@ -11,8 +11,10 @@
 
 import { h, icon } from './dom.js';
 import { byId, zoneFor } from '../metrics.js';
-import { metricValue, plural, ZONE_LABEL } from '../format.js';
+import { metricValue, plural, zoneLabel } from '../format.js';
 import { thresholdsFor } from '../store.js';
+import { t } from '../i18n/index.js';
+import { bus } from '../bus.js';
 
 /* ─────────────────────────────  Wspólne stałe  ───────────────────────────── */
 
@@ -30,16 +32,20 @@ const ZONE_COLOR = {
 };
 
 /* Jednostki zapisane słowem — czytnik ekranu przeczyta „%” jako „procent”
- * tylko czasem, a „×” najczęściej pominie zupełnie. */
-const SPOKEN_UNIT = {
-  share: 'procent', brightness: 'procent', flicker: 'procent', uniformity: 'procent',
-  melanopic: 'razy'
+ * tylko czasem, a „×” najczęściej pominie zupełnie. Stała trzyma KLUCZE, nie
+ * napisy: gotowy napis zamarzłby w języku z chwili wczytania modułu. */
+const SPOKEN_UNIT_KEY = {
+  share: 'unit.spoken.percent',
+  brightness: 'unit.spoken.percent',
+  flicker: 'unit.spoken.percent',
+  uniformity: 'unit.spoken.percent',
+  melanopic: 'unit.spoken.times'
 };
 
 /* Wielkość nieznana katalogowi nie może wywrócić ekranu ani — co gorsza —
  * podstawić cudzych progów. Zastępczy opis jest jawnie pusty. */
 const FALLBACK_METRIC = {
-  id: '', namePL: 'Nieznana wielkość', unit: '',
+  id: '', unknown: true, unit: '',
   decimals: 0, min: 0, max: 100, warn: 70, crit: 90, invert: false, icon: 'gauge'
 };
 
@@ -48,6 +54,13 @@ function metricOf(metricId) {
   if (found) return found;
   console.warn('[gauge] nieznana wielkość: ' + metricId);
   return Object.assign({}, FALLBACK_METRIC, { id: String(metricId ?? '') });
+}
+
+/* Nazwa wielkości powstaje przy KAŻDYM rysowaniu, a nie raz przy tworzeniu
+ * komponentu: ten sam wskaźnik ma po przełączeniu języka powiedzieć nową
+ * nazwę. Katalog (docs/lib) nadal daje liczby — jednostkę, zakres, progi. */
+function metricName(metric) {
+  return metric.unknown ? t('gauge.metric.unknown') : t('metric.' + metric.id + '.name');
 }
 
 /* ────────────────────────────  Style komponentów  ────────────────────────── */
@@ -191,12 +204,14 @@ function zoneOf(metric, value, reading) {
 
 /* Odczyt słowny do aria-label: „27 procent”, „5200 kelwinów”, „84 punkty”. */
 function spokenValue(metric, value) {
-  if (!num(value)) return 'brak danych';
-  if (metric.id === 'kelvin') return plural(value, 'kelwin', 'kelwiny', 'kelwinów');
-  if (metric.id === 'comfort') return plural(value, 'punkt', 'punkty', 'punktów');
-  const unit = SPOKEN_UNIT[metric.id];
+  if (!num(value)) return t('gauge.value.none');
+  if (metric.id === 'kelvin') return plural(value, 'unit.kelvin.plural');
+  if (metric.id === 'comfort') return plural(value, 'unit.point.plural');
+  const unitKey = SPOKEN_UNIT_KEY[metric.id];
   const text = metricValue(metric.id, value);
-  return unit ? text + ' ' + unit : text;
+  // Wzorzec ze słownika, nie sklejenie: w części języków jednostka mówiona
+  // stoi przed liczbą albo bez spacji.
+  return unitKey ? t('gauge.value.spoken', { value: text, unit: t(unitKey) }) : text;
 }
 
 /* Jednostka pokazuje się tylko przy zmierzonej liczbie: „— %” sugerowałoby,
@@ -360,6 +375,10 @@ export function zoneBar({ metricId, value = null, decorative = false } = {}) {
   if (!decorative) el.setAttribute('role', 'img');
 
   let limits = { warn: NaN, crit: NaN };
+  // Ostatni stan pamiętamy po to, żeby po zmianie języka wypisać etykietę od
+  // nowa — pasek stoi między pomiarami i sam z siebie nic by nie odświeżył.
+  let lastValue = null;
+  let lastZone = 'none';
 
   // Progi zmienia użytkownik w Narzędziach, więc czytamy je przy każdej
   // aktualizacji — ale pasma przestawiamy dopiero, gdy liczby się różnią.
@@ -398,15 +417,25 @@ export function zoneBar({ metricId, value = null, decorative = false } = {}) {
       setAttr(markerBack, 'x1', x); setAttr(markerBack, 'x2', x);
       setAttr(markerLine, 'x1', x); setAttr(markerLine, 'x2', x);
     }
+    lastValue = v;
+    lastZone = zone;
     if (!decorative) {
-      el.setAttribute('aria-label', metric.namePL + ': ' + spokenValue(metric, v) +
-        ', strefa: ' + (ZONE_LABEL[zone] || ZONE_LABEL.none));
+      el.setAttribute('aria-label', t('gauge.aria', {
+        metric: metricName(metric),
+        value: spokenValue(metric, v),
+        zone: zoneLabel(zone)
+      }));
     }
     return zone;
   }
 
   update(value);
-  return { el, update, destroy() { el.remove(); } };
+
+  const offLanguage = decorative
+    ? () => {}                                  // ozdobny pasek nie ma czego opisywać
+    : bus.on('i18n:changed', () => update(lastValue, lastZone));
+
+  return { el, update, destroy() { offLanguage(); el.remove(); } };
 }
 
 /* ─────────────────────────────  heroGauge  ───────────────────────────────── */
@@ -521,8 +550,8 @@ export function heroGauge({ metricId } = {}) {
   /* ---- odczyt w środku tarczy ---- */
   const valueEl = h('span.m5-gauge__value.m5-num', { text: DASH });
   const unitEl = h('span.m5-gauge__unit', { text: '' });
-  const nameEl = h('div.m5-gauge__name', { text: metric.namePL });
-  const zoneEl = h('div.m5-gauge__zone', { text: ZONE_LABEL.none });
+  const nameEl = h('div.m5-gauge__name', { text: metricName(metric) });
+  const zoneEl = h('div.m5-gauge__zone', { text: zoneLabel('none') });
   const noteEl = h('div.m5-gauge__note', { hidden: true });
 
   const readout = h('div.m5-gauge__readout', [
@@ -531,17 +560,15 @@ export function heroGauge({ metricId } = {}) {
   ]);
 
   const spark = sparkline({ points: [], width: 160, height: 22, strokeWidth: 1.6 });
-  const sparkWrap = h('div.m5-gauge__spark', [
-    spark,
-    h('div.m5-gauge__sparkLabel', { text: 'ostatnia minuta' })
-  ]);
+  const sparkLabelEl = h('div.m5-gauge__sparkLabel', { text: t('gauge.spark.label') });
+  const sparkWrap = h('div.m5-gauge__spark', [spark, sparkLabelEl]);
 
   const el = h('div.m5-gauge', {
     dataset: { metric: metric.id, zone: 'none' },
     // role="img" czyni ze wskaźnika jeden obiekt dla czytnika ekranu: liczba
     // w środku nie jest czytana osobno, a aria-label niesie pełny odczyt.
     // Świadomie BEZ aria-live — dziesięć komunikatów na sekundę zalałoby czytnik.
-    aria: { role: 'img', label: metric.namePL + ': brak danych' }
+    aria: { role: 'img', label: t('gauge.aria.initial', { metric: metricName(metric) }) }
   }, [
     h('div.m5-gauge__dial', [svg, readout]),
     sparkWrap
@@ -551,7 +578,10 @@ export function heroGauge({ metricId } = {}) {
   let target = null;    // ostatnia próbka
   let display = null;   // wartość rysowana, dobiegająca do target
   let zone = 'none';
-  let note = '';
+  /* Przypisy trzymamy jako KLUCZE, nie gotowe zdania: ten sam stan wskaźnika
+   * ma się po zmianie języka opisać na nowo, bez czekania na próbkę. */
+  let noteKeys = [];
+  let labelled = false;   // czy tarcza ma już pełną etykietę, czy startową
   let raf = 0;
   let lastFrame = 0;
   let lastSpark = 0;
@@ -585,10 +615,19 @@ export function heroGauge({ metricId } = {}) {
     placeTick(markCrit, limits.crit);
   }
 
+  function noteText() {
+    return noteKeys.map((key) => t(key)).join(t('common.listSeparator'));
+  }
+
   function ariaLabel() {
-    const words = metric.namePL + ': ' + spokenValue(metric, target) +
-      ', strefa: ' + (ZONE_LABEL[zone] || ZONE_LABEL.none);
-    return note ? words + ', ' + note : words;
+    const params = {
+      metric: metricName(metric),
+      value: spokenValue(metric, target),
+      zone: zoneLabel(zone)
+    };
+    if (!noteKeys.length) return t('gauge.aria', params);
+    params.note = noteText();
+    return t('gauge.aria.note', params);
   }
 
   // Jedyne miejsce dotykające DOM w pętli: dwa teksty i dwie liczby geometrii.
@@ -630,9 +669,11 @@ export function heroGauge({ metricId } = {}) {
     raf = requestAnimationFrame(frame);
   }
 
-  function pushHistory(t, v) {
-    history.push({ t, v });
-    const cutoff = t - HISTORY_MS;
+  // Znacznik czasu nazywa się tu „ts”, a nie „t”: t() to funkcja tłumacząca
+  // i lokalna nazwa przesłoniłaby import.
+  function pushHistory(ts, v) {
+    history.push({ t: ts, v });
+    const cutoff = ts - HISTORY_MS;
     let drop = 0;
     while (drop < history.length && history[drop].t < cutoff) drop += 1;
     if (drop) history = history.slice(drop);
@@ -698,7 +739,7 @@ export function heroGauge({ metricId } = {}) {
       zone = nextZone;
       el.dataset.zone = zone;
       el.style.setProperty('--m5-zone', ZONE_COLOR[zone] || ZONE_COLOR.none);
-      setText(zoneEl, ZONE_LABEL[zone] || ZONE_LABEL.none);
+      setText(zoneEl, zoneLabel(zone));
     }
 
     // Uczciwość wobec metody: temperaturę barwową liczy wielomian ważny mniej
@@ -707,23 +748,24 @@ export function heroGauge({ metricId } = {}) {
     const notes = [];
     if (metric.id === 'kelvin' && value !== null &&
       reading && typeof reading === 'object' && reading.kelvinReliable === false) {
-      notes.push('wartość przybliżona');
+      notes.push('gauge.note.approx');
     }
     // Łuk kończy się na katalogowym max, a liczba rośnie dalej (współczynnik
     // melanopiczny dochodzi do ~10 ×). Zamiast cicho zacisnąć wskazanie na
     // krawędzi, mówimy wprost, że skala się skończyła.
-    if (value !== null && (value > metric.max || value < metric.min)) notes.push('poza skalą');
-    const nextNote = notes.join(', ');
-    if (nextNote !== note) {
-      note = nextNote;
-      setText(noteEl, note);
-      noteEl.hidden = !note;
+    if (value !== null && (value > metric.max || value < metric.min)) notes.push('gauge.note.offScale');
+    // Porównujemy KLUCZE, nie zdania: zmiana języka nie jest zmianą stanu.
+    if (notes.join('|') !== noteKeys.join('|')) {
+      noteKeys = notes;
+      setText(noteEl, noteText());
+      noteEl.hidden = !noteKeys.length;
     }
 
     const stamp = reading && typeof reading === 'object' && num(reading.t) ? reading.t : Date.now();
     pushHistory(stamp, value);
     refreshSpark(typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+    labelled = true;
     el.setAttribute('aria-label', ariaLabel());
 
     // Pierwsza wartość, brak pomiaru i tryb „mniej ruchu” trafiają na tarczę
@@ -748,26 +790,47 @@ export function heroGauge({ metricId } = {}) {
     target = null;
     display = null;
     zone = 'none';
-    note = '';
+    noteKeys = [];
     limits = { warn: NaN, crit: NaN };
     stopLoop();
     syncThresholds();
     el.dataset.metric = metric.id;
     el.dataset.zone = 'none';
     el.style.setProperty('--m5-zone', ZONE_COLOR.none);
-    setText(nameEl, metric.namePL);
-    setText(zoneEl, ZONE_LABEL.none);
+    setText(nameEl, metricName(metric));
+    setText(zoneEl, zoneLabel('none'));
     setText(noteEl, '');
     noteEl.hidden = true;
     scaleMin.textContent = metricValue(metric.id, metric.min);
     scaleMax.textContent = metricValue(metric.id, metric.max);
     spark.update([]);
     paint();
+    labelled = true;
     el.setAttribute('aria-label', ariaLabel());
   }
 
+  /* Ekran nie odtwarza wskaźnika przy zmianie języka — pomiar trwa dalej,
+   * a przebudowa gubiłaby historię sparkline'a. Wypisujemy więc wszystkie
+   * napisy tarczy od nowa, razem z liczbami: format liczby (przecinek czy
+   * kropka dziesiętna) też zależy od języka. */
+  function relabel() {
+    setText(nameEl, metricName(metric));
+    setText(zoneEl, zoneLabel(zone));
+    setText(noteEl, noteText());
+    setText(sparkLabelEl, t('gauge.spark.label'));
+    scaleMin.textContent = metricValue(metric.id, metric.min);
+    scaleMax.textContent = metricValue(metric.id, metric.max);
+    paint();
+    el.setAttribute('aria-label', labelled
+      ? ariaLabel()
+      : t('gauge.aria.initial', { metric: metricName(metric) }));
+  }
+
+  const offLanguage = bus.on('i18n:changed', relabel);
+
   function destroy() {
     destroyed = true;
+    offLanguage();
     stopLoop();
     history = [];
     el.remove();
@@ -802,13 +865,15 @@ export function metricTile({ metricId, selected = false, onSelect } = {}) {
   const unitEl = h('span.m5-tile__unit', { text: '' });
   const bar = zoneBar({ metricId: metric.id, value: null, decorative: true });
 
+  const nameEl = h('span.m5-tile__name', { text: metricName(metric) });
+
   const el = h('button.m5-tile', {
     type: 'button',
     dataset: { metric: metric.id, zone: 'none', selected: String(!!selected) }
   }, [
     h('div.m5-tile__head', [
       icon(metric.icon || 'gauge', { size: 16 }),
-      h('span.m5-tile__name', { text: metric.namePL })
+      nameEl
     ]),
     h('div.m5-tile__reading', [valueEl, unitEl]),
     bar.el
@@ -818,8 +883,11 @@ export function metricTile({ metricId, selected = false, onSelect } = {}) {
   let zone = 'none';
 
   function label() {
-    return metric.namePL + ': ' + spokenValue(metric, value) +
-      ', strefa: ' + (ZONE_LABEL[zone] || ZONE_LABEL.none);
+    return t('gauge.aria', {
+      metric: metricName(metric),
+      value: spokenValue(metric, value),
+      zone: zoneLabel(zone)
+    });
   }
 
   /* Zmiana dostępnej nazwy SKUPIONEGO przycisku jest przez NVDA i JAWS
@@ -866,6 +934,13 @@ export function metricTile({ metricId, selected = false, onSelect } = {}) {
     el.setAttribute('aria-pressed', String(flag));
   }
 
+  // Kafelek żyje przez cały pomiar, więc po zmianie języka sam wypisuje nazwę
+  // i etykietę; paint() przy okazji formatuje liczbę wg nowego języka.
+  const offLanguage = bus.on('i18n:changed', () => {
+    setText(nameEl, metricName(metric));
+    paint();
+  });
+
   setSelected(selected);
   paint();
 
@@ -873,6 +948,6 @@ export function metricTile({ metricId, selected = false, onSelect } = {}) {
     el,
     update,
     setSelected,
-    destroy() { bar.destroy(); el.remove(); }
+    destroy() { offLanguage(); bar.destroy(); el.remove(); }
   };
 }

@@ -39,6 +39,13 @@
 
   function byId(id) { return document.getElementById(id); }
 
+  /* Warstwa językowa. T() zamiast I18n.t() wprost: brak słownika ma pokazać
+     klucze, a nie wywrócić ekranu — tak samo jak w pozostałych plikach v1. */
+  function T(key, params) {
+    var i18n = window.I18n;
+    return (i18n && typeof i18n.t === 'function') ? i18n.t(key, params) : String(key);
+  }
+
   function el(tag, attrs, children) {
     var node = document.createElement(tag);
     if (attrs) {
@@ -57,8 +64,9 @@
     return node;
   }
 
-  function paragraph(textPL, className) {
-    return el('p', className ? { class: className, text: textPL } : { text: textPL });
+  function paragraph(key, className, params) {
+    var text = T(key, params);
+    return el('p', className ? { class: className, text: text } : { text: text });
   }
 
   function backRow() {
@@ -66,7 +74,7 @@
     return el('div', { class: 'ui-row' }, [
       el('button', {
         type: 'button', class: 'ui-back-btn', 'data-nav-back': '',
-        'aria-label': 'Wróć do poprzedniego ekranu', text: '← Wróć'
+        'aria-label': T('action.back.aria'), text: T('action.back')
       })
     ]);
   }
@@ -79,7 +87,7 @@
     panel.appendChild(backRow());
 
     var title = el('h2', {
-      id: 'supportTitle', class: 'ui-screen-title', tabindex: '-1', text: 'Wsparcie'
+      id: 'supportTitle', class: 'ui-screen-title', tabindex: '-1', text: T('support.title')
     });
     panel.appendChild(title);
 
@@ -87,27 +95,15 @@
 
     // 1. Co ta aplikacja daje za darmo. Nagłówek brzmi tak samo we wszystkich
     //    wersjach — ta sama rzecz nazywa się tak samo.
-    card.appendChild(el('h3', { class: 'ui-support-title', text: 'Wszystko jest dostępne' }));
-    card.appendChild(paragraph(
-      'Cała aplikacja jest bezpłatna: pomiar, historia i raporty, profile progów, ' +
-      'alert, eksport CSV i Dokumentacja. Wszystko działa od razu, bez konta, bez ' +
-      'limitów i bez internetu.',
-      'ui-support-lead'
-    ));
+    card.appendChild(el('h3', { class: 'ui-support-title', text: T('support.free.title') }));
+    card.appendChild(paragraph('support.free.text', 'ui-support-lead'));
 
-    // 2. Dlaczego jest prośba.
-    card.appendChild(paragraph(
-      'Monitoring Światła Szkodliwego powstaje po godzinach. Jeśli Ci się przydaje, ' +
-      'możesz postawić mi kawę. To pomaga utrzymać aplikację i rozwijać ją dalej — ' +
-      'poprawiać pomiar, dopisywać Dokumentację i sprawdzać ją na kolejnych telefonach.'
-    ));
+    // 2. Dlaczego jest prośba. Nazwa aplikacji jest wstawką, nie sklejeniem:
+    //    w części języków stoi w innym miejscu zdania i w innym przypadku.
+    card.appendChild(paragraph('support.why', null, { app: T('app.name') }));
 
     // 3. Co darowizna daje. Musi być napisane wprost.
-    card.appendChild(paragraph(
-      'Darowizna niczego nie odblokowuje. Nie ma wersji lepszej ani gorszej — po ' +
-      'wsparciu aplikacja działa dokładnie tak samo. Jedyna różnica jest taka, że ' +
-      'autor wie, że komuś to się przydało.'
-    ));
+    card.appendChild(paragraph('support.nothing'));
 
     // 4. Przycisk albo spokojna informacja o braku adresu — nigdy martwy odnośnik.
     var url = validUrl();
@@ -115,35 +111,21 @@
       card.appendChild(el('a', {
         id: 'supportLink', class: 'ui-support-btn', href: url,
         target: '_blank', rel: 'noopener noreferrer',
-        'aria-label': 'Postaw mi kawę — otwiera profil darowizn w nowej karcie'
+        'aria-label': T('support.button.aria')
       }, [
         el('span', { 'aria-hidden': 'true', html: ICON_CUP }),
-        el('span', { text: 'Postaw mi kawę' })
+        el('span', { text: T('support.button') })
       ]));
     } else {
       card.appendChild(el('p', {
-        id: 'supportPending', class: 'ui-support-pending',
-        text: 'Profil darowizn nie jest jeszcze podłączony. Gdy tylko się pojawi, ' +
-          'przycisk stanie w tym miejscu. Do tego czasu nic nie trzeba robić — ' +
-          'aplikacja i tak jest w całości bezpłatna.'
+        id: 'supportPending', class: 'ui-support-pending', text: T('support.pending')
       }));
     }
 
     // Zdanie o prywatności stoi przy przycisku, zawsze — ale mówi o tym, co
     // użytkownik naprawdę widzi: przy pustej stałej przycisku na ekranie nie ma,
     // więc zdanie jest w czasie przyszłym i nie odsyła do nieistniejącej kontrolki.
-    card.appendChild(paragraph(
-      url
-        ? 'Przycisk otwiera stronę zewnętrzną (na przykład Buy Me a Coffee) w nowej ' +
-          'karcie przeglądarki. To jedyny moment, w którym cokolwiek opuszcza to ' +
-          'urządzenie. Obraz z kamery i wszystkie Twoje pomiary zostają tutaj — ' +
-          'nie są nigdzie wysyłane, ani przed kliknięciem, ani po nim.'
-        : 'Kiedy adres się pojawi, kliknięcie przycisku otworzy stronę zewnętrzną ' +
-          '(na przykład Buy Me a Coffee) w nowej karcie przeglądarki. Będzie to ' +
-          'jedyny moment, w którym cokolwiek opuszcza to urządzenie. Obraz z kamery ' +
-          'i wszystkie Twoje pomiary zostają tutaj — nie są nigdzie wysyłane.',
-      'ui-support-privacy'
-    ));
+    card.appendChild(paragraph(url ? 'support.privacy' : 'support.privacyPending', 'ui-support-privacy'));
 
     panel.appendChild(card);
   }
@@ -160,6 +142,12 @@
       // podręczna service workera).
       if (window.AppTabs && typeof window.AppTabs.registerOverlay === 'function') {
         window.AppTabs.registerOverlay('panelSupport');
+      }
+      // Ekran jest budowany od nowa po zmianie języka — nie da się go
+      // przetłumaczyć na miejscu, bo zależy też od tego, czy adres darowizn
+      // w ogóle jest podłączony (dwa różne zdania o prywatności).
+      if (window.I18nDom && typeof window.I18nDom.onChange === 'function') {
+        window.I18nDom.onChange(build);
       }
     },
     rebuild: build

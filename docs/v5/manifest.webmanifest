@@ -1,14 +1,14 @@
 {
-  "name": "Monitor Światła",
-  "short_name": "Monitor Światła",
-  "description": "Mierzy kamerą siedem wielkości światła: udział niebieskiego, jasność sceny, temperaturę barwową, wpływ na rytm dobowy, migotanie, równomierność i komfort wzrokowy. Liczy wszystko na urządzeniu, działa offline i niczego nie wysyła do sieci. Wszystkie siedem wielkości jest dostępnych od razu, bez konta i bez opłat.",
+  "name": "Light Monitor",
+  "short_name": "Light Monitor",
+  "description": "Measures seven qualities of the light around you with your camera: blue share, scene brightness, colour temperature, circadian impact, flicker, uniformity and visual comfort. Everything is computed on this device, it works offline and nothing is sent to the network. All seven are available right away, with no account and no payment.",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "lang": "pl",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["utilities", "health", "productivity"],
   "background_color": "#eff2f8",
@@ -20,23 +20,23 @@
   ],
   "shortcuts": [
     {
-      "name": "Pomiar",
-      "short_name": "Pomiar",
-      "description": "Wskaźnik wielkości wiodącej i kafelki pozostałych sześciu.",
+      "name": "Measure",
+      "short_name": "Measure",
+      "description": "The lead metric on a gauge and the other six as tiles.",
       "url": "./index.html#/measure",
       "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Historia",
-      "short_name": "Historia",
-      "description": "Przebieg pomiaru w czasie, od minuty do trzydziestu dni.",
+      "name": "History",
+      "short_name": "History",
+      "description": "The measurement over time, from one minute to thirty days.",
       "url": "./index.html#/history",
       "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
-      "name": "Narzędzia",
-      "short_name": "Narzędzia",
-      "description": "Wygląd, progi stref, kalibracja i eksport danych.",
+      "name": "Tools",
+      "short_name": "Tools",
+      "description": "Appearance, zone thresholds, calibration and data export.",
       "url": "./index.html#/tools",
       "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }

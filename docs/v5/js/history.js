@@ -17,13 +17,15 @@
 
 import { bus } from './bus.js';
 import { CATALOGUE, byId } from './metrics.js';
+import { t } from './i18n/index.js';
 
 const KEY_POINTS = 'ms5.history.v1';
 const KEY_SESSIONS = 'ms5.sessions.v1';
 
 /* Kolejność pól jest schematem zapisu — nie wolno jej zmieniać bez podniesienia
    numeru klucza, bo stare wiersze zostałyby odczytane jako inne wielkości.
-   Katalog z metrics.js służy tu wyłącznie do nazw i jednostek w eksporcie. */
+   Katalog z metrics.js służy tu wyłącznie do jednostek w eksporcie — nazwy
+   wielkości biorą się ze słownika, nie z katalogu. */
 const FIELDS = ['share', 'brightness', 'kelvin', 'melanopic', 'flicker', 'uniformity', 'comfort'];
 
 /* Precyzja zapisu — o krok dokładniejsza niż prezentacja, żeby uśrednianie nie
@@ -46,13 +48,16 @@ const EMIT_EVERY_MS = 1000;      // 'history:changed' przy szybkim push
 const MAX_SESSIONS = 200;
 const TRIM_RATIO = 0.25;         // ile najstarszych ucinamy po QuotaExceededError
 
+/* Zakres niesie KLUCZ etykiety, nie etykietę: tablica jest stałą modułu, więc
+   gotowy napis zamarzłby w języku z chwili wczytania pliku. Ekran historii
+   rozwija go przez t(range.labelKey) przy każdym rysowaniu. */
 export const RANGES = [
-  { id: '1m',  labelPL: '1 min',    ms: MINUTE,      bucketMs: 1000 },
-  { id: '5m',  labelPL: '5 min',    ms: 5 * MINUTE,  bucketMs: 5000 },
-  { id: '1h',  labelPL: '1 godz.',  ms: HOUR,        bucketMs: MINUTE },
-  { id: '24h', labelPL: '24 godz.', ms: DAY,         bucketMs: 10 * MINUTE },
-  { id: '7d',  labelPL: '7 dni',    ms: 7 * DAY,     bucketMs: HOUR },
-  { id: '30d', labelPL: '30 dni',   ms: 30 * DAY,    bucketMs: 6 * HOUR }
+  { id: '1m',  labelKey: 'range.1m',  ms: MINUTE,      bucketMs: 1000 },
+  { id: '5m',  labelKey: 'range.5m',  ms: 5 * MINUTE,  bucketMs: 5000 },
+  { id: '1h',  labelKey: 'range.1h',  ms: HOUR,        bucketMs: MINUTE },
+  { id: '24h', labelKey: 'range.24h', ms: DAY,         bucketMs: 10 * MINUTE },
+  { id: '7d',  labelKey: 'range.7d',  ms: 7 * DAY,     bucketMs: HOUR },
+  { id: '30d', labelKey: 'range.30d', ms: 30 * DAY,    bucketMs: 6 * HOUR }
 ];
 
 let points = [];                 // rosnąco po czasie
@@ -89,9 +94,15 @@ function emitChanged(force) {
   const payload = { count: points.length };
   if (storageState !== 'ok') {
     payload.storage = storageState;
-    payload.messagePL = storageState === 'full'
-      ? 'Pamięć urządzenia jest pełna — nowe pomiary nie są już zapisywane.'
-      : 'Przeglądarka nie pozwala zapisać historii — dane znikną po zamknięciu karty.';
+    /* Gettery, a nie gotowe napisy: ekran historii zapamiętuje payload i rysuje
+       ten komunikat aż do następnego zdarzenia, a zdarzenia nie ma po co
+       wywoływać tylko dlatego, że ktoś przełączył język. */
+    const key = 'storage.' + storageState;
+    Object.defineProperties(payload, {
+      message: { get: () => t(key), enumerable: true },
+      /* Alias przejściowy: screens/history.js czyta jeszcze pole messagePL. */
+      messagePL: { get: () => t(key), enumerable: true }
+    });
   }
   bus.emit('history:changed', payload);
 }
@@ -497,14 +508,19 @@ function csvNumber(value, decimals) {
 }
 
 /**
- * CSV dla polskiego Excela: separator średnik, przecinek dziesiętny, nagłówki po
- * polsku, znacznik czasu w ISO 8601 (jednoznaczny przy imporcie), końce linii
- * CRLF. Kolumny idą w kolejności katalogu wielkości.
+ * CSV dla arkusza kalkulacyjnego: separator średnik, przecinek dziesiętny,
+ * nagłówki w języku interfejsu, znacznik czasu w ISO 8601 (jednoznaczny przy
+ * imporcie), końce linii CRLF. Kolumny idą w kolejności katalogu wielkości.
+ * Nagłówek powstaje przy KAŻDYM eksporcie, więc plik zapisany po zmianie
+ * języka ma nagłówki w tym nowym języku.
  */
 export function exportCSV() {
-  const header = ['Data i godzina'];
+  const header = [t('export.csv.timestamp')];
   for (let i = 0; i < CATALOGUE.length; i += 1) {
-    header.push(CATALOGUE[i].namePL + ' [' + CATALOGUE[i].unit + ']');
+    header.push(t('export.csv.column', {
+      metric: t('metric.' + CATALOGUE[i].id + '.name'),
+      unit: CATALOGUE[i].unit
+    }));
   }
   const lines = [header.map(csvCell).join(';')];
 
@@ -523,6 +539,8 @@ export function exportCSV() {
 /** Pełny zrzut: punkty jako obiekty (null zachowany) plus lista sesji. */
 export function exportJSON() {
   return JSON.stringify({
+    /* NIE tłumaczyć: to identyfikator formatu pliku, po którym import poznaje
+       swoje dane, a nie napis dla człowieka. */
     app: 'Monitor Światła',
     version: 5,
     exportedAt: new Date().toISOString(),

@@ -604,16 +604,67 @@
   var flickerWindow = [];        // brightness samples feeding Metrics.flicker
   var latestReading = null;
 
-  var TEXT_IDLE = 'Naciśnij „Start”, aby uruchomić kamerę.';
-  var TEXT_STARTING = 'Uruchamiam kamerę…';
+  /* ------------------------------------------------------------------
+     Napisy widziane przez użytkownika — zasłona podglądu i komunikaty
+     o nieudanym starcie kamery.
 
-  var ERROR_TEXT = {
-    PERMISSION: 'Brak zgody na dostęp do kamery. Zezwól na kamerę w ustawieniach przeglądarki i naciśnij „Start” ponownie.',
-    NOTFOUND: 'Nie znaleziono kamery. Sprawdź, czy urządzenie ma aparat i czy nie jest wyłączony w systemie.',
-    BUSY: 'Kamera jest zajęta przez inną aplikację. Zamknij ją i spróbuj ponownie.',
-    UNKNOWN: 'Nie udało się uruchomić kamery.',
-    UNSUPPORTED: 'Ta przeglądarka nie udostępnia kamery na tej stronie. Otwórz aplikację przez HTTPS albo użyj innej przeglądarki.'
+     Treść mieszka w warstwie językowej (docs/shared/i18n/, klucze
+     'engine.*'). Silnik sięga po nią przez text() DOPIERO W CHWILI
+     WYŚWIETLENIA, nigdy przy ładowaniu tego pliku. Dwa powody, oba realne:
+     kolejność skryptów bywa taka, że engine.js wykonuje się, zanim słownik
+     dojedzie, a napis pobrany raz zostałby na ekranie po zmianie języka
+     przez I18n.setLanguage().
+
+     DLACZEGO ISTNIEJE ZAPAS WBUDOWANY (TEXT_FALLBACK): ten silnik bywa
+     ładowany przez wersję, w której warstwa językowa nie wstała — nie wpięto
+     i18n.js, plik słownika wrócił z 404, skrypt przed nim się wywalił. Wtedy
+     nie ma kogo zapytać o napis, a milcząca pusta zasłona jest gorsza od
+     napisu w jednym języku: użytkownik nie wiedziałby ani po co nacisnąć
+     „Start”, ani dlaczego kamera nie ruszyła — zobaczyłby czarny prostokąt
+     i tyle. Zapas jest ANGIELSKI, nie polski, bo angielski jest językiem
+     zapasowym całej aplikacji (docs/shared/i18n.js, FALLBACK = 'en').
+     Zdania są przepisane z docs/shared/i18n/en.js i poprawia się je w obu
+     miejscach naraz.
+     ------------------------------------------------------------------ */
+
+  // Nazwy wewnętrzne odpowiadają kodom błędów z mapError(); IDLE i STARTING
+  // to dwa stany zasłony.
+  var TEXT_KEY = {
+    IDLE: 'engine.idle',
+    STARTING: 'engine.starting',
+    PERMISSION: 'engine.error.permission',
+    NOTFOUND: 'engine.error.notFound',
+    BUSY: 'engine.error.busy',
+    UNKNOWN: 'engine.error.unknown',
+    UNSUPPORTED: 'engine.error.unsupported'
   };
+
+  var TEXT_FALLBACK = {
+    IDLE: 'Press “Start” to turn the camera on.',
+    STARTING: 'Starting the camera…',
+    PERMISSION: 'No permission to use the camera. Allow the camera in your browser settings and press “Start” again.',
+    NOTFOUND: 'No camera found. Check that the device has a camera and that it is not switched off in the system.',
+    BUSY: 'The camera is busy in another application. Close it and try again.',
+    UNKNOWN: 'The camera could not be started.',
+    UNSUPPORTED: 'This browser does not give this page access to the camera. Open the app over HTTPS or use a different browser.'
+  };
+
+  /* Napis pod nazwą wewnętrzną, pobierany w chwili użycia. Kolejno: warstwa
+     językowa → zapas angielski. I18n.t() nigdy nie rzuca i nigdy nie zwraca
+     undefined — gdy klucza nie zna, oddaje sam klucz, więc porównanie z nim
+     jest jedynym sposobem odróżnienia trafienia od pudła. Nieznana nazwa
+     schodzi na UNKNOWN, żeby ta funkcja nigdy nie zwróciła pustego napisu. */
+  function text(name) {
+    var known = Object.prototype.hasOwnProperty.call(TEXT_KEY, name) ? name : 'UNKNOWN';
+    try {
+      var i18n = global.I18n;
+      if (i18n && typeof i18n.t === 'function') {
+        var value = i18n.t(TEXT_KEY[known]);
+        if (value && value !== TEXT_KEY[known]) return value;
+      }
+    } catch (_) { /* warstwa językowa nie wstała — idziemy zapasem */ }
+    return TEXT_FALLBACK[known];
+  }
 
   function setState(next) {
     if (state === next) return;
@@ -640,9 +691,11 @@
 
   // The placeholder is the only element this module writes to, and it is not a
   // panel, a sheet or a tab — panel visibility belongs to UI alone.
-  function showPlaceholder(text) {
+  // Parametr nazywa się `message`, a nie `text` — inaczej przesłoniłby funkcję
+  // text() wyżej i pierwsze jej wywołanie stąd byłoby cichym błędem.
+  function showPlaceholder(message) {
     grabDom();
-    if (placeholderTextEl) placeholderTextEl.textContent = text;
+    if (placeholderTextEl) placeholderTextEl.textContent = message;
     if (placeholderEl) placeholderEl.hidden = false;
   }
 
@@ -687,7 +740,7 @@
   }
 
   function fail(code) {
-    var messagePL = ERROR_TEXT[code] || ERROR_TEXT.UNKNOWN;
+    var messagePL = text(code);
     setState('error');
     showPlaceholder(messagePL);
     emit('engine:error', { code: code, messagePL: messagePL });
@@ -739,7 +792,7 @@
     }
 
     setState('starting');
-    showPlaceholder(TEXT_STARTING);
+    showPlaceholder(text('STARTING'));
     startToken += 1;
     var token = startToken;
     var wanted = facingMode;
@@ -752,7 +805,7 @@
           var tracks = s.getTracks();
           for (var i = 0; i < tracks.length; i += 1) tracks[i].stop();
         } catch (_) { /* ignore */ }
-        return { ok: false, code: 'UNKNOWN', messagePL: ERROR_TEXT.UNKNOWN };
+        return { ok: false, code: 'UNKNOWN', messagePL: text('UNKNOWN') };
       }
 
       stream = s;
@@ -767,7 +820,7 @@
         // failure here would stop a measurement that is in fact running.
         return null;
       }).then(function () {
-        if (token !== startToken) return { ok: false, code: 'UNKNOWN', messagePL: ERROR_TEXT.UNKNOWN };
+        if (token !== startToken) return { ok: false, code: 'UNKNOWN', messagePL: text('UNKNOWN') };
 
         hidePlaceholder();
         live = [];
@@ -783,7 +836,7 @@
         return { ok: true };
       });
     }).catch(function (err) {
-      if (token !== startToken) return { ok: false, code: 'UNKNOWN', messagePL: ERROR_TEXT.UNKNOWN };
+      if (token !== startToken) return { ok: false, code: 'UNKNOWN', messagePL: text('UNKNOWN') };
       releaseStream();
       return fail(mapError(err));
     }).then(function (result) {
@@ -816,7 +869,7 @@
     latestReading = null;
     flickerWindow = [];
     setState('idle');
-    showPlaceholder(TEXT_IDLE);
+    showPlaceholder(text('IDLE'));
 
     if (finished) emit('engine:stopped', { session: finished });
     // No ad, no upsell and no dialog is triggered from here. A measurement that
@@ -1082,7 +1135,7 @@
 
   function onReady() {
     grabDom();
-    if (state === 'idle') showPlaceholder(TEXT_IDLE);
+    if (state === 'idle') showPlaceholder(text('IDLE'));
   }
 
   try {

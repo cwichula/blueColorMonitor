@@ -4,7 +4,7 @@
 // by deleting every cache called 'blue-monitor-v<digits>', which is what v1's
 // cache used to be called back when it lived there. Anything named that way is
 // now, by definition, a leftover of that old root - never a live cache.
-const CACHE_NAME = 'blue-monitor-v1-30';
+const CACHE_NAME = 'blue-monitor-v1-33';
 
 // Every version of the app now lives in its own directory (/v1/, /v2/, /v3/,
 // /v4/) and ships its own service worker, registered from that directory and
@@ -18,16 +18,33 @@ const CACHE_NAME = 'blue-monitor-v1-30';
 // pattern can reach any of those.
 const V1_CACHE_PATTERN = /^blue-monitor-v1-\d+$/;
 const V1_LEGACY_CACHE_PATTERN = /^blue-monitor-v\d+$/;
+//
+// Warstwa językowa. Silnik i słownik wspólny leżą w ../shared/, czyli poza zasięgiem
+// tego workera — ale zasięg mówi, KTÓRE STRONY worker obsługuje, a nie jakie
+// adresy wolno mu zapisać. Strona z /v1/ jest obsługiwana, więc każde jej
+// zapytanie — także o ../shared/ i o ../icons/ — przechodzi przez ten worker.
+//
+// Na liście stoi TYLKO ten słownik wersji, który naprawdę istnieje. cache.addAll
+// odrzuca CAŁĄ obietnicę, gdy choćby jeden adres zwróci 404, więc wpisanie tu
+// języka, którego pliku jeszcze nie ma, zabiłoby instalację workera — a razem
+// z nią cały tryb offline. Kolejne języki dopisuje się tutaj razem z ich plikami
+// i z podbiciem CACHE_NAME.
 const APP_SHELL = [
   './',
   './index.html',
   './style.css',
   './ui.css',
+  './i18n-dom.js',
   './features.js',
   './menu.js',
   './support.js',
   './app.js',
   './manifest.webmanifest',
+  '../shared/i18n.js',
+  '../shared/i18n/en.js',
+  '../shared/i18n/pl.js',
+  './i18n/en.js',
+  './i18n/pl.js',
   '../icons/icon-192.png',
   '../icons/icon-512.png',
   '../icons/icon-maskable-512.png'

@@ -13,7 +13,7 @@
  * Bump CACHE when any file in APP_SHELL changes; the old cache is deleted on
  * activate, so a stale stylesheet cannot outlive the markup it styles.
  */
-var CACHE = 'blue-monitor-v2-7';
+var CACHE = 'blue-monitor-v2-11';
 
 /* Relative paths on purpose: the app must work from /v2/, from a project page
    under /<repo>/docs/v2/ and from a copied directory, without editing a line.
@@ -23,6 +23,19 @@ var APP_SHELL = [
   './index.html',
   './manifest.webmanifest',
   './styles.css',
+  /* Warstwa językowa. Silnik i DWA słowniki: wspólny i tej wersji. Angielski
+     jest tu zawsze, bo to on jest wartością zapasową każdego brakującego
+     klucza; polski dlatego, że jest na razie jedynym gotowym tłumaczeniem
+     tej wersji. Pozostałe 28 języków dojdzie do tej listy razem ze swoimi
+     plikami — dopóki ich nie ma, nie wpisujemy ich tutaj, żeby instalacja
+     nie zgłaszała braków przy każdym uruchomieniu. Język wybrany, a jeszcze
+     nie zapisany w pamięci, dociąga się przy pierwszym użyciu w sieci
+     i wtedy trafia do pamięci przez zwykłą ścieżkę fetch niżej. */
+  '../shared/i18n.js',
+  '../shared/i18n/en.js',
+  '../shared/i18n/pl.js',
+  './i18n/en.js',
+  './i18n/pl.js',
   '../shared/bus.js',
   '../shared/metrics.js',
   './ui-core.js',

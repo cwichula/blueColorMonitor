@@ -200,6 +200,13 @@
     return (global.Metrics && global.Metrics.CATALOGUE) ? global.Metrics.CATALOGUE : [];
   }
 
+  /* Nazwa wielkości z warstwy językowej — katalog wspólny v2-v4 zostaje
+     nietknięty, a jego polskie namePL służy już tylko za ostatnią deskę. */
+  function mName(m) {
+    var s = global.Scale;
+    return (m && s && s.metricName) ? s.metricName(m.id) : (m ? m.namePL : '');
+  }
+
   function metric(id) {
     return (global.Metrics && global.Metrics.byId) ? global.Metrics.byId(id) : null;
   }
@@ -289,7 +296,7 @@
 
   function leadName() {
     var m = metric(leadId);
-    return m ? m.namePL : '';
+    return mName(m);
   }
 
   // The context template ends with a fixed "— ostatnie 60 s"; here the range is
@@ -1149,7 +1156,7 @@
     for (var i = 0; i < list.length; i += 1) {
       var row = put(el.crossList, make('div', 'ms3-rec__cross-row'));
       var name = put(row, make('span', 'ms3-rec__cross-name'));
-      name.textContent = list[i].namePL;
+      name.textContent = mName(list[i]);
       var value = put(row, make('span', 'ms3-rec__cross-value ms3-num'));
       var unit = put(row, make('span', 'ms3-rec__cross-unit'));
       el.crossCells[list[i].id] = { value: value, unit: unit };
@@ -1170,7 +1177,7 @@
     for (var i = 0; i < list.length; i += 1) {
       var cell = put(tr, make('th'));
       cell.scope = 'col';
-      cell.textContent = list[i].namePL;
+      cell.textContent = mName(list[i]);
     }
     el.tbody = put(table, make('tbody'));
   }

@@ -39,11 +39,54 @@
   var ALERT_EXPOSURE_MS = 5 * 60 * 1000;   // ciągły czas w strefie szkodliwej przed alertem
   var ALERT_COOLDOWN_MS = 15 * 60 * 1000;  // nigdy nie męczymy: najwyżej jeden alert na kwadrans
 
-  var MONTHS_PL = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
-    'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+  /* ---------------------------------------------------------------------
+     Warstwa językowa
 
-  var ZONE_LABEL = { good: 'BEZPIECZNA', warning: 'UMIARKOWANA', critical: 'SZKODLIWA' };
-  var ZONE_LABEL_LONG = { good: 'Bezpieczna', warning: 'Umiarkowana', critical: 'Szkodliwa' };
+     T() zamiast I18n.t() wprost: gdyby shared/i18n.js się nie wczytał, ten
+     plik ma pokazać klucze, a nie wywrócić panelu historii. Pomiar w app.js
+     nigdy nie zależy od warstwy językowej i tak samo nie zależy od niej nic
+     tutaj.
+     --------------------------------------------------------------------- */
+
+  function T(key, params) {
+    var i18n = window.I18n;
+    return (i18n && typeof i18n.t === 'function') ? i18n.t(key, params) : String(key);
+  }
+
+  function locale() {
+    var i18n = window.I18n;
+    return (i18n && typeof i18n.locale === 'function') ? i18n.locale() : undefined;
+  }
+
+  function zoneName(zone) { return T('zone.' + zone); }
+  function zoneBadge(zone) { return T('zone.badge.' + zone); }
+
+  // Liczba stojąca samotnie w komórce tabeli też jest napisem w danym języku:
+  // arabski zapisuje ją innymi cyframi, a polski innym separatorem tysięcy.
+  function num(value) {
+    var i18n = window.I18n;
+    return (i18n && typeof i18n.number === 'function') ? i18n.number(value) : String(value);
+  }
+
+  // Pełna godzina („07:00”) w zapisie aktywnego języka. Angielski powie
+  // „7:00 AM”, polski „07:00” — czyli dokładnie to, co było tu wcześniej.
+  function hourLabel(hour) {
+    var d = new Date(2000, 0, 1, hour, 0, 0);
+    try {
+      return new Intl.DateTimeFormat(locale(), { hour: '2-digit', minute: '2-digit' }).format(d);
+    } catch (_) {
+      return (hour < 10 ? '0' : '') + hour + ':00';
+    }
+  }
+
+  // Kierunek zmiany jako osobne zdanie podrzędne. Trzy klucze zamiast jednego
+  // z „więcej/mniej” w środku: w części języków porównanie zmienia szyk całego
+  // zdania, a nie tylko jeden wyraz.
+  function changeWording(diff, otherLabel) {
+    if (diff === 0) return T('report.change.same', { other: otherLabel });
+    if (diff > 0) return T('report.change.more', { points: pointsWord(diff), other: otherLabel });
+    return T('report.change.less', { points: pointsWord(Math.abs(diff)), other: otherLabel });
+  }
 
   /* ---------------------------------------------------------------------
      Drobne pomocniki DOM
@@ -89,24 +132,17 @@
     try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; }
   }
 
-  // Polski ma trzy formy liczebnika. Czytniki ekranu wymawiają te napisy, więc
-  // „1 dni” albo „2 odczyt” to nie literówka, którą użytkownik może pominąć.
-  function pluralPL(n, one, few, many) {
-    var count = Math.abs(Number(n) || 0);
-    var m10 = count % 10;
-    var m100 = count % 100;
-    if (count === 1) return one;
-    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-    return many;
-  }
-  function readingsWordPL(n) { return n + ' ' + pluralPL(n, 'odczyt', 'odczyty', 'odczytów'); }
-  function minutesWordPL(n) { return n + ' ' + pluralPL(n, 'minuty', 'minut', 'minut'); }
-  function pointsWordPL(n) {
-    return n + ' ' + pluralPL(n, 'punkt procentowy', 'punkty procentowe', 'punktów procentowych');
-  }
+  // Odmiana liczebnika należy do Intl.PluralRules aktywnego języka — własnej
+  // reguły odmiany tu nie ma i nie może być. Polskie „2 odczyty / 5 odczytów”,
+  // rosyjskie „many” i arabskie sześć kategorii są w CLDR, utrzymywane przez
+  // kogoś innego i poprawne dla wszystkich trzydziestu języków naraz.
+  // Czytniki ekranu wymawiają te napisy, więc „1 dni” to nie literówka,
+  // którą użytkownik może pominąć.
+  function readingsWord(n) { return T('count.readings', { n: n }); }
+  function pointsWord(n) { return T('count.points', { n: n }); }
 
-  function sectionTitle(textPL) {
-    return h('h3', { class: 'ui-section-title', text: textPL });
+  function sectionTitle(key) {
+    return h('h3', { class: 'ui-section-title', text: T(key) });
   }
 
   function announce(regionId, message) {
@@ -153,14 +189,14 @@
     return region;
   }
 
-  function toast(messagePL, opts) {
+  function toast(message, opts) {
     opts = opts || {};
     var type = opts.type || 'info';
     var region = toastRegion();
     region.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
     var duration = opts.durationMs || (type === 'error' ? 8000 : 5000);
     var node = h('div', { class: 'ui-toast ui-toast-' + type }, [
-      h('span', { class: 'ui-grow', text: messagePL })
+      h('span', { class: 'ui-grow', text: message })
     ]);
     var removeNode = function () {
       if (node.parentNode) node.parentNode.removeChild(node);
@@ -169,7 +205,7 @@
     // więc zawsze potrzebuje prawdziwego wyjścia — nie tylko licznika czasu.
     node.appendChild(h('button', {
       type: 'button', class: 'ui-toast-close', text: '✕',
-      'aria-label': 'Zamknij powiadomienie', onclick: removeNode
+      'aria-label': T('action.closeNotification'), onclick: removeNode
     }));
     region.appendChild(node);
     window.setTimeout(removeNode, duration);
@@ -212,19 +248,19 @@
     clear(container);
 
     var panel = h('section', { class: 'card' });
-    panel.appendChild(sectionTitle('Historia i raport'));
+    panel.appendChild(sectionTitle('history.title'));
     if (lastSessionSummary) panel.appendChild(buildSessionSummaryCard());
 
     var ranges = [
-      { id: 'histRange1h', labelPL: '1 h', ms: HOUR_MS },
-      { id: 'histRange24h', labelPL: '24 h', ms: DAY_MS },
-      { id: 'histRange7d', labelPL: '7 dni', ms: 7 * DAY_MS },
-      { id: 'histRange30d', labelPL: '30 dni', ms: 30 * DAY_MS }
+      { id: 'histRange1h', key: 'range.1h', ms: HOUR_MS },
+      { id: 'histRange24h', key: 'range.24h', ms: DAY_MS },
+      { id: 'histRange7d', key: 'range.7d', ms: 7 * DAY_MS },
+      { id: 'histRange30d', key: 'range.30d', ms: 30 * DAY_MS }
     ];
-    var group = h('div', { class: 'ui-row', role: 'group', 'aria-label': 'Zakres historii' });
+    var group = h('div', { class: 'ui-row', role: 'group', 'aria-label': T('history.rangeAria') });
     ranges.forEach(function (range) {
       group.appendChild(h('button', {
-        id: range.id, type: 'button', class: 'btn', text: range.labelPL,
+        id: range.id, type: 'button', class: 'btn', text: T(range.key),
         'aria-pressed': String(historyRangeMs === range.ms),
         onclick: function () { historyRangeMs = range.ms; renderHistoryPanel(); }
       }));
@@ -234,23 +270,25 @@
     var summaryBox = h('div', { class: 'ui-stack', 'aria-live': 'polite' });
     var points = [];
     if (!data) {
-      summaryBox.appendChild(h('p', { class: 'ui-muted', text: 'Dane historii są chwilowo niedostępne.' }));
+      summaryBox.appendChild(h('p', { class: 'ui-muted', text: T('history.unavailable') }));
     } else {
       try { points = data.getHistoryLong({ sinceMs: Date.now() - historyRangeMs }) || []; } catch (_) { points = []; }
       var summary = summarizeZones(points);
       if (!summary.total) {
-        summaryBox.appendChild(h('p', {
-          class: 'ui-muted',
-          text: 'Brak zapisanych odczytów w tym zakresie. Uruchom pomiar — historia zbiera się automatycznie.'
-        }));
+        summaryBox.appendChild(h('p', { class: 'ui-muted', text: T('history.empty') }));
       } else {
         summaryBox.appendChild(h('p', {
-          text: 'Zapisane odczyty: ' + summary.total + '. Podział czasu według stref:'
+          text: T('history.savedReadings', { count: summary.total })
         }));
         ['good', 'warning', 'critical'].forEach(function (zone) {
           summaryBox.appendChild(h('p', {
-            text: ZONE_LABEL_LONG[zone] + ': ' + percentOf(summary.counts[zone], summary.total) +
-              '% (' + readingsWordPL(summary.counts[zone]) + ')'
+            // Liczebnik wchodzi w zdanie jako gotowy napis: forma zależy od
+            // liczby, a nie od miejsca w zdaniu, więc rozstrzyga ją t() osobno.
+            text: T('history.zoneLine', {
+              zone: zoneName(zone),
+              percent: percentOf(summary.counts[zone], summary.total),
+              readings: readingsWord(summary.counts[zone])
+            })
           }));
         });
       }
@@ -269,28 +307,34 @@
     return d.getFullYear() + '-' + (month < 10 ? '0' : '') + month + '-' + (day < 10 ? '0' : '') + day;
   }
 
+  // Nazwa dnia („28 sierpnia”) należy do Intl.DateTimeFormat aktywnego języka.
+  // Własna tablica nazw miesięcy działała dla jednego języka; dla trzydziestu
+  // musiałaby nieść trzydzieści tablic razem z odmianą przez przypadki.
   function dayLabelOf(ts) {
-    var d = new Date(ts);
-    return d.getDate() + ' ' + MONTHS_PL[d.getMonth()];
+    try {
+      return new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'long' }).format(new Date(ts));
+    } catch (_) {
+      return new Date(ts).toLocaleDateString();
+    }
   }
 
-  function zoneTable(id, captionPL, firstColPL, rows) {
+  function zoneTable(id, captionKey, firstColKey, rows) {
     return h('div', { id: id + 'Wrap', class: 'ui-table-wrap' }, h('table', { id: id, class: 'ui-table' }, [
-      h('caption', { text: captionPL }),
+      h('caption', { text: T(captionKey) }),
       h('thead', {}, h('tr', {}, [
-        h('th', { scope: 'col', text: firstColPL }),
-        h('th', { scope: 'col', text: 'Bezpieczna' }),
-        h('th', { scope: 'col', text: 'Umiarkowana' }),
-        h('th', { scope: 'col', text: 'Szkodliwa' }),
-        h('th', { scope: 'col', text: 'Odczyty' })
+        h('th', { scope: 'col', text: T(firstColKey) }),
+        h('th', { scope: 'col', text: zoneName('good') }),
+        h('th', { scope: 'col', text: zoneName('warning') }),
+        h('th', { scope: 'col', text: zoneName('critical') }),
+        h('th', { scope: 'col', text: T('report.col.readings') })
       ])),
       h('tbody', {}, rows.map(function (row) {
         return h('tr', {}, [
-          h('th', { scope: 'row', class: 'ui-table-rowhead', text: row.labelPL }),
-          h('td', { class: 'ui-table-val', text: percentOf(row.good, row.total) + '%' }),
-          h('td', { class: 'ui-table-val', text: percentOf(row.warning, row.total) + '%' }),
-          h('td', { class: 'ui-table-val', text: percentOf(row.critical, row.total) + '%' }),
-          h('td', { class: 'ui-table-val', text: String(row.total) })
+          h('th', { scope: 'row', class: 'ui-table-rowhead', text: row.label }),
+          h('td', { class: 'ui-table-val', text: num(percentOf(row.good, row.total)) + '%' }),
+          h('td', { class: 'ui-table-val', text: num(percentOf(row.warning, row.total)) + '%' }),
+          h('td', { class: 'ui-table-val', text: num(percentOf(row.critical, row.total)) + '%' }),
+          h('td', { class: 'ui-table-val', text: num(row.total) })
         ]);
       }))
     ]));
@@ -302,12 +346,9 @@
   // dla których ta aplikacja powstała.
   function buildReport(points) {
     var box = h('div', { class: 'ui-stack' });
-    box.appendChild(sectionTitle('Raport dzienny'));
+    box.appendChild(sectionTitle('report.dailyTitle'));
     if (!points.length) {
-      box.appendChild(h('p', {
-        class: 'ui-muted',
-        text: 'Raport pojawi się, gdy w wybranym zakresie będą zapisane odczyty.'
-      }));
+      box.appendChild(h('p', { class: 'ui-muted', text: T('report.empty') }));
       return box;
     }
 
@@ -317,7 +358,7 @@
     points.forEach(function (point) {
       var key = dayKeyOf(point.t);
       if (!byDay[key]) {
-        byDay[key] = { key: key, labelPL: dayLabelOf(point.t), total: 0, good: 0, warning: 0, critical: 0 };
+        byDay[key] = { key: key, label: dayLabelOf(point.t), total: 0, good: 0, warning: 0, critical: 0 };
         days.push(byDay[key]);
       }
       var day = byDay[key];
@@ -330,26 +371,23 @@
     });
     days.sort(function (a, b) { return a.key < b.key ? 1 : -1; });   // najnowszy na górze
 
-    box.appendChild(zoneTable('reportTable', 'Udział czasu w strefach, dzień po dniu', 'Dzień', days));
+    box.appendChild(zoneTable('reportTable', 'report.dailyCaption', 'report.col.day', days));
 
     // Porównanie dzień do dnia, wypisane wprost zamiast zostawione czytelnikowi.
     if (days.length >= 2) {
       var today = percentOf(days[0].critical, days[0].total);
       var before = percentOf(days[1].critical, days[1].total);
-      var diff = today - before;
-      var wording;
-      if (diff === 0) wording = 'tyle samo co ' + days[1].labelPL + '.';
-      else if (diff > 0) wording = 'o ' + pointsWordPL(diff) + ' więcej niż ' + days[1].labelPL + '.';
-      else wording = 'o ' + pointsWordPL(Math.abs(diff)) + ' mniej niż ' + days[1].labelPL + '.';
       box.appendChild(h('p', {
         id: 'reportCompare',
-        text: 'Porównanie dzień do dnia: ' + days[0].labelPL + ' — ' + today +
-          '% czasu w strefie szkodliwej, ' + wording
+        text: T('report.compare.day', {
+          day: days[0].label,
+          percent: today,
+          change: changeWording(today - before, days[1].label)
+        })
       }));
     } else {
       box.appendChild(h('p', {
-        id: 'reportCompare', class: 'ui-muted',
-        text: 'Porównanie dzień do dnia pojawi się po drugim dniu pomiarów.'
+        id: 'reportCompare', class: 'ui-muted', text: T('report.compare.dayPending')
       }));
     }
 
@@ -358,23 +396,21 @@
     Object.keys(byHour).forEach(function (hour) {
       if (peakHour === null || byHour[hour] > byHour[peakHour]) peakHour = hour;
     });
-    var pad = function (value) { return (value < 10 ? '0' : '') + value; };
     box.appendChild(h('p', {
       id: 'reportPeak',
       text: peakHour === null
-        ? 'W tym zakresie nie zapisano odczytów w strefie szkodliwej.'
-        : ('Najwięcej odczytów w strefie szkodliwej między ' + pad(Number(peakHour)) + ':00 a ' +
-           pad((Number(peakHour) + 1) % 24) + ':00.')
+        ? T('report.peak.none')
+        : T('report.peak', {
+            from: hourLabel(Number(peakHour)),
+            to: hourLabel((Number(peakHour) + 1) % 24)
+          })
     }));
 
     // Zestawienie tygodniowe. Pokazywane tylko wtedy, gdy wybrany zakres może
     // w ogóle objąć więcej niż jeden tydzień — inaczej powtarzałoby tabelę dzienną.
     if (historyRangeMs >= 7 * DAY_MS) box.appendChild(buildWeeklySection(points));
 
-    box.appendChild(h('p', {
-      class: 'ui-muted',
-      text: 'Liczby to udział zapisanych odczytów w wybranym zakresie, nie dokładny czas ekspozycji.'
-    }));
+    box.appendChild(h('p', { class: 'ui-muted', text: T('report.footnote') }));
     return box;
   }
 
@@ -391,7 +427,12 @@
     var firstIndex = (firstThursday.getDay() + 6) % 7;
     firstThursday.setDate(firstThursday.getDate() - firstIndex + 3);
     var week = 1 + Math.round((d - firstThursday) / (7 * DAY_MS));
-    return { key: isoYear + '-W' + (week < 10 ? '0' : '') + week, labelPL: 'Tydzień ' + week + ' (' + isoYear + ')' };
+    return {
+      key: isoYear + '-W' + (week < 10 ? '0' : '') + week,
+      // Rok idzie jako NAPIS, nie jako liczba: przez Intl.NumberFormat wyszłoby
+      // „2 026” z separatorem tysięcy. Numer tygodnia jest liczbą i ma nią być.
+      label: T('report.weekLabel', { week: week, year: String(isoYear) })
+    };
   }
 
   function buildWeeklySection(points) {
@@ -400,7 +441,7 @@
     points.forEach(function (point) {
       var info = isoWeekOf(point.t);
       if (!byWeek[info.key]) {
-        byWeek[info.key] = { key: info.key, labelPL: info.labelPL, total: 0, good: 0, warning: 0, critical: 0 };
+        byWeek[info.key] = { key: info.key, label: info.label, total: 0, good: 0, warning: 0, critical: 0 };
         weeks.push(byWeek[info.key]);
       }
       var week = byWeek[info.key];
@@ -409,31 +450,26 @@
     });
     weeks.sort(function (a, b) { return a.key < b.key ? 1 : -1; });   // najnowszy na górze
 
-    var box = h('div', { class: 'ui-stack' }, [sectionTitle('Raport tygodniowy')]);
+    var box = h('div', { class: 'ui-stack' }, [sectionTitle('report.weeklyTitle')]);
     if (!weeks.length) {
-      box.appendChild(h('p', {
-        id: 'weeklyEmpty', class: 'ui-muted',
-        text: 'Raport tygodniowy pojawi się, gdy w wybranym zakresie będą zapisane odczyty.'
-      }));
+      box.appendChild(h('p', { id: 'weeklyEmpty', class: 'ui-muted', text: T('report.weeklyEmpty') }));
       return box;
     }
-    box.appendChild(zoneTable('weeklyTable', 'Udział czasu w strefach, tydzień po tygodniu', 'Tydzień', weeks));
+    box.appendChild(zoneTable('weeklyTable', 'report.weeklyCaption', 'report.col.week', weeks));
     if (weeks.length >= 2) {
       var now = percentOf(weeks[0].critical, weeks[0].total);
       var prev = percentOf(weeks[1].critical, weeks[1].total);
-      var diff = now - prev;
       box.appendChild(h('p', {
         id: 'weeklyCompare',
-        text: 'Porównanie tydzień do tygodnia: ' + weeks[0].labelPL + ' — ' + now +
-          '% czasu w strefie szkodliwej, ' +
-          (diff === 0 ? ('tyle samo co ' + weeks[1].labelPL + '.')
-            : (diff > 0 ? ('o ' + pointsWordPL(diff) + ' więcej niż ' + weeks[1].labelPL + '.')
-              : ('o ' + pointsWordPL(Math.abs(diff)) + ' mniej niż ' + weeks[1].labelPL + '.')))
+        text: T('report.compare.week', {
+          week: weeks[0].label,
+          percent: now,
+          change: changeWording(now - prev, weeks[1].label)
+        })
       }));
     } else {
       box.appendChild(h('p', {
-        id: 'weeklyCompare', class: 'ui-muted',
-        text: 'Porównanie tydzień do tygodnia pojawi się po drugim tygodniu pomiarów.'
+        id: 'weeklyCompare', class: 'ui-muted', text: T('report.compare.weekPending')
       }));
     }
     return box;
@@ -463,34 +499,38 @@
     var data = (window.AppData && typeof window.AppData.getThresholds === 'function') ? window.AppData : null;
     var store = profilesStore();
 
-    var wrap = h('div', { class: 'ui-stack' }, [sectionTitle('Profile progów')]);
+    var wrap = h('div', { class: 'ui-stack' }, [sectionTitle('profiles.title')]);
     var list = h('div', { class: 'ui-list' });
     if (!store.list.length) {
-      list.appendChild(h('p', { class: 'ui-muted', text: 'Nie masz jeszcze zapisanych profili.' }));
+      list.appendChild(h('p', { class: 'ui-muted', text: T('profiles.empty') }));
     }
     store.list.forEach(function (profile) {
+      // Nazwę profilu wpisał użytkownik, więc nie podlega tłumaczeniu — wchodzi
+      // do zdania jako wstawka i nigdy nie jest sklejana z tekstem na sztywno.
+      var name = profile.name || profile.namePL || '';
       var row = h('div', { class: 'ui-row' }, [
         h('button', {
           id: 'profileApply_' + profile.id, type: 'button', class: 'btn ui-grow',
-          text: profile.namePL + (store.active === profile.id ? ' (aktywny)' : ''),
-          'aria-label': 'Zastosuj profil ' + profile.namePL,
+          text: store.active === profile.id ? T('profiles.itemActive', { name: name }) : name,
+          'aria-label': T('profiles.applyAria', { name: name }),
           onclick: function () {
             if (!data || typeof data.setThresholds !== 'function') return;
             data.setThresholds({ raw: profile.raw, share: profile.share });
             store.active = profile.id;
             saveProfiles(store);
-            toast('Zastosowano profil „' + profile.namePL + '”.', { type: 'success' });
+            toast(T('profiles.applied', { name: name }), { type: 'success' });
             renderProfilesPanel();
           }
         }),
         h('button', {
-          id: 'profileDelete_' + profile.id, type: 'button', class: 'btn btn-danger', text: 'Usuń',
-          'aria-label': 'Usuń profil ' + profile.namePL,
+          id: 'profileDelete_' + profile.id, type: 'button', class: 'btn btn-danger',
+          text: T('action.delete'),
+          'aria-label': T('profiles.deleteAria', { name: name }),
           onclick: function () {
             store.list = store.list.filter(function (p) { return p.id !== profile.id; });
             if (store.active === profile.id) store.active = '';
             saveProfiles(store);
-            toast('Usunięto profil „' + profile.namePL + '”.', { type: 'info' });
+            toast(T('profiles.deleted', { name: name }), { type: 'info' });
             renderProfilesPanel();
           }
         })
@@ -500,31 +540,31 @@
     wrap.appendChild(list);
 
     var nameInput = h('input', {
-      class: 'ui-input', type: 'text', placeholder: 'Nazwa profilu (np. Wieczór)',
+      class: 'ui-input', type: 'text', placeholder: T('profiles.namePlaceholder'),
       id: 'profileName', autocomplete: 'off'
     });
-    wrap.appendChild(h('label', { for: 'profileName', text: 'Zapisz bieżące progi jako profil' }));
+    wrap.appendChild(h('label', { for: 'profileName', text: T('profiles.saveLabel') }));
     wrap.appendChild(h('div', { class: 'ui-row' }, [
       nameInput,
       h('button', {
-        id: 'profileSaveBtn', type: 'button', class: 'btn', text: 'Zapisz profil',
+        id: 'profileSaveBtn', type: 'button', class: 'btn', text: T('profiles.saveBtn'),
         onclick: function () {
-          var name = (nameInput.value || '').trim();
-          if (!name) { toast('Podaj nazwę profilu.', { type: 'warning' }); return; }
+          var newName = (nameInput.value || '').trim();
+          if (!newName) { toast(T('profiles.needName'), { type: 'warning' }); return; }
           if (store.list.length >= PROFILES_MAX) {
-            toast('Możesz zapisać maksymalnie ' + PROFILES_MAX + ' profili. Usuń jeden, aby dodać nowy.', { type: 'warning' });
+            toast(T('profiles.limit', { n: PROFILES_MAX }), { type: 'warning' });
             return;
           }
           if (!data || typeof data.getThresholds !== 'function') return;
           var thresholds = data.getThresholds();
           store.list.push({
             id: 'p' + Date.now(),
-            namePL: name,
+            name: newName,
             raw: { warn: thresholds.raw.warn, crit: thresholds.raw.crit },
             share: { warn: thresholds.share.warn, crit: thresholds.share.crit }
           });
           saveProfiles(store);
-          toast('Zapisano profil „' + name + '”.', { type: 'success' });
+          toast(T('profiles.saved', { name: newName }), { type: 'success' });
           renderProfilesPanel();
         }
       })
@@ -555,33 +595,39 @@
       try { points = window.AppData.getHistory() || []; } catch (_) { points = []; }
     }
     if (!points.length) {
-      toast('Brak odczytów do wyeksportowania. Uruchom pomiar i spróbuj ponownie.', { type: 'warning' });
+      toast(T('csv.empty'), { type: 'warning' });
       return false;
     }
-    var lines = ['czas;jasnosc_B_proc;udzial_niebieskiego_proc;jasnosc_sceny_proc;strefa'];
+    // Nagłówek pliku jest napisem dla człowieka — Excel pokazuje go w pierwszym
+    // wierszu — więc idzie przez słownik. Same liczby zostają w zapisie
+    // maszynowym (kropka dziesiętna, ASCII), bo plik ma się dać wczytać
+    // niezależnie od tego, w jakim języku był otwarty program, który go zapisał.
+    var lines = [T('csv.header')];
     points.forEach(function (p) {
       lines.push([
         csvTimestamp(p.t),
         String(Math.round(p.raw)),
         String(Math.round(p.share)),
         String(Math.round(p.brightness)),
-        ZONE_LABEL[p.zoneShare] || ''
+        zoneBadge(p.zoneShare)
       ].join(';'));
     });
     // BOM utrzymuje czytelność polskich znaków po otwarciu pliku w Excelu.
     var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     var url = URL.createObjectURL(blob);
-    var link = h('a', {
-      href: url,
-      download: 'monitoring-swiatla-' + csvTimestamp(Date.now()).replace(/[: ]/g, '-') + '.csv'
-    });
+    // Nazwa pliku podlega tłumaczeniu, ale nie wolno jej zaufać bez ograniczeń:
+    // ukośnik albo dwukropek w tłumaczeniu rozbiłby zapis na dysk. Zostawiamy
+    // wyłącznie znaki bezpieczne w nazwie pliku na każdym systemie.
+    var stamp = csvTimestamp(Date.now()).replace(/[: ]/g, '-');
+    var fileName = T('csv.filename', { stamp: stamp }).replace(/[\\/:*?"<>|]/g, '-');
+    var link = h('a', { href: url, download: fileName });
     document.body.appendChild(link);
     link.click();
     window.setTimeout(function () {
       if (link.parentNode) link.parentNode.removeChild(link);
       URL.revokeObjectURL(url);
     }, 1000);
-    toast('Wyeksportowano ' + readingsWordPL(points.length) + ' do pliku CSV.', { type: 'success' });
+    toast(T('csv.done', { readings: readingsWord(points.length) }), { type: 'success' });
     return true;
   }
 
@@ -613,8 +659,10 @@
   }
 
   function fireExposureAlert(minutes) {
-    var message = 'Alert progowy: od ' + minutesWordPL(minutes) + ' odczyt jest w strefie szkodliwej. ' +
-      'Rozważ przerwę albo zmniejszenie udziału niebieskiego na ekranie.';
+    // Całe zdanie jest JEDNYM kluczem z formami CLDR, a nie sklejeniem z
+    // odmienioną liczbą minut: „od 1 minuty / od 5 minut” to dopełniacz, a nie
+    // mianownik z count.minutes — i w każdym języku przypadek wypada inaczej.
+    var message = T('alert.exposure', { n: minutes });
     toast(message, { type: 'warning', durationMs: 8000 });
     announce('navLive', message);
     try {
@@ -624,17 +672,26 @@
     } catch (_) { /* wibracja to miły dodatek, nigdy wymóg */ }
   }
 
-  function formatDurationPL(ms) {
+  function formatDuration(ms) {
     var totalSeconds = Math.max(0, Math.round((ms || 0) / 1000));
     var minutes = Math.floor(totalSeconds / 60);
     var seconds = totalSeconds % 60;
-    if (!minutes) return seconds + ' s';
-    return minutes + ' min ' + (seconds < 10 ? '0' : '') + seconds + ' s';
+    if (!minutes) return T('duration.seconds', { n: totalSeconds });
+    // Sekundy jako NAPIS, bo mają zostać uzupełnione zerem do dwóch cyfr —
+    // „5 min 07 s”. Minuty jako liczba, więc podlegają zapisowi języka.
+    return T('duration.minutesSeconds', {
+      minutes: minutes,
+      seconds: (seconds < 10 ? '0' : '') + num(seconds)
+    });
   }
 
   function fmtDateTime(ts) {
     var d = new Date(ts);
-    return d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+    try {
+      return new Intl.DateTimeFormat(locale(), { hour: 'numeric', minute: '2-digit' }).format(d);
+    } catch (_) {
+      return d.getHours() + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+    }
   }
 
   function onSessionEndForSummary(summary) {
@@ -643,9 +700,11 @@
     lastSessionSummary = summary;
     renderHistoryPanel();
     var critical = Math.round(((summary.zoneShares && summary.zoneShares.critical) || 0) * 100);
-    toast('Sesja zakończona: ' + formatDurationPL(summary.durationMs) + ', ' +
-      readingsWordPL(summary.samples || 0) + ', ' + critical + '% czasu w strefie szkodliwej.',
-      { type: 'info', durationMs: 9000 });
+    toast(T('session.toast', {
+      duration: formatDuration(summary.durationMs),
+      readings: readingsWord(summary.samples || 0),
+      percent: critical
+    }), { type: 'info', durationMs: 9000 });
   }
 
   // Karta pokazywana na górze panelu historii po zakończonej sesji.
@@ -653,20 +712,25 @@
     var summary = lastSessionSummary;
     var shares = (summary && summary.zoneShares) || {};
     var box = h('div', { id: 'sessionSummary', class: 'ui-stack' }, [
-      sectionTitle('Podsumowanie ostatniej sesji')
+      sectionTitle('session.title')
     ]);
     box.appendChild(h('p', {
-      text: 'Czas pomiaru: ' + formatDurationPL(summary.durationMs) +
-        '. Zapisane odczyty: ' + (summary.samples || 0) + '.'
+      text: T('session.line', {
+        duration: formatDuration(summary.durationMs),
+        count: summary.samples || 0
+      })
     }));
     ['good', 'warning', 'critical'].forEach(function (zone) {
       box.appendChild(h('p', {
-        text: ZONE_LABEL_LONG[zone] + ': ' + Math.round((shares[zone] || 0) * 100) + '% czasu sesji.'
+        text: T('session.zoneLine', {
+          zone: zoneName(zone),
+          percent: Math.round((shares[zone] || 0) * 100)
+        })
       }));
     });
     box.appendChild(h('p', {
       class: 'ui-muted',
-      text: 'Podsumowanie dotyczy sesji zakończonej ' + fmtDateTime(summary.endedAt) + '.'
+      text: T('session.endedAt', { time: fmtDateTime(summary.endedAt) })
     }));
     return box;
   }
@@ -702,6 +766,16 @@
       if (window.AppNav && typeof window.AppNav.on === 'function') {
         window.AppNav.on('change', function (payload) {
           if (payload && payload.to === 'monitoring') renderHistoryPanel();
+        });
+      }
+
+      // Po zmianie języka oba panele są budowane od nowa. Nie da się ich
+      // przetłumaczyć na miejscu: nie niosą kluczy, tylko gotowe zdania
+      // złożone z liczb, dat i odmienionych liczebników.
+      if (window.I18nDom && typeof window.I18nDom.onChange === 'function') {
+        window.I18nDom.onChange(function () {
+          renderHistoryPanel();
+          renderProfilesPanel();
         });
       }
     },

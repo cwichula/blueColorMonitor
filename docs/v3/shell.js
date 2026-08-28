@@ -107,8 +107,12 @@
     return typeof node === 'string' && node.length ? node : null;
   }
 
-  // `paths` is tried in order; the first string wins. The fallback is the
-  // literal wording from chapter 8 — never an invented sentence.
+  /* `paths` jest przeglądane po kolei; wygrywa pierwszy napis.
+     ZAPASOWE BRZMIENIE JEST PO ANGIELSKU, a nie po polsku. Widać je tylko
+     wtedy, gdy nie wczytał się ani scale.js, ani warstwa językowa — a wtedy
+     jedynym uczciwym wyborem jest język, którym aplikacja mówi do kogoś, kto
+     nie wybrał niczego. Polskie brzmienie tych zdań stoi w ./i18n/pl.js,
+     razem z pozostałymi dwudziestoma dziewięcioma językami. */
   function text(paths, fallback) {
     for (var i = 0; i < paths.length; i += 1) {
       var found = lookup(paths[i]);
@@ -117,20 +121,20 @@
     return fallback;
   }
 
-  function T_back() { return text(['keys.back', 'key.back', 'keyBack', 'ui.back', 'back'], '‹ Wróć'); }
-  function T_backAria() { return text(['keys.backAria', 'key.backAria', 'aria.back', 'backAria'], 'Wróć do pulpitu'); }
-  function T_dash() { return text(['keys.dash', 'key.dash', 'keyDash', 'livebar.key', 'live.key'], 'Pulpit'); }
-  function T_close() { return text(['keys.close', 'key.close', 'close'], 'Zamknij'); }
-  function T_flip() { return text(['keys.flip', 'key.flip', 'keyFlip', 'flip'], 'Obróć'); }
-  function T_flipAria() { return text(['keys.flipAria', 'key.flipAria', 'aria.flip'], 'Przełącz kamerę przód/tył'); }
-  function T_menuTitle() { return text(['menu.titlePL', 'menu.title', 'modules.titlePL', 'screens.menu'], 'Spis modułów'); }
-  function T_aimTitle() { return text(['aim.titlePL', 'aim.title', 'screens.aim'], 'Celowanie'); }
-  function T_stopped() { return text(['live.stoppedPL', 'livebar.stopped', 'live.stopped', 'states.stopped'], 'Pomiar zatrzymany'); }
-  function T_none() { return text(['noValue', 'empty', 'dashes', 'values.none'], '—'); }
+  function T_back() { return text(['keys.back', 'key.back', 'keyBack', 'ui.back', 'back'], '‹ Back'); }
+  function T_backAria() { return text(['keys.backAria', 'key.backAria', 'aria.back', 'backAria'], 'Back to the dashboard'); }
+  function T_dash() { return text(['keys.dash', 'key.dash', 'keyDash', 'livebar.key', 'live.key'], 'Dashboard'); }
+  function T_close() { return text(['keys.close', 'key.close', 'close'], 'Close'); }
+  function T_flip() { return text(['keys.flip', 'key.flip', 'keyFlip', 'flip'], 'Flip'); }
+  function T_flipAria() { return text(['keys.flipAria', 'key.flipAria', 'aria.flip'], 'Switch between the front and rear camera'); }
+  function T_menuTitle() { return text(['menu.titlePL', 'menu.title', 'modules.titlePL', 'screens.menu'], 'Module index'); }
+  function T_aimTitle() { return text(['aim.titlePL', 'aim.title', 'screens.aim'], 'Aiming'); }
+  function T_stopped() { return text(['live.stoppedPL', 'livebar.stopped', 'live.stopped', 'states.stopped'], 'Measurement stopped'); }
+  function T_none() { return text(['noValue', 'common.noValue', 'empty', 'dashes', 'values.none'], '—'); }
   function T_aimHint() {
     return text(['aim.hintPL', 'aim.hint', 'aim.textPL'],
-      'Celownik obejmuje dokładnie ten wycinek, który jest mierzony. ' +
-      'Kieruj na oświetloną powierzchnię i trzymaj telefon nieruchomo.');
+      'The reticle covers exactly the part of the image being measured. ' +
+      'Point it at a lit surface and hold the phone still.');
   }
 
   /* ------------------------------------------------------------------
@@ -505,6 +509,14 @@
     return Metrics && Metrics.byId ? Metrics.byId(id) : null;
   }
 
+  /* Nazwa wielkości z warstwy językowej; polskie namePL ze wspólnego katalogu
+     Metrics.CATALOGUE jest tylko ostatnią deską ratunku. */
+  function metricName(metric, fallbackId) {
+    var S = global.Scale;
+    if (metric && S && S.metricName) return S.metricName(metric.id);
+    return metric ? metric.namePL : fallbackId;
+  }
+
   function formatValue(id, value) {
     var Scale = global.Scale;
     if (Scale && typeof Scale.formatValue === 'function') return Scale.formatValue(id, value);
@@ -519,7 +531,7 @@
     if (!live) return;
     var id = UI3.leadChannel();
     var metric = metricOf(id);
-    setText(live.name, metric ? metric.namePL : id);
+    setText(live.name, metricName(metric, id));
     setText(live.unit, metric && metric.unit ? metric.unit : '');
 
     var value = null;
@@ -679,6 +691,7 @@
         el: parts.el,
         body: parts.body,
         live: parts.live,
+        parts: parts,          // nagłówek i klawisz wstecz — do przepisania po zmianie języka
         entry: entry
       };
     }
@@ -725,7 +738,7 @@
     menuList = put(parts.body, make('div', 'ms3-menu'));
     var host = screensHost();
     if (host) host.appendChild(parts.el);
-    menuLayer = { kind: LAYER_MENU, el: parts.el, body: parts.body, live: null };
+    menuLayer = { kind: LAYER_MENU, el: parts.el, body: parts.body, live: null, parts: parts };
     return menuLayer;
   }
 
@@ -785,6 +798,7 @@
   var aimLayer = null;
   var aimStage = null;
   var aimHome = null;
+  var aimParts = null;
 
   function buildAim() {
     var section = make('section', 'ms3-aim');
@@ -804,7 +818,10 @@
     close.onclick = function () { UI3.closeAim(); };
     put(keys, close);
 
+    aimParts = { section: section, hint: hint, close: close };
+
     var flip = key(T_flip(), 'ms3-key--square', T_flipAria());
+    aimParts.flip = flip;
     // dash.js is the only file allowed to call Engine.switchCamera(); clicking
     // its key keeps that rule intact and inherits its disabled state for free.
     flip.onclick = function () {
@@ -1155,6 +1172,158 @@
     publish();
   }
 
+  /* ==================================================================
+     WARSTWA JĘZYKOWA — napisy szkieletu i zmiana języka
+
+     Dwie rzeczy, których nie robi żaden inny plik tej wersji:
+
+     1. NAPISY WPISANE W index.html. Szkielet strony ma napisy w markupie, bo
+        pierwsze malowanie musi pokazać gotowy przyrząd, a nie puste ramki.
+        Znaczniki data-i18n-* mówią, skąd wziąć każdy z nich, a ta funkcja
+        wpisuje je jeszcze przed app:ready — czyli zanim dash.js weźmie te
+        węzły na własność. Polski literał w markupie zostaje jako to, co widać,
+        gdy nie wykona się ani jeden skrypt.
+
+     2. PRZERYSOWANIE PO ZMIANIE JĘZYKA. Ekrany modułów budują się raz i żyją
+        w DOM aż do zamknięcia karty, więc sama podmiana Scale.TEXT nie zmienia
+        ani jednej litery na już zbudowanym ekranie. Powłoka rozwiązuje to
+        jedynym sposobem, który nie wymaga od dwunastu modułów własnej funkcji
+        „przetłumacz się”: ekran WIDOCZNY buduje od nowa w miejscu, a każdy
+        schowany wyrzuca — zbuduje się przy następnym otwarciu, tak samo jak
+        za pierwszym razem. Przeładowania strony tu nie ma świadomie: rzuciłoby
+        trwający pomiar, a to jest w tej aplikacji rzecz nie do zrobienia.
+     ================================================================== */
+
+  /* Wstawka {name} dla napisów, które mówią o konkretnej wielkości. */
+  function staticVars(node) {
+    var id = node.getAttribute('data-i18n-name');
+    if (!id) return null;
+    return { name: metricName(metricOf(id), id) };
+  }
+
+  function staticFill(template, vars) {
+    if (!vars) return template;
+    return template.replace(/\{(\w+)\}/g, function (whole, name) {
+      return Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : whole;
+    });
+  }
+
+  /* `again` = wywołanie po zmianie języka, a nie przy pierwszym malowaniu.
+     Węzły z data-i18n-once są wtedy pomijane: od app:ready należą do dash.js,
+     który pisze w nich stan pomiaru i zdanie oceniające. Powłoka wpisałaby tam
+     „Gotowy" w środku trwającego pomiaru. */
+  function paintStatic(again) {
+    if (!doc || !doc.querySelectorAll) return;
+
+    var title = lookup('app.title');
+    if (title) doc.title = title;
+
+    var nodes = doc.querySelectorAll('[data-i18n],[data-i18n-aria],[data-i18n-metric]');
+    for (var i = 0; i < nodes.length; i += 1) {
+      var node = nodes[i];
+      if (again && node.hasAttribute('data-i18n-once')) continue;
+      var vars = staticVars(node);
+
+      var metricId = node.getAttribute('data-i18n-metric');
+      if (metricId) setText(node, metricName(metricOf(metricId), metricId));
+
+      var path = node.getAttribute('data-i18n');
+      var value = path ? lookup(path) : null;
+      if (value) setText(node, staticFill(value, vars));
+
+      var ariaPath = node.getAttribute('data-i18n-aria');
+      var aria = ariaPath ? lookup(ariaPath) : null;
+      if (aria) node.setAttribute('aria-label', staticFill(aria, vars));
+    }
+  }
+
+  function relabelKey(btn, labelPL, ariaPL) {
+    if (!btn) return;
+    var label = btn.querySelector ? btn.querySelector('.ms3-key__label') : null;
+    setText(label || btn, labelPL);
+    if (ariaPL) btn.setAttribute('aria-label', ariaPL);
+  }
+
+  /* Nagłówek ekranu: klawisz wstecz, tytuł i klawisz listwy podglądu. Treść
+     ekranu przepisuje jego własny build(); tutaj tylko rama powłoki. */
+  function relabelScreenChrome(parts, titlePL) {
+    if (!parts) return;
+    relabelKey(parts.back, T_back(), T_backAria());
+    if (parts.title && titlePL) setText(parts.title, titlePL);
+    if (parts.live && parts.live.el && parts.live.el.querySelector) {
+      relabelKey(parts.live.el.querySelector('.ms3-livebar__key'), T_dash(), null);
+    }
+  }
+
+  function moduleMeta(no) {
+    var Scale = global.Scale;
+    var table = Scale && Scale.TEXT && Scale.TEXT.modules;
+    return (table && table[no]) ? table[no] : null;
+  }
+
+  function relabel() {
+    paintStatic(true);
+
+    /* Arkusz modalny buduje ten, kto go otworzył, i nikt nie trzyma jego
+       treści — nie da się go przetłumaczyć, więc się go zamyka. Otwarty
+       arkusz to zawsze odpowiedź na jedno naciśnięcie, nie stan do zachowania. */
+    dismissKind(LAYER_SHEET, false);
+
+    var i;
+
+    /* Tytuły i opisy modułów są tymi samymi, którymi zarejestrowały się pliki:
+       Scale.TEXT.modules[nr]. Czytamy je tu ponownie, zamiast prosić dwanaście
+       plików o powtórną rejestrację. */
+    for (i = 0; i < registry.length; i += 1) {
+      var meta = moduleMeta(registry[i].no);
+      if (!meta) continue;
+      if (meta.titlePL) registry[i].titlePL = meta.titlePL;
+      if (meta.descPL) registry[i].descPL = meta.descPL;
+    }
+
+    for (i = 0; i < registry.length; i += 1) {
+      var entry = registry[i];
+      if (!entry.layer) continue;
+      relabelScreenChrome(entry.layer.parts, entry.titlePL);
+
+      if (indexOf(entry.layer) !== -1) {
+        // Otwarty: przebuduj treść w miejscu. Ekran jest widoczny, więc canvas
+        // zmierzy się poprawnie — dokładnie ten warunek, dla którego build()
+        // biegnie po pokazaniu ekranu, a nie przed nim.
+        var body = entry.layer.body;
+        while (body.firstChild) body.removeChild(body.firstChild);
+        try { entry.build(body); }
+        catch (err) {
+          if (global.console && console.error) console.error('UI3: moduł ' + entry.no + ' nie przebudował się', err);
+        }
+        renderLiveBar(entry.layer.live, lastReading);
+      } else {
+        // Schowany: wyrzuć. Następne otwarcie zbuduje go od zera.
+        if (entry.layer.el && entry.layer.el.parentNode) {
+          entry.layer.el.parentNode.removeChild(entry.layer.el);
+        }
+        entry.layer = null;
+        entry.built = false;
+      }
+    }
+
+    if (menuLayer) {
+      relabelScreenChrome(menuLayer.parts, T_menuTitle());
+      fillMenu();
+    }
+
+    if (aimParts) {
+      if (aimParts.section) aimParts.section.setAttribute('aria-label', T_aimTitle());
+      setText(aimParts.hint, T_aimHint());
+      relabelKey(aimParts.close, T_close(), null);
+      relabelKey(aimParts.flip, T_flip(), T_flipAria());
+    }
+  }
+
+  /** Wystawione, bo bez tego nie da się sprawdzić przerysowania z konsoli
+   *  ani wywołać go po zmianie napisów spoza warstwy językowej. */
+  UI3.relabel = relabel;
+
   function boot() {
     ensureSettings();
     applyAll();
@@ -1182,9 +1351,19 @@
   }
 
   if (doc) {
+    /* Napisy szkieletu wpisujemy TERAZ, nie w boot(). Ten plik stoi na końcu
+       <body>, więc cały szkielet jest już sparsowany, a boot() biegnie dopiero
+       jeden takt po DOMContentLoaded — do tego czasu użytkownik z angielską
+       przeglądarką patrzyłby na polskie literały z markupu. */
+    paintStatic();
     if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', scheduleBoot);
     else scheduleBoot();
   }
+
+  /* Zmiana języka. Kolejność słuchaczy magistrali jest kolejnością wczytania
+     plików, a scale.js stoi przed tym plikiem — więc gdy tu dochodzimy,
+     Scale.TEXT jest już przebudowany. */
+  if (Bus && typeof Bus.on === 'function') Bus.on('i18n:changed', relabel);
 
   global.UI3 = UI3;
 

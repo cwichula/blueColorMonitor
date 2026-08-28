@@ -14,7 +14,10 @@
  * Ten plik ładuje się ostatni, bo dopiero wtedy rejestr jest kompletny. Na końcu
  * bootstrapu leci Bus.emit('app:ready') — lepki, więc kto się spóźnił, i tak go złapie.
  *
- * Zero polskich literałów: każde słowo pochodzi z UI.T albo ze Scale.TEXT.
+ * Zero polskich literałów: każde słowo pochodzi z UI.T albo ze Scale.TEXT,
+ * a oba te słowniki są budowane z warstwy językowej (../shared/i18n.js).
+ * Ten plik jest też jedynym miejscem, które decyduje, co się dzieje z ekranem
+ * po zmianie języka — patrz relanguage() na końcu.
  */
 (function (global) {
   'use strict';
@@ -787,6 +790,59 @@
     } catch (_) { /* tryb prywatny rzuca wyjątkiem nawet przy kasowaniu */ }
   }
 
+  /* ------------------------------------------------------------------
+     Napisy, które w index.html stoją puste
+
+     Znacznik strony nie ma jak być wielojęzyczny: jest jeden i parsuje się
+     zanim ktokolwiek wie, jaki język wybrał użytkownik. Cztery napisy, które
+     tam stały, są więc wpisywane stąd — z tego samego słownika co reszta.
+     ------------------------------------------------------------------ */
+
+  function paintShellText() {
+    var skip = node('skipLink');
+    if (skip) skip.textContent = t('nav.skip');
+
+    var navLabel = t('aria.tabbar') || t('nav.aria');
+    if (el.sideNav && navLabel) el.sideNav.setAttribute('aria-label', navLabel);
+
+    var video = node('cameraVideo');
+    if (video && global.I18n) video.setAttribute('aria-label', global.I18n.t('camera.previewAria'));
+
+    var title = ts('app.title');
+    if (title && doc) doc.title = title;
+  }
+
+  /* ------------------------------------------------------------------
+     Zmiana języka
+
+     Widoki tej wersji powstają RAZ, przy starcie, i potem tylko pokazują się
+     i chowają (patrz nagłówek pliku). Nie ma więc czego „przerysować”: żeby
+     ekran przemówił nowym językiem, trzeba go zbudować od nowa — a jedynym
+     sposobem, który buduje od nowa wszystko i nic nie pomija, jest ponowne
+     wczytanie strony. Robimy to świadomie i tylko tutaj.
+
+     Dwie rzeczy dzieją się przed przeładowaniem. Po pierwsze zatrzymujemy
+     pomiar, żeby sesja zdążyła trafić do historii — przeładowanie w trakcie
+     pomiaru urwałoby ją tak samo jak zamknięcie karty. Po drugie przebudowujemy
+     oba słowniki, żeby wszystko, co jeszcze zdąży się wykonać między zmianą
+     a przeładowaniem, mówiło już nowym językiem, a nie mieszanką dwóch.
+
+     Wybór języka jest już zapisany, zanim to zdarzenie przyjdzie (robi to
+     I18n.setLanguage), więc po przeładowaniu strona wstaje w nowym języku
+     nawet wtedy, gdy plik słownika się nie wczytał.
+     ------------------------------------------------------------------ */
+
+  function relanguage() {
+    if (global.Scale && typeof global.Scale.relanguage === 'function') global.Scale.relanguage();
+    if (global.UI && typeof global.UI.relanguage === 'function') global.UI.relanguage();
+    if (global.Store && typeof global.Store.relanguage === 'function') global.Store.relanguage();
+
+    if (global.Engine && global.Engine.isRunning && global.Engine.isRunning()) {
+      try { global.Engine.stop(); } catch (_) { /* i tak zaraz przeładowujemy */ }
+    }
+    try { global.location.reload(); } catch (_) { /* nie ma czego więcej spróbować */ }
+  }
+
   function boot() {
     if (booted) return;
     dropStaleKeys();
@@ -805,6 +861,8 @@
 
     try { mqDesktop = global.matchMedia(DESKTOP_QUERY); } catch (_) { mqDesktop = null; }
 
+    paintShellText();
+
     for (var i = 0; i < views.length; i += 1) buildSection(views[i]);
     buildNav();
     buildStatus();
@@ -822,6 +880,7 @@
     watchLayers();
 
     if (global.Bus) {
+      global.Bus.on('i18n:changed', relanguage);
       global.Bus.on('engine:state', paintStatus);
       global.Bus.on('engine:started', paintStatus);
       global.Bus.on('engine:stopped', paintStatus);

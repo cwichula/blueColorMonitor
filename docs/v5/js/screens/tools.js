@@ -1,6 +1,9 @@
 /* Monitor Światła v5 — ekran „Narzędzia”.
  *
- * Sześć kart: Wygląd, Progi, Kalibracja, Pomiar, O pomiarze, Dane.
+ * Siedem kart: Język, Wygląd, Progi, Kalibracja, Pomiar, O pomiarze, Dane.
+ * Język stoi pierwszy, bo od niego zależy zrozumiałość wszystkich pozostałych
+ * ustawień — ktoś, kto trafił na aplikację w obcym języku, ma znaleźć tę kartę
+ * bez czytania czegokolwiek po drodze.
  *
  * Trzy zasady rządzą tym plikiem. Po pierwsze: każda kontrolka stoi na natywnym
  * elemencie (input[type=radio|checkbox|range], details/summary), bo własna
@@ -11,7 +14,7 @@
  * wyłącznie wtedy, gdy skutku nie widać od razu na ekranie.
  */
 
-import { h, icon, download, announce, haptic, reducedMotion } from '../ui/dom.js';
+import { h, icon, clear, mount, download, announce, haptic, reducedMotion } from '../ui/dom.js';
 import { toast, dialog, sheet } from '../ui/overlays.js';
 import { zoneBar } from '../ui/gauge.js';
 import { CATALOGUE } from '../metrics.js';
@@ -19,12 +22,8 @@ import { SAMPLE_HZ } from '../camera.js';
 import { bus } from '../bus.js';
 import * as store from '../store.js';
 import * as historyStore from '../history.js';
-import { nf, metricValueUnit, plural, ZONE_LABEL } from '../format.js';
-
-/* Ten sam komunikat co w ekranie Historia: ta sama porażka ma brzmieć tak samo
-   i mówić, co z nią zrobić. */
-const EXPORT_FAIL_PL = 'Nie udało się przygotować pliku. W trybie prywatnym i w oknie osadzonym w innej '
-  + 'aplikacji przeglądarka blokuje zapis — otwórz stronę w zwykłej karcie.';
+import { nf, metricValueUnit, plural, zoneLabel } from '../format.js';
+import { t, locale, setLanguage, languageInfo, LANGUAGES } from '../i18n/index.js';
 
 /* ─────────────────────────────  Style własne  ────────────────────────────── */
 
@@ -114,6 +113,19 @@ function zoneDot(zone) {
   return h('span.m5-tools__dot', { dataset: { zone }, aria: { hidden: 'true' } });
 }
 
+/* Skala tekstu jest ułamkiem, a nie liczbą ze znakiem procentu doklejonym
+   z boku: część języków stawia ten znak przed liczbą, a arabski i perski mają
+   go we własnym kroju. Formatowanie zostawiamy Intl, awaryjnie sklejamy sami. */
+function percentLabel(scale) {
+  try {
+    return new Intl.NumberFormat(locale(), {
+      style: 'percent', maximumFractionDigits: 0
+    }).format(scale);
+  } catch (err) {
+    return Math.round(scale * 100) + '%';
+  }
+}
+
 function isDarkNow() {
   const attr = document.documentElement.getAttribute('data-theme');
   if (attr === 'dark') return true;
@@ -200,39 +212,41 @@ function zoneRanges(metric, warn, crit) {
   const c = metricValueUnit(metric.id, crit);
   if (metric.invert) {
     return [
-      { zone: 'good', text: 'powyżej ' + w },
-      { zone: 'warn', text: c + ' – ' + w },
-      { zone: 'crit', text: c + ' i mniej' }
+      { zone: 'good', text: t('tools.zoneRange.goodAbove', { warn: w }) },
+      { zone: 'warn', text: t('tools.zoneRange.warnInvert', { crit: c, warn: w }) },
+      { zone: 'crit', text: t('tools.zoneRange.critBelow', { crit: c }) }
     ];
   }
   return [
-    { zone: 'good', text: 'poniżej ' + w },
-    { zone: 'warn', text: w + ' – ' + c },
-    { zone: 'crit', text: c + ' i więcej' }
+    { zone: 'good', text: t('tools.zoneRange.goodBelow', { warn: w }) },
+    { zone: 'warn', text: t('tools.zoneRange.warn', { warn: w, crit: c }) },
+    { zone: 'crit', text: t('tools.zoneRange.critAbove', { crit: c }) }
   ];
 }
 
 /* ────────────────────────────  Klocki interfejsu  ───────────────────────── */
 
-function card({ titlePL, subtitlePL, flush = false }, ...body) {
+/* Pomocnicy dostają GOTOWY napis, nie klucz: t() woła ten, kto wie, jakie
+   wstawki podstawić. Jeden zwyczaj w całym pliku, żeby nie było dwóch. */
+function card({ title, subtitle, flush = false }, ...body) {
   const headingId = nextId('card');
   return h('section.m5-card', { aria: { labelledby: headingId } },
     h('header.m5-card__head', null,
-      h('h2.m5-card__title', { id: headingId, text: titlePL }),
-      subtitlePL ? h('p.m5-card__subtitle', { text: subtitlePL }) : null),
+      h('h2.m5-card__title', { id: headingId, text: title }),
+      subtitle ? h('p.m5-card__subtitle', { text: subtitle }) : null),
     h('div.m5-card__body', { class: flush ? 'm5-card__body--flush' : null }, ...body));
 }
 
-function row({ titlePL, descPL, controlId, control, stack = false, value = null }) {
+function row({ title: titleText, desc, controlId, control, stack = false, value = null }) {
   // Tytuł jest <label for>, gdy kontrolka ma id — powiększa cel dotyku
   // przełącznika z 24 px do całej szerokości wiersza.
   const title = controlId
-    ? h('label.m5-row__title', { for: controlId, text: titlePL })
-    : h('span.m5-row__title', { text: titlePL });
+    ? h('label.m5-row__title', { for: controlId, text: titleText })
+    : h('span.m5-row__title', { text: titleText });
   return h('div.m5-row', { class: stack ? 'm5-row--stack' : null },
     h('div.m5-row__main', null,
       title,
-      descPL ? h('span.m5-row__desc', { text: descPL }) : null),
+      desc ? h('span.m5-row__desc', { text: desc }) : null),
     value,
     h('div.m5-row__control', null, control));
 }
@@ -243,10 +257,10 @@ function row({ titlePL, descPL, controlId, control, stack = false, value = null 
  * `input` jest schowany klasą sronly (nadal jest skupialny), widoczny jest jego
  * `label` — więc cały segment pozostaje celem dotyku.
  */
-function segRadios({ ariaLabelPL, options, value, onPick }) {
+function segRadios({ ariaLabel, options, value, onPick }) {
   const entries = new Map();
   const name = nextId('seg');
-  const el = h('div.m5-seg.m5-seg--block', { aria: { role: 'radiogroup', label: ariaLabelPL } });
+  const el = h('div.m5-seg.m5-seg--block', { aria: { role: 'radiogroup', label: ariaLabel } });
 
   options.forEach((opt) => {
     const key = String(opt.id);
@@ -257,7 +271,7 @@ function segRadios({ ariaLabelPL, options, value, onPick }) {
     });
     const label = h('label.m5-seg__item', { dataset: { state: active ? 'active' : 'idle' } },
       input,
-      h('span', { text: opt.labelPL }));
+      h('span', { text: opt.label }));
     entries.set(key, { input, label });
     el.appendChild(label);
   });
@@ -278,7 +292,8 @@ function segRadios({ ariaLabelPL, options, value, onPick }) {
 function accentRadios({ value, onPick }) {
   const entries = new Map();
   const name = nextId('accent');
-  const el = h('div.m5-swatches', { aria: { role: 'radiogroup', label: 'Kolor akcentu' } });
+  const el = h('div.m5-swatches',
+    { aria: { role: 'radiogroup', label: t('tools.appearance.accent.aria') } });
 
   store.ACCENTS.forEach((accent) => {
     const active = accent.id === value;
@@ -289,7 +304,7 @@ function accentRadios({ value, onPick }) {
     const label = h('label.m5-swatch', {
       dataset: { state: active ? 'active' : 'idle' },
       style: { '--swatch': isDarkNow() ? accent.swatchDark : accent.swatchLight }
-    }, input, h('span.m5-sronly', { text: accent.namePL }));
+    }, input, h('span.m5-sronly', { text: t(accent.nameKey) }));
     entries.set(accent.id, { input, label, accent });
     el.appendChild(label);
   });
@@ -310,6 +325,76 @@ function accentRadios({ value, onPick }) {
   return { el, sync };
 }
 
+/**
+ * Wybór języka. To ta sama natywna grupa radiowa co przy motywie — strzałki
+ * przechodzą po opcjach, czytnik mówi „5 z 31” — tylko ułożona w siatkę:
+ * trzydziestu pozycji nie da się podzielić po równo w jednym pasku segmentów,
+ * bo każda byłaby węższa od własnej nazwy.
+ *
+ * Nazwy są endonimami, więc każda niesie własny `lang` (czytnik ekranu ma je
+ * przeczytać właściwym głosem, a nie przeliterować po angielsku) i własny `dir`
+ * (arabski, urdu i perski układają się w swoją stronę także wtedy, gdy reszta
+ * interfejsu jest pisana od lewej).
+ */
+function languageRadios({ value, onPick }) {
+  const entries = new Map();
+  const name = nextId('lang');
+  const el = h('div.m5-seg.m5-seg--grid',
+    { aria: { role: 'radiogroup', label: t('tools.language.aria') } });
+
+  /* „Auto” jest tu tym samym, czym w karcie Wygląd: stanem, w którym decyduje
+     urządzenie. Bez tej pozycji świeżo otwarta aplikacja nie miałaby zaznaczonej
+     ŻADNEJ opcji — zapamiętany wybór jest wtedy pusty — a raz wybranego języka
+     nie dałoby się już oddać z powrotem systemowi. */
+  const options = [{ code: 'system', label: t('tools.language.system'), lang: null, dir: null }];
+
+  /* Kolejność alfabetyczna nazwy własnej, a nie kolejność zasięgu z i18n:
+     na liście trzydziestu pozycji szuka się wzrokiem jednego słowa, a nie
+     czyta jej od góry. Zestawia Intl dla języka bieżącego; gdyby go zabrakło,
+     zostaje kolejność źródłowa — też stała, tylko mniej wygodna. */
+  const languages = LANGUAGES.slice();
+  try {
+    const collator = new Intl.Collator(locale());
+    languages.sort((a, b) => collator.compare(a.name, b.name));
+  } catch (err) { /* brak Intl.Collator — zostaje kolejność z listy języków */ }
+
+  languages.forEach((entry) => options.push({
+    code: entry.code, label: entry.name, lang: entry.code, dir: entry.dir
+  }));
+
+  options.forEach((opt) => {
+    const active = opt.code === String(value);
+    const input = h('input.m5-sronly', {
+      type: 'radio', name, value: opt.code, checked: active,
+      on: { change: () => { if (input.checked) onPick(opt.code); } }
+    });
+    const label = h('label.m5-seg__item', { dataset: { state: active ? 'active' : 'idle' } },
+      input,
+      h('span', { text: opt.label, lang: opt.lang, dir: opt.dir }));
+    entries.set(opt.code, { input, label });
+    el.appendChild(label);
+  });
+
+  function sync(next) {
+    const key = String(next);
+    entries.forEach((entry, code) => {
+      const on = code === key;
+      entry.input.checked = on;
+      entry.label.dataset.state = on ? 'active' : 'idle';
+    });
+  }
+
+  /* Skupialna w grupie radiowej jest wyłącznie pozycja zaznaczona — po
+     przebudowie ekranu wracamy fokusem dokładnie na nią. */
+  function focusActive() {
+    entries.forEach((entry) => {
+      if (entry.input.checked) entry.input.focus({ preventScroll: true });
+    });
+  }
+
+  return { el, sync, focusActive };
+}
+
 function switchControl({ checked, onToggle, disabled = false }) {
   const id = nextId('sw');
   const input = h('input.m5-switch', {
@@ -324,11 +409,11 @@ function switchControl({ checked, onToggle, disabled = false }) {
  * sformatowaną po polsku z jednostką — samo `aria-valuenow` czytnik przeczyta
  * jako gołą liczbę z kropką dziesiętną, a to brzmi jak zupełnie inna wartość.
  */
-function slider({ ariaLabelPL, min, max, step, value, zone = null, format, onInput }) {
+function slider({ ariaLabel, min, max, step, value, zone = null, format, onInput }) {
   const readout = h('span.m5-row__value.m5-tools__readout.m5-num', { text: format(value) });
   const input = h('input.m5-slider', {
     type: 'range', min, max, step, value,
-    aria: { label: ariaLabelPL, valuetext: format(value) },
+    aria: { label: ariaLabel, valuetext: format(value) },
     dataset: zone ? { zone } : {},
     on: { input: () => onInput(Number(input.value)) }
   });
@@ -351,15 +436,48 @@ function slider({ ariaLabelPL, min, max, step, value, zone = null, format, onInp
   return { input, readout, sync };
 }
 
+/* ──────────────────────────────  Karta: Język  ──────────────────────────── */
+
+function languageCard(settings) {
+  const radios = languageRadios({
+    // Pusty zapis w ustawieniach znaczy „wg urządzenia”; w kontrolce odpowiada
+    // mu pozycja „Auto”, więc zaznaczone jest zawsze dokładnie jedno pole.
+    value: settings.language || 'system',
+    onPick: (code) => {
+      /* setLanguage() robi obie rzeczy naraz: przestawia interfejs (bez
+         przeładowania strony) i zapisuje wybór w ustawieniach. Kończy
+         zdarzeniem 'i18n:changed', na które ten ekran przebudowuje się w
+         całości — dlatego tutaj nie odświeżamy niczego ręcznie. */
+      setLanguage(code === 'system' ? null : code).then((active) => {
+        // Cały ekran właśnie zniknął i wrócił w innym języku. Bez tego zdania
+        // czytnik ekranu nie ma skąd wiedzieć, że cokolwiek się stało.
+        const info = languageInfo(active);
+        announce(t('tools.language.announce', { language: info ? info.name : active }));
+      });
+    }
+  });
+
+  const el = card({
+    title: t('tools.language.title'),
+    subtitle: t('tools.language.subtitle')
+  }, radios.el);
+
+  function sync(next) {
+    radios.sync(next.language || 'system');
+  }
+
+  return { el, sync, focusActive: radios.focusActive };
+}
+
 /* ─────────────────────────────  Karta: Wygląd  ──────────────────────────── */
 
 function appearanceCard(settings) {
   const theme = segRadios({
-    ariaLabelPL: 'Motyw',
+    ariaLabel: t('tools.appearance.theme.aria'),
     options: [
-      { id: 'system', labelPL: 'Auto' },
-      { id: 'light', labelPL: 'Jasny' },
-      { id: 'dark', labelPL: 'Ciemny' }
+      { id: 'system', label: t('tools.theme.system') },
+      { id: 'light', label: t('tools.theme.light') },
+      { id: 'dark', label: t('tools.theme.dark') }
     ],
     value: settings.theme,
     onPick: (id) => store.set({ theme: id })
@@ -371,17 +489,17 @@ function appearanceCard(settings) {
   });
 
   const scale = segRadios({
-    ariaLabelPL: 'Wielkość tekstu',
-    options: store.TEXT_SCALES.map((s) => ({ id: s, labelPL: Math.round(s * 100) + '%' })),
+    ariaLabel: t('tools.appearance.textScale.aria'),
+    options: store.TEXT_SCALES.map((s) => ({ id: s, label: percentLabel(s) })),
     value: settings.textScale,
     onPick: (id) => store.set({ textScale: Number(id) })
   });
 
   const density = segRadios({
-    ariaLabelPL: 'Gęstość układu',
+    ariaLabel: t('tools.appearance.density.aria'),
     options: [
-      { id: 'comfortable', labelPL: 'Zwykła' },
-      { id: 'compact', labelPL: 'Zwarta' }
+      { id: 'comfortable', label: t('tools.density.comfortable') },
+      { id: 'compact', label: t('tools.density.compact') }
     ],
     value: settings.density,
     onPick: (id) => store.set({ density: id })
@@ -392,27 +510,26 @@ function appearanceCard(settings) {
     onToggle: (on) => store.set({ motion: on ? 'reduced' : 'system' })
   });
 
-  const el = card({ titlePL: 'Wygląd', flush: true },
+  const el = card({ title: t('tools.appearance.title'), flush: true },
     row({
-      titlePL: 'Motyw', descPL: '„Auto” idzie za ustawieniem systemu.',
+      title: t('tools.appearance.theme.title'), desc: t('tools.appearance.theme.desc'),
       stack: true, control: theme.el
     }),
     row({
-      titlePL: 'Kolor akcentu', descPL: 'Barwa przycisków, zaznaczeń i suwaków.',
+      title: t('tools.appearance.accent.title'), desc: t('tools.appearance.accent.desc'),
       stack: true, control: accent.el
     }),
     row({
-      titlePL: 'Wielkość tekstu', descPL: 'Powiększa cały interfejs, nie tylko opisy.',
+      title: t('tools.appearance.textScale.title'), desc: t('tools.appearance.textScale.desc'),
       stack: true, control: scale.el
     }),
     row({
-      titlePL: 'Gęstość', descPL: 'Zwarta mieści więcej treści na jednym ekranie.',
+      title: t('tools.appearance.density.title'), desc: t('tools.appearance.density.desc'),
       stack: true, control: density.el
     }),
     row({
-      titlePL: 'Mniej ruchu',
-      descPL: 'Wyłącza animacje i płynne dobieganie wskazówki. Niezależnie od tego '
-        + 'respektujemy ustawienie systemowe.',
+      title: t('tools.appearance.motion.title'),
+      desc: t('tools.appearance.motion.desc'),
       controlId: motion.id,
       control: motion.input
     }));
@@ -441,11 +558,11 @@ function thresholdGroup(metric) {
 
   const resetBtn = h('button.m5-btn.m5-btn--quiet.m5-btn--sm', {
     type: 'button',
-    aria: { label: 'Przywróć domyślne progi: ' + metric.namePL },
+    aria: { label: t('tools.thresholds.reset.aria', { metric: t('metric.' + metric.id + '.name') }) },
     // Nadpisanie kasujemy, podstawiając null: store.js odrzuca wpis, który nie
     // przechodzi walidacji, więc klucz znika i wracają progi z katalogu.
     on: { click: () => store.set({ thresholds: { [metric.id]: null } }) }
-  }, 'Domyślne');
+  }, t('tools.thresholds.reset'));
 
   let warnSlider = null;
   let critSlider = null;
@@ -455,7 +572,7 @@ function thresholdGroup(metric) {
     zoneRanges(metric, warn, crit).forEach((entry) => {
       legend.appendChild(h('span.m5-tools__legenditem', null,
         zoneDot(entry.zone),
-        h('span', { text: ZONE_LABEL[entry.zone] + ':' }),
+        h('span', { text: t('tools.legend.zone', { zone: zoneLabel(entry.zone) }) }),
         h('span.m5-tools__legendrange', { text: entry.text })));
     });
     // zoneBar sam sięga po progi ze store.js przy każdym update — wystarczy go
@@ -488,22 +605,24 @@ function thresholdGroup(metric) {
     const now = Date.now();
     if (Math.abs(pair[other] - otherBefore) > 1e-9 && now - lastPushAnnounce > 450) {
       lastPushAnnounce = now;
-      announce((other === 'crit' ? 'Próg alarmu' : 'Próg ostrzeżenia')
-        + ' przesunięty na ' + metricValueUnit(metric.id, pair[other]) + '.');
+      announce(t('tools.thresholds.moved', {
+        threshold: t(other === 'crit' ? 'tools.thresholds.crit' : 'tools.thresholds.warn'),
+        value: metricValueUnit(metric.id, pair[other])
+      }));
     }
   }
 
   // Widoczna etykieta wiersza otwiera dostępną nazwę suwaka, więc sterowanie
   // głosem („kliknij Próg ostrzeżenia”) trafia w tę samą kontrolkę, którą widać.
   warnSlider = slider({
-    ariaLabelPL: 'Próg ostrzeżenia — ' + metric.namePL,
+    ariaLabel: t('tools.thresholds.warn.aria', { metric: t('metric.' + metric.id + '.name') }),
     min: metric.min, max: metric.max, step, value: start.warn, zone: 'warn',
     format: (v) => metricValueUnit(metric.id, v),
     onInput: (v) => commit('warn', v)
   });
 
   critSlider = slider({
-    ariaLabelPL: 'Próg alarmu — ' + metric.namePL,
+    ariaLabel: t('tools.thresholds.crit.aria', { metric: t('metric.' + metric.id + '.name') }),
     min: metric.min, max: metric.max, step, value: start.crit, zone: 'crit',
     format: (v) => metricValueUnit(metric.id, v),
     onInput: (v) => commit('crit', v)
@@ -512,12 +631,12 @@ function thresholdGroup(metric) {
   const el = h('div.m5-tools__group', null,
     h('div.m5-tools__grouphead', null,
       icon(metric.icon, { size: 20 }),
-      h('span.m5-tools__groupname', { text: metric.namePL }),
+      h('span.m5-tools__groupname', { text: t('metric.' + metric.id + '.name') }),
       resetBtn),
     bar.el,
     legend,
-    row({ titlePL: 'Próg ostrzeżenia', stack: true, control: warnSlider.input, value: warnSlider.readout }),
-    row({ titlePL: 'Próg alarmu', stack: true, control: critSlider.input, value: critSlider.readout }));
+    row({ title: t('tools.thresholds.warn'), stack: true, control: warnSlider.input, value: warnSlider.readout }),
+    row({ title: t('tools.thresholds.crit'), stack: true, control: critSlider.input, value: critSlider.readout }));
 
   function sync(settings) {
     const current = settings.thresholds[metric.id] || { warn: metric.warn, crit: metric.crit };
@@ -539,25 +658,23 @@ function thresholdsCard(settings) {
     on: {
       click: async () => {
         const ok = await dialog({
-          title: 'Przywrócić domyślne progi?',
-          text: 'Wszystkie siedem wielkości wróci do progów zaproponowanych w aplikacji. '
-            + 'Historia pomiarów zostaje nietknięta.',
-          confirmPL: 'Przywróć',
-          cancelPL: 'Zostaw'
+          title: t('tools.thresholds.resetAll.title'),
+          text: t('tools.thresholds.resetAll.text'),
+          confirmPL: t('tools.thresholds.resetAll.confirm'),
+          cancelPL: t('tools.thresholds.resetAll.cancel')
         });
         if (!ok) return;
         const wipe = {};
         CATALOGUE.forEach((m) => { wipe[m.id] = null; });
         store.set({ thresholds: wipe });
-        toast('Progi wróciły do domyślnych', { tone: 'success' });
+        toast(t('tools.thresholds.resetAll.toast'), { tone: 'success' });
       }
     }
-  }, 'Przywróć wszystkie progi');
+  }, t('tools.thresholds.resetAll'));
 
   const el = card({
-    titlePL: 'Progi',
-    subtitlePL: 'Od jakiej wartości aplikacja ma mówić „umiarkowanie”, a od jakiej „szkodliwie”. '
-      + 'Progi domyślne są naszą propozycją, nie normą — ustaw je pod siebie.'
+    title: t('tools.thresholds.title'),
+    subtitle: t('tools.thresholds.subtitle')
   }, ...groups.map((g) => g.el));
 
   el.appendChild(h('div.m5-card__foot', null, resetAll));
@@ -573,23 +690,22 @@ function thresholdsCard(settings) {
 
 /* ───────────────────────────  Karta: Kalibracja  ────────────────────────── */
 
-const CHANNELS = [
-  { id: 'r', namePL: 'Kanał czerwony' },
-  { id: 'g', namePL: 'Kanał zielony' },
-  { id: 'b', namePL: 'Kanał niebieski' }
-];
+/* Same identyfikatory kanałów — nazwa jest treścią i mieszka w słowniku. */
+const CHANNELS = ['r', 'g', 'b'];
+
+const channelName = (id) => t('tools.calibration.channel.' + id);
 
 function calibrationCard(settings) {
-  const gainText = (v) => nf(v, 2) + ' ×';
+  const gainText = (v) => t('tools.calibration.gain', { value: nf(v, 2) });
 
   const sliders = CHANNELS.map((channel) => ({
     channel,
     control: slider({
-      ariaLabelPL: channel.namePL + ' — mnożnik kalibracji',
+      ariaLabel: t('tools.calibration.channel.aria', { channel: channelName(channel) }),
       min: 0.5, max: 1.5, step: 0.01,
-      value: settings.calibration[channel.id],
+      value: settings.calibration[channel],
       format: gainText,
-      onInput: (v) => store.set({ calibration: { [channel.id]: Number(v.toFixed(2)) } })
+      onInput: (v) => store.set({ calibration: { [channel]: Number(v.toFixed(2)) } })
     })
   }));
 
@@ -599,38 +715,28 @@ function calibrationCard(settings) {
       click: () => {
         store.set({ calibration: { r: 1, g: 1, b: 1 } });
         // Skutku nie widać na tym ekranie poza samymi suwakami, więc mówimy o nim wprost.
-        toast('Kalibracja wyzerowana', { tone: 'success' });
+        toast(t('tools.calibration.reset.toast'), { tone: 'success' });
       }
     }
-  }, 'Wyzeruj kalibrację');
+  }, t('tools.calibration.reset'));
 
   const el = card({
-    titlePL: 'Kalibracja',
-    subtitlePL: 'Dla tych, którzy mają z czym porównać.'
+    title: t('tools.calibration.title'),
+    subtitle: t('tools.calibration.subtitle')
   },
-  h('p.m5-tools__note', {
-    text: 'Dwa telefony skierowane na tę samą lampę pokażą trochę inne liczby — każdy czujnik ma '
-      + 'własne zabarwienie. Jeśli masz pod ręką pomiar, któremu ufasz, możesz tu delikatnie '
-      + 'podbić albo przyciszyć poszczególne kanały obrazu. Mnożniki działają zanim policzymy '
-      + 'cokolwiek, więc zmieniają wszystkie siedem wielkości naraz.'
-  }),
-  h('p.m5-tools__note', {
-    text: 'Nie masz z czym porównać? Zostaw 1,00 — to ustawienie fabryczne i niczego nie psuje.'
-  }),
+  h('p.m5-tools__note', { text: t('tools.calibration.intro') }),
+  h('p.m5-tools__note', { text: t('tools.calibration.neutral') }),
   ...sliders.map(({ channel, control }) => row({
-    titlePL: channel.namePL, stack: true, control: control.input, value: control.readout
+    title: channelName(channel), stack: true, control: control.input, value: control.readout
   })),
-  h('p.m5-tools__note.m5-tools__note--quiet', {
-    text: 'Zmiana działa od teraz. Pomiary zapisane wcześniej w historii zostają takie, jakie były '
-      + 'w chwili zapisu — nie przeliczamy ich wstecz, bo to podmieniałoby dane po fakcie.'
-  }));
+  h('p.m5-tools__note.m5-tools__note--quiet', { text: t('tools.calibration.forward') }));
 
   el.appendChild(h('div.m5-card__foot', null, resetBtn));
 
   function sync(next) {
     let neutral = true;
     sliders.forEach(({ channel, control }) => {
-      const value = next.calibration[channel.id];
+      const value = next.calibration[channel];
       control.sync(value);
       if (Math.abs(value - 1) > 0.0005) neutral = false;
     });
@@ -663,20 +769,20 @@ function measurementCard(settings) {
     }
   });
 
-  const el = card({ titlePL: 'Pomiar', flush: true },
+  const el = card({ title: t('tools.measurement.title'), flush: true },
     row({
-      titlePL: 'Nie wygaszaj ekranu',
-      descPL: wakeSupported
-        ? 'Podczas pomiaru ekran zostaje włączony. Bateria schodzi wtedy szybciej.'
-        : 'Ta przeglądarka nie pozwala zatrzymać wygaszania ekranu.',
+      title: t('tools.measurement.wake.title'),
+      desc: t(wakeSupported
+        ? 'tools.measurement.wake.desc'
+        : 'tools.measurement.wake.unsupported'),
       controlId: wake.id,
       control: wake.input
     }),
     row({
-      titlePL: 'Wibracja',
-      descPL: vibrateSupported
-        ? 'Krótkie potwierdzenie przy starcie, zatrzymaniu i zmianie wielkości.'
-        : 'To urządzenie nie zgłasza silniczka wibracji.',
+      title: t('tools.measurement.haptics.title'),
+      desc: t(vibrateSupported
+        ? 'tools.measurement.haptics.desc'
+        : 'tools.measurement.haptics.unsupported'),
       controlId: haptics.id,
       control: haptics.input
     }));
@@ -694,11 +800,10 @@ function measurementCard(settings) {
 function thresholdSentence(metric, limits) {
   // Przy `invert` wyższa wartość jest lepsza, więc ostrzegamy PONIŻEJ progu —
   // zdanie musi to powiedzieć, inaczej czyta się jak literówka.
-  return metric.invert
-    ? 'Ostrzegamy poniżej ' + metricValueUnit(metric.id, limits.warn)
-      + ', alarmujemy poniżej ' + metricValueUnit(metric.id, limits.crit) + '.'
-    : 'Ostrzegamy od ' + metricValueUnit(metric.id, limits.warn)
-      + ', alarmujemy od ' + metricValueUnit(metric.id, limits.crit) + '.';
+  return t(metric.invert ? 'tools.about.thresholdInvert' : 'tools.about.threshold', {
+    warn: metricValueUnit(metric.id, limits.warn),
+    crit: metricValueUnit(metric.id, limits.crit)
+  });
 }
 
 function metricDetails(metric) {
@@ -710,14 +815,16 @@ function metricDetails(metric) {
   const el = h('details.m5-tools__help', null,
     h('summary.m5-tools__summary', null,
       icon(metric.icon, { size: 20 }),
-      h('span.m5-tools__summarytext', { text: metric.namePL }),
+      h('span.m5-tools__summarytext', { text: t('metric.' + metric.id + '.name') }),
       icon('chevronDown', { size: 18, class: 'm5-tools__chevron' })),
     h('div.m5-tools__helpbody', null,
-      h('p.m5-tools__note', { text: metric.shortPL }),
-      h('p.m5-tools__note', { text: metric.helpPL }),
+      h('p.m5-tools__note', { text: t('metric.' + metric.id + '.short') }),
+      h('p.m5-tools__note', { text: t('metric.' + metric.id + '.help') }),
       h('p.m5-tools__note.m5-tools__note--quiet', {
-        text: 'Skala: od ' + metricValueUnit(metric.id, metric.min)
-          + ' do ' + metricValueUnit(metric.id, metric.max) + '.'
+        text: t('tools.about.scale', {
+          min: metricValueUnit(metric.id, metric.min),
+          max: metricValueUnit(metric.id, metric.max)
+        })
       }),
       thresholdEl));
 
@@ -730,56 +837,37 @@ function metricDetails(metric) {
 }
 
 /* Uczciwa lista tego, czego ta metoda nie potrafi. Stoi na widoku, nie pod
-   rozwinięciem — ograniczenia, których trzeba szukać, nie są ostrzeżeniem. */
-const LIMITS = [
-  {
-    titlePL: 'Kamera nie widzi barw tak jak przyrząd pomiarowy',
-    textPL: 'Aparat w telefonie ma trzy kanały: czerwony, zielony i niebieski. Przyrząd do pomiaru '
-      + 'światła rozkłada je na dziesiątki wąskich pasm. To, co tu widzisz, jest wyliczone z tych '
-      + 'trzech liczb — rozsądnym sposobem, ale to nadal przeliczenie, a nie zmierzone widmo.'
-  },
-  {
-    titlePL: 'Aparat sam sobie reguluje jasność',
-    textPL: 'Kiedy skierujesz telefon na okno, kamera przyciemnia obraz, żeby go nie prześwietlić. '
-      + '„Jasność sceny” wtedy spada, choć w pokoju nic się nie zmieniło. Dlatego porównuj tę '
-      + 'wartość w obrębie jednego ujęcia, a nie między pomieszczeniami.'
-  },
-  {
-    titlePL: 'Szybkiego migotania wolna kamera nie złapie',
-    textPL: 'Sprawdzamy obraz ' + nf(SAMPLE_HZ) + ' razy na sekundę. Pulsowanie szybsze niż '
-      + nf(SAMPLE_HZ / 2) + ' razy na sekundę potrafi się w takim pomiarze pokazać jako wolniejsze, '
-      + 'niż jest naprawdę, albo zniknąć zupełnie — a migotanie z sieci elektrycznej jest właśnie '
-      + 'takie. Jeśli aplikacja coś wyłapie, traktuj to jako sygnał „tu coś pulsuje”, a nie jako '
-      + 'zmierzoną częstotliwość.'
-  },
-  {
-    titlePL: 'To nie jest badanie ani porada lekarska',
-    textPL: 'Aplikacja pomaga zauważyć, że światło wokół jest chłodne, jasne albo niespokojne, '
-      + 'i podpowiada, co da się z tym zrobić. Nie orzeka o zdrowiu i nie zastępuje rozmowy '
-      + 'z lekarzem ani pomiaru profesjonalnym miernikiem.'
-  }
-];
+   rozwinięciem — ograniczenia, których trzeba szukać, nie są ostrzeżeniem.
+   FUNKCJA, nie stała: napisy (a w migotaniu także liczby) muszą powstać przy
+   rysowaniu, bo stała zamarzłaby w języku z chwili wczytania modułu. */
+const LIMIT_IDS = ['spectrum', 'exposure', 'flicker', 'medical'];
+
+function limits() {
+  return LIMIT_IDS.map((id) => ({
+    title: t('tools.about.limit.' + id + '.title'),
+    text: t('tools.about.limit.' + id + '.text', {
+      hz: nf(SAMPLE_HZ),
+      nyquist: nf(SAMPLE_HZ / 2)
+    })
+  }));
+}
 
 function aboutCard(settings) {
   const items = CATALOGUE.map(metricDetails);
 
   const el = card({
-    titlePL: 'O pomiarze',
-    subtitlePL: 'Co dokładnie liczy każda z siedmiu wielkości i gdzie kończy się rzetelność '
-      + 'tej metody.'
+    title: t('tools.about.title'),
+    subtitle: t('tools.about.subtitle')
   },
   ...items.map((i) => i.el),
   h('div.m5-tools__limits', null,
     h('p.m5-tools__limitshead', null,
       icon('alert', { size: 20 }),
-      h('span', { text: 'Czego ten pomiar nie potrafi' })),
-    ...LIMITS.map((limit) => h('div.m5-tools__limit', null,
-      h('span.m5-tools__limittitle', { text: limit.titlePL }),
-      h('p.m5-tools__note', { text: limit.textPL }))),
-    h('p.m5-tools__note.m5-tools__note--quiet', {
-      text: 'Wszystko liczy się na Twoim urządzeniu. Obraz z kamery nigdzie nie jest wysyłany ani '
-        + 'zapisywany — do pamięci trafiają wyłącznie policzone liczby.'
-    })));
+      h('span', { text: t('tools.about.limitsHead') })),
+    ...limits().map((limit) => h('div.m5-tools__limit', null,
+      h('span.m5-tools__limittitle', { text: limit.title }),
+      h('p.m5-tools__note', { text: limit.text }))),
+    h('p.m5-tools__note.m5-tools__note--quiet', { text: t('tools.about.privacy') })));
 
   function sync(next) {
     items.forEach((i) => i.sync(next));
@@ -829,7 +917,7 @@ function confirmWipe() {
     const confirmBtn = h('button.m5-btn.m5-btn--danger', {
       type: 'button', disabled: true, dataset: { tone: 'danger' },
       on: { click: () => { answer = true; api.close(); } }
-    }, 'Usuń wszystko');
+    }, t('tools.data.wipe.confirm'));
 
     const check = h('input.m5-switch', {
       type: 'checkbox', id: checkId,
@@ -837,21 +925,14 @@ function confirmWipe() {
     });
 
     const api = sheet({
-      title: 'Usunąć wszystkie dane aplikacji?',
+      title: t('tools.data.wipe.title'),
       body: [
-        h('p.m5-tools__note', {
-          text: 'Znikną: cała historia pomiarów i lista sesji, Twoje progi i kalibracja '
-            + 'oraz ustawienia wyglądu. Aplikacja wróci do stanu z pierwszego '
-            + 'uruchomienia.'
-        }),
-        h('p.m5-tools__note.m5-tools__note--quiet', {
-          text: 'Nie mamy kopii tych danych — nigdy nie opuściły tego urządzenia, więc nie ma ich '
-            + 'skąd przywrócić.'
-        }),
-        row({ titlePL: 'Rozumiem, że tego nie da się cofnąć', controlId: checkId, control: check })
+        h('p.m5-tools__note', { text: t('tools.data.wipe.text') }),
+        h('p.m5-tools__note.m5-tools__note--quiet', { text: t('tools.data.wipe.note') }),
+        row({ title: t('tools.data.wipe.check'), controlId: checkId, control: check })
       ],
       actions: [
-        { labelPL: 'Anuluj', tone: 'ghost', autofocus: true, onClick: () => { answer = false; } },
+        { labelPL: t('common.cancel'), tone: 'ghost', autofocus: true, onClick: () => { answer = false; } },
         confirmBtn
       ],
       onClose: () => resolve(answer)
@@ -885,21 +966,23 @@ function dataCard() {
         download('monitor-swiatla-' + stamp() + '.json', historyStore.exportJSON(),
           'application/json;charset=utf-8');
       }
-      toast('Plik przygotowany do zapisu', { tone: 'success' });
+      toast(t('history.export.ok'), { tone: 'success' });
     } catch (err) {
-      toast(EXPORT_FAIL_PL, { tone: 'error' });
+      // Ten sam klucz co w ekranie Historia: ta sama porażka ma brzmieć tak samo
+      // i mówić, co z nią zrobić.
+      toast(t('history.export.fail'), { tone: 'error' });
     }
   }
 
   const exportCsvBtn = h('button.m5-btn.m5-btn--ghost', {
     type: 'button',
     on: { click: () => exportFile('csv') }
-  }, icon('download', { size: 20 }), h('span', { text: 'Eksportuj CSV' }));
+  }, icon('download', { size: 20 }), h('span', { text: t('tools.data.export.csv') }));
 
   const exportJsonBtn = h('button.m5-btn.m5-btn--ghost', {
     type: 'button',
     on: { click: () => exportFile('json') }
-  }, icon('download', { size: 20 }), h('span', { text: 'Eksportuj JSON' }));
+  }, icon('download', { size: 20 }), h('span', { text: t('tools.data.export.json') }));
 
   // Operacja nieodwracalna wygląda tak samo jak w Historii: czerwony przycisk
   // i to samo zdanie w dialogu. Inaczej użytkownik uczy się, że czerwień coś
@@ -912,39 +995,41 @@ function dataCard() {
         const count = historyStore.all().length;
         const sessionCount = historyStore.sessions().length;
         const ok = await dialog({
-          title: 'Wyczyścić historię?',
-          text: 'Usuniemy ' + plural(count, 'pomiar', 'pomiary', 'pomiarów')
-            + ' i ' + plural(sessionCount, 'sesję', 'sesje', 'sesji')
-            + '. Tego nie da się cofnąć — jeśli chcesz zachować dane, najpierw je wyeksportuj.',
-          confirmPL: 'Wyczyść',
-          cancelPL: 'Anuluj',
+          title: t('history.clear.title'),
+          text: t('history.clear.text', {
+            points: plural(count, 'unit.measurement.plural'),
+            // Biernik: „Usuniemy … i dwie sesje”. Mianownik trafia niżej,
+            // do podsumowania karty.
+            sessions: plural(sessionCount, 'unit.session.accusative.plural')
+          }),
+          confirmPL: t('history.clear.confirm'),
+          cancelPL: t('common.cancel'),
           tone: 'danger'
         });
         if (!ok) return;
         haptic(18);
         historyStore.clear();
-        toast('Historia wyczyszczona', { tone: 'success' });
+        toast(t('history.clear.toast'), { tone: 'success' });
       }
     }
-  }, icon('trash', { size: 20 }), h('span', { text: 'Wyczyść historię' }));
+  }, icon('trash', { size: 20 }), h('span', { text: t('tools.data.clear') }));
 
   const resetBtn = h('button.m5-btn.m5-btn--ghost', {
     type: 'button',
     on: {
       click: async () => {
         const ok = await dialog({
-          title: 'Przywrócić ustawienia domyślne?',
-          text: 'Wygląd, progi, kalibracja i ustawienia pomiaru wrócą do stanu początkowego. '
-            + 'Historia pomiarów zostaje nietknięta.',
-          confirmPL: 'Przywróć',
-          cancelPL: 'Anuluj'
+          title: t('tools.data.reset.title'),
+          text: t('tools.data.reset.text'),
+          confirmPL: t('tools.data.reset.confirm'),
+          cancelPL: t('common.cancel')
         });
         if (!ok) return;
         store.reset();
-        toast('Przywrócono ustawienia domyślne', { tone: 'success' });
+        toast(t('tools.data.reset.toast'), { tone: 'success' });
       }
     }
-  }, icon('settings', { size: 20 }), h('span', { text: 'Ustawienia domyślne' }));
+  }, icon('settings', { size: 20 }), h('span', { text: t('tools.data.reset') }));
 
   const wipeBtn = h('button.m5-btn.m5-btn--danger', {
     type: 'button', dataset: { tone: 'danger' },
@@ -954,15 +1039,15 @@ function dataCard() {
         if (!ok) return;
         haptic([18, 60, 18]);
         wipeEverything();
-        toast('Usunięto wszystkie dane aplikacji', { tone: 'success' });
-        announce('Usunięto wszystkie dane aplikacji. Ustawienia wróciły do domyślnych.');
+        toast(t('tools.data.wipe.toast'), { tone: 'success' });
+        announce(t('tools.data.wipe.announce'));
       }
     }
-  }, icon('trash', { size: 20 }), h('span', { text: 'Usuń wszystkie dane' }));
+  }, icon('trash', { size: 20 }), h('span', { text: t('tools.data.wipe') }));
 
   const el = card({
-    titlePL: 'Dane',
-    subtitlePL: 'Wszystko leży w pamięci tej przeglądarki i nigdzie stąd nie wychodzi.'
+    title: t('tools.data.title'),
+    subtitle: t('tools.data.subtitle')
   },
   summary,
   h('div.m5-tools__actions', null, exportCsvBtn, exportJsonBtn),
@@ -977,9 +1062,11 @@ function dataCard() {
     const sessionCount = historyStore.sessions().length;
 
     summary.textContent = count === 0
-      ? 'Nie ma jeszcze żadnych zapisanych pomiarów.'
-      : 'W pamięci: ' + plural(count, 'pomiar', 'pomiary', 'pomiarów')
-        + ' i ' + plural(sessionCount, 'sesja', 'sesje', 'sesji') + '.';
+      ? t('tools.data.summary.empty')
+      : t('tools.data.summary', {
+        points: plural(count, 'unit.measurement.plural'),
+        sessions: plural(sessionCount, 'unit.session.plural')   // mianownik
+      });
 
     // Eksport pustego pliku i czyszczenie pustej historii tylko udawałyby akcję.
     exportCsvBtn.disabled = count === 0;
@@ -989,11 +1076,9 @@ function dataCard() {
     const state = historyStore.storage();
     let note = '';
     if (state === 'blocked' || !store.isPersistent()) {
-      note = 'Ta przeglądarka nie pozwala nic zapisać na stałe (tryb prywatny albo zablokowane '
-        + 'dane witryn). Wszystko, co tu ustawisz, zniknie po zamknięciu karty.';
+      note = t('tools.data.storage.blocked');
     } else if (state === 'full') {
-      note = 'Pamięć przeglądarki się zapełniła i nowe pomiary nie są już zapisywane. '
-        + 'Wyczyszczenie historii zwolni miejsce.';
+      note = t('tools.data.storage.full');
     }
     storageNote.textContent = note;
     storageNote.hidden = note === '';
@@ -1008,39 +1093,82 @@ function dataCard() {
 export function create() {
   ensureStyles();
 
-  const settings = store.get();
+  const el = h('div.m5-screen.m5-tools');
 
-  const appearance = appearanceCard(settings);
-  const thresholds = thresholdsCard(settings);
-  const calibration = calibrationCard(settings);
-  const measurement = measurementCard(settings);
-  const about = aboutCard(settings);
-  const data = dataCard();
+  /* Karty powstają w funkcji, a nie raz na zawsze: ten ekran trzyma napisy
+     w gotowych węzłach DOM, więc po przełączeniu języka jedynym sposobem, żeby
+     nie został na nich stary tekst, jest zbudowanie ich od nowa. Korzeń ekranu
+     zostaje ten sam — powłoka trzyma do niego referencję. */
+  let cards = null;
 
-  const el = h('div.m5-screen.m5-tools', null,
-    appearance.el, thresholds.el, calibration.el, measurement.el, about.el, data.el);
+  function build() {
+    const settings = store.get();
+    cards = {
+      language: languageCard(settings),
+      appearance: appearanceCard(settings),
+      thresholds: thresholdsCard(settings),
+      calibration: calibrationCard(settings),
+      measurement: measurementCard(settings),
+      about: aboutCard(settings),
+      data: dataCard()
+    };
+    clear(el);
+    mount(el, cards.language.el, cards.appearance.el, cards.thresholds.el,
+      cards.calibration.el, cards.measurement.el, cards.about.el, cards.data.el);
+  }
+
+  function teardownCards() {
+    // Paski stref w karcie Progi trzymają obserwatora rozmiaru — bez tego
+    // przebudowa po każdej zmianie języka zostawiałaby ich po sobie coraz więcej.
+    if (cards) cards.thresholds.destroy();
+    cards = null;
+  }
+
+  build();
 
   const unsubscribe = [];
   let colourScheme = null;
   let onScheme = null;
 
   function syncSettings(next) {
-    appearance.sync(next);
-    thresholds.sync(next);
-    calibration.sync(next);
-    measurement.sync(next);
-    about.sync(next);
+    cards.language.sync(next);
+    cards.appearance.sync(next);
+    cards.thresholds.sync(next);
+    cards.calibration.sync(next);
+    cards.measurement.sync(next);
+    cards.about.sync(next);
   }
+
+  /* Nasłuch języka stoi POZA mount(): język wolno przełączyć także wtedy, gdy
+     ekran jest odmontowany (przełącznik systemowy, druga zakładka), a wracać
+     mamy na gotowe napisy, nie na poprzednie. */
+  bus.on('i18n:changed', () => {
+    /* Przebudowa wyrzuca z dokumentu element, który miał fokus — a przy zmianie
+       języka jest nim niemal zawsze przycisk radiowy z listy języków: klawiatura
+       przechodzi po niej strzałkami, a każde przejście zmienia język. Bez
+       przywrócenia fokusu po pierwszej strzałce lądowałby na początku dokumentu
+       i dalszy wybór klawiaturą byłby niemożliwy. */
+    const keepFocus = !!cards && cards.language.el.contains(document.activeElement);
+    teardownCards();
+    build();
+    if (keepFocus) cards.language.focusActive();
+  });
 
   return {
     el,
-    titlePL: 'Narzędzia',
+    // Getter, nie stała: powłoka pyta o tytuł przy każdym wejściu na ekran,
+    // a napis ma być w języku, który jest teraz.
+    get titlePL() { return t('tools.title'); },
 
     actions() {
       return [{
         icon: 'info',
-        labelPL: 'O pomiarze',
+        labelPL: t('tools.action.about'),
+        // Kartę bierzemy w chwili kliknięcia, nie w chwili budowania akcji:
+        // po przełączeniu języka karty są już inne, a powłoka nie pyta o akcje
+        // drugi raz.
         onClick: () => {
+          const about = cards.about;
           about.openAll();
           // „Mniej ruchu” zabrania właśnie takiego przewinięcia przez kilka ekranów.
           about.el.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' });
@@ -1055,17 +1183,17 @@ export function create() {
     mount() {
       // Ustawienia i historia mogły się zmienić, gdy ekran był odmontowany.
       syncSettings(store.get());
-      data.sync();
+      cards.data.sync();
 
       unsubscribe.push(bus.on('settings:changed', (payload) => syncSettings(payload.settings)));
-      unsubscribe.push(bus.on('history:changed', () => data.sync()));
-      unsubscribe.push(bus.on('history:session', () => data.sync()));
+      unsubscribe.push(bus.on('history:changed', () => cards.data.sync()));
+      unsubscribe.push(bus.on('history:session', () => cards.data.sync()));
 
       // Przy theme='system' motyw zmienia się bez udziału store.js, a próbki
       // akcentu muszą wtedy pokazać drugi z dwóch odcieni.
       try {
         colourScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        onScheme = () => appearance.sync(store.get());
+        onScheme = () => cards.appearance.sync(store.get());
         if (typeof colourScheme.addEventListener === 'function') {
           colourScheme.addEventListener('change', onScheme);
         } else if (typeof colourScheme.addListener === 'function') {
