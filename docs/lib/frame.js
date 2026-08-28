@@ -1,9 +1,10 @@
 /* Obróbka pojedynczej klatki — bez canvasu, bez DOM, bez kamery.
  *
- * Matematyka przeniesiona z docs/v5/js/camera.js (sampleFrame) i docs/v4/engine.js
- * (takeSample): kadrowanie środkowych 60 % obrazu, uśrednianie kanałów w siatce
- * N x N, luminancja komórek liczona w świetle LINIOWYM, kalibracja nakładana na
- * średnią przed metrykami oraz okno próbek jasności dla migotania.
+ * Matematyka przeniesiona z docs/v5/js/camera.js (sampleFrame) i docs/shared/engine.js
+ * (takeSample; dawniej docs/v4/engine.js): kadrowanie środkowych 60 % obrazu,
+ * uśrednianie kanałów w siatce N x N, luminancja komórek liczona w świetle
+ * LINIOWYM, kalibracja nakładana na średnią przed metrykami oraz okno próbek
+ * jasności dla migotania.
  * Wejściem jest obiekt zgodny z ImageData ({data, width, height}, RGBA po cztery
  * bajty na piksel), więc w Node wystarczy zwykła tablica — te same wzory da się
  * przetestować bez przeglądarki.
@@ -232,7 +233,8 @@ export function sampleGrid(image, options) {
  * ale nie zamienia kamery w spektrometr.
  *
  * Mnożymy PRZED metrykami i zaciskamy do 0..255, bo wzmocnienie wypuszczone poza
- * zakres bajtu produkowałoby pewne siebie bzdury (v4/engine.js, takeSample).
+ * zakres bajtu produkowałoby pewne siebie bzdury (shared/engine.js, takeSample —
+ * dawniej v4/engine.js).
  * Sensowność samych wzmocnień (v4 przyjmowało tylko 0,25–4) jest sprawą warstwy
  * ustawień; tutaj wzmocnienie niebędące dodatnią liczbą znaczy po prostu brak
  * kalibracji, czyli 1.

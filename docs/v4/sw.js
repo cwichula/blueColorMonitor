@@ -12,17 +12,20 @@
  *   - reszta (CSS, JS, ikony, manifest): stale-while-revalidate — z pamięci
  *     natychmiast, a w tle świeża kopia na następne uruchomienie.
  *
- * NAJWAŻNIEJSZE: ten worker obsługuje WYŁĄCZNIE katalog /v4/ oraz wspólny
- * katalog /icons/. Wersje 1, 2 i 3 są publikowane z własnych katalogów, mają
- * własne workery i własne nazwy pamięci podręcznej. Dlatego:
- *   - fetch spoza tych dwóch katalogów przepuszczamy bez dotykania,
+ * NAJWAŻNIEJSZE: ten worker obsługuje WYŁĄCZNIE katalog /v4/ oraz wspólne
+ * katalogi /icons/ i /shared/. Wersje 1, 2 i 3 są publikowane z własnych
+ * katalogów, mają własne workery i własne nazwy pamięci podręcznej. Dlatego:
+ *   - fetch spoza tych trzech katalogów przepuszczamy bez dotykania,
  *   - przy sprzątaniu kasujemy wyłącznie własne pamięci, po wzorcu /^ms4-/.
  * Naruszenie któregokolwiek z tych dwóch punktów psuje trzy działające wersje naraz.
+ * Pliki z /shared/ trzymamy we WŁASNEJ pamięci, tak samo jak v2 i v3 w swoich:
+ * kilka kopii tego samego pliku to cena za to, że każda wersja aktualizuje się
+ * niezależnie i żadna nie może popsuć pozostałych.
  *
  * Numer w nazwie pamięci podbijamy przy KAŻDEJ zmianie któregokolwiek pliku z listy.
  */
 
-var CACHE = 'ms4-7';
+var CACHE = 'ms4-11';
 var CACHE_PREFIX = 'ms4-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v4/, spod
@@ -34,9 +37,10 @@ var APP_SHELL = [
   './base.css',
   './components.css',
   './screens.css',
-  './metrics.js',
-  './bus.js',
-  './engine.js',
+  '../shared/metrics.js',
+  '../shared/bus.js',
+  '../shared/engine.js',
+  '../shared/scale-core.js',
   './scale.js',
   './store.js',
   './ui.js',
@@ -54,6 +58,7 @@ var APP_SHELL = [
 /* Granice, w których ten worker w ogóle się odzywa. */
 var BASE = new URL('./', self.location.href).pathname;        // …/v4/
 var ICONS = new URL('../icons/', self.location.href).pathname; // …/icons/
+var SHARED = new URL('../shared/', self.location.href).pathname; // …/shared/
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
@@ -127,16 +132,32 @@ self.addEventListener('fetch', function (event) {
   event.respondWith(staleWhileRevalidate(event, request));
 });
 
+/* Zasięg rejestracji workera decyduje o tym, które STRONY on kontroluje — a nie
+   o tym, które adresy widzi. Żądania kontrolowanej strony docierają tutaj
+   niezależnie od katalogu, także te spoza /v4/. Ten strażnik jest więc naszą
+   decyzją, a nie ograniczeniem przeglądarki: sami wybieramy, za co bierzemy
+   odpowiedzialność. Katalog wspólny musi w tym wyborze być, bo inaczej pliki
+   z ../shared/ nie trafią do pamięci i wersja przestanie działać offline. */
 function inScope(pathname) {
-  return pathname.indexOf(BASE) === 0 || pathname.indexOf(ICONS) === 0;
+  return pathname.indexOf(BASE) === 0 || pathname.indexOf(ICONS) === 0 ||
+         pathname.indexOf(SHARED) === 0;
 }
 
 /* Nawigacja albo bezpośrednie trafienie w plik powłoki. Jedno i drugie musi
-   odpowiedzieć znacznikami i jedno i drugie woli kopię świeżą. */
+   odpowiedzieć znacznikami i jedno i drugie woli kopię świeżą.
+
+   Czego tu NIE MA i być nie może: obsługi adresu katalogu bez końcowego
+   ukośnika ('…/v4'). Kuszące jest dopisanie go, bo bez sieci nie ma serwera,
+   który zwykle odpowiada na taki adres przekierowaniem — ale to nie działa
+   i sprawdziliśmy to na żywo. Nawigację przeglądarka przypisuje do workera po
+   ZASIĘGU REJESTRACJI ('…/v4/'), zanim jakikolwiek kod stąd się wykona; adres
+   bez ukośnika w ten zasięg nie wpada, więc żądanie nie dociera tutaj nawet po
+   rozluźnieniu inScope. Zasięg wynika z położenia tego pliku, a przenieść go
+   wyżej nie wolno: worker v4 przechwytywałby wtedy pozostałe wersje. */
 function isDocument(request, url) {
   if (request.mode === 'navigate') return true;
   if (/\/index\.html$/.test(url.pathname)) return true;
-  return url.pathname === BASE || url.pathname + '/' === BASE;
+  return url.pathname === BASE;
 }
 
 function documentFirstFromNetwork(event, request) {
@@ -151,8 +172,12 @@ function documentFirstFromNetwork(event, request) {
     return response;
   }).catch(function () {
     // Brak sieci, czyli normalny tryb pracy tej aplikacji.
-    return caches.match(request).then(function (cached) {
-      return cached || caches.match('./index.html');
+    // Tylko własna pamięć: wspólne adresy leżą w kilku pamięciach naraz (każda
+    // wersja zapisuje je u siebie), a globalne caches.match iteruje pamięci
+    // w kolejności powstania i oddaje pierwsze trafienie — czyli kopię cudzej,
+    // starszej wersji.
+    return caches.match(request, { cacheName: CACHE }).then(function (cached) {
+      return cached || caches.match('./index.html', { cacheName: CACHE });
     }).then(function (cached) {
       if (cached) return cached;
       return new Response(
@@ -167,7 +192,10 @@ function documentFirstFromNetwork(event, request) {
 /* Z pamięci natychmiast, świeża kopia w tle. Gdy w pamięci nic nie ma,
    czekamy na sieć — to jedyny przypadek, w którym ten worker cokolwiek opóźnia. */
 function staleWhileRevalidate(event, request) {
-  return caches.match(request).then(function (cached) {
+  // Zawężone do własnej pamięci z tego samego powodu co wyżej: globalne
+  // caches.match przeszukuje pamięci wszystkich wersji, a pierwsze trafienie
+  // pod wspólnym adresem bywa starszą kopią.
+  return caches.match(request, { cacheName: CACHE }).then(function (cached) {
     var network = fetch(request).then(function (response) {
       if (response && response.ok && response.type === 'basic') {
         var copy = response.clone();

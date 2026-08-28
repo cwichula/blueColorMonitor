@@ -15,9 +15,11 @@ integratorowi, a nie improwizuje.
 > kodu, który by je realizował. Darowizna niczego nie odblokowuje, bo nie ma
 > czego odblokowywać.
 
-Katalog: `docs/v2/`. Katalog `docs/` (wersja 1) jest **nietykalny** — wolno go
-tylko czytać. Jedyny wyjątek: `docs/v2/*` odwołuje się do ikon w
-`../icons/*.png` (odczyt przez manifest, bez modyfikacji pliku).
+Katalog: `docs/v2/` oraz — wspólnie z v3 i v4 — `docs/shared/`. Katalogi
+pozostałych wersji są **nietykalne**: wolno je tylko czytać. Poza własny katalog
+v2 sięga w dwóch miejscach: po ikony w `../icons/*.png` (odczyt przez manifest,
+bez modyfikacji pliku) i po trzy pliki kodu wspólnego w `../shared/` — te wolno
+zmieniać, ale zmiana dotyczy równocześnie v3 i v4.
 
 ---
 
@@ -42,7 +44,7 @@ tylko czytać. Jedyny wyjątek: `docs/v2/*` odwołuje się do ikon w
    bez grafiki i bez ramki). Zakazane: odliczanie, sztuczna pilność, okna po
    N uruchomieniach, prośby w trakcie pomiaru albo na ekranie wyniku,
    sugerowanie, że bez wsparcia coś przestanie działać.
-5. **Zero zależności.** Czysty JS/CSS/HTML, styl zgodny z `metrics.js`
+5. **Zero zależności.** Czysty JS/CSS/HTML, styl zgodny z `../shared/metrics.js`
    (IIFE, `var`, bez modułów ES). Zero `fetch`/XHR/WebSocket poza `sw.js`
    cache'ującym własne pliki. Zero czcionek z sieci — systemowy stos.
 6. **Język.** Interfejs w 100 % po polsku z diakrytykami. Komentarze w kodzie
@@ -65,24 +67,38 @@ Każdy plik ma **jednego** właściciela. Nikt nie edytuje cudzego pliku.
 | Zakres | Pliki (właściciel) |
 |---|---|
 | Powłoka: HTML, style, nawigacja, dostępność, PWA, wizualizacja | `index.html`, `styles.css`, `ui-core.js`, `manifest.webmanifest`, `sw.js` |
-| Pomiar: kamera, próbkowanie, historia, progi | `engine.js` |
+| Pomiar: kamera, próbkowanie, historia, progi | `../shared/engine.js` (plik wspólny z v3 i v4) |
 | Warstwa wsparcia: ekran Wsparcie, `SUPPORT_URL` | `support.js` |
 | Narzędzia: siedem ekranów narzędziowych | `tools.js` |
 | Start: przegląd modułów, rejestracja workera | `boot.js` |
-| Pomiar matematyczny | `metrics.js` |
+| Pomiar matematyczny | `../shared/metrics.js` (plik wspólny z v3 i v4) |
+| Magistrala zdarzeń | `../shared/bus.js` (plik wspólny z v3 i v4) |
 
-`window.Bus`, `window.UI` i `window.Viz` publikuje `ui-core.js` — dawne
-`bus.js`, `ui.js` i `viz.js` zostały scalone w jeden plik powłoki, bo trzy
-osobne pliki dzieliły jeden stan widoczności. Kontrakty tych trzech obiektów
-(rozdziały 3, 4 i 5) obowiązują bez zmian.
+`window.UI` i `window.Viz` publikuje `ui-core.js` — dawne `ui.js` i `viz.js`
+zostały scalone w jeden plik powłoki, bo dzieliły jeden stan widoczności.
+`window.Bus` daje `../shared/bus.js`, wczytywany **przed** `ui-core.js`; ten
+sam plik ładują v3 i v4. `ui-core.js` trzyma dalej własną, zapasową magistralę
+o tym samym kontrakcie i zakłada ją tylko wtedy, gdy `window.Bus` nie istnieje —
+jest to siatka bezpieczeństwa na wypadek niewczytania pliku, a nie druga szyna.
+Kontrakty `window.UI` i `window.Viz` (rozdziały 3 i 5) obowiązują bez zmian.
+Kontrakt `window.Bus` — **nie**: rozdział 4 jest przepisany pod
+`../shared/bus.js`. Nie ma w nim `Bus.off` ani `Bus.names`, `Bus.on` zwraca
+funkcję wypisującą zamiast callbacka, a dwie zmiany zachowania względem dawnej
+szyny są tam wypisane osobno.
+
+Trzy pliki z `../shared/` są wspólne dla v2, v3 i v4 (opis w
+`docs/shared/README.md`). Zmiana w którymkolwiek z nich dotyka trzech wersji
+naraz, więc trzeba wtedy podbić `CACHE` w `docs/v2/sw.js`, `docs/v3/sw.js`
+i `docs/v4/sw.js`.
 
 Kolejność ładowania skryptów w `index.html` (na końcu `<body>`, bez `defer`,
 synchronicznie — kolejność jest częścią kontraktu):
 
 ```
-metrics.js
+../shared/bus.js
+../shared/metrics.js
 ui-core.js
-engine.js
+../shared/engine.js
 support.js
 tools.js
 boot.js
@@ -122,7 +138,7 @@ osiągalna w 1 dotknięciu przyciskiem „i” w nagłówku.
 | `panelId` | Tytuł PL | Ścieżka dojścia (2 dotknięcia) | Właściciel |
 |---|---|---|---|
 | `panelDocs` | Dokumentacja | nagłówek → „i” (1 dotknięcie); Więcej → „Dokumentacja” | `ui-core.js` |
-| `panelThresholds` | Progi i profile | Więcej → „Progi i profile”; Narzędzia → „Profile progów” | `engine.js` (progi) + `tools.js` (profile) |
+| `panelThresholds` | Progi i profile | Więcej → „Progi i profile”; Narzędzia → „Profile progów” | `../shared/engine.js` (progi) + `tools.js` (profile) |
 | `panelReports` | Raporty | Historia → „Raporty” | `tools.js` |
 | `panelExport` | Eksport danych | Historia → „Eksport CSV” | `tools.js` |
 | `panelCompare` | Porównywarka A/B | Narzędzia → „Porównywarka A/B” | `tools.js` |
@@ -181,21 +197,47 @@ Zasady zachowania:
 
 ---
 
-## 4. Magistrala zdarzeń — `window.Bus` (`ui-core.js`)
+## 4. Magistrala zdarzeń — `window.Bus` (`../shared/bus.js`)
 
-Jedyny mechanizm komunikacji między modułami. Nikt nie tworzy własnych
-`on`/`off`. Nikt nie woła cudzych metod w reakcji na coś — słucha zdarzenia.
+Jedyny mechanizm komunikacji między modułami. Nikt nie tworzy własnej szyny.
+Nikt nie woła cudzych metod w reakcji na coś — słucha zdarzenia.
 
 ```js
-Bus.on(name, cb)      // -> cb; rejestruje słuchacza
-Bus.once(name, cb)    // -> cb
-Bus.off(name, cb)     // -> void
+Bus.on(name, cb)      // -> function(); rejestruje słuchacza, zwraca funkcję wypisującą
+Bus.once(name, cb)    // -> function(); jw., odpina się po pierwszym wywołaniu
 Bus.emit(name, data)  // -> void; wyjątek w jednym słuchaczu nie przerywa reszty
-Bus.names()           // -> string[]; wyłącznie do diagnostyki
 ```
 
 `emit` łapie wyjątek każdego słuchacza osobno (`try/catch`) i idzie dalej —
 zepsuty moduł poboczny nie może zabić pętli pomiarowej.
+
+**`Bus.off(name, cb)` i `Bus.names()` nie należą do kontraktu.**
+`../shared/bus.js` świadomie ich nie ma i mówi to wprost w swoim nagłówku:
+słuchacza wypisuje się funkcją zwróconą przez `on`/`once`, a nie po
+identyczności callbacka — ta druga droga myli się, gdy ta sama funkcja została
+zarejestrowana dwa razy. Obie metody istnieją **wyłącznie** w zapasowej
+magistrali wewnątrz `ui-core.js` i mają tam jednego konsumenta: jej własne
+`Bus.once`. Poza tym w całym kodzie v2–v4 nie ma ani jednego ich wywołania i
+nowy kod nie ma prawa się na nie oprzeć, bo na prawdziwej szynie ich nie będzie.
+
+### Dwie zmiany zachowania po przejściu na wspólną szynę
+
+Nazwy zdarzeń i ładunki (rejestr niżej) są te same, ale dwie rzeczy działają
+inaczej niż w dawnej magistrali z `ui-core.js`:
+
+* **`app:ready` jest lepkie.** `../shared/bus.js` zapamiętuje to jedno zdarzenie
+  (tablica `STICKY`), więc słuchacz zapisany przez `Bus.once('app:ready', cb)`
+  **już po** jego wyemitowaniu i tak zostanie wywołany — asynchronicznie, przez
+  `setTimeout(…, 0)`. W zapasowej magistrali taki spóźniony słuchacz nie odpalał
+  się nigdy. Znika przez to cicha zależność od kolejności `<script>`. Lepkie jest
+  tylko `app:ready`; `engine:sample` celowo nie, bo podawałby spóźnionym
+  słuchaczom odczyt sprzed nieokreślonej chwili.
+* **Wyjątek słuchacza trafia do konsoli.** Wspólna szyna nadal izoluje każdego
+  słuchacza osobno, ale w bloku `catch` woła
+  `console.error('Bus: handler for "<nazwa>" threw', err)`. Zapasowa magistrala
+  połykała wyjątek bez śladu (`catch (e) { /* isolated on purpose */ }`).
+  Zachowanie aplikacji się nie zmienia — zmienia się to, że zepsuty słuchacz
+  przestaje być niewidoczny.
 
 ### Pełny rejestr zdarzeń
 
@@ -229,7 +271,7 @@ Wszystkie obiekty globalne. Wszystkie metody synchroniczne, chyba że opisano
 w polu wyniku. To wymóg: zgubiony `catch` w module pobocznym nie może zawiesić
 przycisku Start.
 
-### 5.1 `window.Engine` (`engine.js`)
+### 5.1 `window.Engine` (`../shared/engine.js`)
 
 Stałe: `SAMPLE_MS = 200` (5 Hz), płótno próbkujące 64×64, `CROP_FRACTION = 0.6`,
 siatka 3×3 komórek dla równomierności.
@@ -582,10 +624,10 @@ i wyczerpany limit nie mogą wywrócić aplikacji.
 | Klucz | Właściciel | Zawartość |
 |---|---|---|
 | `ms2.settings.v1` | `ui-core.js` | motyw, skala tekstu, kontrast, dźwięk, wibracja, `firstRunDone` |
-| `ms2.thresholds.v1` | `engine.js` | progi `{<metricId>:{warn,crit}}` |
-| `ms2.history.v1` | `engine.js` | historia długa, forma tablicowa, ≤ 15 000 rekordów |
-| `ms2.session.v1` | `engine.js` | podsumowanie ostatniej sesji |
-| `ms2.calibration.v1` | `engine.js` | `{gainR,gainG,gainB,at}` |
+| `ms2.thresholds.v1` | `../shared/engine.js` | progi `{<metricId>:{warn,crit}}` |
+| `ms2.history.v1` | `../shared/engine.js` | historia długa, forma tablicowa, ≤ 15 000 rekordów |
+| `ms2.session.v1` | `../shared/engine.js` | podsumowanie ostatniej sesji |
+| `ms2.calibration.v1` | `../shared/engine.js` | `{gainR,gainG,gainB,at}` |
 | `ms2.profiles.v1` | `tools.js` | profile progów użytkownika |
 | `ms2.schedule.v1` | `tools.js` | reguły harmonogramu |
 | `ms2.alerts.v1` | `tools.js` | konfiguracja alertów |
@@ -640,13 +682,16 @@ mimochodem. Kasowanie pomiarów jest osobną, wyraźnie opisaną akcją
 
 ## 9. Kroki integracji (dla agenta integrującego, po kolei)
 
-1. Sprawdź, że `docs/` poza `docs/v2/` nie ma żadnych zmian (`git status`).
-   Jakakolwiek modyfikacja poza `v2/` to błąd blokujący.
-2. Zbierz pliki: `index.html`, `styles.css`, `metrics.js`, `ui-core.js`,
-   `engine.js`, `support.js`, `tools.js`, `boot.js`, `manifest.webmanifest`,
-   `sw.js`.
+1. Sprawdź, że `docs/` poza `docs/v2/` i `docs/shared/` nie ma żadnych zmian
+   (`git status`). Modyfikacja innej wersji to błąd blokujący; modyfikacja
+   `docs/shared/` jest dopuszczalna, ale dotyka też v3 i v4 — wymaga podbicia
+   `CACHE` w service workerach wszystkich trzech.
+2. Zbierz pliki: `index.html`, `styles.css`, `ui-core.js`, `support.js`,
+   `tools.js`, `boot.js`, `manifest.webmanifest`, `sw.js` oraz — z katalogu
+   wspólnego — `../shared/bus.js`, `../shared/metrics.js`,
+   `../shared/engine.js`.
 3. Zweryfikuj kolejność skryptów w `index.html` zgodnie z rozdz. 1.
-4. Zestaw listę wszystkich `getElementById` z `engine.js`, `support.js`
+4. Zestaw listę wszystkich `getElementById` z `../shared/engine.js`, `support.js`
    i `tools.js` i porównaj z rozdziałem 6. Każde odwołanie do identyfikatora
    spoza listy albo nieobecnego w `index.html` — błąd blokujący.
 5. Zestaw listę wszystkich `Bus.emit` i `Bus.on` i porównaj z rozdziałem 4.

@@ -1,3 +1,28 @@
+/* docs/shared/engine.js — kod wspólny wersji v2–v4.
+ *
+ * SKĄD: kod przeniesiony BEZ ZMIAN z docs/v3/engine.js. docs/v4/engine.js był
+ * bajtowo identyczny, a docs/v2/engine.js różnił się wyłącznie trzema blokami
+ * komentarza — ani jedną linią kodu. Te trzy bloki wzięto tutaj w redakcji v2,
+ * bo tylko w niej nie ma reliktów podziału aplikacji na funkcje darmowe
+ * i odpłatne: skasował je commit przestawiający v2 na dobrowolne wpłaty, a do
+ * v3 i v4 ta redakcja nigdy nie dotarła. Z tego samego powodu w metrics.js
+ * wybrano redakcję v4.
+ *
+ * KTO ŁADUJE: v2, v3 i v4 — plik jest wpięty w index.html i wymieniony
+ * w APP_SHELL każdej z tych trzech wersji.
+ *
+ * CO WYSTAWIA: globalne `window.Engine` — cykl życia kamery, próbkowanie
+ * 5 Hz, bufory pomiarów, progi i kalibrację. Wymaga, żeby wcześniej były już
+ * załadowane `window.Metrics` (matematyka) i `window.Bus` (zdarzenia) —
+ * dotyczy to także v2, która ładuje wspólny bus.js przed tym plikiem; zapasowa
+ * magistrala z v2/ui-core.js zakłada się tylko wtedy, gdy `window.Bus` nie
+ * istnieje.
+ *
+ * CZEGO TU NIE WOLNO: sięgać do DOM, do układu ekranu konkretnej wersji ani
+ * do żadnego ekranu z osobna; liczyć czegokolwiek na pikselach — to robota
+ * metrics.js; dopisywać napisów widocznych dla użytkownika ponad te, które
+ * już tu są. Zmiana w tym pliku dotyka trzech wersji naraz.
+ */
 /* Monitor Światła v2 — silnik pomiaru (P2).
  *
  * Camera lifecycle, 5 Hz sampling, all seven metrics, the live buffer, the
@@ -5,15 +30,15 @@
  *
  * Two rules govern this file and neither has an exception:
  *
- *  1. Measurement is sacred. This module never asks whether anything is paid
- *     for. There is no reference to Store, Account or Ads anywhere below, and
- *     there must never be one. Delete every other file in docs/v2/ except
- *     metrics.js and this engine still starts a camera and produces readings.
+ *  1. Measurement is sacred. This module knows nothing about the interface and
+ *     checks no permissions, because there are none: nothing in this
+ *     application is conditional on anything. Delete every other file in
+ *     docs/v2/ except metrics.js and this engine still starts a camera and
+ *     produces readings.
  *
- *  2. All seven metrics are computed on every sample, for everybody. Gating is
- *     a presentation concern owned by the interface layer. That is what makes a
- *     purchase reveal real history instead of an empty table: the numbers were
- *     already there, they were only not drawn.
+ *  2. All seven metrics are computed on every sample, for everybody, and all
+ *     seven are handed to whoever asks. This file makes no distinction between
+ *     one reading and another, and no caller can ask it for a subset.
  *
  * Honesty, repeated here because it belongs next to the code that samples
  * pixels: a phone camera has three broad channels and an auto-adjusting white
@@ -59,7 +84,9 @@
   var LIVE_WINDOW_MS = 60000;     // live buffer: what the 1-minute chart reads
   var LIVE_MARGIN_MS = 5000;      // keep a little past the window so trimming is lazy
 
-  // Long buffer. Collected and read back by everybody; there is no tier.
+  // Long buffer. This is what the Historia screen, the chart and the reports
+  // read back, so it is collected continuously and for everybody: 30 days at
+  // one point per 5 s, trimmed by age and by count.
   var LONG_STEP_MS = 5000;        // 1 point / 5 s
   var LONG_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
   var HISTORY_MAX = 15000;        // ~21 h of continuous measurement, or 30 days of use

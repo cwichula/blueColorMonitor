@@ -1,7 +1,12 @@
 /* Indeks komfortu wzrokowego — jedna ocena 0–100 składana z pozostałych wielkości.
  *
- * Źródło wzoru: docs/v5/js/metrics.js; docs/v4/metrics.js miało te same wagi,
- * ale trzy błędy, które v5 świadomie naprawiło (opisane niżej przy każdym).
+ * Źródło wzoru: docs/v5/js/metrics.js; docs/shared/metrics.js (dawniej
+ * docs/v4/metrics.js) ma te same wagi, ale trzy błędy, które v5 świadomie
+ * naprawiło (opisane niżej przy każdym).
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
  * Wagi i progi są JAWNĄ OCENĄ REDAKCYJNĄ tego projektu, a nie normą — żadna
  * instytucja nie ogłosiła, że chłodna barwa jest warta 25 punktów. To nie jest
  * pomiar fotometryczny ani wynik medyczny; to skrót, który ma zwrócić uwagę na

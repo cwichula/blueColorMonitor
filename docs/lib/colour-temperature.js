@@ -1,7 +1,12 @@
 /* Temperatura barwowa (CCT) — przybliżenie McCamy'ego z oceną wiarygodności.
  *
  * Źródło wzoru: docs/v5/js/metrics.js (redakcja najnowsza), wcześniej
- * docs/v4/metrics.js — ten sam wielomian, ale bez warunku na Duv.
+ * docs/shared/metrics.js (dawniej docs/v4/metrics.js) — ten sam wielomian,
+ * ale bez warunku na Duv.
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
  * Ograniczenie należy do samej wielkości: „temperatura barwowa” ma sens tylko
  * dla światła leżącego blisko krzywej Plancka. Dla barwy nasyconej (kolorowy
  * ekran, dioda RGB) wielomian nadal zwraca liczbę — i ta liczba nic nie znaczy.

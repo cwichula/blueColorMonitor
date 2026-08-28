@@ -24,10 +24,14 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((names) => Promise.all(
         // Wzorzec trafia WYŁĄCZNIE w nazwy pozostałe po workerze z korzenia
-        // ('blue-monitor-v27'). Wszystkie cztery żywe wersje mają w nazwie
-        // przedrostek z myślnikiem — 'blue-monitor-v1-N', 'blue-monitor-v2-N',
-        // 'blue-monitor-v3-N', 'ms4-N' — a końcowe \d+ nie przechodzi przez
-        // myślnik, więc żadnej z nich ten wzorzec nie obejmuje.
+        // ('blue-monitor-v27') i jest wąski CELOWO: kasujemy tu cudzą pamięć,
+        // więc pomyłka kosztowałaby żywą wersję jej trybu offline. Żywych wersji
+        // jest PIĘĆ i żadna się w ten wzorzec nie łapie, ale z dwóch różnych
+        // powodów — przy dopisywaniu kolejnej trzeba sprawdzić oba osobno:
+        //   - 'blue-monitor-v1-N', 'blue-monitor-v2-N' i 'blue-monitor-v3-N' mają
+        //     po numerze wersji myślnik, a końcowe \d+ przez myślnik nie przejdzie;
+        //   - 'ms4-N' oraz 'ms5-N' (v5 używa przedrostka 'ms5-') nie zaczynają się
+        //     nawet od 'blue-monitor-v', więc odpadają już na początku wzorca.
         names.filter((name) => /^blue-monitor-v\d+$/.test(name))
              .map((name) => caches.delete(name))
       ))

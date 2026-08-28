@@ -1,7 +1,11 @@
 /* Udział niebieskiego — pierwotna i najstarsza wielkość tej aplikacji.
  *
  * Źródło wzoru: docs/v1/app.js (definicja pierwotna), powtórzona bez zmian
- * w docs/v4/metrics.js i docs/v5/js/metrics.js.
+ * w docs/shared/metrics.js (dawniej docs/v4/metrics.js) i w docs/v5/js/metrics.js.
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
  * Wielkość izoluje barwę od jasności: to ona rusza się, gdy włączysz tryb
  * nocny, a jasność zostaje. Ograniczenie: to proporcja trzech szerokich
  * kanałów kamery z nieznanym balansem bieli, a nie pomiar widma ani

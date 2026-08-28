@@ -40,3 +40,9 @@ build/
 ### Local dev tools inside the published docs/ site — never deploy these ###
 docs/__*.js
 docs/__*.html
+
+### Profile przeglądarki i zrzuty z sesji debugowania PWA — nigdy do repozytorium ###
+# Katalogi --user-data-dir Chrome'a potrafią mieć ponad 100 MB i powstają przy
+# każdym sprawdzaniu service workera. Nie są kodem i nie mają tu czego szukać.
+_sw*/
+_shot*.html

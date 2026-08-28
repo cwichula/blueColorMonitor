@@ -214,11 +214,12 @@
 
 <!-- Kolejność wiążąca (9.2). Bez defer: shell.js musi mieć powłokę i musi
      skończyć przed engine.js, a boot.js jest zawsze ostatni. -->
-<script src="bus.js"></script>
-<script src="metrics.js"></script>
+<script src="../shared/bus.js"></script>
+<script src="../shared/metrics.js"></script>
+<script src="../shared/scale-core.js"></script>
 <script src="scale.js"></script>
 <script src="shell.js"></script>
-<script src="engine.js"></script>
+<script src="../shared/engine.js"></script>
 <script src="dash.js"></script>
 <script src="recorder.js"></script>
 <script src="modules.js"></script>

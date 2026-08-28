@@ -1,0 +1,27 @@
+# Jeden standard zakończeń linii dla całego repozytorium: LF.
+#
+# DLACZEGO LF, a nie CRLF. To nie jest wybór smaku, tylko zapisanie stanu, który
+# już obowiązuje: wszystkie pliki tekstowe leżą w repozytorium z LF (normalizuje
+# je ustawienie core.autocrlf=true na tej maszynie), a i na dysku LF ma większość
+# plików. Wpisanie tu LF nie zmienia więc ani jednego bajtu w historii i wymaga
+# przestawienia najmniejszej liczby plików roboczych. Odwrotny wybór — CRLF —
+# przepisałby całą zawartość repozytorium.
+#
+# DLACZEGO W PLIKU, A NIE W USTAWIENIU GITA. core.autocrlf jest ustawieniem
+# maszyny: obowiązuje jednego człowieka na jednym komputerze i nie jedzie razem
+# z repozytorium. Ten plik jedzie — więc każdy, kto sklonuje projekt (i każdy
+# automat: GitHub Pages, PWABuilder, edytor), dostanie tę samą konwencję bez
+# konfigurowania czegokolwiek. Reguła stąd ma pierwszeństwo przed core.autocrlf,
+# więc nikomu nie trzeba niczego zmieniać w ustawieniach.
+#
+# CO TO ZNACZY W PRAKTYCE. `text=auto` każe gitowi wykryć, czy plik jest tekstem;
+# `eol=lf` mówi, że tekst ma trafiać na dysk z LF — również na Windowsie. Pliki
+# rozpoznane jako binarne nie są ruszane w ogóle, a trzy najczęstsze rodzaje
+# wymieniamy niżej wprost, żeby wykrywanie nie miało nic do roboty.
+
+* text=auto eol=lf
+
+# Binaria — żadnej konwersji, żadnych prób scalania po liniach.
+*.png binary
+*.ico binary
+*.jar binary

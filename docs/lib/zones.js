@@ -4,6 +4,10 @@
  * nierówności. zonesFor i DEFAULT_THRESHOLDS są NOWE: v5 miało prywatną pętlę
  * po progach w camera.js, więc nie ma tu czego kopiować — jest za to reguła,
  * którą trzeba było wypowiedzieć wprost.
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
  * Reguła brzmi: wartość dokładnie na progu należy do strefy GORSZEJ. Próg ma
  * ostrzegać, a nie uspokajać, więc 26 % udziału niebieskiego to już 'warn'.
  * Progi są oceną redakcyjną projektu (te same liczby co w katalogu), nie normą.

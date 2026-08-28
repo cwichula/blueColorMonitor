@@ -9,10 +9,11 @@ temat, moduły ES, nazwane eksporty, zero zależności zewnętrznych. Żadna fun
 dotyka DOM, canvasu, `window` ani `localStorage`, więc wszystko uruchamia się tak samo
 w przeglądarce i w Node.
 
-Wzory pochodzą z aplikacji: `docs/v5/js/metrics.js` i `docs/v5/js/camera.js` (redakcja
-najnowsza), `docs/v4/metrics.js` i `docs/v4/engine.js` (poprzednia) oraz `docs/v1/app.js`
-(pierwotna definicja udziału niebieskiego). Tam, gdzie wersje się różnią, przeniesiona
-jest wersja z v5, a różnica opisana w komentarzu przy wzorze.
+Wzory pochodzą z aplikacji: `docs/v5/js/camera.js` (redakcja najnowsza),
+`docs/shared/metrics.js` i `docs/shared/engine.js` (redakcja klasyczna, dziś wspólna dla
+v2–v4, wcześniej trzymana osobno w każdej z nich) oraz `docs/v1/app.js` (pierwotna
+definicja udziału niebieskiego). Tam, gdzie wersje się różnią, przeniesiona jest wersja
+z v5, a różnica opisana w komentarzu przy wzorze.
 
 ## Czym to nie jest
 
@@ -47,6 +48,7 @@ podczas gdy naprawdę znaczyłoby, że kadr jest czarny.
 | `frame.js` | Obróbka klatki bez canvasu: kadrowanie środka, uśrednianie w siatce N×N, kalibracja wzmocnieniami kanałów i bufor okna próbek dla migotania. |
 | `package.json` | Sam znacznik `{"type":"module", "private":true}` — żeby Node traktował te pliki `.js` jak moduły ES i żeby nikt nie opublikował katalogu jako paczki. |
 | `*.test.js` | Testy leżące obok sprawdzanego pliku; sprawdzają fizykę i wartości odniesienia, nie zapis implementacji. |
+| `shared-parity.test.js` | Jedyny test bez własnego pliku źródłowego: porównuje tę bibliotekę z klasyczną redakcją `docs/shared/metrics.js`. Skrypt klasyczny nie ma żadnego `export`, więc test wczytuje go z dysku i wykonuje przez `node:vm` w osobnym kontekście, a `window.Metrics` odczytuje z podstawionego globala. |
 
 ## Wszystkie wielkości są dostępne bez warunków
 
@@ -151,11 +153,37 @@ Napisane prostym językiem, bo to nie jest przypis — to jest instrukcja obsłu
 
 ## Stosunek do wersji aplikacji
 
-Wersje interfejsu `v1` … `v5` mają **własne kopie tych wzorów** i nie importują niczego
-z tej biblioteki. To jest zamierzone, a nie dług do spłacenia: każda wersja ma pozostać
-katalogiem, który da się skopiować osobno i który działa offline, z własnym service
-workerem o zasięgu swojego katalogu. Biblioteka stoi obok nich, nie pod spodem.
+**Z tej biblioteki korzysta `docs/v5`** — to nie jest kod odłożony na bok. Wchodzi do
+aplikacji przez `docs/v5/js/metrics.js`, który po refaktorze jest wyłącznie cienką
+warstwą adaptacyjną: re-eksportuje funkcje wprost, a w trzech miejscach (`blueShare`,
+`melanopicRatio`, `flicker`) zamienia `null` na `0`, bo v5 od pierwszego dnia pokazuje
+tam zero i zmiana tej liczby na ekranie oraz w zapisanej historii byłaby osobną decyzją
+produktową, a nie skutkiem ubocznym przenosin. Adaptery są w kodzie opisane po to, żeby
+ten dług był widoczny. Ponieważ moduły biblioteki wchodzą do grafu importów v5, muszą
+też stać na liście `APP_SHELL` w `docs/v5/sw.js` — inaczej po utracie sieci aplikacja
+pokaże biały ekran. Zmiana pliku tutaj wymaga podniesienia `CACHE` w tamtym workerze.
 
-Praktyczny wniosek: poprawka wzoru tutaj **nie zmienia** zachowania żadnej wersji aplikacji,
-a poprawka w `docs/v5/js/metrics.js` nie zmienia zachowania biblioteki. Jeśli wzór ma się
-zmienić w obu miejscach, trzeba to zrobić w obu miejscach świadomie.
+Wersje `v2`, `v3` i `v4` biblioteki **nie** importują — ładują klasyczne skrypty
+w synchronicznej kolejności tagów `<script>` i cała ich warstwa startu jest na tym
+zbudowana. Ich wspólna matematyka mieszka w `docs/shared/metrics.js` (`window.Metrics`),
+opisanym w `docs/shared/README.md`. Wersja `v1` ma własną, najstarszą redakcję wewnątrz
+`docs/v1/app.js`.
+
+Doktryny obu redakcji różnią się świadomie i to jest jedyna prawdziwa różnica między
+nimi. Tutaj **wartość niezmierzona to `null`**: czarny kadr nie ma udziału niebieskiego,
+zerowe okno nie ma migotania, barwa daleka od krzywej Plancka nie ma kelwinów.
+W `docs/shared/metrics.js` brak pomiaru bywa `0` albo wartością zastępczą: czerń daje
+0 % udziału (i zieloną strefę), zerowe okno daje `percent: 0`, kelwiny są zawsze liczbą
+zaciśniętą do 1500–12500 z osobną flagą `reliable`, a `comfortIndex` bez ani jednego
+wejścia melduje `measured: true`. Nazwy stref też się różnią: `warn`/`crit` tutaj,
+`warning`/`critical` tam — przy identycznym podziale wartości.
+
+**Wszędzie tam, gdzie obie redakcje coś liczą, wyniki są równe co do bitu** — i tego
+pilnuje `shared-parity.test.js`, a nie pamięć człowieka. Test wypisuje każdą różnicę
+doktryn jako osobny przypadek z prefiksem „RÓŻNICA POKOLEŃ”, więc zapali się na czerwono
+zarówno wtedy, gdy rozjedzie się wzór, jak i wtedy, gdy któraś z opisanych różnic
+zniknie — bo to też jest zmiana zachowania aplikacji, a nie kosmetyka.
+
+Praktyczny wniosek: poprawka wzoru tutaj zmienia zachowanie **v5**, ale nie dotyka v2–v4.
+Jeśli wzór ma się zmienić wszędzie, trzeba go poprawić także w `docs/shared/metrics.js`
+i podnieść `CACHE` w service workerach wszystkich wersji, których to dotyczy.

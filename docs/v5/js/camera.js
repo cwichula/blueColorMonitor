@@ -2,8 +2,9 @@
  *
  * Uruchamia getUserMedia, rysuje kadr na małym canvasie 64×64, uśrednia go
  * w siatce 3×3 i zamienia piksele w `reading` z siedmioma wielkościami.
- * Fizyka jest przeniesiona z docs/v4/engine.js: środkowe 60 % kadru, okno
- * migotania, uśrednianie luminancji w świetle liniowym, twardy guard na
+ * Fizyka jest przeniesiona z docs/shared/engine.js (dawniej docs/v4/engine.js,
+ * przeniesionego przy wyprowadzaniu kodu wspólnego v2–v4): środkowe 60 % kadru,
+ * okno migotania, uśrednianie luminancji w świetle liniowym, twardy guard na
  * getUserMedia rozwiązujące się już po stop(). Nowe jest API — i to, że ten
  * moduł nie dotyka historii: emituje 'camera:reading', a zapis należy do
  * screens/measure.js, żeby historia nie rosła przy odmontowanym ekranie.

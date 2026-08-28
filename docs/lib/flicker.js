@@ -1,7 +1,12 @@
 /* Migotanie — procent modulacji wg definicji IES i zgrubna częstotliwość.
  *
  * Źródło wzoru: docs/v5/js/metrics.js (wcześniejsza, identyczna co do stałej
- * redakcja: docs/v4/metrics.js). Migotanie jest jedyną wielkością w tej
+ * redakcja: docs/shared/metrics.js, dawniej docs/v4/metrics.js).
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
+ * Migotanie jest jedyną wielkością w tej
  * bibliotece, którą kamera wykrywa naprawdę dobrze — ale tylko poniżej połowy
  * częstotliwości próbkowania. Powyżej niej wynik jest aliasem, nie odczytem,
  * i to jest ograniczenie metody, nie szczegół implementacji. To nie jest

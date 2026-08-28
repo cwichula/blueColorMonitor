@@ -12,17 +12,21 @@ Komentarze w kodzie i nazwy zmiennych po angielsku. Cały interfejs po polsku, z
 
 ## 0. Co jest nienaruszalne
 
-v3 dziedziczy po v2 **dokładnie dwa pliki i ani linijki więcej**:
+v3 dzieli z v2 **dokładnie dwa pliki matematyki i obsługi kamery, ani linijki więcej**:
 
-* `metrics.js` — cała matematyka. **NIE ZMIENIAMY.**
-* `engine.js` — kamera, próbkowanie 5 Hz, bufor, historia, progi, kalibracja. **NIE ZMIENIAMY.**
+* `../shared/metrics.js` — cała matematyka. **NIE ZMIENIAMY.**
+* `../shared/engine.js` — kamera, próbkowanie 5 Hz, bufor, historia, progi, kalibracja. **NIE ZMIENIAMY.**
 
-Oba kopiujemy do `docs/v3/` **bajt w bajt** (nie linkujemy do `../v2/`, bo service worker v3 ma mieć
-własny, zamknięty zestaw plików). Jakakolwiek różnica względem `docs/v2/` to błąd budowy.
+Nie są to już kopie: to **jeden plik na trzy wersje**, leżący w `docs/shared/`
+i wczytywany przez v2, v3 i v4 (opis w `docs/shared/README.md`). Service worker
+v3 ma nadal zamknięty zestaw plików — po prostu jego `APP_SHELL` wymienia te
+dwa adresy z `../shared/`, tak samo jak ikony z `../icons/`. „NIE ZMIENIAMY”
+jest przez to twardsze niż wcześniej: jedna zmiana psuje albo naprawia trzy
+wersje naraz.
 
 Kontrakt, który v3 musi spełnić co do joty — sprawdzony w kodzie silnika:
 
-| Rzecz | Wartość | Gdzie w engine.js |
+| Rzecz | Wartość | Gdzie w `../shared/engine.js` |
 |---|---|---|
 | Wymagane węzły DOM | `#cameraVideo` (`<video>`), `#cameraPlaceholder`, `#cameraPlaceholderText` | `grabDom()` |
 | Zdarzenia na `window.Bus` | `engine:sample {reading}`, `engine:state {state}`, `engine:started {startedAt,facingMode}`, `engine:stopped {session}`, `engine:error {code,messagePL}`, `engine:thresholds {thresholds,source}`, `engine:history {reason}`, `engine:calibration {calibration}` | `emit()` |
@@ -47,7 +51,7 @@ ma je przeczytać, zanim napisze pierwszą linijkę:
    niż mierzy silnik. Rozwiązanie w 5.7: proporcję kontenera ustawiamy z `videoWidth/videoHeight`,
    wtedy celownik to dokładnie `inset: 20%`.
 
-### 0.1 Katalog metryk (z `metrics.js` — nie przepisujemy go nigdzie w kodzie)
+### 0.1 Katalog metryk (z `../shared/metrics.js` — nie przepisujemy go nigdzie w kodzie)
 
 | # | id | namePL | unit | min | max | warn | crit | invert | decimals |
 |---|---|---|---|---|---|---|---|---|---|
@@ -1481,10 +1485,11 @@ wyłącznie wtedy, gdy użytkownik sam otworzy ten moduł ze spisu.
 | `docs/v3/tokens.css` | P1 | **wyłącznie** `:root` i motywy z rozdziału 2. Ani jednego selektora elementu |
 | `docs/v3/base.css` | P1 | reset, `body`, siatka powłoki, fokus, `prefers-reduced-motion`, klasa `.ms3-sr`, mnożnik `--ms3-scale` |
 | `docs/v3/components.css` | P1 | wszystkie klasy `ms3-*` z rozdziału 5 |
-| `docs/v3/bus.js` | P1 | `window.Bus` (`on`/`once`/`off`/`emit`). Musi istnieć **przed** `engine.js` |
-| `docs/v3/metrics.js` | — | **kopia z v2, bajt w bajt** |
-| `docs/v3/engine.js` | — | **kopia z v2, bajt w bajt** |
-| `docs/v3/scale.js` | P2 | `window.Scale`: `pos`, `bands`, `zone`, `severity`, `verdict`, `formatFor`. Czysta matematyka i teksty, zero DOM |
+| `docs/shared/bus.js` | P1 | `window.Bus` (`on`/`once`/`emit` — świadomie bez `off` i `names`; wypisuje się funkcją zwróconą przez `on`/`once`). Musi istnieć **przed** `engine.js`. **Plik wspólny z v4** |
+| `docs/shared/metrics.js` | — | **plik wspólny z v2 i v4** — jedna kopia dla trzech wersji, nie trzy identyczne |
+| `docs/shared/engine.js` | — | **plik wspólny z v2 i v4** — j.w. |
+| `docs/shared/scale-core.js` | P2 | `window.Scale`: `pos`, `bands`, `zone`, `severity`, `verdict`, `formatFor`. Czysta matematyka, zero DOM; teksty czyta z `Scale.TEXT` dopiero w chwili wywołania. **Plik wspólny z v4** |
+| `docs/v3/scale.js` | P2 | dokłada do tego samego `window.Scale` słownik `Scale.TEXT` — napisy tej wersji, z natury nie do współdzielenia |
 | `docs/v3/shell.js` | P2 | `window.UI3`: powłoka, ekrany, arkusze, żywy pasek, fokus, region live, ustawienia, motyw |
 | `docs/v3/dash.js` | P3 | Pulpit: studnia, listwa kanałów, pulpit sterowania, monitor kamery, Errata. Jedyny plik, który słucha `engine:sample` |
 | `docs/v3/recorder.js` | P3 | moduł 01: taśma, panorama, krzyż odczytu, statystyka sesji, tabela |
@@ -1502,18 +1507,26 @@ wyłącznie wtedy, gdy użytkownik sam otworzy ten moduł ze spisu.
 <link rel="stylesheet" href="base.css">
 <link rel="stylesheet" href="components.css">
 …
-<script src="bus.js"></script>      <!-- Bus must exist before engine.js binds -->
-<script src="metrics.js"></script>  <!-- window.Metrics -->
-<script src="scale.js"></script>    <!-- window.Scale, needs Metrics -->
-<script src="shell.js"></script>    <!-- window.UI3, builds the DOM shell -->
-<script src="engine.js"></script>   <!-- window.Engine, needs Bus + Metrics + #cameraVideo -->
+<script src="../shared/bus.js"></script>         <!-- Bus must exist before engine.js binds -->
+<script src="../shared/metrics.js"></script>     <!-- window.Metrics -->
+<script src="../shared/scale-core.js"></script>  <!-- window.Scale, needs Metrics -->
+<script src="scale.js"></script>                 <!-- Scale.TEXT, dokłada do window.Scale -->
+<script src="shell.js"></script>                 <!-- window.UI3, builds the DOM shell -->
+<script src="../shared/engine.js"></script>      <!-- window.Engine, needs Bus + Metrics + #cameraVideo -->
 <script src="dash.js"></script>
 <script src="recorder.js"></script>
 <script src="modules.js"></script>
-<script src="offer.js"></script>
+<script src="support.js"></script>               <!-- moduł 10: Wsparcie -->
 <script src="docs.js"></script>
 <script src="boot.js"></script>     <!-- last, always -->
 ```
+
+Cztery pliki z `../shared/` są **wspólne z v2 i v4** (opis w `docs/shared/README.md`).
+Zmiana w którymkolwiek z nich dotyka trzech wersji naraz, więc trzeba wtedy podbić
+`CACHE` w `docs/v2/sw.js`, `docs/v3/sw.js` i `docs/v4/sw.js`. Lokalny `scale.js` idzie
+**po** `scale-core.js`: rdzeń tworzy `window.Scale`, lokalny plik dokłada do tego samego
+obiektu `Scale.TEXT`. Funkcje rdzenia sięgają po `Scale.TEXT` dopiero w chwili wywołania,
+więc taka kolejność wystarcza.
 
 `shell.js` idzie **przed** `engine.js`, bo silnik szuka `#cameraVideo` już przy
 `DOMContentLoaded`. Powłokę budujemy w `shell.js` synchronicznie przy parsowaniu (nie czekamy na
@@ -1590,13 +1603,15 @@ plików na dysku. Przy testach v3 najpierw wyrejestruj SW v2 albo otwórz w okni
     jest jednym z najtrudniejszych typów grafiki dla osób o niskiej biegłości wykresowej, a pytanie
     użytkownika brzmi „jak jest teraz", nie „jak było przez minutę". Przebieg mieszka w module 01.
 12. **Nie ma gestu jako jedynej drogi.** Każde przeciągnięcie ma dublujący klawisz ≥48 px.
-13. **Nie ma warstwy zgodności `ms-*`.** `ui-core.js`, `tools.js` i `account.js` z v2 **nie są
+13. **Nie ma warstwy zgodności `ms-*`.** `ui-core.js` i `tools.js` z v2 **nie są
     ładowane**. Jedna nieprzestylowana klasa `ms-*` pokazałaby zaokrąglony róg i cień, czyli złamała
     dwie zasady naczelne naraz. Moduły 02–13 piszemy w `ms3-*` od nowa, korzystając z tekstów v2.
 14. **Nie ma trzeciego poziomu nawigacji.** Moduł nie otwiera modułu.
 15. **Nie ma reklamy, prośby o wpłatę ani konta nad pulpitem sterowania.** Prośba o wsparcie
     mieszka w module 10 i nigdzie indziej; wymuszone kolejnością w DOM.
-16. **Nie ma czcionek z sieci, bibliotek, build-stepu ani żadnego zasobu spoza `docs/v3/`.**
+16. **Nie ma czcionek z sieci, bibliotek zewnętrznych ani build-stepu.** Poza własnym
+    katalogiem v3 sięga wyłącznie po `../icons/` i po cztery pliki kodu wspólnego
+    z `../shared/` — nic więcej.
 17. **Nie ma tekstu poniżej 15 px.** Stopień 13 px (`--ms-t-cap` z v2) nie istnieje.
 18. **Nie ma migania i pulsowania** w żadnym trybie, także dioda stanu i plakietka „Na żywo".
 
@@ -1606,7 +1621,8 @@ plików na dysku. Przy testach v3 najpierw wyrejestruj SW v2 albo otwórz w okni
 
 Programista nie oddaje zadania, dopóki wszystkie punkty nie są prawdziwe:
 
-- [ ] `metrics.js` i `engine.js` są identyczne z v2 (`diff` pusty).
+- [ ] `index.html` wczytuje `metrics.js`, `engine.js`, `bus.js` i `scale-core.js`
+      z `../shared/`, a nie z własnego katalogu — w `docs/v3/` nie ma ich kopii.
 - [ ] Na 360×640 widać jednocześnie: wielką liczbę, stempel, werdykt i klawisz START.
 - [ ] Klawisza START nie da się zasłonić żadnym arkuszem ani modułem.
 - [ ] Wielka liczba nie przesuwa się przy przejściu 9 → 10 ani 99 → 100.

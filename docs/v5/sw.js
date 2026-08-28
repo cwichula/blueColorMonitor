@@ -12,19 +12,23 @@
  *   - reszta (CSS, moduły JS, ikony, manifest): stale-while-revalidate —
  *     z pamięci natychmiast, świeża kopia w tle na następne uruchomienie.
  *
- * NAJWAŻNIEJSZE: ten worker obsługuje WYŁĄCZNIE katalog /v5/ (ikony aplikacji
- * leżą w /v5/icons/, właśnie po to, żeby mieściły się w zasięgu rejestracji).
- * Wersje 1–4 są publikowane z własnych katalogów, mają własne workery i własne
- * nazwy pamięci. Dlatego:
- *   - żądania spoza tego katalogu przepuszczamy nietknięte,
+ * NAJWAŻNIEJSZE: ten worker obsługuje katalog /v5/ ORAZ wspólną bibliotekę
+ * pomiarową /lib/, z której v5 importuje całą matematykę. Wersje 1–4 są
+ * publikowane z własnych katalogów, mają własne workery i własne nazwy pamięci.
+ * Dlatego:
+ *   - żądania spoza tych dwóch katalogów przepuszczamy nietknięte,
  *   - przy sprzątaniu kasujemy wyłącznie własne pamięci, po wzorcu /^ms5-/.
  * Złamanie któregokolwiek z tych punktów psuje cztery działające wersje naraz.
+ * (Wspólny katalog /lib/ zapisujemy u siebie i to jest w porządku: każda wersja,
+ * która kiedyś po niego sięgnie, trzyma własną kopię we własnej pamięci —
+ * wspólny adres w kilku pamięciach naraz jest powodem, dla którego czytamy
+ * zawsze przez { cacheName: CACHE }, a nigdy globalnym caches.match.)
  *
  * Numer w nazwie pamięci podbijamy przy KAŻDEJ zmianie któregokolwiek pliku
  * z listy poniżej.
  */
 
-var CACHE = 'ms5-5';
+var CACHE = 'ms5-8';
 var CACHE_PREFIX = 'ms5-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v5/, spod
@@ -61,16 +65,46 @@ var APP_SHELL = [
   './js/screens/tools.js',
   './js/screens/support.js',
 
+  /* Biblioteka pomiarowa. Leży POZA katalogiem v5 (docs/lib), bo dzielą ją
+     wersje aplikacji, ale wchodzi w całości do grafu importów v5: js/metrics.js
+     importuje ../../lib/index.js, a ten re-eksportuje wszystkie pozostałe
+     moduły; js/format.js importuje ../../lib/catalogue.js wprost. Lista jest
+     kompletna i musi taka zostać — brak choćby jednego pliku to biały ekran po
+     utracie sieci, bo graf modułów ES nie ma źródła zapasowego. */
+  '../lib/index.js',
+  '../lib/color.js',
+  '../lib/blue-share.js',
+  '../lib/brightness.js',
+  '../lib/colour-temperature.js',
+  '../lib/melanopic.js',
+  '../lib/flicker.js',
+  '../lib/uniformity.js',
+  '../lib/comfort.js',
+  '../lib/zones.js',
+  '../lib/catalogue.js',
+  '../lib/frame.js',
+
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png'
 ];
 
-/* Granica, w której ten worker w ogóle się odzywa. Ikony leżą WEWNĄTRZ /v5/,
-   a nie w katalogu nadrzędnym: rejestracja ma zasięg './', więc żądania spoza
-   niego nigdy nie docierają do tego pliku — ikona z katalogu nadrzędnego nie
-   dałaby się ani przechwycić, ani podać z pamięci po utracie sieci. */
+/* Granica, w której ten worker odzywa się Z WŁASNEJ WOLI — i tylko tyle.
+
+   Poprzedni komentarz twierdził w tym miejscu, że „żądania spoza zasięgu
+   rejestracji nigdy nie docierają do tego pliku”. To NIEPRAWDA i to ona była
+   źródłem nieporozumienia. Zasięg rejestracji ( './' ) decyduje o tym, które
+   STRONY worker kontroluje — a nie o tym, które adresy widzi. Gdy strona jest
+   już kontrolowana, przez zdarzenie fetch przechodzi KAŻDE jej żądanie:
+   z katalogu nadrzędnego, z korzenia witryny, a nawet z cudzego pochodzenia.
+   Dlatego moduły z ../lib/ dają się i przechwycić, i zapisać, i podać z pamięci
+   po utracie sieci, choć leżą poza zasięgiem rejestracji.
+
+   Te dwie ścieżki to więc nie „co widzimy”, tylko „za co bierzemy
+   odpowiedzialność”. Wszystko poza nimi przepuszczamy nietknięte do sieci,
+   żeby nie wejść w drogę workerom wersji 1–4. */
 var BASE = new URL('./', self.location.href).pathname;          // …/v5/
+var LIB = new URL('../lib/', self.location.href).pathname;      // …/lib/
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
@@ -145,15 +179,24 @@ self.addEventListener('fetch', function (event) {
 });
 
 function inScope(pathname) {
-  return pathname.indexOf(BASE) === 0;
+  return pathname.indexOf(BASE) === 0 || pathname.indexOf(LIB) === 0;
 }
 
 /* Nawigacja albo bezpośrednie trafienie w plik powłoki. Jedno i drugie musi
-   odpowiedzieć znacznikami i jedno i drugie woli kopię świeżą. */
+   odpowiedzieć znacznikami i jedno i drugie woli kopię świeżą.
+
+   Czego tu NIE MA i być nie może: obsługi adresu katalogu bez końcowego
+   ukośnika ('…/v5'). Kuszące jest dopisanie go, bo bez sieci nie ma serwera,
+   który zwykle odpowiada na taki adres przekierowaniem — ale to nie działa
+   i sprawdziliśmy to na żywo. Nawigację przeglądarka przypisuje do workera po
+   ZASIĘGU REJESTRACJI ('…/v5/'), zanim jakikolwiek kod stąd się wykona; adres
+   bez ukośnika w ten zasięg nie wpada, więc żądanie nie dociera tutaj nawet po
+   rozluźnieniu inScope. Zasięg wynika z położenia tego pliku, a przenieść go
+   wyżej nie wolno: worker v5 przechwytywałby wtedy pozostałe wersje. */
 function isDocument(request, url) {
   if (request.mode === 'navigate') return true;
   if (/\/index\.html$/.test(url.pathname)) return true;
-  return url.pathname === BASE || url.pathname + '/' === BASE;
+  return url.pathname === BASE;
 }
 
 function documentFirstFromNetwork(event, request) {
@@ -168,8 +211,12 @@ function documentFirstFromNetwork(event, request) {
     return response;
   }).catch(function () {
     // Brak sieci, czyli normalny tryb pracy tej aplikacji.
-    return caches.match(request).then(function (cached) {
-      return cached || caches.match('./index.html');
+    // Tylko własna pamięć: wspólne adresy leżą w kilku pamięciach naraz (każda
+    // wersja zapisuje je u siebie), a globalne caches.match iteruje pamięci
+    // w kolejności powstania i oddaje pierwsze trafienie — czyli kopię cudzej,
+    // starszej wersji.
+    return caches.match(request, { cacheName: CACHE }).then(function (cached) {
+      return cached || caches.match('./index.html', { cacheName: CACHE });
     }).then(function (cached) {
       if (cached) return cached;
       return new Response(
@@ -185,7 +232,10 @@ function documentFirstFromNetwork(event, request) {
    czekamy na sieć — to jedyny przypadek, w którym ten worker cokolwiek
    opóźnia. */
 function staleWhileRevalidate(event, request) {
-  return caches.match(request).then(function (cached) {
+  // Zawężone do własnej pamięci z tego samego powodu co wyżej: globalne
+  // caches.match przeszukuje pamięci wszystkich wersji, a pierwsze trafienie
+  // pod wspólnym adresem bywa starszą kopią.
+  return caches.match(request, { cacheName: CACHE }).then(function (cached) {
     var network = fetch(request).then(function (response) {
       if (response && response.ok && response.type === 'basic') {
         var copy = response.clone();

@@ -109,6 +109,10 @@
      it installs a contract-shaped fallback when Bus is absent and resolves
      window.Bus at call time. Listeners are attached during init(), never at
      parse time, so a real bus.js loaded afterwards still gets them.
+
+     Od teraz szynę daje ../shared/bus.js, ładowany w index.html przed tym
+     plikiem, więc poniższy fallback jest już tylko siatką bezpieczeństwa na
+     wypadek, gdyby tamten plik się nie wczytał.
      ------------------------------------------------------------------ */
 
   function installFallbackBus() {

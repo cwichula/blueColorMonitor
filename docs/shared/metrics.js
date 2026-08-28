@@ -1,3 +1,22 @@
+/* docs/shared/metrics.js — kod wspólny wersji v2–v4.
+ *
+ * SKĄD: przeniesione BEZ ZMIAN z docs/v4/metrics.js. Redakcje v2, v3 i v4
+ * różniły się wyłącznie komentarzami — ani jedną linią kodu. Wybrano v4, bo
+ * jej komentarze są najnowsze i nie ma w nich reliktów podziału aplikacji na
+ * funkcje darmowe i płatne.
+ *
+ * KTO ŁADUJE: v2, v3 i v4 — plik jest wpięty w index.html i wymieniony
+ * w APP_SHELL każdej z tych trzech wersji.
+ *
+ * CO WYSTAWIA: globalne `window.Metrics` — czystą matematykę pomiaru
+ * (funkcje liczbowe bez DOM) oraz katalog wielkości Metrics.CATALOGUE, który
+ * jest jedynym domem nazw, jednostek i zakresów.
+ *
+ * CZEGO TU NIE WOLNO: odwoływać się do DOM, do magistrali, do silnika ani do
+ * układu ekranu konkretnej wersji; dopisywać napisów widocznych dla
+ * użytkownika ponad te, które już tu są w katalogu. Zmiana w tym pliku
+ * dotyka trzech wersji naraz.
+ */
 /* Monitor Światła — pomiar (czysta matematyka, bez DOM).
  *
  * Everything here is a pure function of numbers so it can be checked without a
@@ -68,7 +87,7 @@
   };
 
   /* ------------------------------------------------------------------
-     Metric 3 — correlated colour temperature (NEW)
+     Metric 3 — correlated colour temperature
      ------------------------------------------------------------------ */
 
   // McCamy's cubic approximation of CCT from CIE 1931 chromaticity.
@@ -93,7 +112,7 @@
   };
 
   /* ------------------------------------------------------------------
-     Metric 4 — melanopic ratio (NEW)
+     Metric 4 — melanopic ratio
      ------------------------------------------------------------------ */
 
   // Approximate melanopic-to-photopic ratio ("how strongly this light speaks to
@@ -265,10 +284,12 @@
      Metric catalogue — the single source of truth for the whole app
      ------------------------------------------------------------------ */
 
-  // The UI builds gauges, the documentation screen builds its cards and the
-  // export builds its columns from this one array. A metric added here appears
-  // everywhere; there is no second list to keep in sync. Every entry is
-  // available to every user — there is no field that could say otherwise.
+  // The UI builds gauges, the documentation builds its tables and the export
+  // builds its columns from this one array. A metric added here appears
+  // everywhere; there is no second list to keep in sync.
+  //
+  // Wszystkie siedem wielkości jest dostępnych dla każdego, bez warunków —
+  // w tym katalogu nie ma i nie ma być pola dzielącego je na dostępne i nie.
   Metrics.CATALOGUE = [
     {
       id: 'share',

@@ -48,7 +48,7 @@ docs/v5/
   icons/                     ikony PWA (192, 512, maskable 512)
   js/format.js               formatowanie liczb, jednostek, dat, czasu
   js/bus.js                  szyna zdarzeń
-  js/metrics.js              czysta matematyka pomiaru + katalog wielkości
+  js/metrics.js              adapter do ../lib: re-eksport + trzy zgodności z v5
   js/store.js                ustawienia (localStorage) + atrybuty na <html>
   js/history.js              bufor i trwałość historii pomiarów
   js/camera.js               getUserMedia, próbkowanie klatek, stan sesji
@@ -163,11 +163,11 @@ export function relative(ts, now = Date.now()) -> 'przed chwilą' / '3 min temu'
 export function plural(n, one, few, many) -> string   // 1 pomiar / 2 pomiary / 5 pomiarów
 export const ZONE_LABEL = {good:'bezpiecznie', warn:'umiarkowanie', crit:'szkodliwie', none:'brak danych'}
 ```
-`format.js` nie importuje `metrics.js` — `metricValue` przyjmuje liczbę
-miejsc po przecinku z małej, lokalnej mapy `{share:0, brightness:0, kelvin:0,
-melanopic:2, flicker:1, uniformity:0, comfort:0}` i mapy jednostek
-`{share:'%', brightness:'%', kelvin:'K', melanopic:'×', flicker:'%',
-uniformity:'%', comfort:'pkt'}`.
+`format.js` nie importuje `metrics.js` — mapy `DECIMALS` i `UNITS` buduje
+pętlą z katalogu wielkości, importowanego wprost z `../../lib/catalogue.js`.
+Tamten plik sam nic nie importuje, więc `format.js` pozostaje liściem drzewa
+importów z sekcji 1, a liczby miejsc po przecinku i jednostki nie są przepisane
+drugi raz z ręki.
 
 ### js/bus.js
 ```js
@@ -185,21 +185,27 @@ Zdarzenia (pełna lista, nikt nie wymyśla nowych bez dopisania tutaj):
 ```
 
 ### js/metrics.js
-Port matematyki z `docs/v4/metrics.js` — **wzory zostają identyczne**, zmienia
-się tylko forma (ES modules, `export`). Przeczytaj tamten plik i przenieś
-komentarze wyjaśniające, przetłumaczone na polski.
+Wzory nie mieszkają w tym pliku. Wszystkie liczy `docs/lib` (moduły ES, testy
+w `node --test`), a ten plik jest wyłącznie warstwą adaptacyjną: re-eksportuje
+funkcje wprost i tylko w trzech miejscach (`blueShare`, `melanopicRatio`,
+`flicker`) zamienia `null` biblioteki na `0`, które v5 pokazuje od pierwszego
+dnia. Klasyczną redakcją tych samych wzorów jest `docs/shared/metrics.js`
+(używają jej v2–v4); zgodności obu pilnuje `docs/lib/shared-parity.test.js`.
+Pliki z `docs/lib` wchodzą do grafu importów v5, więc muszą stać na liście
+`APP_SHELL` w `sw.js` — inaczej po utracie sieci będzie biały ekran.
+Poniższe sygnatury obowiązują bez zmian:
 ```js
 export function toLinear(c8)              // sRGB gamma -> linear
 export function toXYZ(rLin, gLin, bLin)
 export function blueShare(r, g, b) -> %
 export function brightness(r, g, b) -> %
-export function colourTemperature(r, g, b) -> {kelvin|null, reliable}
+export function colourTemperature(r, g, b) -> {kelvin|null, reliable, duv}
 export function melanopicRatio(r, g, b) -> number
 export function flicker(samples, sampleHz) -> {percent|null, hz|null, withinRange}
 export function uniformity(cellLuminances) -> %|null
 export function comfortIndex({melanopic, kelvin, flickerPercent, uniformity}) -> {score, penalties[], measured}
 export function zoneFor(value, warn, crit, invert) -> 'good'|'warn'|'crit'|null
-export const CATALOGUE = [...]   // 7 pozycji, id i kolejność jak w v4
+export const CATALOGUE = [...]   // 7 pozycji, id i kolejność jak w ../shared/metrics.js
 export function byId(id)
 ```
 Katalog **nie ma** pola `premium` ani list `FREE_IDS` / `PREMIUM_IDS`:
@@ -267,7 +273,7 @@ raz jeszcze, nigdy nie rzuca wyżej. Zapis do `localStorage` jest dławiony
 
 ### js/camera.js
 Odpowiada za `getUserMedia`, rysowanie klatki na ukrytym canvasie, uśrednianie
-kadru w siatce 3×3 i zamianę na `reading`. Wzoruj się na `docs/v4/engine.js`
+kadru w siatce 3×3 i zamianę na `reading`. Wzoruj się na `docs/shared/engine.js`
 (ta sama fizyka: crop ~60 % kadru, ~10 Hz, okno migotania 32 próbek), ale API
 jest nowe:
 ```js

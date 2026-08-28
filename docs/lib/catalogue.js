@@ -3,7 +3,12 @@
  * Źródło: docs/v5/js/metrics.js (tablica CATALOGUE wraz z byId), przeniesione
  * bez zmiany ani jednej liczby i ani jednego identyfikatora — progi stąd muszą
  * zgadzać się z progami, pod które użytkownicy v5 przywykli, inaczej ta sama
- * scena zmieniłaby kolor strefy. To warstwa OPISOWA: nazwy, jednostki, zakresy
+ * scena zmieniłaby kolor strefy.
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
+ * To warstwa OPISOWA: nazwy, jednostki, zakresy
  * wskaźników. Nic tu nie liczy i nic tu nie jest pomiarem; progi są oceną
  * redakcyjną projektu, nie normą.
  *

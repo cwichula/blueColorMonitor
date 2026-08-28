@@ -4,14 +4,18 @@
  * człowieka: przecinek dziesiętny, spacja nierozdzielająca w tysiącach i przed
  * jednostką, polskie skróty miesięcy i poprawna odmiana liczebników.
  *
- * Świadomie NIE importuje `metrics.js` — trzyma własne, małe mapy jednostek
- * i miejsc po przecinku, dzięki czemu jest liściem drzewa importów i da się go
- * uruchomić w Node bez DOM.
+ * Świadomie NIE importuje `metrics.js`: bierze katalog wprost z
+ * '../../lib/catalogue.js', czyli z pliku, który sam nic nie importuje. Dzięki
+ * temu format.js zostaje LIŚCIEM drzewa importów — da się go uruchomić w Node
+ * bez DOM, bez kamery i bez całej matematyki pomiaru — a mimo to nie trzyma
+ * własnej kopii jednostek ani miejsc po przecinku.
  *
  * Zasada nadrzędna: wartość niezmierzona (`null`, `undefined`, `NaN`,
  * `Infinity`) to pauza, nigdy zero. Zero jest wynikiem pomiaru, pauza jest
  * jego brakiem.
  */
+
+import { CATALOGUE } from '../../lib/catalogue.js';
 
 /* Pauza (myślnik) dla wartości, których nie zmierzono. */
 const DASH = '—';
@@ -21,18 +25,18 @@ const DASH = '—';
  * jednostki ani rozpaść się w środku tysięcy. */
 const NBSP = '\u00A0';
 
-/* Lokalne mapy — odpowiednik katalogu z `metrics.js`, powtórzony tutaj, żeby
- * nie ciągnąć całej matematyki dla dwóch liczb. Klucze zgodne z kontraktem;
- * przy dopisaniu wielkości trzeba uzupełnić oba obiekty. */
-const DECIMALS = {
-  share: 0, brightness: 0, kelvin: 0, melanopic: 2,
-  flicker: 1, uniformity: 0, comfort: 0
-};
-
-const UNITS = {
-  share: '%', brightness: '%', kelvin: 'K', melanopic: '×',
-  flicker: '%', uniformity: '%', comfort: 'pkt'
-};
+/* Miejsca po przecinku i jednostki WYPROWADZONE z katalogu, a nie przepisane
+ * obok niego. Wcześniej stały tu dwie ręczne mapy — trzecia kopia tych samych
+ * pól — i komentarz przyznawał wprost, że przy dopisaniu wielkości trzeba je
+ * uzupełnić ręcznie; to jest dokładnie ten rodzaj obowiązku, o którym się
+ * zapomina, a jego skutkiem jest wielkość drukowana bez jednostki i z zerem
+ * miejsc po przecinku. Teraz wielkość dopisana w katalogu formatuje się sama. */
+const DECIMALS = {};
+const UNITS = {};
+for (const metric of CATALOGUE) {
+  DECIMALS[metric.id] = metric.decimals;
+  UNITS[metric.id] = metric.unit;
+}
 
 const MONTHS_SHORT = [
   'sty', 'lut', 'mar', 'kwi', 'maj', 'cze',

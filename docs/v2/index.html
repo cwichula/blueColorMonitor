@@ -169,11 +169,16 @@
      SCRIPTS
      ===================================================================
      Order is a contract, not a preference:
-       metrics.js  — pure maths, the single source of truth about a reading.
+       ../shared/bus.js
+                   — the event bus, shared with v3 and v4. First, so the
+                     fallback bus inside ui-core.js stays switched off.
+       ../shared/metrics.js
+                   — pure maths, the single source of truth about a reading.
                      Everything below refuses to define itself without it.
-       ui-core.js  — installs window.Bus (or leaves a real bus.js alone) and
-                     window.UI before any module tries to register a listener.
-       engine.js   — the camera. Registers on the bus at parse time.
+       ui-core.js  — installs window.UI before any module tries to register a
+                     listener; its own bus is only a fallback now.
+       ../shared/engine.js
+                   — the camera. Registers on the bus at parse time.
        support.js  — the Wsparcie screen. Also registers at parse time.
        tools.js    — the seven tool screens. All seven are simply available.
        boot.js     — last: reports what is missing and registers the worker.
@@ -181,9 +186,10 @@
      registers bus listeners while the others are still loading, and the shell
      waits for DOMContentLoaded before it builds anything.
      =================================================================== -->
-<script src="metrics.js"></script>
+<script src="../shared/bus.js"></script>
+<script src="../shared/metrics.js"></script>
 <script src="ui-core.js"></script>
-<script src="engine.js"></script>
+<script src="../shared/engine.js"></script>
 <script src="support.js"></script>
 <script src="tools.js"></script>
 <script src="boot.js"></script>

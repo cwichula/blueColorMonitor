@@ -1,7 +1,12 @@
 /* Równomierność oświetlenia — stosunek najciemniejszej komórki kadru do najjaśniejszej.
  *
  * Źródło wzoru: docs/v5/js/metrics.js (wcześniejsza, identyczna redakcja:
- * docs/v4/metrics.js). Wejściem są luminancje komórek siatki (w v5 3×3),
+ * docs/shared/metrics.js, dawniej docs/v4/metrics.js).
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
+ * Wejściem są luminancje komórek siatki (w v5 3×3),
  * policzone przez frame.sampleGrid / color.relativeLuminance.
  * Wielkość jest ilorazem, więc nie zależy od ekspozycji ani od jednostki —
  * ale też nic nie mówi o bezwzględnym poziomie światła i nie jest pomiarem

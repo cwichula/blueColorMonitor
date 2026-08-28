@@ -74,11 +74,20 @@
 
   // [global name | probe, file, what stops working]
   var REQUIRED = [
-    { name: 'Bus', filePL: 'bus.js', lossPL: 'moduły przestaną się widzieć i pomiar nie ruszy' },
-    { name: 'Metrics', filePL: 'metrics.js', lossPL: 'żadna wartość nie zostanie policzona' },
-    { name: 'Scale', filePL: 'scale.js', lossPL: 'zniknie skala i wszystkie napisy' },
+    { name: 'Bus', filePL: '../shared/bus.js', lossPL: 'moduły przestaną się widzieć i pomiar nie ruszy' },
+    { name: 'Metrics', filePL: '../shared/metrics.js', lossPL: 'żadna wartość nie zostanie policzona' },
+    { name: 'Scale', filePL: '../shared/scale-core.js', lossPL: 'zniknie geometria skali i formatowanie liczb' },
+    /* Drugi wiersz na TEN SAM obiekt, bo skala stoi teraz w dwóch plikach:
+       ../shared/scale-core.js tworzy `window.Scale`, a lokalny scale.js dokłada
+       do niego wyłącznie słownik Scale.TEXT. Gdy nie wczyta się ten drugi plik,
+       `global.Scale` mimo to ISTNIEJE i spis po samej nazwie globala milczał —
+       a interfejs wywalał się dopiero później na Scale.TEXT.* (Scale.formatFor,
+       Scale.verdict i Scale.stamp rzucają wtedy TypeError), w miejscu, które nic
+       nie mówi o przyczynie. Dlatego pytamy tu o sam słownik, nie o globalne. */
+    { probe: function () { return !!(global.Scale && global.Scale.TEXT); },
+      filePL: 'scale.js', lossPL: 'znikną wszystkie napisy interfejsu' },
     { name: 'UI3', filePL: 'shell.js', lossPL: 'nie da się otworzyć żadnego modułu' },
-    { name: 'Engine', filePL: 'engine.js', lossPL: 'kamera i pomiar nie ruszą' },
+    { name: 'Engine', filePL: '../shared/engine.js', lossPL: 'kamera i pomiar nie ruszą' },
     { probe: dashPresent, filePL: 'dash.js', lossPL: 'pulpit zostanie pusty' }
   ];
 
@@ -259,7 +268,12 @@
   /* The reload happens here and only here, after a human pressed "Odśwież".
      The waiting worker is told to take over first; the page then reloads on
      `controllerchange`, with a timer as the fallback for the case where no
-     worker was waiting after all. */
+     worker was waiting after all.
+
+     BLIŹNIAK: docs/v4/app.js ma tę samą funkcję (te same „controllerchange”
+     i zapasowy timer); świadomie jej nie współdzielimy, bo v2 aktualizuje się
+     inaczej — ale poprawki wprowadzamy w OBU plikach naraz, żeby kopie nie
+     rozjechały się po cichu. */
   function applyUpdate(reg) {
     var nav = global.navigator;
     var reloaded = false;

@@ -13,7 +13,7 @@
  * Bump CACHE when any file in APP_SHELL changes; the old cache is deleted on
  * activate, so a stale stylesheet cannot outlive the markup it styles.
  */
-var CACHE = 'blue-monitor-v2-4';
+var CACHE = 'blue-monitor-v2-7';
 
 /* Relative paths on purpose: the app must work from /v2/, from a project page
    under /<repo>/docs/v2/ and from a copied directory, without editing a line.
@@ -23,9 +23,10 @@ var APP_SHELL = [
   './index.html',
   './manifest.webmanifest',
   './styles.css',
-  './metrics.js',
+  '../shared/bus.js',
+  '../shared/metrics.js',
   './ui-core.js',
-  './engine.js',
+  '../shared/engine.js',
   './support.js',
   './tools.js',
   './boot.js',
@@ -41,20 +42,34 @@ self.addEventListener('install', function (event) {
       // icon would leave the app half-cached and half-live, which is the worst
       // of the three outcomes. Each entry is added on its own and a failure is
       // logged instead of aborting the install.
+      // Nie cache.add(url): ono pobiera plik przez pamięć HTTP przeglądarki,
+      // więc zaraz po podbiciu numeru pamięci potrafi zapisać starą kopię —
+      // na GitHub Pages wygląda to jak „nowa wersja, stare pliki”. Własny fetch
+      // z { cache: 'reload' } omija pamięć HTTP, a do pamięci podręcznej trafia
+      // dopiero to, co naprawdę przyszło z serwera.
       var jobs = APP_SHELL.map(function (url) {
-        return cache.add(url).catch(function () {
+        return fetch(url, { cache: 'reload' }).then(function (response) {
+          if (!response || !response.ok) return null;
+          return cache.put(url, response);
+        }).catch(function () {
           if (self.console && console.warn) console.warn('sw.js: nie udało się zapisać w pamięci podręcznej: ' + url);
+          return null;
         });
       });
-      // The directory URL is what a home-screen icon opens, but not every
-      // server answers it — the local test server returns 404 for './'. So the
-      // shell is fetched once by its file name and stored under BOTH keys,
-      // instead of being requested twice and failing once.
-      jobs.push(fetch('./index.html').then(function (response) {
+      /* Ikonę z ekranu głównego otwiera adres katalogu, ale nie każdy serwer na
+         niego odpowiada — lokalny serwer testowy zwraca dla './' błąd 404.
+         Dlatego powłoka musi leżeć w pamięci pod OBIEMA kluczami, a pobieramy ją
+         po nazwie pliku: klucz './index.html' zapisała już pętla po APP_SHELL
+         wyżej, więc tutaj dokładamy wyłącznie klucz './'.
+         { cache: 'reload' } jest tu równie konieczne co tam: bez niego odpowiedź
+         może przyjść z pamięci HTTP przeglądarki i pod adresem powłoki wyląduje
+         STARA strona — ta, która ładuje './metrics.js' i './engine.js', czyli
+         pliki przeniesione już do ../shared/. Nawigacje ta wersja serwuje
+         z pamięci, więc użytkownik zobaczyłby „Aplikacja wczytała się
+         niekompletnie”. */
+      jobs.push(fetch('./index.html', { cache: 'reload' }).then(function (response) {
         if (!response || !response.ok) return null;
-        return cache.put('./', response.clone()).then(function () {
-          return cache.put('./index.html', response);
-        });
+        return cache.put('./', response);
       }).catch(function () { return null; }));
       return Promise.all(jobs);
     }).then(function () {
@@ -89,7 +104,11 @@ self.addEventListener('fetch', function (event) {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(request).then(function (cached) {
+    // Tylko własna pamięć: wspólne adresy leżą w kilku pamięciach naraz (każda
+    // wersja zapisuje je u siebie), a globalne caches.match iteruje pamięci
+    // w kolejności powstania i oddaje pierwsze trafienie — czyli kopię cudzej,
+    // starszej wersji.
+    caches.match(request, { cacheName: CACHE }).then(function (cached) {
       if (cached) {
         // Refresh in the background so the next launch is current, while this
         // one stays instant.
@@ -106,7 +125,9 @@ self.addEventListener('fetch', function (event) {
         // Offline and never cached. For a navigation that means the shell,
         // which is always in the cache; for anything else there is nothing
         // honest to return.
-        if (request.mode === 'navigate') return caches.match('./index.html');
+        // Też zawężone: powłoka innej wersji, leżąca w jej własnej pamięci,
+        // wyglądałaby stąd jak nasza.
+        if (request.mode === 'navigate') return caches.match('./index.html', { cacheName: CACHE });
         return new Response('', { status: 504, statusText: 'Offline' });
       });
     })

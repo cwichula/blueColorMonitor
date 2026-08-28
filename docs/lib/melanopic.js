@@ -1,7 +1,12 @@
 /* Współczynnik melanopiczny — przybliżenie stosunku melanopicznego do fotopicznego.
  *
  * Źródło wzoru: docs/v5/js/metrics.js (wcześniejsza, identyczna co do stałej
- * redakcja: docs/v4/metrics.js). Wagi i normalizacja przeniesione bez zmian.
+ * redakcja: docs/shared/metrics.js, dawniej docs/v4/metrics.js). Wagi
+ * i normalizacja przeniesione bez zmian.
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
  * Ograniczenie należy do definicji, nie do przypisu: kamera ma trzy szerokie
  * kanały i NIE mierzy widma — to nie jest pomiar fotometryczny ani wynik
  * medyczny. Kierunek zmian wskaźnik oddaje pewnie, wartość bezwzględną nie

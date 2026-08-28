@@ -36,10 +36,10 @@
 
   // name -> [globalName, whatPL (what stops working without it)]
   var REQUIRED = [
-    ['Metrics', 'metrics.js', 'żadna wartość nie zostanie policzona'],
-    ['Bus', 'bus (w ui-core.js)', 'moduły przestaną się widzieć'],
+    ['Metrics', '../shared/metrics.js', 'żadna wartość nie zostanie policzona'],
+    ['Bus', '../shared/bus.js (zapas w ui-core.js)', 'moduły przestaną się widzieć'],
     ['UI', 'ui-core.js', 'nie da się przełączać ekranów'],
-    ['Engine', 'engine.js', 'kamera i pomiar nie ruszą'],
+    ['Engine', '../shared/engine.js', 'kamera i pomiar nie ruszą'],
     ['Support', 'support.js', 'ekran Wsparcie będzie pusty'],
     ['Tools', 'tools.js', 'zakładka Narzędzia będzie pusta']
   ];

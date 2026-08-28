@@ -20,7 +20,7 @@
  *
  * Bump CACHE when ANY file below changes. The old cache is deleted on activate.
  */
-var CACHE = 'blue-monitor-v3-4';
+var CACHE = 'blue-monitor-v3-7';
 
 /* Relative paths on purpose: the app must work from /v3/, from a project page
    under /<repo>/docs/v3/ and from a copied directory, without editing a line.
@@ -32,11 +32,12 @@ var APP_SHELL = [
   './tokens.css',
   './base.css',
   './components.css',
-  './bus.js',
-  './metrics.js',
+  '../shared/bus.js',
+  '../shared/metrics.js',
+  '../shared/scale-core.js',
   './scale.js',
   './shell.js',
-  './engine.js',
+  '../shared/engine.js',
   './dash.js',
   './recorder.js',
   './modules.js',
@@ -136,8 +137,12 @@ function documentFirstFromNetwork(event, request) {
     return response;
   }).catch(function () {
     // Offline, which is the normal mode for this application.
-    return caches.match(request).then(function (cached) {
-      return cached || caches.match('./index.html');
+    // Tylko własna pamięć: wspólne adresy leżą w kilku pamięciach naraz (każda
+    // wersja zapisuje je u siebie), a globalne caches.match iteruje pamięci
+    // w kolejności powstania i oddaje pierwsze trafienie — czyli kopię cudzej,
+    // starszej wersji.
+    return caches.match(request, { cacheName: CACHE }).then(function (cached) {
+      return cached || caches.match('./index.html', { cacheName: CACHE });
     }).then(function (cached) {
       if (cached) return cached;
       return new Response('<!doctype html><html lang="pl"><meta charset="utf-8"><title>Monitor Światła</title>' +
@@ -148,7 +153,10 @@ function documentFirstFromNetwork(event, request) {
 }
 
 function assetFirstFromCache(event, request) {
-  return caches.match(request).then(function (cached) {
+  // Zawężone do własnej pamięci z tego samego powodu co wyżej: globalne
+  // caches.match przeszukuje pamięci wszystkich wersji, a pierwsze trafienie
+  // pod wspólnym adresem bywa starszą kopią.
+  return caches.match(request, { cacheName: CACHE }).then(function (cached) {
     if (cached) {
       // Refresh in the background so the next launch is current, while this
       // one stays instant.

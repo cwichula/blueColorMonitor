@@ -715,8 +715,7 @@
         cancel: t('confirm.close')
       }).then(function (ok) {
         if (!ok) return;
-        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        global.location.reload();
+        applyUpdate(reg);
       });
     };
     if (global.Engine && global.Engine.isRunning && global.Engine.isRunning()) {
@@ -725,6 +724,37 @@
       return;
     }
     ask();
+  }
+
+  /* Przeładowanie dzieje się tu i tylko tu, po naciśnięciu „Odśwież”.
+     Najpierw czekający worker dostaje polecenie przejęcia sterów, a strona
+     przeładowuje się dopiero na „controllerchange”. Samo location.reload()
+     zaraz po postMessage ściga się z tym przejęciem i często wygrywa, czyli
+     wczytuje powłokę jeszcze spod starego workera — a wtedy nowa wersja
+     wchodzi dopiero przy kolejnym uruchomieniu. Zapasowy timer jest na
+     wypadek, gdyby żaden worker jednak nie czekał i zdarzenie nie przyszło.
+
+     BLIŹNIAK: docs/v3/boot.js ma tę samą funkcję (te same „controllerchange”
+     i zapasowy timer); świadomie jej nie współdzielimy, bo v2 aktualizuje się
+     inaczej — ale poprawki wprowadzamy w OBU plikach naraz, żeby kopie nie
+     rozjechały się po cichu. */
+  function applyUpdate(reg) {
+    var nav = global.navigator;
+    var reloaded = false;
+
+    function reloadOnce() {
+      if (reloaded) return;
+      reloaded = true;
+      try { global.location.reload(); } catch (_) { /* nie ma czego więcej spróbować */ }
+    }
+
+    if (nav && nav.serviceWorker) {
+      nav.serviceWorker.addEventListener('controllerchange', reloadOnce);
+    }
+    if (reg && reg.waiting) {
+      try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {}
+    }
+    global.setTimeout(reloadOnce, 1500);
   }
 
   /* ------------------------------------------------------------------

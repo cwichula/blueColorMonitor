@@ -1,7 +1,12 @@
 /* Jasność sceny — względny wskaźnik ekspozycji kadru.
  *
- * Źródło wzoru: docs/v1/app.js, przeniesione bez zmian przez docs/v4/metrics.js
- * do docs/v5/js/metrics.js — średnia trzech kanałów przeskalowana na procenty.
+ * Źródło wzoru: docs/v1/app.js, przeniesione bez zmian przez docs/shared/metrics.js
+ * (dawniej docs/v4/metrics.js) do docs/v5/js/metrics.js — średnia trzech kanałów
+ * przeskalowana na procenty.
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
  * Ograniczenie, które trzeba powiedzieć wprost: to NIE są luksy i nie da się
  * ich z tego wyliczyć. Automatyka ekspozycji kamery przesuwa skalę pod spodem,
  * więc liczba mówi tylko, jak jasny jest obraz, który kamera właśnie oddała.

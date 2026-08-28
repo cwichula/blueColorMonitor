@@ -5,6 +5,10 @@
  * 1960 UCS. Macierz i wagi fotopowe są przepisane co do cyfry, bo na nich stoją
  * kelwiny i melanopic — inna redakcja tych samych stałych przesuwa raportowaną
  * temperaturę bieli o ~2 K, czyli o liczbę widoczną na wskaźniku.
+ * docs/v5/js/metrics.js nie jest już źródłem tych wzorów — wyprowadziły się
+ * TUTAJ, a tamten plik jest dziś cienką warstwą adaptacyjną nad docs/lib
+ * (reeksport + trzy adaptery, które zostawiają v5 zero tam, gdzie biblioteka
+ * woli pauzę).
  * Ograniczenie: to arytmetyka trzech szerokich kanałów kamery po nieznanej
  * korekcie balansu bieli, a nie kolorymetria. Wynik wolno czytać jako
  * przybliżenie, nigdy jako pomiar.

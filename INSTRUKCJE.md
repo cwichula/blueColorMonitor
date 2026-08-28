@@ -287,6 +287,10 @@ docs/
   serve.ps1             — lokalny serwer testowy (Windows, bez instalacji)
   icons/                — ikony aplikacji (192px, 512px, wersja maskowalna),
                           wspólne dla wszystkich wersji
+  lib/                  — biblioteka pomiarowa w nowszym zapisie (moduły ES),
+                          z własnymi testami; korzysta z niej v5
+  shared/               — kod wspólny wersji v2, v3 i v4: bus.js, metrics.js,
+                          engine.js, scale-core.js
   v1/
     index.html            — struktura strony (panele: Kamera, Monitoring, Dokumentacja,
                             Wsparcie, Więcej, O aplikacji)
@@ -309,11 +313,14 @@ docs/
                           kontrakt implementacyjny w CONTRACT.md
 ```
 
-Każda wersja (`v1` … `v5`) jest samodzielna: ma własny `index.html`, własny
-`manifest.webmanifest` i własnego service workera o zasięgu swojego katalogu,
-a ikony bierze ze wspólnego `../icons/`.
+Każda wersja (`v1` … `v5`) ma własny `index.html`, własny
+`manifest.webmanifest` i własnego service workera o zasięgu swojego katalogu.
+Ikony wszystkie biorą ze wspólnego `../icons/`, a część kodu — z katalogów
+opisanych w następnym rozdziale: `v2`, `v3` i `v4` z `docs/shared/`,
+a `v5` z `docs/lib/`. W całości samodzielny został tylko `v1`.
 
-Kolejność wczytywania skryptów w `index.html` jest ISTOTNA i nie wolno jej zmieniać:
+Kolejność wczytywania skryptów w `docs/v1/index.html` jest ISTOTNA i nie wolno
+jej zmieniać:
 
 ```html
 <script src="features.js"></script>
@@ -326,3 +333,61 @@ Kolejność wczytywania skryptów w `index.html` jest ISTOTNA i nie wolno jej zm
 `app:ready`, na które czekają pozostałe moduły. Każde wywołanie cudzego API jest
 osłonięte sprawdzeniem obecności, więc brak któregokolwiek pliku (np. stary cache
 service workera) nie wywala reszty aplikacji.
+
+---
+
+## Kod wspólny kilku wersji
+
+Wersje 2, 3 i 4 robią ten sam pomiar i do niedawna każda miała u siebie własną
+kopię tych samych plików. Kopie zostały złożone w jedno miejsce, poza katalogami
+wersji:
+
+| Katalog | Co w nim leży | Które wersje z niego biorą |
+|---|---|---|
+| `docs/shared/` | `bus.js`, `metrics.js`, `engine.js`, `scale-core.js` — matematyka pomiaru, obsługa kamery, przekazywanie zdarzeń i geometria skal | v2, v3, v4 |
+| `docs/lib/` | ta sama matematyka zapisana po nowemu, rozbita na jeden plik na temat, z własnym zestawem testów | v5 |
+
+Wersja 1 nie bierze nic ani z jednego, ani z drugiego — całą swoją logikę ma
+w `docs/v1/app.js`.
+
+Dlaczego dwa katalogi, a nie jeden: wersje 2–4 wczytują pliki po kolei, zwykłymi
+tagami `<script>`, i cały ich rozruch jest na tym oparty. Wersja 5 używa
+nowszego zapisu (moduły ES), którego tamte trzy nie zniosłyby bez przepisania od
+zera. Dlatego wzory istnieją w repozytorium dwa razy — a tego, żeby oba zapisy
+dawały co do cyfry te same wyniki, pilnuje test `docs/lib/shared-parity.test.js`,
+uruchamiany razem z resztą testów:
+
+```powershell
+cd docs/lib
+node --test
+```
+
+**Zasada przy zmianach.** Plik z `docs/shared/` należy do trzech wersji naraz,
+a plik z `docs/lib/` do wersji 5. Poprawka w jednym pliku zmienia więc kilka
+aplikacji jednocześnie. Po każdej takiej zmianie trzeba podnieść numer pamięci
+podręcznej (stała `CACHE`) w service workerze **każdej** wersji, która ten plik
+wczytuje — dokładnie tak, jak opisuje krok 3 w rozdziale 5.1:
+
+| Zmiana w | Podnieś `CACHE` w |
+|---|---|
+| `docs/shared/` | `docs/v2/sw.js`, `docs/v3/sw.js`, `docs/v4/sw.js` |
+| `docs/lib/` | `docs/v5/sw.js` |
+
+Bez tego telefony z już zainstalowaną aplikacją dalej dostaną starą kopię pliku
+i zmiany po prostu nie zobaczysz. A jeśli poprawiasz sam wzór — popraw go w obu
+katalogach, inaczej test zgodności zapali się na czerwono.
+
+### Uwaga jednorazowa: kto ma już zainstalowaną wersję 2, 3 lub 4
+
+Po wgraniu tej zmiany na GitHub Pages każdy, kto ma na telefonie zainstalowaną
+wcześniejszą wersję 2, 3 albo 4, musi **raz otworzyć aplikację przy działającym
+internecie** i przyjąć propozycję odświeżenia, którą aplikacja sama wyświetli
+(pasek z przyciskiem „Odśwież”). Dopiero wtedy pliki z `docs/shared/` trafią
+do jego pamięci offline.
+
+Powód jest prosty: aplikacja zapisana na telefonie zna listę swoich plików
+z dnia instalacji, a na tamtej liście katalogu `shared/` jeszcze nie było. Do
+chwili odświeżenia nie ma skąd tych plików wziąć bez internetu — więc otwarta
+w trybie samolotowym może się nie uruchomić. Jedno odświeżenie przy sieci
+załatwia sprawę na zawsze: potem aplikacja znów działa offline jak wcześniej.
+Warto o tym uprzedzić osoby, którym wcześniej wysłałeś link albo plik .apk.

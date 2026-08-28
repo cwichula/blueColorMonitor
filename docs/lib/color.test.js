@@ -221,8 +221,10 @@ test('stałe macierzy są dokładnie tymi, których używa v5', () => {
   // wszystkie testy powyżej, bo ich tolerancje opisują własności, a nie zapis.
   // Chodzi o ciągłość liczb pokazywanych użytkownikowi — macierz wysokiej
   // precyzji (Lindbloom) przesuwa raportowaną temperaturę bieli o 2 K
-  // (6503 -> 6505). Wzory przeniesiono z docs/v5/js/metrics.js i tamte cyfry
-  // mają zostać, dopóki nie zmienią się tam.
+  // (6503 -> 6505). Wzory przeniesiono z docs/v5/js/metrics.js, ale tamten plik
+  // jest dziś tylko cienką warstwą adaptacyjną nad docs/lib i nie trzyma już
+  // żadnej z tych stałych — jedyny ich egzemplarz jest w color.js i to ten test
+  // go pilnuje.
   const m = wiersze(SRGB_TO_XYZ);
   const v5 = [
     [0.4124564, 0.3575761, 0.1804375],

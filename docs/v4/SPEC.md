@@ -24,10 +24,11 @@ nie wymyślaj po cichu własnej konwencji.
 
 | plik | właściciel | rola |
 |---|---|---|
-| `metrics.js` | GOTOWE, NIETYKALNE | matematyka pomiaru, katalog 7 wielkości |
-| `bus.js` | GOTOWE, NIETYKALNE | magistrala zdarzeń |
-| `engine.js` | GOTOWE, NIETYKALNE | kamera, próbkowanie 5 Hz, historia, progi, kalibracja |
-| `scale.js` | GOTOWE, NIETYKALNE | geometria skal + `Scale.TEXT` (polszczyzna v3) |
+| `../shared/metrics.js` | GOTOWE, NIETYKALNE | matematyka pomiaru, katalog 7 wielkości. **Plik wspólny z v2 i v3** |
+| `../shared/bus.js` | GOTOWE, NIETYKALNE | magistrala zdarzeń. **Plik wspólny z v2 i v3** |
+| `../shared/engine.js` | GOTOWE, NIETYKALNE | kamera, próbkowanie 5 Hz, historia, progi, kalibracja. **Plik wspólny z v2 i v3** |
+| `../shared/scale-core.js` | GOTOWE, NIETYKALNE | geometria skal (`pos`, `bands`, `zone`, `severity`, `verdict`, `formatFor`). **Plik wspólny z v3** |
+| `scale.js` | GOTOWE, NIETYKALNE | dokłada do tego samego `window.Scale` słownik `Scale.TEXT` (polszczyzna v3) — napisy tej wersji, lokalne |
 | `tokens.css` | autor 1 | WYŁĄCZNIE `:root` i selektory motywu/palety. Rozdział 2 |
 | `base.css` | autor 1 | reset, typografia, powłoka, nawigacja, siatka. Rozdziały 3 i 5.A–5.C |
 | `components.css` | autor 2 | wszystkie komponenty z rozdziałów 5.D–5.M |
@@ -37,7 +38,7 @@ nie wymyślaj po cichu własnej konwencji.
 | `gauge.js` | autor 4 | cała wizualizacja danych (SVG) |
 | `app.js` | autor 6 | powłoka, router, rejestr widoków |
 | `index.html` | autor 6 | szkielet z rozdziału 4.3, przepisany dosłownie |
-| `manifest.webmanifest`, `sw.js` | autor 6 | offline; kopia z v3 z zakresem przestawionym na `/v4/` |
+| `manifest.webmanifest`, `sw.js` | autor 6 | offline; wzorowane na v3, z zakresem na `/v4/`. `APP_SHELL` wymienia też cztery pliki z `../shared/` i trzy ikony z `../icons/` |
 | `screen-measure.js` | autor 7 | ekran POMIAR |
 | `screen-history.js` | autor 7 | ekran HISTORIA |
 | `screen-tools.js` | autor 8 | ekran NARZĘDZIA + dziewięć arkuszy narzędziowych |
@@ -47,11 +48,18 @@ nie wymyślaj po cichu własnej konwencji.
 
 ```
 tokens.css → base.css → components.css → screens.css
-metrics.js → bus.js → engine.js → scale.js
+../shared/metrics.js → ../shared/bus.js → ../shared/engine.js → ../shared/scale-core.js → scale.js
 store.js → ui.js → gauge.js
 screen-measure.js → screen-history.js → screen-tools.js → screen-support.js
 app.js                     (ostatni: buduje powłokę z rejestru i emituje app:ready)
 ```
+
+Cztery pliki z `../shared/` są **wspólne z v2 i v3** (opis w `docs/shared/README.md`).
+Zmiana w którymkolwiek z nich dotyka trzech wersji naraz, więc trzeba wtedy podbić
+`CACHE` w `docs/v2/sw.js`, `docs/v3/sw.js` i `docs/v4/sw.js`. Lokalny `scale.js` idzie
+**po** `scale-core.js`: rdzeń tworzy `window.Scale`, lokalny plik dokłada do tego samego
+obiektu `Scale.TEXT`. Rdzeń sięga po `Scale.TEXT` dopiero w chwili wywołania, więc taka
+kolejność wystarcza.
 
 Każdy `screen-*.js` w czasie ładowania wywołuje `App.registerView({...})` i nic więcej.
 Budowa DOM widoku dzieje się dopiero w `build(root)`, które `app.js` woła po `DOMContentLoaded`.
@@ -59,8 +67,10 @@ Budowa DOM widoku dzieje się dopiero w `build(root)`, które `app.js` woła po 
 ### 0.3 Trzy zakazy, które unieważniają kod
 
 1. **Zero sieci.** Żadnego `fetch`, `XMLHttpRequest`, `<link>` do CDN, webfontów, plików
-   graficznych. Wszystkie ikony to inline SVG rysowane w `ui.js`. Aplikacja działa w trybie
-   samolotowym, od pierwszego uruchomienia.
+   graficznych. Wszystkie ikony to inline SVG rysowane w `ui.js`. Poza własnym katalogiem
+   v4 sięga wyłącznie po `../icons/` i po cztery pliki kodu wspólnego z `../shared/` —
+   oba katalogi leżą w tym samym repozytorium i stoją na liście `APP_SHELL` w `sw.js`,
+   więc aplikacja nadal działa w trybie samolotowym po pierwszym uruchomieniu.
 2. **Zero polszczyzny poza słownikami.** `Scale.TEXT` (istniejący) oraz `UI.T` (nowy, rozdział 7).
    Żaden `screen-*.js` nie zawiera literału polskiego. Autor ekranu, któremu brakuje zdania,
    dopisuje je do rozdziału 7 tego dokumentu, a nie do swojego pliku.
@@ -540,9 +550,10 @@ modalne stoją w statycznym HTML, bo `engine.js` i `ui.js` szukają ich po ID pr
   <!-- 5. Komunikat dla czytnika ekranu. Jedyny element o tej roli w aplikacji. -->
   <p class="ms4-sronly" id="live" role="status" aria-live="polite"></p>
 
-  <script src="metrics.js"></script>
-  <script src="bus.js"></script>
-  <script src="engine.js"></script>
+  <script src="../shared/metrics.js"></script>
+  <script src="../shared/bus.js"></script>
+  <script src="../shared/engine.js"></script>
+  <script src="../shared/scale-core.js"></script>
   <script src="scale.js"></script>
   <script src="store.js"></script>
   <script src="ui.js"></script>
