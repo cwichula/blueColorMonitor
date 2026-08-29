@@ -3,10 +3,8 @@
  * SKĄD: kod przeniesiony BEZ ZMIAN z docs/v3/engine.js. docs/v4/engine.js był
  * bajtowo identyczny, a docs/v2/engine.js różnił się wyłącznie trzema blokami
  * komentarza — ani jedną linią kodu. Te trzy bloki wzięto tutaj w redakcji v2,
- * bo tylko w niej nie ma reliktów podziału aplikacji na funkcje darmowe
- * i odpłatne: skasował je commit przestawiający v2 na dobrowolne wpłaty, a do
- * v3 i v4 ta redakcja nigdy nie dotarła. Z tego samego powodu w metrics.js
- * wybrano redakcję v4.
+ * bo jej komentarze są najnowsze — tak samo jak w metrics.js, gdzie z tego
+ * samego powodu wybrano redakcję v4.
  *
  * KTO ŁADUJE: v2, v3 i v4 — plik jest wpięty w index.html i wymieniony
  * w APP_SHELL każdej z tych trzech wersji.
@@ -872,8 +870,9 @@
     showPlaceholder(text('IDLE'));
 
     if (finished) emit('engine:stopped', { session: finished });
-    // No ad, no upsell and no dialog is triggered from here. A measurement that
-    // ends must end quietly; that is a rule of this project, not an omission.
+    // Nothing is triggered from here: no dialog, no prompt, no interruption.
+    // A measurement that ends must end quietly; that is a rule of this
+    // project, not an omission.
   };
 
   Engine.toggle = function () {
@@ -984,8 +983,8 @@
     return fl && fl.percent !== null && brightness > COMFORT_MIN_BRIGHTNESS;
   }
 
-  // Every metric, every sample, for everybody. This function has no idea what a
-  // subscription is and must never learn.
+  // Every metric, every sample, for everybody: the reading is always built
+  // whole, and no number in it is ever conditional.
   function buildReading(t, r, g, b, cells) {
     var brightness = Metrics.brightness(r, g, b);
 

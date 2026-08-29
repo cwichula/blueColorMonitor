@@ -474,7 +474,7 @@ window.I18nData['cs'] = Object.assign(window.I18nData['cs'] || {}, {
   'support.keyTitle': 'Pokud chcete pomoct',
   'support.keyLabel': 'Kupte mi kávu',
   'support.keyAria': 'Kupte mi kávu — otevře externí stránku na nové kartě',
-  'support.serviceText': 'Profil pro dary vede externí služba, například Buy Me a Coffee. Aplikace z něj nenačítá žádný skript, widget ani obrázek — stojí tu obyčejný odkaz a nic víc.',
+  'support.serviceText': 'Profil pro dary vede Buy Me a Coffee a je to jediná forma podpory v této aplikaci. Aplikace z něj nenačítá žádný skript, widget ani obrázek — stojí tu obyčejný odkaz a nic víc.',
   'support.privacyText': 'Stisknutí tohoto tlačítka otevře externí stránku na nové kartě a je to jediný okamžik, kdy cokoli opouští toto zařízení. Měření, historie a nastavení zůstávají tam, kde byly — v paměti tohoto prohlížeče.',
   'support.privacyPendingText': 'Až se adresa objeví, stisknutí tlačítka otevře externí stránku na nové kartě a bude to jediný okamžik, kdy cokoli opouští toto zařízení. Měření, historie a nastavení zůstávají tam, kde byly — v paměti tohoto prohlížeče.',
   'support.emptyTitle': 'Profil zatím není připojený',

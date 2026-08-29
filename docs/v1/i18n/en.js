@@ -256,8 +256,8 @@ window.I18nData['en'] = Object.assign(window.I18nData['en'] || {}, {
   'support.button': 'Buy me a coffee',
   'support.button.aria': 'Buy me a coffee — opens the donation profile in a new tab',
   'support.pending': 'The donation profile is not connected yet. The button will stand here as soon as it is. Until then there is nothing to do — the app is free in its entirety anyway.',
-  'support.privacy': 'The button opens an external page (Buy Me a Coffee, for example) in a new browser tab. That is the only moment when anything leaves this device. The camera image and all of your measurements stay here — they are not sent anywhere, either before you press it or after.',
-  'support.privacyPending': 'Once the address is available, pressing the button will open an external page (Buy Me a Coffee, for example) in a new browser tab. That will be the only moment when anything leaves this device. The camera image and all of your measurements stay here — they are not sent anywhere.',
+  'support.privacy': 'The button opens an external page (Buy Me a Coffee) in a new browser tab. That is the only moment when anything leaves this device. The camera image and all of your measurements stay here — they are not sent anywhere, either before you press it or after.',
+  'support.privacyPending': 'Once the address is available, pressing the button will open an external page (Buy Me a Coffee) in a new browser tab. That will be the only moment when anything leaves this device. The camera image and all of your measurements stay here — they are not sent anywhere.',
 
   /* =====================================================================
      DOKUMENTACJA (#panelMethodology)

@@ -261,8 +261,8 @@ window.I18nData['pl'] = Object.assign(window.I18nData['pl'] || {}, {
   'support.button': 'Postaw mi kawę',
   'support.button.aria': 'Postaw mi kawę — otwiera profil darowizn w nowej karcie',
   'support.pending': 'Profil darowizn nie jest jeszcze podłączony. Gdy tylko się pojawi, przycisk stanie w tym miejscu. Do tego czasu nic nie trzeba robić — aplikacja i tak jest w całości bezpłatna.',
-  'support.privacy': 'Przycisk otwiera stronę zewnętrzną (na przykład Buy Me a Coffee) w nowej karcie przeglądarki. To jedyny moment, w którym cokolwiek opuszcza to urządzenie. Obraz z kamery i wszystkie Twoje pomiary zostają tutaj — nie są nigdzie wysyłane, ani przed kliknięciem, ani po nim.',
-  'support.privacyPending': 'Kiedy adres się pojawi, kliknięcie przycisku otworzy stronę zewnętrzną (na przykład Buy Me a Coffee) w nowej karcie przeglądarki. Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie. Obraz z kamery i wszystkie Twoje pomiary zostają tutaj — nie są nigdzie wysyłane.',
+  'support.privacy': 'Przycisk otwiera stronę zewnętrzną (Buy Me a Coffee) w nowej karcie przeglądarki. To jedyny moment, w którym cokolwiek opuszcza to urządzenie. Obraz z kamery i wszystkie Twoje pomiary zostają tutaj — nie są nigdzie wysyłane, ani przed kliknięciem, ani po nim.',
+  'support.privacyPending': 'Kiedy adres się pojawi, kliknięcie przycisku otworzy stronę zewnętrzną (Buy Me a Coffee) w nowej karcie przeglądarki. Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie. Obraz z kamery i wszystkie Twoje pomiary zostają tutaj — nie są nigdzie wysyłane.',
 
   /* =====================================================================
      DOKUMENTACJA (#panelMethodology)

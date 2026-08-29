@@ -2,8 +2,7 @@
  *
  * SKĄD: przeniesione BEZ ZMIAN z docs/v4/metrics.js. Redakcje v2, v3 i v4
  * różniły się wyłącznie komentarzami — ani jedną linią kodu. Wybrano v4, bo
- * jej komentarze są najnowsze i nie ma w nich reliktów podziału aplikacji na
- * funkcje darmowe i płatne.
+ * jej komentarze są najnowsze.
  *
  * KTO ŁADUJE: v2, v3 i v4 — plik jest wpięty w index.html i wymieniony
  * w APP_SHELL każdej z tych trzech wersji.

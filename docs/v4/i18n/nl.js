@@ -583,7 +583,7 @@ window.I18nData['nl'] = Object.assign(window.I18nData['nl'] || {}, {
   'support.nothingText': 'Niets in de app. Een donatie ontgrendelt niets en verandert niets — ervoor en erna ziet alles er hetzelfde uit. Er blijft alleen dit van over: ik weet dat het voor iemand nuttig was.',
   'support.donate': 'Trakteer me op een koffie',
   'support.donateAria': 'Het donatieprofiel in een nieuw tabblad openen',
-  'support.donateVia': 'De link leidt naar een extern donatieprofiel (bijvoorbeeld Buy Me a Coffee).',
+  'support.donateVia': 'De link leidt naar een extern donatieprofiel op Buy Me a Coffee.',
   'support.noUrlTitle': 'Het profiel is nog niet aangesloten',
   'support.noUrlText': 'Het adres van het donatieprofiel is nog niet ingesteld, dus er is nergens heen te gaan — en daarom staat hier geen knop. De rest van de app werkt onveranderd.',
   'support.thanks': 'Dank voor elke steun — en ook voor het gebruiken van de app zelf.',

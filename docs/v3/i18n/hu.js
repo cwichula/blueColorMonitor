@@ -471,7 +471,7 @@ window.I18nData['hu'] = Object.assign(window.I18nData['hu'] || {}, {
   'support.keyTitle': 'Ha segíteni szeretnél',
   'support.keyLabel': 'Hívj meg egy kávéra',
   'support.keyAria': 'Hívj meg egy kávéra — külső oldalt nyit meg új lapon',
-  'support.serviceText': 'Az adományozási profilt külső szolgáltatás vezeti, például a Buy Me a Coffee. Az alkalmazás semmilyen szkriptet, widgetet vagy képet nem tölt be onnan — itt egy egyszerű hivatkozás áll, és semmi más.',
+  'support.serviceText': 'Az adományozási profilt a Buy Me a Coffee vezeti, és ez a támogatás egyetlen formája ebben az alkalmazásban. Az alkalmazás semmilyen szkriptet, widgetet vagy képet nem tölt be onnan — itt egy egyszerű hivatkozás áll, és semmi más.',
   'support.privacyText': 'Ennek a gombnak a megnyomása külső oldalt nyit meg új lapon, és ez az egyetlen pillanat, amikor bármi elhagyja ezt az eszközt. A mérések, az előzmények és a beállítások ott maradnak, ahol voltak — ennek a böngészőnek a tárolójában.',
   'support.privacyPendingText': 'Amint a cím elérhető lesz, a gomb megnyomása külső oldalt nyit majd meg új lapon, és ez lesz az egyetlen pillanat, amikor bármi elhagyja ezt az eszközt. A mérések, az előzmények és a beállítások ott maradnak, ahol voltak — ennek a böngészőnek a tárolójában.',
   'support.emptyTitle': 'A profil még nincs bekötve',

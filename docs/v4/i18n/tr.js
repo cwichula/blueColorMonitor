@@ -579,7 +579,7 @@ window.I18nData['tr'] = Object.assign(window.I18nData['tr'] || {}, {
   'support.nothingText': 'Uygulamada hiçbir şey. Bağış hiçbir şeyin kilidini açmaz ve hiçbir şeyi değiştirmez — ondan önce de sonra da her şey aynı görünür. Geriye yalnızca bunun birine yaradığını bilmem kalır.',
   'support.donate': 'Bana bir kahve ısmarla',
   'support.donateAria': 'Bağış profilini yeni sekmede aç',
-  'support.donateVia': 'Bağlantı dış bir bağış profiline gider (örneğin Buy Me a Coffee).',
+  'support.donateVia': 'Bağlantı, Buy Me a Coffee üzerindeki dış bir bağış profiline gider.',
   'support.noUrlTitle': 'Profil henüz bağlı değil',
   'support.noUrlText': 'Bağış profilinin adresi henüz belirlenmedi, dolayısıyla gidilecek bir yer yok — düğmenin burada olmamasının nedeni de bu. Uygulamanın geri kalanı olduğu gibi çalışır.',
   'support.thanks': 'Her destek için teşekkür ederim — uygulamayı kullanmanız için de.',

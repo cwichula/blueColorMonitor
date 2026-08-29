@@ -474,7 +474,7 @@ window.I18nData['zh'] = Object.assign(window.I18nData['zh'] || {}, {
   'support.keyTitle': '如果你想帮忙',
   'support.keyLabel': '请我喝杯咖啡',
   'support.keyAria': '请我喝杯咖啡——会在新标签页中打开外部页面',
-  'support.serviceText': '捐赠页面由外部服务承载，例如 Buy Me a Coffee。应用不会从它那里加载任何脚本、组件或图片——这里只有一个普通的链接，此外什么也没有。',
+  'support.serviceText': '捐赠页面由 Buy Me a Coffee 承载，这也是本应用中唯一的支持方式。应用不会从它那里加载任何脚本、组件或图片——这里只有一个普通的链接，此外什么也没有。',
   'support.privacyText': '按下这个按键会在新标签页中打开一个外部页面，这是唯一有东西离开这台设备的时刻。测量结果、历史记录和设置都留在原处——在这个浏览器的存储里。',
   'support.privacyPendingText': '等地址出现之后，按下这个按键会在新标签页中打开一个外部页面，那将是唯一有东西离开这台设备的时刻。测量结果、历史记录和设置都留在原处——在这个浏览器的存储里。',
   'support.emptyTitle': '捐赠页面还没有接上',

@@ -575,7 +575,7 @@ window.I18nData['zh'] = Object.assign(window.I18nData['zh'] || {}, {
   'support.nothingText': '在应用里什么都没有。捐赠不解锁任何东西，也不改变任何东西 —— 捐之前和捐之后一切看起来都一样。留下的只是：我知道这东西对某个人有用。',
   'support.donate': '请我喝杯咖啡',
   'support.donateAria': '在新标签页中打开捐赠页面',
-  'support.donateVia': '链接通向外部的捐赠页面（例如 Buy Me a Coffee）。',
+  'support.donateVia': '链接通向 Buy Me a Coffee 上的外部捐赠页面。',
   'support.noUrlTitle': '捐赠页面还没有接上',
   'support.noUrlText': '捐赠页面的地址还没有设定，所以没有地方可去 —— 因此这里也没有按钮。应用的其余部分照常工作。',
   'support.thanks': '谢谢每一份支持 —— 也谢谢你使用这个应用本身。',

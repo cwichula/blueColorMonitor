@@ -3,9 +3,8 @@
 
    Wszystko, co ten plik buduje, jest dostępne dla każdego, od razu i bez
    warunków: historia długoterminowa, raport dzienny i tygodniowy, profile
-   progów, eksport CSV, alert progowy i podsumowanie sesji. Nie ma tu
-   żadnego sprawdzania uprawnień, bo nie ma czego sprawdzać — aplikacja
-   nie dzieli funkcji na darmowe i płatne.
+   progów, eksport CSV, alert progowy i podsumowanie sesji. Aplikacja jest
+   w całości bezpłatna i działa bez konta.
 
    Podział odpowiedzialności:
    - app.js  — pomiar, wykresy, progi, bufor historii (publikuje AppData),
@@ -25,9 +24,11 @@
   var PROFILES_KEY = 'blueMonitor.profiles.v1';
   var PROFILES_MAX = 5;
 
-  // Klucze po nieistniejącej już warstwie sprzedażowej. Kasujemy je raz, przy
-  // starcie, żeby nie zostawiać po sobie śmieci w pamięci przeglądarki.
-  // Kluczy z pomiarami, historią, progami i profilami nie ruszamy.
+  // Klucze zostawione w pamięci przeglądarki przez starsze buildy tej
+  // aplikacji. Nic ich już nie zapisuje ani nie czyta; kasujemy je raz, przy
+  // starcie, żeby nie zostawiać po sobie śmieci na urządzeniach, które
+  // tamte buildy uruchomiły. Kluczy z pomiarami, historią, progami
+  // i profilami nie ruszamy.
   var OBSOLETE_KEYS = [
     'blueMonitor.billing.v1',
     'blueMonitor.account.v1',

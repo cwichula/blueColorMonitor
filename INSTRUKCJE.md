@@ -193,12 +193,11 @@ Pełne wyjaśnienie jest też w aplikacji pod ikoną „i" w nagłówku.
 
 Aplikacja nie sprzedaje niczego. **Wszystko, co dana wersja potrafi, działa dla
 każdego, od razu, bez konta, bez limitów i bez opłat** — w v2…v5 to wszystkie
-siedem wielkości, w v1 obie gałki i cała reszta narzędzi. Nie ma planów, subskrypcji, cen,
-okresu próbnego, paywalla, reklam ani logowania — dawna warstwa monetyzacji
-została usunięta z wszystkich pięciu wersji, a nie tylko wyłączona.
+siedem wielkości, w v1 obie gałki i cała reszta narzędzi. Nie ma w niej reklam
+ani logowania.
 
-W jej miejsce w każdej wersji stoi jeden ekran (albo sekcja) **„Wsparcie”**,
-dostępny tam, gdzie wcześniej była zakładka „Konto”. Jest na nim krótkie
+Jedyna forma wsparcia to **dobrowolna darowizna przez Buy Me a Coffee**.
+W każdej wersji stoi na to jeden ekran (albo sekcja) **„Wsparcie”**: krótkie
 wyjaśnienie i jeden przycisk prowadzący na zewnętrzny profil darowizn.
 **Darowizna niczego nie odblokowuje** — to jest napisane wprost na ekranie
 i tak ma zostać. Prośba pojawia się wyłącznie wtedy, gdy użytkownik sam tam
@@ -226,8 +225,8 @@ wpisanie adresu tam nie zadziała.
 
 **Co zrobić, żeby podłączyć prawdziwy profil:**
 
-1. Załóż profil w dowolnym serwisie darowizn — Buy Me a Coffee, Ko-fi, PayPal.me
-   albo innym. Skopiuj adres swojego profilu.
+1. Załóż profil na **Buy Me a Coffee** — to jedyny serwis, którego ta warstwa
+   używa. Skopiuj adres swojego profilu.
 2. W każdej z pięciu wersji otwórz plik z tabeli powyżej i wklej adres między
    apostrofy:
 
@@ -235,9 +234,11 @@ wpisanie adresu tam nie zadziała.
    const SUPPORT_URL = 'https://buymeacoffee.com/twojanazwa';
    ```
 
-   Adres **musi zaczynać się od `https://`**. Cokolwiek innego (`http://`, sam
-   `buymeacoffee.com/…`, literówka w schemacie) aplikacja celowo traktuje jak
-   brak adresu i nie pokaże przycisku — to zabezpieczenie, nie awaria.
+   Adres **musi zaczynać się od `https://`** i prowadzić na `buymeacoffee.com`
+   (albo `www.buymeacoffee.com`) — to jedyny dopuszczalny cel i warstwa wsparcia
+   sama tego pilnuje. Cokolwiek innego (`http://`, samo `buymeacoffee.com/…`,
+   inny serwis, literówka w schemacie) aplikacja celowo traktuje jak brak adresu
+   i nie pokaże przycisku — to zabezpieczenie, nie awaria.
 3. Podnieś numer pamięci podręcznej w service workerze tej wersji, inaczej
    telefony z już zainstalowaną aplikacją dalej dostaną starą kopię:
 
@@ -261,19 +262,19 @@ docelowy stan — aplikacja jest wtedy po prostu w pełni darmowa i o nic nie pr
 
 ### 5.2. Czego świadomie NIE ma i nie należy dodawać
 
-- **Żadnego gotowego widżetu Buy Me a Coffee, Ko-fi ani PayPala.** Takie widżety
-  ładują kod z cudzego serwera przy każdym otwarciu strony. Złamałoby to
+- **Żadnego gotowego widżetu Buy Me a Coffee.** Takie widżety ładują kod
+  z cudzego serwera przy każdym otwarciu strony. Złamałoby to
   obietnicę, na której stoi cała aplikacja („pomiar zostaje na urządzeniu”),
   i zepsuło tryb offline. Ikonka kubka jest narysowana na miejscu.
 - **Żadnego połączenia z siecią poza kliknięciem użytkownika.** Otwarcie profilu
   darowizn to jedyny moment, w którym cokolwiek opuszcza urządzenie — i jest to
   napisane wprost przy przycisku, na każdym ekranie Wsparcia.
 - **Żadnych kwot zapisywanych w aplikacji.** Nic nie zapamiętuje, czy ktoś
-  wsparł; nie ma „planu”, uprawnień ani stanu zakupu.
-- Jeśli kiedyś miałaby wrócić prawdziwa sprzedaż, jest to zmiana modelu
-  produktu, a nie podmiana pliku — teksty w całej aplikacji obiecują teraz
-  pełną dostępność bez opłat wszystkiego, co dana wersja potrafi (w v2…v5
-  wszystkich siedmiu wielkości, w v1 obu gałek).
+  wsparł, bo nie ma po co: darowizna niczego nie odblokowuje.
+- **Żadnego dzielenia funkcji na dostępne i niedostępne.** Teksty w całej
+  aplikacji obiecują pełną dostępność bez opłat wszystkiego, co dana wersja
+  potrafi (w v2…v5 wszystkich siedmiu wielkości, w v1 obu gałek) — i tak ma
+  zostać.
 
 ---
 
@@ -299,7 +300,7 @@ docs/
                             z tokenów kolorów zdefiniowanych w style.css
     app.js                — obsługa kamery, próbkowanie koloru, wykres, gałka;
                             publikuje window.AppTabs i window.AppData
-    features.js           — wspólne funkcje aplikacji, dostępne bezwarunkowo
+    features.js           — wspólne funkcje aplikacji
     support.js            — ekran „Wsparcie”; TU NA GÓRZE STOI STAŁA SUPPORT_URL
                             (patrz rozdział 5.1)
     menu.js               — dolny pasek nawigacji, ekrany „Więcej" i „O aplikacji",

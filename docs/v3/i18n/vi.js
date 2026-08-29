@@ -463,7 +463,7 @@ window.I18nData['vi'] = Object.assign(window.I18nData['vi'] || {}, {
   'support.keyTitle': 'Nếu bạn muốn giúp',
   'support.keyLabel': 'Mời tôi một ly cà phê',
   'support.keyAria': 'Mời tôi một ly cà phê — mở một trang bên ngoài trong tab mới',
-  'support.serviceText': 'Hồ sơ đóng góp do một dịch vụ bên ngoài quản lý, ví dụ Buy Me a Coffee. Ứng dụng không tải từ đó bất kỳ tập lệnh, tiện ích hay hình ảnh nào — ở đây chỉ có một liên kết thông thường và không gì khác.',
+  'support.serviceText': 'Hồ sơ đóng góp do Buy Me a Coffee quản lý, và đó là hình thức ủng hộ duy nhất trong ứng dụng này. Ứng dụng không tải từ đó bất kỳ tập lệnh, tiện ích hay hình ảnh nào — ở đây chỉ có một liên kết thông thường và không gì khác.',
   'support.privacyText': 'Nhấn nút này sẽ mở một trang bên ngoài trong tab mới, và đó là lúc duy nhất có thứ gì đó rời khỏi thiết bị này. Kết quả đo, lịch sử và cài đặt vẫn ở nguyên chỗ cũ — trong bộ nhớ của trình duyệt này.',
   'support.privacyPendingText': 'Khi đã có địa chỉ, nhấn nút sẽ mở một trang bên ngoài trong tab mới và đó sẽ là lúc duy nhất có thứ gì đó rời khỏi thiết bị này. Kết quả đo, lịch sử và cài đặt vẫn ở nguyên chỗ cũ — trong bộ nhớ của trình duyệt này.',
   'support.emptyTitle': 'Hồ sơ chưa được kết nối',

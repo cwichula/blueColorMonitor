@@ -576,7 +576,7 @@ window.I18nData['de'] = Object.assign(window.I18nData['de'] || {}, {
   'support.nothingText': 'Nichts in der App. Die Spende schaltet nichts frei und ändert nichts — davor und danach sieht alles gleich aus. Es bleibt nur, dass ich weiß, dass es jemandem genützt hat.',
   'support.donate': 'Einen Kaffee spendieren',
   'support.donateAria': 'Spendenprofil in einem neuen Tab öffnen',
-  'support.donateVia': 'Der Link führt auf ein externes Spendenprofil (z. B. Buy Me a Coffee).',
+  'support.donateVia': 'Der Link führt auf ein externes Spendenprofil bei Buy Me a Coffee.',
   'support.noUrlTitle': 'Das Profil ist noch nicht angebunden',
   'support.noUrlText': 'Die Adresse des Spendenprofils ist noch nicht gesetzt, es gibt also kein Ziel — und deshalb steht hier keine Schaltfläche. Der ganze Rest der App funktioniert unverändert.',
   'support.thanks': 'Danke für jede Unterstützung — auch dafür, dass Sie die App überhaupt benutzen.',

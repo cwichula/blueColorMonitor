@@ -581,7 +581,7 @@ window.I18nData['hu'] = Object.assign(window.I18nData['hu'] || {}, {
   'support.nothingText': 'Az alkalmazásban semmit. Az adomány semmit nem old fel és semmit nem változtat meg — előtte és utána minden ugyanúgy néz ki. Csak annyi marad, hogy tudom: valakinek hasznára vált.',
   'support.donate': 'Hívj meg egy kávéra',
   'support.donateAria': 'Az adományozási profil megnyitása új lapon',
-  'support.donateVia': 'A hivatkozás külső adományozási profilra vezet (például Buy Me a Coffee).',
+  'support.donateVia': 'A hivatkozás a Buy Me a Coffee-n lévő külső adományozási profilra vezet.',
   'support.noUrlTitle': 'A profil még nincs csatlakoztatva',
   'support.noUrlText': 'Az adományozási profil címe még nincs beállítva, így nincs hová vezetnie — ezért nincs itt gomb. Az alkalmazás összes többi része változatlanul működik.',
   'support.thanks': 'Köszönök minden támogatást — és azt is, hogy egyáltalán használod az alkalmazást.',

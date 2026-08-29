@@ -573,7 +573,7 @@ window.I18nData['id'] = Object.assign(window.I18nData['id'] || {}, {
   'support.nothingText': 'Tidak ada apa-apa di dalam aplikasi. Donasi tidak membuka apa pun dan tidak mengubah apa pun — sebelum dan sesudahnya semuanya terlihat sama. Yang tersisa hanyalah bahwa saya tahu ini berguna bagi seseorang.',
   'support.donate': 'Belikan saya kopi',
   'support.donateAria': 'Buka profil donasi di tab baru',
-  'support.donateVia': 'Tautan ini menuju profil donasi eksternal (misalnya Buy Me a Coffee).',
+  'support.donateVia': 'Tautan ini menuju profil donasi eksternal di Buy Me a Coffee.',
   'support.noUrlTitle': 'Profilnya belum terhubung',
   'support.noUrlText': 'Alamat profil donasi belum disetel, jadi tidak ada tujuan yang dituju — dan karena itu di sini tidak ada tombol. Seluruh bagian aplikasi lainnya bekerja tanpa perubahan.',
   'support.thanks': 'Terima kasih untuk setiap dukungan — juga untuk sekadar memakai aplikasi ini.',

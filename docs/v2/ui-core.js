@@ -538,8 +538,8 @@
   /* Swap the sheet on top of the stack without touching browser history.
      Closing one sheet and opening another in the same tick queued a
      history.back() that landed AFTER the new pushState, so popstate then
-     closed the sheet that had just been opened — the purchase sheet flashed
-     and dismissed itself. One entry in, one entry out, no navigation. */
+     closed the sheet that had just been opened — it flashed and dismissed
+     itself. One entry in, one entry out, no navigation. */
   function replaceSheet(fromId, toId, opts) {
     var top = topEntry();
     if (!top || top.kind !== 'sheet' || top.id !== fromId) {

@@ -467,7 +467,7 @@ window.I18nData['nl'] = Object.assign(window.I18nData['nl'] || {}, {
   'support.keyTitle': 'Als u wilt helpen',
   'support.keyLabel': 'Trakteer me op een koffie',
   'support.keyAria': 'Trakteer me op een koffie — opent een externe pagina in een nieuw tabblad',
-  'support.serviceText': 'Het donatieprofiel wordt door een externe dienst beheerd, bijvoorbeeld Buy Me a Coffee. De app laadt er geen script, widget of afbeelding van — hier staat een gewone link en verder niets.',
+  'support.serviceText': 'Het donatieprofiel wordt door Buy Me a Coffee beheerd en dat is de enige vorm van steun in deze app. De app laadt er geen script, widget of afbeelding van — hier staat een gewone link en verder niets.',
   'support.privacyText': 'Op deze knop drukken opent een externe pagina in een nieuw tabblad, en dat is het enige moment waarop er iets dit apparaat verlaat. Metingen, geschiedenis en instellingen blijven waar ze waren — in het geheugen van deze browser.',
   'support.privacyPendingText': 'Zodra het adres er is, opent een druk op de knop een externe pagina in een nieuw tabblad, en dat zal het enige moment zijn waarop er iets dit apparaat verlaat. Metingen, geschiedenis en instellingen blijven waar ze waren — in het geheugen van deze browser.',
   'support.emptyTitle': 'Het profiel is nog niet aangesloten',

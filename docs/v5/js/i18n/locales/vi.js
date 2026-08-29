@@ -396,8 +396,8 @@ export default {
   'support.cta.title': 'Nếu bạn muốn giúp',
   'support.cta.button': 'Mời tôi một ly cà phê',
   'support.cta.nolink': 'Hồ sơ quyên góp chưa được kết nối. Khi nào có, một cái nút sẽ đứng ở chỗ này.',
-  'support.cta.privacy': 'Liên kết này mở một trang bên ngoài (chẳng hạn Buy Me a Coffee) trong thẻ mới. Đó là lúc duy nhất có thứ gì đó rời khỏi thiết bị này — bản thân phép đo thì luôn ở lại đây.',
-  'support.cta.privacyFuture': 'Khi nào có địa chỉ, cái nút sẽ mở một trang bên ngoài (chẳng hạn Buy Me a Coffee) trong thẻ mới. Đó sẽ là lúc duy nhất có thứ gì đó rời khỏi thiết bị này — bản thân phép đo thì luôn ở lại đây.',
+  'support.cta.privacy': 'Liên kết này mở trang Buy Me a Coffee bên ngoài trong thẻ mới. Đó là lúc duy nhất có thứ gì đó rời khỏi thiết bị này — bản thân phép đo thì luôn ở lại đây.',
+  'support.cta.privacyFuture': 'Khi nào có địa chỉ, cái nút sẽ mở trang Buy Me a Coffee bên ngoài trong thẻ mới. Đó sẽ là lúc duy nhất có thứ gì đó rời khỏi thiết bị này — bản thân phép đo thì luôn ở lại đây.',
   'support.cta.note': 'Ở đây không có đồng hồ đếm ngược, không có lời nhắc và không có cửa sổ nào tự bật lên. Lời đề nghị này chỉ chờ ở thẻ này mà thôi.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

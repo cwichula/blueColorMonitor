@@ -581,7 +581,7 @@ window.I18nData['ro'] = Object.assign(window.I18nData['ro'] || {}, {
   'support.nothingText': 'Nimic în aplicație. Donația nu deblochează nimic și nu schimbă nimic — înainte de ea și după ea totul arată la fel. Rămâne doar atât, că știu că i-a folosit cuiva.',
   'support.donate': 'Fă-mi cinste cu o cafea',
   'support.donateAria': 'Deschide profilul de donații într-o filă nouă',
-  'support.donateVia': 'Linkul duce către un profil extern de donații (de exemplu Buy Me a Coffee).',
+  'support.donateVia': 'Linkul duce către un profil extern de donații pe Buy Me a Coffee.',
   'support.noUrlTitle': 'Profilul nu este încă conectat',
   'support.noUrlText': 'Adresa profilului de donații nu a fost încă setată, așa că nu are unde să ducă — și de aceea nu există aici niciun buton. Tot restul aplicației funcționează neschimbat.',
   'support.thanks': 'Mulțumesc pentru orice sprijin — și pentru simplul fapt că folosești aplicația.',

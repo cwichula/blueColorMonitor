@@ -4,7 +4,7 @@
 // by deleting every cache called 'blue-monitor-v<digits>', which is what v1's
 // cache used to be called back when it lived there. Anything named that way is
 // now, by definition, a leftover of that old root - never a live cache.
-const CACHE_NAME = 'blue-monitor-v1-33';
+const CACHE_NAME = 'blue-monitor-v1-34';
 
 // Every version of the app now lives in its own directory (/v1/, /v2/, /v3/,
 // /v4/) and ships its own service worker, registered from that directory and

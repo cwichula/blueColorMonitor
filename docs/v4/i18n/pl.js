@@ -567,7 +567,7 @@ window.I18nData['pl'] = Object.assign(window.I18nData['pl'] || {}, {
   'support.nothingText': 'Nic w aplikacji. Darowizna niczego nie odblokowuje i niczego nie zmienia — przed nią i po niej wszystko wygląda tak samo. Zostaje tylko tyle, że wiem, że to komuś się przydało.',
   'support.donate': 'Postaw mi kawę',
   'support.donateAria': 'Otwórz profil darowizn w nowej karcie',
-  'support.donateVia': 'Odnośnik prowadzi na zewnętrzny profil darowizn (np. Buy Me a Coffee).',
+  'support.donateVia': 'Odnośnik prowadzi na zewnętrzny profil darowizn w serwisie Buy Me a Coffee.',
   'support.noUrlTitle': 'Profil nie jest jeszcze podłączony',
   'support.noUrlText': 'Adres profilu darowizn nie został jeszcze ustawiony, więc nie ma dokąd prowadzić — i dlatego nie ma tu przycisku. Cała reszta aplikacji działa bez zmian.',
   'support.thanks': 'Dziękuję za każde wsparcie — także za samo korzystanie z aplikacji.',

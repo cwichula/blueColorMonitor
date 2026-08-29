@@ -12,22 +12,9 @@
  * wskaźników. Nic tu nie liczy i nic tu nie jest pomiarem; progi są oceną
  * redakcyjną projektu, nie normą.
  *
- * DECYZJA (przejście na model dobrowolnego wsparcia): pole `premium` oraz
- * eksporty `FREE_IDS` i `PREMIUM_IDS` zostały USUNIĘTE CAŁKOWICIE, a nie
- * zostawione z wartościami neutralnymi. Powody, w kolejności wagi:
- *   1. Wszystkie siedem wielkości jest dostępnych dla każdego bez warunków,
- *      więc podział nie ma już czego opisywać. Zostawione `premium: false`
- *      w każdej pozycji to nie neutralna wartość, tylko martwe pole, które
- *      podpowiada, że kiedyś bywa `true` — czyli że gdzieś istnieje wariant
- *      płatny. Katalog jest źródłem prawdy; nie wolno mu kłamać kształtem.
- *   2. `PREMIUM_IDS` równe `[]` jest gorsze niż brak eksportu: kod, który je
- *      importuje, przechodzi cicho i zaczyna zachowywać się inaczej, zamiast
- *      wywalić się na imporcie w miejscu, które trzeba poprawić.
- *   3. Nic w tym repozytorium tego nie importowało. Wersje v1…v5 mają własne
- *      kopie wzorów i katalogu (patrz README, sekcja „Stosunek do wersji
- *      aplikacji”), więc usunięcie nie psuje żadnego wywołania.
- * Jeżeli ktoś z zewnątrz importował `FREE_IDS`, poprawka po jego stronie jest
- * jednolinijkowa: wszystkie wielkości to teraz po prostu `CATALOGUE.map(m => m.id)`.
+ * Wszystkie siedem wielkości jest dostępnych bez warunków; katalog niczym
+ * dostępu nie warunkuje i nie ma pola, którym mógłby to robić. Listę
+ * identyfikatorów daje po prostu `CATALOGUE.map(m => m.id)`.
  */
 
 /* Pola pozycji: id (klucz używany wszędzie), namePL/unit/shortPL/helpPL (opis

@@ -404,8 +404,8 @@ export default {
   'support.cta.title': '손을 보태고 싶다면',
   'support.cta.button': '커피 한 잔 사주기',
   'support.cta.nolink': '후원 페이지는 아직 연결되지 않았습니다. 준비되면 이 자리에 버튼이 생깁니다.',
-  'support.cta.privacy': '이 링크는 외부 사이트(예: Buy Me a Coffee)를 새 탭에서 엽니다. 이 기기에서 무언가가 나가는 것은 그때뿐이며, 측정 자체는 언제나 여기에 남습니다.',
-  'support.cta.privacyFuture': '주소가 준비되면 버튼이 외부 사이트(예: Buy Me a Coffee)를 새 탭에서 엽니다. 이 기기에서 무언가가 나가는 것은 그때뿐이며, 측정 자체는 언제나 여기에 남습니다.',
+  'support.cta.privacy': '이 링크는 외부 Buy Me a Coffee 페이지를 새 탭에서 엽니다. 이 기기에서 무언가가 나가는 것은 그때뿐이며, 측정 자체는 언제나 여기에 남습니다.',
+  'support.cta.privacyFuture': '주소가 준비되면 버튼이 외부 Buy Me a Coffee 페이지를 새 탭에서 엽니다. 이 기기에서 무언가가 나가는 것은 그때뿐이며, 측정 자체는 언제나 여기에 남습니다.',
   'support.cta.note': '여기에는 카운트다운도, 재촉도, 저절로 열리는 창도 없습니다. 이 부탁은 오직 이 탭에서만 기다립니다.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

@@ -20,9 +20,10 @@
  *   'zone.warning'        — wspólne mówi „Uwaga”, ta wersja od zawsze mówi
  *                           „Ostrzeżenie” (i „Ostrzeżenia” w podsumowaniu);
  *   'zone.spoken.warning' — to samo słowo dla czytnika ekranu;
- *   'privacy.external', 'privacy.externalPending' — ta wersja wymienia
- *                           z nazwy przykładowy serwis i mówi „Pomiary”,
- *                           a nie „Pomiar”.
+ *   'privacy.external', 'privacy.externalPending' — ta wersja nazywa Buy Me
+ *                           a Coffee wprost, bo walidacja adresu w support.js
+ *                           nie przepuszcza żadnego innego serwisu; mówi też
+ *                           „Pomiary”, a nie „Pomiar”.
  *
  * ZASADY: klucze kropkowane po angielsku, wstawki '{nazwa}' identyczne we
  * wszystkich językach, liczba mnoga jako obiekt form CLDR rozstrzygany przez
@@ -312,7 +313,7 @@ window.I18nData['pl'] = Object.assign(window.I18nData['pl'] || {}, {
   'support.pendingText': 'Nie ma tu jeszcze adresu, pod który można przesłać wsparcie. Pojawi się w tym miejscu, kiedy będzie gotowy — do tego czasu wszystko w aplikacji działa dokładnie tak samo.',
 
   /* Nadpisania warstwy wspólnej — patrz nagłówek pliku. */
-  'privacy.external': 'Przycisk otwiera zewnętrzną stronę (na przykład Buy Me a Coffee) w nowej karcie. To jedyny moment, w którym cokolwiek opuszcza to urządzenie — i dzieje się dopiero po Twoim kliknięciu. Pomiary, historia i ustawienia zostają tutaj.',
+  'privacy.external': 'Przycisk otwiera zewnętrzną stronę Buy Me a Coffee w nowej karcie. To jedyny moment, w którym cokolwiek opuszcza to urządzenie — i dzieje się dopiero po Twoim kliknięciu. Pomiary, historia i ustawienia zostają tutaj.',
   'privacy.externalPending': 'Kiedy adres się pojawi, kliknięcie otworzy zewnętrzną stronę w nowej karcie. Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie. Pomiary, historia i ustawienia zostają tutaj.',
 
   /* ==================================================================
@@ -341,9 +342,9 @@ window.I18nData['pl'] = Object.assign(window.I18nData['pl'] || {}, {
      ================================================================== */
 
   'thresholds.noteTitle': 'Co robią progi. ',
-  'thresholds.noteText': 'Próg ostrzegawczy zapala żółty stan, próg krytyczny czerwony. Zmiana działa natychmiast — także na odczycie, który już jest na ekranie. Progi są bezpłatne; płatne jest wyłącznie zapisywanie własnych zestawów pod nazwą.',
+  'thresholds.noteText': 'Próg ostrzegawczy zapala żółty stan, próg krytyczny czerwony. Zmiana działa natychmiast — także na odczycie, który już jest na ekranie. Własny zestaw progów możesz zapisać pod nazwą i wracać do niego, kiedy zechcesz.',
   'thresholds.profilesTitle': 'Profile progów',
-  'thresholds.profilesSub': 'Trzy wbudowane są bezpłatne',
+  'thresholds.profilesSub': 'Trzy wbudowane i Twoje własne',
   'thresholds.customName': 'Nazwa własnego profilu',
   'thresholds.customPlaceholder': 'np. Sypialnia wieczorem',
   'thresholds.save': 'Zapisz bieżące progi',

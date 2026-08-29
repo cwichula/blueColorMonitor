@@ -576,7 +576,7 @@ window.I18nData['ms'] = Object.assign(window.I18nData['ms'] || {}, {
   'support.nothingText': 'Tiada apa-apa dalam aplikasi. Derma tidak membuka apa-apa dan tidak mengubah apa-apa — sebelum dan selepasnya semuanya kelihatan sama. Yang tinggal hanyalah bahawa saya tahu ia berguna kepada seseorang.',
   'support.donate': 'Belanja saya kopi',
   'support.donateAria': 'Buka profil derma dalam tab baharu',
-  'support.donateVia': 'Pautan itu menuju ke profil derma luar (Buy Me a Coffee, sebagai contoh).',
+  'support.donateVia': 'Pautan itu menuju ke profil derma luar di Buy Me a Coffee.',
   'support.noUrlTitle': 'Profil itu belum disambungkan',
   'support.noUrlText': 'Alamat profil derma belum ditetapkan, jadi tiada tempat untuk dituju — dan itulah sebabnya tiada butang di sini. Selebihnya aplikasi ini berfungsi tanpa perubahan.',
   'support.thanks': 'Terima kasih atas setiap sokongan — dan juga kerana menggunakan aplikasi ini.',

@@ -396,8 +396,8 @@ export default {
   'support.cta.title': '如果你愿意帮忙',
   'support.cta.button': '请我喝杯咖啡',
   'support.cta.nolink': '捐助页面还没有接上。等它出现，这个位置会站着一个按钮。',
-  'support.cta.privacy': '这个链接会在新标签页中打开一个外部网站（例如 Buy Me a Coffee）。那是唯一一次有东西离开本设备 — 测量本身始终留在这里。',
-  'support.cta.privacyFuture': '等地址就位之后，这个按钮会在新标签页中打开一个外部网站（例如 Buy Me a Coffee）。那将是唯一一次有东西离开本设备 — 测量本身始终留在这里。',
+  'support.cta.privacy': '这个链接会在新标签页中打开外部的 Buy Me a Coffee 页面。那是唯一一次有东西离开本设备 — 测量本身始终留在这里。',
+  'support.cta.privacyFuture': '等地址就位之后，这个按钮会在新标签页中打开外部的 Buy Me a Coffee 页面。那将是唯一一次有东西离开本设备 — 测量本身始终留在这里。',
   'support.cta.note': '这里没有倒计时，没有提醒，也没有会自己弹出来的窗口。这个请求只在这个标签页里等着。',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

@@ -391,8 +391,8 @@ export default {
   'support.cta.title': 'Ha segíteni szeretnél',
   'support.cta.button': 'Hívj meg egy kávéra',
   'support.cta.nolink': 'Az adományozási profil még nincs bekötve. Amint meglesz, ezen a helyen áll majd egy gomb.',
-  'support.cta.privacy': 'Ez a hivatkozás külső oldalt (például a Buy Me a Coffee-t) nyit meg új lapon. Ez az egyetlen pillanat, amikor bármi elhagyja ezt az eszközt — maga a mérés mindig itt marad.',
-  'support.cta.privacyFuture': 'Amint a cím a helyére kerül, a gomb külső oldalt (például a Buy Me a Coffee-t) nyitja meg új lapon. Ez lesz az egyetlen pillanat, amikor bármi elhagyja ezt az eszközt — maga a mérés mindig itt marad.',
+  'support.cta.privacy': 'Ez a hivatkozás a Buy Me a Coffee külső oldalát nyit meg új lapon. Ez az egyetlen pillanat, amikor bármi elhagyja ezt az eszközt — maga a mérés mindig itt marad.',
+  'support.cta.privacyFuture': 'Amint a cím a helyére kerül, a gomb a Buy Me a Coffee külső oldalát nyitja meg új lapon. Ez lesz az egyetlen pillanat, amikor bármi elhagyja ezt az eszközt — maga a mérés mindig itt marad.',
   'support.cta.note': 'Nincs itt visszaszámlálás, nincsenek emlékeztetők, és nincs magától megnyíló ablak. Ez a kérés csak ezen a lapon várakozik.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

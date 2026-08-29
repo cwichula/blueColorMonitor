@@ -585,7 +585,7 @@ window.I18nData['ja'] = Object.assign(window.I18nData['ja'] || {}, {
   'support.nothingText': 'アプリの中では、何も。寄付は何も解除せず、何も変えません — その前も後も、すべて同じに見えます。残るのは、誰かの役に立ったと私が知ることだけです。',
   'support.donate': 'コーヒーをおごる',
   'support.donateAria': '寄付のプロフィールを新しいタブで開く',
-  'support.donateVia': 'リンクは外部の寄付プロフィール (たとえば Buy Me a Coffee) に移動します。',
+  'support.donateVia': 'リンクは Buy Me a Coffee にある外部の寄付プロフィールに移動します。',
   'support.noUrlTitle': 'プロフィールはまだつながっていません',
   'support.noUrlText': '寄付のプロフィールのアドレスがまだ設定されていないので、移動する先がありません — だからここにはボタンがありません。アプリのほかの部分は、変わりなく動きます。',
   'support.thanks': 'どんな支援にも感謝します — アプリを使ってくださること自体にも。',

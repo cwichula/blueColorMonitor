@@ -120,8 +120,8 @@
 
   /** The sentence under the big number.
    *
-   *  Computed from ALL SEVEN metrics, every one of which is available to
-   *  everyone: there is nothing here to buy and nothing to unlock.
+   *  Computed from ALL SEVEN metrics — every one of them, always, for
+   *  everybody.
    *
    *  Worst zone wins; inside that zone the culprit is the metric with the
    *  highest severity, ties resolved by catalogue order. NO hysteresis here —

@@ -399,8 +399,8 @@ export default {
   'support.cta.title': 'Pokud chcete pomoct',
   'support.cta.button': 'Kupte mi kávu',
   'support.cta.nolink': 'Profil pro dary zatím není připojený. Až se objeví, bude na tomto místě tlačítko.',
-  'support.cta.privacy': 'Tento odkaz otevře externí stránku (například Buy Me a Coffee) v nové kartě. To je jediný okamžik, kdy cokoli opouští toto zařízení — samotné měření zůstává vždy tady.',
-  'support.cta.privacyFuture': 'Až bude adresa na místě, tlačítko otevře externí stránku (například Buy Me a Coffee) v nové kartě. Bude to jediný okamžik, kdy cokoli opouští toto zařízení — samotné měření zůstává vždy tady.',
+  'support.cta.privacy': 'Tento odkaz otevře externí stránku Buy Me a Coffee v nové kartě. To je jediný okamžik, kdy cokoli opouští toto zařízení — samotné měření zůstává vždy tady.',
+  'support.cta.privacyFuture': 'Až bude adresa na místě, tlačítko otevře externí stránku Buy Me a Coffee v nové kartě. Bude to jediný okamžik, kdy cokoli opouští toto zařízení — samotné měření zůstává vždy tady.',
   'support.cta.note': 'Není tu žádné odpočítávání, žádné připomínky ani okno, které se otevře samo. Tato prosba čeká jen na této záložce.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

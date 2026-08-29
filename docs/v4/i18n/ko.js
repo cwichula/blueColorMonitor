@@ -580,7 +580,7 @@ window.I18nData['ko'] = Object.assign(window.I18nData['ko'] || {}, {
   'support.nothingText': '앱에서는 아무것도 생기지 않습니다. 기부는 아무것도 열어 주지 않고 아무것도 바꾸지 않습니다 — 기부 전과 후의 모습이 똑같습니다. 남는 것은 이것이 누군가에게 쓸모가 있었다는 사실을 제가 안다는 것뿐입니다.',
   'support.donate': '커피 한 잔 사 주기',
   'support.donateAria': '새 탭에서 기부 페이지 열기',
-  'support.donateVia': '이 링크는 외부 기부 페이지(예: Buy Me a Coffee)로 이어집니다.',
+  'support.donateVia': '이 링크는 Buy Me a Coffee에 있는 외부 기부 페이지로 이어집니다.',
   'support.noUrlTitle': '기부 페이지가 아직 연결되지 않았습니다',
   'support.noUrlText': '기부 페이지 주소가 아직 설정되지 않아 이어질 곳이 없고, 그래서 여기에 버튼이 없습니다. 앱의 나머지는 그대로 작동합니다.',
   'support.thanks': '모든 후원에 감사드립니다 — 앱을 써 주시는 것 자체에도 감사합니다.',

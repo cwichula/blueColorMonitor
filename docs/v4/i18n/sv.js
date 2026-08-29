@@ -580,7 +580,7 @@ window.I18nData['sv'] = Object.assign(window.I18nData['sv'] || {}, {
   'support.nothingText': 'Ingenting i appen. En gåva låser inte upp något och ändrar ingenting — före den och efter den ser allt likadant ut. Kvar blir bara att jag vet att det var till nytta för någon.',
   'support.donate': 'Bjud mig på en kaffe',
   'support.donateAria': 'Öppna donationsprofilen i en ny flik',
-  'support.donateVia': 'Länken leder till en extern donationsprofil (till exempel Buy Me a Coffee).',
+  'support.donateVia': 'Länken leder till en extern donationsprofil på Buy Me a Coffee.',
   'support.noUrlTitle': 'Profilen är inte ansluten än',
   'support.noUrlText': 'Adressen till donationsprofilen är inte inställd än, så det finns ingenstans att leda — och därför finns det ingen knapp här. Resten av appen fungerar oförändrat.',
   'support.thanks': 'Tack för allt stöd — och för att du överhuvudtaget använder appen.',

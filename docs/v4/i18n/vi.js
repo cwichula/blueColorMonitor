@@ -577,7 +577,7 @@ window.I18nData['vi'] = Object.assign(window.I18nData['vi'] || {}, {
   'support.nothingText': 'Không gì trong ứng dụng cả. Khoản đóng góp không mở khóa thứ gì và không thay đổi thứ gì — trước và sau nó, mọi thứ trông y như nhau. Chỉ còn lại điều này: tôi biết ứng dụng đã có ích cho ai đó.',
   'support.donate': 'Mời tôi một ly cà phê',
   'support.donateAria': 'Mở trang đóng góp trong tab mới',
-  'support.donateVia': 'Liên kết dẫn tới một trang đóng góp bên ngoài (ví dụ Buy Me a Coffee).',
+  'support.donateVia': 'Liên kết dẫn tới một trang đóng góp bên ngoài trên Buy Me a Coffee.',
   'support.noUrlTitle': 'Trang đóng góp chưa được kết nối',
   'support.noUrlText': 'Địa chỉ trang đóng góp chưa được đặt, nên không có nơi nào để dẫn tới — và vì thế ở đây không có nút. Toàn bộ phần còn lại của ứng dụng vẫn chạy như thường.',
   'support.thanks': 'Cảm ơn vì mọi sự ủng hộ — và cả vì bạn đã dùng ứng dụng.',

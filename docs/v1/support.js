@@ -7,17 +7,15 @@
    ma funkcji zablokowanych — wszystko działa dla każdego od razu.
 
    Zero odwołań sieciowych: żadnego skryptu, widżetu ani obrazka z serwera
-   serwisu darowizn. Jedyny ruch na zewnątrz to odnośnik, który użytkownik
+   Buy Me a Coffee. Jedyny ruch na zewnątrz to odnośnik, który użytkownik
    sam kliknie. Ikonę kubka rysujemy sami, tym samym stylem co reszta ikon.
    ===================================================================== */
 (function () {
   'use strict';
 
   /* ─────────────────────────────────────────────────────────────────────
-     TU WPISZ ADRES SWOJEGO PROFILU DAROWIZN.
-     Przykłady: 'https://buymeacoffee.com/twojanazwa'
-                'https://ko-fi.com/twojanazwa'
-                'https://paypal.me/twojanazwa'
+     TU WPISZ ADRES SWOJEGO PROFILU BUY ME A COFFEE.
+     Przykład: 'https://buymeacoffee.com/twojanazwa'
      Dopóki tu pusto, aplikacja nie pokazuje martwego przycisku — patrz niżej.
      ───────────────────────────────────────────────────────────────────── */
   var SUPPORT_URL = '';
@@ -29,12 +27,15 @@
     '<path fill="currentColor" d="M4 6h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V6zm14 1h1.5A2.5 2.5 0 0 1 22 9.5 2.5 2.5 0 0 1 19.5 12H18v-2h1.5a.5.5 0 0 0 0-1H18V7z"/>' +
     '<rect x="3" y="20" width="15" height="2" rx="1" fill="currentColor"/></svg>';
 
-  /* Przyjmujemy wyłącznie https://. Cokolwiek innego traktujemy jak brak
-     adresu — jedna linijka, a chroni przed wklejeniem javascript: albo
-     literówką w schemacie. */
+  /* Przyjmujemy wyłącznie https:// na buymeacoffee.com (albo www.buymeacoffee.com)
+     — to jedyny kanał darowizn tej aplikacji, więc walidacja pilnuje nie tylko
+     schematu, ale i hosta. Cokolwiek innego traktujemy jak brak adresu, co
+     chroni przed wklejeniem javascript:, cudzego serwisu albo literówki. */
   function validUrl() {
     var raw = String(SUPPORT_URL || '').trim();
-    return raw.indexOf('https://') === 0 && raw.length > 'https://'.length ? raw : '';
+    if (raw.indexOf('https://') !== 0) return '';
+    var host = raw.slice('https://'.length).split(/[/?#]/)[0].toLowerCase();
+    return (host === 'buymeacoffee.com' || host === 'www.buymeacoffee.com') ? raw : '';
   }
 
   function byId(id) { return document.getElementById(id); }

@@ -5,15 +5,12 @@ nazwy zdarzeń, identyfikatory DOM, klucze localStorage — jest **kontraktem**.
 Nie wolno ich zmieniać jednostronnie. Jeżeli czegoś brakuje, brak zgłasza się
 integratorowi, a nie improwizuje.
 
-> **Zmiana modelu (obowiązuje od tej wersji dokumentu).** Wersja 2 nie ma już
-> konta, sklepu, opłat cyklicznych ani reklam. Wszystkie siedem wielkości, cała
-> historia, wszystkie narzędzia i tryb offline działają dla każdego, od razu,
-> bez żadnego warunku. W miejsce całej dawnej monetyzacji weszła jedna,
-> nieinwazyjna warstwa wsparcia: ekran **Wsparcie** z jednym odnośnikiem na
-> zewnętrzny profil darowizn. Rozdziały o produktach, cenach, logowaniu,
-> bramkowaniu i reklamach zostały usunięte, a nie zarchiwizowane — nie ma już
-> kodu, który by je realizował. Darowizna niczego nie odblokowuje, bo nie ma
-> czego odblokowywać.
+> **Model.** Wersja 2 nie ma konta, sklepu, opłat ani reklam. Wszystkie siedem
+> wielkości, cała historia, wszystkie narzędzia i tryb offline działają dla
+> każdego, od razu, bez żadnego warunku. Jedyna warstwa pieniężna to
+> nieinwazyjne wsparcie: ekran **Wsparcie** z jednym odnośnikiem na profil
+> Buy Me a Coffee. Darowizna niczego nie odblokowuje, bo nie ma czego
+> odblokowywać.
 
 Katalog: `docs/v2/` oraz — wspólnie z v3 i v4 — `docs/shared/`. Katalogi
 pozostałych wersji są **nietykalne**: wolno je tylko czytać. Poza własny katalog
@@ -31,13 +28,14 @@ zmieniać, ale zmiana dotyczy równocześnie v3 i v4.
 2. **Nic nie jest bramkowane.** `Engine` wylicza i zapisuje wszystkie 7
    wielkości, a interfejs rysuje wszystkie 7. Nie istnieje stan aplikacji,
    w którym którakolwiek z nich jest zasłonięta, rozmyta albo opatrzona
-   kłódką — i nie wolno takiego stanu wprowadzić z powrotem.
+   kłódką — i nie wolno takiego stanu wprowadzić.
 3. **Jeden adres, jedno miejsce.** Cała warstwa wsparcia to `support.js`,
    a w nim jedna stała `SUPPORT_URL` na samej górze pliku. Pusta stała jest
    stanem normalnym, nie błędem: ekran Wsparcie wygląda wtedy tak samo, tyle
    że zamiast przycisku stoi spokojne zdanie, iż profil nie jest jeszcze
    podłączony. Żaden martwy odnośnik nie jest renderowany. Przyjmowane są
-   wyłącznie adresy `https://`.
+   wyłącznie adresy `https://` na hoście `buymeacoffee.com` (lub
+   `www.buymeacoffee.com`) — to jedyny serwis, do którego aplikacja odsyła.
 4. **Prośba nie zaczepia.** Prośba o wsparcie pojawia się wtedy, gdy
    użytkownik sam wejdzie na zakładkę Wsparcie. Poza nią wolno umieścić
    **najwyżej jeden** dyskretny odnośnik (jedno zdanie w stopce ustawień,
@@ -358,8 +356,8 @@ maks. 15 000 rekordów, zapis wsadowy co 64 punkty.
 
 **Reguły twarde dla P2:**
 
-* Wszystkie 7 metryk liczone zawsze, bez pytania `Store`. `Engine` **nie
-  odwołuje się** do `Store` ani `Account`.
+* Wszystkie 7 metryk liczone zawsze i bezwarunkowo. `Engine` **nie pyta**
+  żadnego modułu o zgodę na policzenie którejkolwiek z nich.
 * `flicker` liczony z okna 40 ostatnich próbek jasności (8 s przy 5 Hz),
   `Metrics.flicker(samples, 5)`. Gdy `withinRange === false`, `flickerHz` = `null`.
 * `uniformity` z 9 komórek 3×3 wycinka, luminancja liniowa
@@ -401,14 +399,16 @@ Support.render()          // przebudowuje #panelSupport
 ```
 
 `SUPPORT_URL` jest **pierwszą rzeczą w pliku po nagłówku**, żeby dało się ją
-znaleźć bez czytania kodu. Walidacja: wyłącznie `https://`; cokolwiek innego
-(w tym `http:` i `javascript:`) jest traktowane jak brak adresu. Odnośnik
-renderuje się wyłącznie wtedy, gdy adres przeszedł walidację, i zawsze jako
+znaleźć bez czytania kodu. Walidacja jest dwuwarunkowa i celowo wąska: schemat
+musi być `https:`, a host `buymeacoffee.com` albo `www.buymeacoffee.com`.
+Cokolwiek innego (w tym `http:`, `javascript:` i adres innego serwisu) jest
+traktowane jak brak adresu. Odnośnik renderuje się wyłącznie wtedy, gdy adres
+przeszedł walidację, i zawsze jako
 `<a target="_blank" rel="noopener noreferrer">`. Żadnego skryptu, widżetu ani
-obrazka z serwera serwisu darowizn — ikona kubka jest rysowana lokalnie
+obrazka z serwerów Buy Me a Coffee — ikona kubka jest rysowana lokalnie
 w `styles.css`, tak jak każda inna ikona w tej aplikacji.
 
-Moduł kasuje przy starcie martwe klucze po usuniętej monetyzacji
+Moduł kasuje przy starcie martwe klucze zostawione przez starsze buildy
 (`ms2.billing.v1`, `ms2.account.v1`, `ms2.cloud.v1`, `ms2.ads.v1`,
 `ms2.tour.v1`). Lista jest wypisana wprost — bez zamiatania po prefiksie,
 bo `ms2.history`, `ms2.settings`, `ms2.thresholds` i `ms2.profiles` mają ten
@@ -637,10 +637,10 @@ Warstwa wsparcia **nie ma własnego klucza** i niczego nie zapamiętuje: nie
 liczy wyświetleń, nie pamięta „już wsparłem”, nie odkłada daty ostatniej
 prośby. Nie ma czego zapisać.
 
-**Klucze usunięte.** `ms2.billing.v1`, `ms2.account.v1`, `ms2.cloud.v1`,
-`ms2.ads.v1` i `ms2.tour.v1` należały do modułów, których już nie ma.
-`support.js` kasuje je przy pierwszym starcie tej wersji — po nazwie, nigdy po
-prefiksie.
+**Klucze martwe (notatka migracyjna).** `ms2.billing.v1`, `ms2.account.v1`,
+`ms2.cloud.v1`, `ms2.ads.v1` i `ms2.tour.v1` mogą jeszcze leżeć na urządzeniach,
+które uruchomiły starszy build. Nikt ich nie czyta; `support.js` kasuje je przy
+pierwszym starcie tej wersji — po nazwie, nigdy po prefiksie.
 
 **Zasada własności danych.** Pomiary, progi, profile, kalibracja, harmonogram,
 alerty i porównania to własność użytkownika i nic w aplikacji nie kasuje ich
@@ -654,7 +654,7 @@ mimochodem. Kasowanie pomiarów jest osobną, wyraźnie opisaną akcją
 1. **Nikt nikogo nie pyta o pozwolenie.** W aplikacji nie ma funkcji
    sprawdzającej uprawnienie, nie ma zdarzenia proszącego o pokazanie oferty
    i nie ma ekranu, który mógłby odmówić otwarcia. Wprowadzenie takiej ścieżki
-   z powrotem jest zmianą modelu, a nie poprawką.
+   jest zmianą modelu, a nie poprawką.
 2. **Ekran Wsparcie sam z siebie nigdy się nie otwiera.** Otwiera go wyłącznie
    `navSupport` albo jeden dyskretny odnośnik `btnOpenSupport` w stopce
    ustawień. Nic nie wyzwala go z timera, z licznika uruchomień ani ze
@@ -699,12 +699,12 @@ mimochodem. Kasowanie pomiarów jest osobną, wyraźnie opisaną akcją
    słucha — ostrzeżenie do zgłoszenia.
 6. Sprawdź, że poza `ui-core.js` żaden plik nie ustawia `.hidden`,
    `style.display` ani `aria-selected` na elementach `panel*`, `nav*`, `sheet*`.
-7. **Grep kontrolny po całym katalogu.** Słownictwo dawnego modelu — nazwy
-   pakietów płatnych, opłat cyklicznych, ekranu sprzedażowego i ekranu
-   wejścia do konta — nie może wystąpić nigdzie: ani w kodzie, ani w tekstach
-   interfejsu, ani w tym dokumencie. Lista słów do sprawdzenia jest w sekcji 6
-   wspólnej specyfikacji przejścia na model darowiznowy. Trafienie oznacza, że
-   gdzieś został kawałek starego modelu.
+7. **Grep kontrolny po całym katalogu.** Słownictwo płatności i kont —
+   subskrypcja, abonament, opłata, cennik, zakup, licencja, okres próbny,
+   paywall, wersja premium, konto, logowanie, rejestracja użytkownika — nie może
+   wystąpić nigdzie: ani w kodzie, ani w tekstach interfejsu, ani w tym
+   dokumencie, chyba że jako stwierdzenie faktu, iż czegoś takiego tu nie ma
+   („bez konta i bez opłat”). Każde inne trafienie jest błędem blokującym.
 8. Sprawdź brak `fetch`, `XMLHttpRequest`, `WebSocket`, `import(`, `<script src>`
    i `@import`/`url()` wskazujących poza `docs/v2/` i `../icons/`, we wszystkich
    plikach poza `sw.js`. Odnośnik z `SUPPORT_URL` jest jedynym wyjątkiem i jest
@@ -717,10 +717,11 @@ mimochodem. Kasowanie pomiarów jest osobną, wyraźnie opisaną akcją
 11. Smoke test Wsparcia przy pustym `SUPPORT_URL`: ekran się otwiera, wygląda
     normalnie, **nie ma żadnego `<a>`**, jest `supportPending` i zdanie
     o prywatności, konsola czysta.
-12. Smoke test Wsparcia z adresem: wpisz tymczasowo poprawny adres `https://`,
-    sprawdź, że przycisk ma `target="_blank"` i `rel="noopener noreferrer"`,
-    po czym **przywróć pustą stałą**. Sprawdź też adres `http://` i
-    `javascript:` — oba muszą zachować się jak brak adresu.
+12. Smoke test Wsparcia z adresem: wpisz tymczasowo poprawny adres
+    `https://buymeacoffee.com/...`, sprawdź, że przycisk ma `target="_blank"`
+    i `rel="noopener noreferrer"`, po czym **przywróć pustą stałą**. Sprawdź też
+    adres `http://`, `javascript:` oraz `https://` na innym hoście — każdy
+    z nich musi zachować się jak brak adresu.
 13. Smoke test narzędzi: każdy z siedmiu ekranów otwiera się i działa
     w całości, bez żadnego komunikatu o niedostępności.
 14. Test dostępności: przejście całej aplikacji samym `Tab`/`Enter`/`Escape`;

@@ -392,8 +392,8 @@ export default {
   'support.cta.title': 'If you would like to help',
   'support.cta.button': 'Buy me a coffee',
   'support.cta.nolink': 'The donation profile is not connected yet. When it is, a button will stand in this place.',
-  'support.cta.privacy': 'This link opens an external site (Buy Me a Coffee, for instance) in a new tab. That is the only moment when anything leaves this device — the measurement itself always stays here.',
-  'support.cta.privacyFuture': 'Once the address is in place, the button will open an external site (Buy Me a Coffee, for instance) in a new tab. That will be the only moment when anything leaves this device — the measurement itself always stays here.',
+  'support.cta.privacy': 'This link opens the external Buy Me a Coffee page in a new tab. That is the only moment when anything leaves this device — the measurement itself always stays here.',
+  'support.cta.privacyFuture': 'Once the address is in place, the button will open the external Buy Me a Coffee page in a new tab. That will be the only moment when anything leaves this device — the measurement itself always stays here.',
   'support.cta.note': 'There is no countdown here, no reminders and no window that opens by itself. This request waits on this tab and nowhere else.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

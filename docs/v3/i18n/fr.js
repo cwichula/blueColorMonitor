@@ -471,7 +471,7 @@ window.I18nData['fr'] = Object.assign(window.I18nData['fr'] || {}, {
   'support.keyTitle': 'Si vous voulez aider',
   'support.keyLabel': 'Offrez-moi un café',
   'support.keyAria': 'Offrez-moi un café — ouvre une page externe dans un nouvel onglet',
-  'support.serviceText': 'Le profil de dons est tenu par un service externe, par exemple Buy Me a Coffee. L’application n’en charge ni script, ni widget, ni image — il n’y a ici qu’un lien ordinaire, et rien d’autre.',
+  'support.serviceText': 'Le profil de dons est tenu par Buy Me a Coffee, et c’est la seule forme de soutien dans cette application. L’application n’en charge ni script, ni widget, ni image — il n’y a ici qu’un lien ordinaire, et rien d’autre.',
   'support.privacyText': 'Appuyer sur ce bouton ouvre une page externe dans un nouvel onglet, et c’est le seul moment où quelque chose quitte cet appareil. Les mesures, l’historique et les réglages restent là où ils étaient — dans la mémoire de ce navigateur.',
   'support.privacyPendingText': 'Dès que l’adresse sera disponible, appuyer sur le bouton ouvrira une page externe dans un nouvel onglet, et ce sera le seul moment où quelque chose quitte cet appareil. Les mesures, l’historique et les réglages restent là où ils étaient — dans la mémoire de ce navigateur.',
   'support.emptyTitle': 'Le profil n’est pas encore relié',

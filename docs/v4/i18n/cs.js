@@ -582,7 +582,7 @@ window.I18nData['cs'] = Object.assign(window.I18nData['cs'] || {}, {
   'support.nothingText': 'V aplikaci nic. Dar nic neodemyká a nic nemění — před ním i po něm vypadá všechno stejně. Zbude jen to, že vím, že se to někomu hodilo.',
   'support.donate': 'Kupte mi kávu',
   'support.donateAria': 'Otevřít profil pro dary na nové kartě',
-  'support.donateVia': 'Odkaz vede na externí profil pro dary (např. Buy Me a Coffee).',
+  'support.donateVia': 'Odkaz vede na externí profil pro dary ve službě Buy Me a Coffee.',
   'support.noUrlTitle': 'Profil zatím není připojený',
   'support.noUrlText': 'Adresa profilu pro dary zatím nebyla nastavena, takže není kam vést — a proto tu není tlačítko. Celý zbytek aplikace funguje beze změny.',
   'support.thanks': 'Děkuji za každou podporu — i za samotné používání aplikace.',

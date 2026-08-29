@@ -467,7 +467,7 @@ window.I18nData['tr'] = Object.assign(window.I18nData['tr'] || {}, {
   'support.keyTitle': 'Yardım etmek isterseniz',
   'support.keyLabel': 'Bana bir kahve ısmarlayın',
   'support.keyAria': 'Bana bir kahve ısmarlayın — yeni bir sekmede dış bir sayfa açar',
-  'support.serviceText': 'Bağış profilini dış bir servis yürütür, örneğin Buy Me a Coffee. Uygulama oradan hiçbir betik, araç ya da görsel yüklemez — burada duran yalnızca sıradan bir bağlantıdır, başka bir şey değil.',
+  'support.serviceText': 'Bağış profilini Buy Me a Coffee yürütür ve bu uygulamadaki tek destek biçimi budur. Uygulama oradan hiçbir betik, araç ya da görsel yüklemez — burada duran yalnızca sıradan bir bağlantıdır, başka bir şey değil.',
   'support.privacyText': 'Bu düğmeye basmak yeni bir sekmede dış bir sayfa açar ve bu cihazdan bir şeyin çıktığı tek an budur. Ölçümler, geçmiş ve ayarlar oldukları yerde kalır — bu tarayıcının belleğinde.',
   'support.privacyPendingText': 'Adres hazır olduğunda düğmeye basmak yeni bir sekmede dış bir sayfa açacak ve bu cihazdan bir şeyin çıkacağı tek an o olacak. Ölçümler, geçmiş ve ayarlar oldukları yerde kalır — bu tarayıcının belleğinde.',
   'support.emptyTitle': 'Profil henüz bağlanmadı',

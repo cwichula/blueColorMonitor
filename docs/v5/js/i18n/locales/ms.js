@@ -399,8 +399,8 @@ export default {
   'support.cta.title': 'Jika anda mahu membantu',
   'support.cta.button': 'Belanja saya kopi',
   'support.cta.nolink': 'Profil derma belum disambungkan. Apabila ia ada, sebuah butang akan berdiri di tempat ini.',
-  'support.cta.privacy': 'Pautan ini membuka tapak luaran (contohnya Buy Me a Coffee) dalam tab baharu. Itulah satu-satunya saat apabila ada sesuatu meninggalkan peranti ini — pengukurannya sendiri sentiasa kekal di sini.',
-  'support.cta.privacyFuture': 'Apabila alamatnya sedia nanti, butang ini akan membuka tapak luaran (contohnya Buy Me a Coffee) dalam tab baharu. Itulah nanti satu-satunya saat apabila ada sesuatu meninggalkan peranti ini — pengukurannya sendiri sentiasa kekal di sini.',
+  'support.cta.privacy': 'Pautan ini membuka halaman luaran Buy Me a Coffee dalam tab baharu. Itulah satu-satunya saat apabila ada sesuatu meninggalkan peranti ini — pengukurannya sendiri sentiasa kekal di sini.',
+  'support.cta.privacyFuture': 'Apabila alamatnya sedia nanti, butang ini akan membuka halaman luaran Buy Me a Coffee dalam tab baharu. Itulah nanti satu-satunya saat apabila ada sesuatu meninggalkan peranti ini — pengukurannya sendiri sentiasa kekal di sini.',
   'support.cta.note': 'Tiada kiraan detik di sini, tiada peringatan dan tiada tetingkap yang membuka sendiri. Permintaan ini menunggu pada tab ini sahaja.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

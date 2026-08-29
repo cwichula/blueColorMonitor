@@ -578,7 +578,7 @@ window.I18nData['es'] = Object.assign(window.I18nData['es'] || {}, {
   'support.nothingText': 'Nada dentro de la aplicación. La donación no desbloquea nada y no cambia nada: antes y después todo se ve igual. Lo único que queda es que sé que a alguien le ha servido.',
   'support.donate': 'Invítame a un café',
   'support.donateAria': 'Abrir el perfil de donaciones en una pestaña nueva',
-  'support.donateVia': 'El enlace lleva a un perfil de donaciones externo (por ejemplo, Buy Me a Coffee).',
+  'support.donateVia': 'El enlace lleva a un perfil de donaciones externo en Buy Me a Coffee.',
   'support.noUrlTitle': 'El perfil todavía no está conectado',
   'support.noUrlText': 'La dirección del perfil de donaciones todavía no está fijada, así que no hay adónde llevar; por eso aquí no hay botón. Todo el resto de la aplicación funciona igual.',
   'support.thanks': 'Gracias por cualquier apoyo, y también por usar la aplicación.',

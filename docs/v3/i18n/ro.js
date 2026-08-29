@@ -470,7 +470,7 @@ window.I18nData['ro'] = Object.assign(window.I18nData['ro'] || {}, {
   'support.keyTitle': 'Dacă vrei să ajuți',
   'support.keyLabel': 'Cumpără-mi o cafea',
   'support.keyAria': 'Cumpără-mi o cafea — deschide o pagină externă într-o filă nouă',
-  'support.serviceText': 'Profilul de donații este ținut de un serviciu extern, de exemplu Buy Me a Coffee. Aplicația nu încarcă de acolo niciun script, widget sau imagine — aici stă o legătură obișnuită și nimic mai mult.',
+  'support.serviceText': 'Profilul de donații este ținut de Buy Me a Coffee și este singura formă de sprijin din această aplicație. Aplicația nu încarcă de acolo niciun script, widget sau imagine — aici stă o legătură obișnuită și nimic mai mult.',
   'support.privacyText': 'Apăsarea acestui buton deschide o pagină externă într-o filă nouă și acesta este singurul moment în care ceva părăsește acest dispozitiv. Măsurătorile, istoricul și setările rămân unde au fost — în memoria acestui browser.',
   'support.privacyPendingText': 'Când adresa va apărea, apăsarea butonului va deschide o pagină externă într-o filă nouă și acela va fi singurul moment în care ceva părăsește acest dispozitiv. Măsurătorile, istoricul și setările rămân unde au fost — în memoria acestui browser.',
   'support.emptyTitle': 'Profilul nu este încă legat',

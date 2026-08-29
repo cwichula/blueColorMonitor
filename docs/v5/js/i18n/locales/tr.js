@@ -402,8 +402,8 @@ export default {
   'support.cta.title': 'Yardım etmek isterseniz',
   'support.cta.button': 'Bana bir kahve ısmarlayın',
   'support.cta.nolink': 'Bağış profili henüz bağlanmadı. Bağlandığında bu noktada bir düğme duracak.',
-  'support.cta.privacy': 'Bu bağlantı, yeni bir sekmede dış bir siteyi (örneğin Buy Me a Coffee) açar. Bu cihazdan bir şeyin çıktığı tek an budur — ölçümün kendisi her zaman burada kalır.',
-  'support.cta.privacyFuture': 'Adres yerine konduğunda düğme, yeni bir sekmede dış bir siteyi (örneğin Buy Me a Coffee) açacak. Bu cihazdan bir şeyin çıkacağı tek an o olacak — ölçümün kendisi her zaman burada kalır.',
+  'support.cta.privacy': 'Bu bağlantı, yeni bir sekmede dış Buy Me a Coffee sayfasını açar. Bu cihazdan bir şeyin çıktığı tek an budur — ölçümün kendisi her zaman burada kalır.',
+  'support.cta.privacyFuture': 'Adres yerine konduğunda düğme, yeni bir sekmede dış Buy Me a Coffee sayfasını açacak. Bu cihazdan bir şeyin çıkacağı tek an o olacak — ölçümün kendisi her zaman burada kalır.',
   'support.cta.note': 'Burada ne geri sayım, ne hatırlatma, ne de kendiliğinden açılan bir pencere var. Bu rica yalnızca bu sekmede bekler.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

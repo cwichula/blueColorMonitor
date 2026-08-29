@@ -7,9 +7,9 @@
  *      od pierwszego uruchomienia.
  *   2. ustawienia: język, motyw, paleta, tekst, ruch, pomiar, dane, o aplikacji.
  *
- * Ten plik zastąpił dawny screen-account.js. Razem z nim zniknęły billing.js
- * i auth.js: nie ma już ani symulowanego konta, ani symulowanej płatności,
- * ani arkusza sprzedażowego, który ten plik kiedyś trzymał.
+ * W całej aplikacji nie ma konta, logowania ani profilu użytkownika i nie ma
+ * niczego, za co dałoby się zapłacić. Ten ekran nie sprawdza żadnych uprawnień,
+ * bo nie ma czego sprawdzać.
  *
  * Zasady, które ten plik trzyma świadomie:
  *   — ani jednego literału językowego: każde zdanie pochodzi z UI.T, ze Scale.TEXT
@@ -27,20 +27,26 @@
   var VIEW_ID = 'support';
 
   /* ────────────────────────────────────────────────────────────
-     TU WPISZ ADRES SWOJEGO PROFILU DAROWIZN.
-     Przykłady: 'https://buymeacoffee.com/twojanazwa'
-                'https://ko-fi.com/twojanazwa'
-                'https://paypal.me/twojanazwa'
+     TU WPISZ ADRES SWOJEGO PROFILU NA BUY ME A COFFEE.
+     Przykład: 'https://buymeacoffee.com/twojanazwa'
      Dopóki tu pusto, aplikacja nie pokazuje martwego przycisku — patrz niżej.
      ─────────────────────────────────────────────────────────── */
   var SUPPORT_URL = '';
 
-  /** Jedna linijka walidacji, która chroni przed wklejeniem 'javascript:' albo
-   *  literówką w schemacie. Cokolwiek innego niż https:// traktujemy jak brak
-   *  adresu — czyli ekran zachowuje się dokładnie tak, jak przy pustej stałej. */
+  /** Walidacja chroni przed wklejeniem 'javascript:' albo literówką w schemacie,
+   *  a poza tym zawęża adres do jedynej dopuszczalnej domeny darowizn:
+   *  buymeacoffee.com (także z przedrostkiem www). Ukośnik na końcu przedrostka
+   *  zamyka nazwę hosta, więc adresu nie da się podszyć dłuższą domeną.
+   *  Cokolwiek innego traktujemy jak brak adresu — czyli ekran zachowuje się
+   *  dokładnie tak, jak przy pustej stałej. */
+  var SUPPORT_PREFIXES = ['https://buymeacoffee.com/', 'https://www.buymeacoffee.com/'];
+
   function supportUrl() {
     var url = typeof SUPPORT_URL === 'string' ? SUPPORT_URL.trim() : '';
-    return url.indexOf('https://') === 0 ? url : '';
+    for (var i = 0; i < SUPPORT_PREFIXES.length; i += 1) {
+      if (url.indexOf(SUPPORT_PREFIXES[i]) === 0) return url;
+    }
+    return '';
   }
 
   /* Ikony siedmiu wielkości — załącznik B specyfikacji. */
@@ -588,7 +594,7 @@
   }
 
   /** Wybór wielkości na dużym wskaźniku. Wszystkie siedem stoi na tej liście
-   *  na równych prawach — nie ma tu już ani kłódki, ani wielkości nie do wybrania. */
+   *  na równych prawach: żadna nie jest zamknięta i żadnej nie da się nie wybrać. */
   function openLeadSheet() {
     var body = el('div', 'ms4-stack');
     body.appendChild(el('p', 'ms4-card__subtitle', T('measure.leadSheetSub')));

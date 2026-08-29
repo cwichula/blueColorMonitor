@@ -5,8 +5,8 @@
  * everybody, right away and without an account. This file adds exactly one
  * thing on top: a screen where the author can be thanked.
  *
- * What is not here and never will be: a widget or a script from the donation
- * service, an image from somebody else's server, a donation counter, reminders,
+ * What is not here and never will be: a widget or a script from Buy Me a
+ * Coffee, an image from somebody else's server, a donation counter, reminders,
  * dialogs after N launches, or any network request at all. The only outward
  * reference is a plain link the user clicks — and the screen says so out loud,
  * because every other screen promises that the measurement stays on the device.
@@ -19,22 +19,23 @@
   'use strict';
 
   /* ─────────────────────────────────────────────────────────────────────
-     TU WPISZ ADRES SWOJEGO PROFILU DAROWIZN.
-     Przykłady: 'https://buymeacoffee.com/twojanazwa'
-                'https://ko-fi.com/twojanazwa'
-                'https://paypal.me/twojanazwa'
+     TU WPISZ ADRES SWOJEGO PROFILU BUY ME A COFFEE.
+     Przykład: 'https://buymeacoffee.com/twojanazwa'
      Dopóki tu pusto, aplikacja nie pokazuje martwego przycisku — patrz niżej.
      ───────────────────────────────────────────────────────────────────── */
   const SUPPORT_URL = '';
 
   var doc = global.document;
 
-  /* Only https:// is accepted. Anything else — another scheme, a typo, a pasted
-     'javascript:' — counts as no address at all, so the screen behaves exactly
-     as it does with the empty constant: no link, one calm sentence instead. */
+  /* Buy Me a Coffee jest jedyną formą wsparcia w tej aplikacji, więc walidacja
+     jest zawężona do tego serwisu: przyjmujemy wyłącznie adres ze schematem
+     https:// na hoście buymeacoffee.com albo www.buymeacoffee.com. Cokolwiek
+     innego — inny schemat, literówka, wklejone 'javascript:' — liczy się jak
+     brak adresu, więc ekran zachowuje się dokładnie tak jak przy pustej
+     stałej: żadnego odnośnika, jedno spokojne zdanie zamiast niego. */
   function supportHref() {
-    var url = String(SUPPORT_URL || '');
-    return /^https:\/\//.test(url) ? url : '';
+    var url = String(SUPPORT_URL || '').trim();
+    return /^https:\/\/(www\.)?buymeacoffee\.com(\/|$)/.test(url) ? url : '';
   }
 
   /* ------------------------------------------------------------------

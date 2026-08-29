@@ -400,8 +400,8 @@ export default {
   'support.cta.title': 'Kalau Anda ingin membantu',
   'support.cta.button': 'Traktir saya kopi',
   'support.cta.nolink': 'Profil donasi belum tersambung. Begitu ada, sebuah tombol akan berdiri di tempat ini.',
-  'support.cta.privacy': 'Tautan ini membuka situs eksternal (misalnya Buy Me a Coffee) di tab baru. Itulah satu-satunya saat ketika ada sesuatu yang meninggalkan perangkat ini — pengukurannya sendiri selalu tinggal di sini.',
-  'support.cta.privacyFuture': 'Begitu alamatnya tersedia, tombol ini akan membuka situs eksternal (misalnya Buy Me a Coffee) di tab baru. Itulah nanti satu-satunya saat ketika ada sesuatu yang meninggalkan perangkat ini — pengukurannya sendiri selalu tinggal di sini.',
+  'support.cta.privacy': 'Tautan ini membuka halaman eksternal Buy Me a Coffee di tab baru. Itulah satu-satunya saat ketika ada sesuatu yang meninggalkan perangkat ini — pengukurannya sendiri selalu tinggal di sini.',
+  'support.cta.privacyFuture': 'Begitu alamatnya tersedia, tombol ini akan membuka halaman eksternal Buy Me a Coffee di tab baru. Itulah nanti satu-satunya saat ketika ada sesuatu yang meninggalkan perangkat ini — pengukurannya sendiri selalu tinggal di sini.',
   'support.cta.note': 'Tidak ada hitung mundur di sini, tidak ada pengingat, dan tidak ada jendela yang membuka sendiri. Permintaan ini menunggu di tab ini saja.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

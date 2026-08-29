@@ -388,8 +388,8 @@ export default {
   'support.cta.title': 'Jeśli chcesz pomóc',
   'support.cta.button': 'Postaw mi kawę',
   'support.cta.nolink': 'Profil darowizn nie jest jeszcze podłączony. Gdy się pojawi, stanie w tym miejscu przycisk.',
-  'support.cta.privacy': 'Ten odnośnik otwiera stronę zewnętrzną (na przykład Buy Me a Coffee) w nowej karcie. To jedyny moment, w którym cokolwiek opuszcza to urządzenie — sam pomiar zostaje tutaj zawsze.',
-  'support.cta.privacyFuture': 'Kiedy adres się pojawi, przycisk otworzy stronę zewnętrzną (na przykład Buy Me a Coffee) w nowej karcie. Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie — sam pomiar zostaje tutaj zawsze.',
+  'support.cta.privacy': 'Ten odnośnik otwiera w nowej karcie zewnętrzną stronę Buy Me a Coffee. To jedyny moment, w którym cokolwiek opuszcza to urządzenie — sam pomiar zostaje tutaj zawsze.',
+  'support.cta.privacyFuture': 'Kiedy adres się pojawi, przycisk otworzy w nowej karcie zewnętrzną stronę Buy Me a Coffee. Będzie to jedyny moment, w którym cokolwiek opuszcza to urządzenie — sam pomiar zostaje tutaj zawsze.',
   'support.cta.note': 'Nie ma tu ani odliczania, ani przypomnień, ani okna, które samo się otworzy. Ta prośba czeka wyłącznie na tej zakładce.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

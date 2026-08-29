@@ -397,8 +397,8 @@ export default {
   'support.cta.title': 'Als je wilt helpen',
   'support.cta.button': 'Trakteer me op een koffie',
   'support.cta.nolink': 'Het donatieprofiel is nog niet aangesloten. Zodra het er is, staat op deze plek een knop.',
-  'support.cta.privacy': 'Deze link opent een externe site (bijvoorbeeld Buy Me a Coffee) in een nieuw tabblad. Dat is het enige moment waarop er iets dit apparaat verlaat — de meting zelf blijft altijd hier.',
-  'support.cta.privacyFuture': 'Zodra het adres er is, opent de knop een externe site (bijvoorbeeld Buy Me a Coffee) in een nieuw tabblad. Dat zal het enige moment zijn waarop er iets dit apparaat verlaat — de meting zelf blijft altijd hier.',
+  'support.cta.privacy': 'Deze link opent de externe pagina van Buy Me a Coffee in een nieuw tabblad. Dat is het enige moment waarop er iets dit apparaat verlaat — de meting zelf blijft altijd hier.',
+  'support.cta.privacyFuture': 'Zodra het adres er is, opent de knop de externe pagina van Buy Me a Coffee in een nieuw tabblad. Dat zal het enige moment zijn waarop er iets dit apparaat verlaat — de meting zelf blijft altijd hier.',
   'support.cta.note': 'Er is hier geen aftelklok, er zijn geen herinneringen en er gaat geen venster vanzelf open. Dit verzoek wacht alleen op dit tabblad.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

@@ -394,8 +394,8 @@ export default {
   'support.cta.title': 'Wenn du helfen möchtest',
   'support.cta.button': 'Spendier mir einen Kaffee',
   'support.cta.nolink': 'Das Spendenprofil ist noch nicht angebunden. Sobald es da ist, steht an dieser Stelle eine Schaltfläche.',
-  'support.cta.privacy': 'Dieser Link öffnet eine externe Seite (zum Beispiel Buy Me a Coffee) in einem neuen Tab. Das ist der einzige Moment, in dem irgendetwas dieses Gerät verlässt — die Messung selbst bleibt immer hier.',
-  'support.cta.privacyFuture': 'Sobald die Adresse steht, öffnet die Schaltfläche eine externe Seite (zum Beispiel Buy Me a Coffee) in einem neuen Tab. Das wird der einzige Moment sein, in dem irgendetwas dieses Gerät verlässt — die Messung selbst bleibt immer hier.',
+  'support.cta.privacy': 'Dieser Link öffnet die externe Seite von Buy Me a Coffee in einem neuen Tab. Das ist der einzige Moment, in dem irgendetwas dieses Gerät verlässt — die Messung selbst bleibt immer hier.',
+  'support.cta.privacyFuture': 'Sobald die Adresse steht, öffnet die Schaltfläche die externe Seite von Buy Me a Coffee in einem neuen Tab. Das wird der einzige Moment sein, in dem irgendetwas dieses Gerät verlässt — die Messung selbst bleibt immer hier.',
   'support.cta.note': 'Es gibt hier keinen Countdown, keine Erinnerungen und kein Fenster, das von selbst aufgeht. Diese Bitte wartet nur auf diesem Tab.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

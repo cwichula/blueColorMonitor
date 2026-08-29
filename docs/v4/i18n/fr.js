@@ -573,7 +573,7 @@ window.I18nData['fr'] = Object.assign(window.I18nData['fr'] || {}, {
   'support.nothingText': 'Rien dans l’application. Un don ne débloque rien et ne change rien — avant et après, tout est exactement pareil. Il reste seulement que je sais que cela a servi à quelqu’un.',
   'support.donate': 'Offrez-moi un café',
   'support.donateAria': 'Ouvrir le profil de dons dans un nouvel onglet',
-  'support.donateVia': 'Le lien mène à un profil de dons externe (Buy Me a Coffee, par exemple).',
+  'support.donateVia': 'Le lien mène à un profil de dons externe sur Buy Me a Coffee.',
   'support.noUrlTitle': 'Le profil n’est pas encore relié',
   'support.noUrlText': 'L’adresse du profil de dons n’a pas encore été définie, il n’y a donc nulle part où aller — et c’est pourquoi il n’y a pas de bouton ici. Tout le reste de l’application fonctionne sans changement.',
   'support.thanks': 'Merci pour chaque soutien — et aussi pour le simple fait d’utiliser l’application.',

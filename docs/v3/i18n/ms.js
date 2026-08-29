@@ -465,7 +465,7 @@ window.I18nData['ms'] = Object.assign(window.I18nData['ms'] || {}, {
   'support.keyTitle': 'Jika anda mahu membantu',
   'support.keyLabel': 'Belanja saya kopi',
   'support.keyAria': 'Belanja saya kopi — membuka halaman luar dalam tab baharu',
-  'support.serviceText': 'Profil derma itu dikendalikan oleh perkhidmatan luar, contohnya Buy Me a Coffee. Aplikasi tidak memuatkan sebarang skrip, widget atau imej daripadanya — yang berdiri di sini hanyalah pautan biasa dan tiada apa-apa selain itu.',
+  'support.serviceText': 'Profil derma itu dikendalikan oleh Buy Me a Coffee, dan itulah satu-satunya bentuk sokongan dalam aplikasi ini. Aplikasi tidak memuatkan sebarang skrip, widget atau imej daripadanya — yang berdiri di sini hanyalah pautan biasa dan tiada apa-apa selain itu.',
   'support.privacyText': 'Menekan butang ini membuka halaman luar dalam tab baharu, dan itulah satu-satunya saat apabila ada sesuatu meninggalkan peranti ini. Pengukuran, sejarah dan tetapan kekal di tempatnya — dalam storan pelayar ini.',
   'support.privacyPendingText': 'Apabila alamatnya tersedia nanti, menekan butang itu akan membuka halaman luar dalam tab baharu dan itulah nanti satu-satunya saat apabila ada sesuatu meninggalkan peranti ini. Pengukuran, sejarah dan tetapan kekal di tempatnya — dalam storan pelayar ini.',
   'support.emptyTitle': 'Profil belum disambungkan',

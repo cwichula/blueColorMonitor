@@ -13,7 +13,7 @@
  *    piece of information is carried by hue alone — every status also carries a
  *    distinct SHAPE (circle / triangle / diamond) and a distinct icon.
  * 2. Nothing here is sold and nothing here is withheld. There is no lock, no
- *    lock, no badge and no advertising surface in this stylesheet, because
+ *    badge and no advertising surface in this stylesheet, because
  *    there is no state in the application that any of them could express: all
  *    seven metrics and all seven tools are drawn the same way for everybody.
  * 3. The one donation surface is styled as a secondary accent of THIS app —
@@ -1182,9 +1182,8 @@ a { color: var(--ms-accent); text-underline-offset: 3px; }
 /* A button label WRAPS. It does not get an ellipsis.
 
    The ellipsis was the single most damaging line in this stylesheet: at 360px
-   it turned "Start" into "St…", at 130% text into "S…", it cut the renewal
-   amount off the purchase button — the one figure the terms require to be in
-   view — and it clipped "Przywróć domyślne" and "Wyczyść historię pomiarów".
+   it turned "Start" into "St…", at 130% text into "S…", and it clipped
+   "Przywróć domyślne" and "Wyczyść historię pomiarów".
    Every one of those is a control whose whole job is to say what it will do.
    A button that is one line taller costs nothing; a button that lies about
    what it does costs everything. Polish compounds are long and often have no

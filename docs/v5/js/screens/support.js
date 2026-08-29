@@ -1,8 +1,9 @@
 /* Monitor Światła v5 — js/screens/support.js
  *
  * ROLA PLIKU: ekran „Wsparcie”. Cztery karty w stałej kolejności: co aplikacja
- * daje za darmo, dlaczego pada prośba, czego darowizna NIE odblokowuje, i sam
- * przycisk razem ze zdaniem o prywatności.
+ * daje, dlaczego pada prośba, czego darowizna NIE odblokowuje, i sam przycisk
+ * razem ze zdaniem o prywatności. Jedyny adres, do jakiego ten ekran prowadzi,
+ * to profil Buy Me a Coffee ze stałej SUPPORT_URL.
  *
  * Ekran niczego nie zapisuje i nasłuchuje jednego jedynego zdarzenia: zmiany
  * języka, po której stawia swoje cztery karty od nowa (napisy siedzą w gotowych
@@ -67,15 +68,15 @@ function build() {
      w trakcie działania aplikacji. */
   const url = supportUrl();
 
-  /* ─────────────────  1. Co ta aplikacja daje za darmo  ────────────────── */
+  /* ────────────────────  1. Co ta aplikacja daje  ─────────────────────── */
 
   const freeCard = card(t('support.free.title'),
     h('p.m5-screen__lead', { text: t('support.free.lead') }),
     h('p.m5-screen__note', null,
-      /* Świadomie NIE kłódka: to ekran, z którego właśnie zniknął podział na
-         wielkości darmowe i płatne, a zamknięta kłódka wracałaby tu jako
-         pamiątka po tamtym podziale. Kłódka przy zdaniu o prywatności zostaje
-         na ekranie pomiaru, gdzie mówi wyłącznie o obrazie z kamery. */
+      /* Świadomie NIE kłódka: na tym ekranie nic nie jest zamknięte, a kłódka
+         sugerowałaby, że gdzieś obok czeka coś niedostępnego. Kłódka zostaje na
+         ekranie pomiaru, przy zdaniu o prywatności, gdzie mówi wyłącznie
+         o obrazie z kamery. */
       icon('info', { size: 16 }),
       h('span', { text: t('support.free.note') })));
 
@@ -87,7 +88,7 @@ function build() {
   /* ───────────────────────  3. Co daje darowizna  ──────────────────────── */
 
   /* Najważniejsza karta tego ekranu. Zdanie „darowizna niczego nie odblokowuje”
-     musi paść wprost, inaczej ekran czyta się jak cennik bez cen. */
+     musi paść wprost, inaczej prośba czyta się jak warunek. */
   const whatCard = card(t('support.what.title'),
     h('p.m5-screen__lead', { text: t('support.what.lead') }),
     h('p.m5-screen__note', null,

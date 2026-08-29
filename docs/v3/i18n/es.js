@@ -471,7 +471,7 @@ window.I18nData['es'] = Object.assign(window.I18nData['es'] || {}, {
   'support.keyTitle': 'Si quieres ayudar',
   'support.keyLabel': 'Invítame a un café',
   'support.keyAria': 'Invítame a un café — abre una página externa en una pestaña nueva',
-  'support.serviceText': 'El perfil de donaciones lo lleva un servicio externo, por ejemplo Buy Me a Coffee. La aplicación no carga de él ningún script, ningún widget ni ninguna imagen: aquí hay un enlace normal y nada más.',
+  'support.serviceText': 'El perfil de donaciones lo lleva Buy Me a Coffee y es la única forma de apoyo en esta aplicación. La aplicación no carga de él ningún script, ningún widget ni ninguna imagen: aquí hay un enlace normal y nada más.',
   'support.privacyText': 'Pulsar este botón abre una página externa en una pestaña nueva, y ese es el único momento en el que algo sale de este dispositivo. Las mediciones, el historial y los ajustes se quedan donde estaban — en la memoria de este navegador.',
   'support.privacyPendingText': 'Cuando la dirección esté disponible, pulsar el botón abrirá una página externa en una pestaña nueva y ese será el único momento en el que algo salga de este dispositivo. Las mediciones, el historial y los ajustes se quedan donde estaban — en la memoria de este navegador.',
   'support.emptyTitle': 'El perfil todavía no está conectado',

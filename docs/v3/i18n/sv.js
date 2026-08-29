@@ -466,7 +466,7 @@ window.I18nData['sv'] = Object.assign(window.I18nData['sv'] || {}, {
   'support.keyTitle': 'Om du vill hjälpa till',
   'support.keyLabel': 'Bjud mig på en kaffe',
   'support.keyAria': 'Bjud mig på en kaffe — öppnar en extern sida i en ny flik',
-  'support.serviceText': 'Gåvoprofilen drivs av en extern tjänst, till exempel Buy Me a Coffee. Appen laddar inget skript, ingen widget och ingen bild från den — här står en vanlig länk och ingenting utöver den.',
+  'support.serviceText': 'Gåvoprofilen drivs av Buy Me a Coffee, och det är den enda formen av stöd i den här appen. Appen laddar inget skript, ingen widget och ingen bild från den — här står en vanlig länk och ingenting utöver den.',
   'support.privacyText': 'Att trycka på den här knappen öppnar en extern sida i en ny flik, och det är det enda tillfället då något lämnar den här enheten. Mätningar, historik och inställningar stannar där de var — i den här webbläsarens lagring.',
   'support.privacyPendingText': 'När adressen finns på plats öppnar ett tryck på knappen en extern sida i en ny flik, och det blir det enda tillfället då något lämnar den här enheten. Mätningar, historik och inställningar stannar där de var — i den här webbläsarens lagring.',
   'support.emptyTitle': 'Profilen är inte kopplad än',

@@ -398,8 +398,8 @@ export default {
   'support.cta.title': 'Se você quiser ajudar',
   'support.cta.button': 'Me pague um café',
   'support.cta.nolink': 'O perfil de doações ainda não está conectado. Quando estiver, um botão vai ficar neste lugar.',
-  'support.cta.privacy': 'Este link abre um site externo (o Buy Me a Coffee, por exemplo) em uma nova aba. Esse é o único momento em que alguma coisa sai deste dispositivo — a medição em si fica sempre aqui.',
-  'support.cta.privacyFuture': 'Quando o endereço estiver no lugar, o botão vai abrir um site externo (o Buy Me a Coffee, por exemplo) em uma nova aba. Esse será o único momento em que alguma coisa sai deste dispositivo — a medição em si fica sempre aqui.',
+  'support.cta.privacy': 'Este link abre a página externa do Buy Me a Coffee em uma nova aba. Esse é o único momento em que alguma coisa sai deste dispositivo — a medição em si fica sempre aqui.',
+  'support.cta.privacyFuture': 'Quando o endereço estiver no lugar, o botão vai abrir a página externa do Buy Me a Coffee em uma nova aba. Esse será o único momento em que alguma coisa sai deste dispositivo — a medição em si fica sempre aqui.',
   'support.cta.note': 'Aqui não há contagem regressiva, nem lembretes, nem janela que se abre sozinha. Este pedido espera nesta aba e em nenhum outro lugar.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

@@ -5,8 +5,8 @@
  * oraz to, że opisane kierunki zgadzają się z fizyką wielkości: równomierność
  * i komfort są odwrócone, bo w nich WIĘCEJ znaczy lepiej.
  *
- * Osobna grupa testów na końcu pilnuje decyzji z catalogue.js: podziału na
- * wielkości darmowe i płatne już nie ma i nie ma go czym po cichu przywrócić.
+ * Osobna grupa testów na końcu pilnuje, że katalog nie odzyska pola ani list,
+ * którymi dałoby się warunkować dostęp do którejkolwiek wielkości.
  */
 
 import { test } from 'node:test';
@@ -98,11 +98,10 @@ test('byId dla nieznanego identyfikatora zwraca null, a nie wyjątek', () => {
   assert.equal(byId(), null);
 });
 
-/* --- Model dobrowolnego wsparcia: podziału na darmowe i płatne już nie ma. --- *
+/* --- Straż nad regresją: nic tu nie warunkuje dostępu do wielkości. --- *
  *
- * Te trzy testy nie sprawdzają nowej funkcjonalności — pilnują, żeby stara nie
- * wróciła bokiem. Wystarczy jedno `premium: false` dopisane „dla zgodności”
- * i cała aplikacja znowu ma czym warunkować dostęp do wielkości.
+ * Te trzy testy nie sprawdzają nowej funkcjonalności — pilnują, żeby jedno
+ * pole dopisane „dla zgodności” nie dało znowu czym dzielić katalogu.
  */
 
 test('żadna pozycja katalogu nie ma już pola premium', () => {
@@ -114,18 +113,18 @@ test('żadna pozycja katalogu nie ma już pola premium', () => {
 
 test('moduł nie wystawia już list FREE_IDS ani PREMIUM_IDS', () => {
   assert.equal(katalog.FREE_IDS, undefined, 'FREE_IDS wróciło — nie ma już czego dzielić');
-  assert.equal(katalog.PREMIUM_IDS, undefined, 'PREMIUM_IDS wróciło — nie ma wielkości płatnych');
+  assert.equal(katalog.PREMIUM_IDS, undefined, 'PREMIUM_IDS wróciło — katalog nie dzieli wielkości');
   const eksporty = Object.keys(katalog).sort();
   assert.deepEqual(eksporty, ['CATALOGUE', 'byId'],
     'katalog ma wystawiać wyłącznie sam katalog i wyszukiwarkę po identyfikatorze');
 });
 
 test('wszystkie siedem wielkości jest dostępnych dla każdego', () => {
-  // Zastępuje dawny test „udział niebieskiego jest darmowy”: skoro nie ma
-  // podziału, pytanie brzmi już tylko, czy lista dostępnych to cały katalog.
+  // Skoro katalog nie dzieli wielkości, pytanie brzmi już tylko, czy lista
+  // dostępnych to po prostu cały katalog.
   const dostepne = CATALOGUE.map((m) => m.id);
   assert.equal(dostepne.length, 7);
   assert.ok(dostepne.includes('share'), 'udział niebieskiego — pierwotna wielkość aplikacji');
   assert.ok(dostepne.includes('flicker') && dostepne.includes('uniformity') && dostepne.includes('comfort'),
-    'wielkości dawniej płatne mają być na tej samej liście co reszta');
+    'wskaźniki jakości światła mają być na tej samej liście co reszta');
 });

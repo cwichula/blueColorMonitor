@@ -44,7 +44,7 @@ z pamięci. Przy każdym jest plik, w którym to widać.
       adresu**. Nie ma `XMLHttpRequest`, `sendBeacon`, `WebSocket`, `EventSource`
       ani żadnego skryptu z obcego serwera. Jedyne obce adresy występujące
       w plikach to `http://www.w3.org/2000/svg` (przestrzeń nazw SVG — nie jest
-      pobierana) i **zakomentowane przykłady** adresu darowizn.
+      pobierana) i **zakomentowany przykład** adresu Buy Me a Coffee.
 * [x] **Dane zostają na urządzeniu** — historia pomiarów i ustawienia leżą
       w `localStorage` (`docs/v5/js/history.js`, `docs/v5/js/store.js`).
       Eksport CSV/JSON (`docs/v5/js/screens/tools.js`) zapisuje plik lokalnie
@@ -238,14 +238,18 @@ pytania recenzenta:
       ani treści generowanych przez użytkowników — spodziewana kategoria to
       **3+ / Everyone**.
 * [ ] Odpowiadaj zgodnie ze stanem faktycznym na pytania o **zakupy cyfrowe,
-      lokalizację i udostępnianie danych** — dziś odpowiedź na wszystkie brzmi
-      „nie". **Jeśli włączysz adres darowizn (punkt 6), wróć do ankiety
-      i popraw odpowiedź o zakupach/płatnościach.**
+      lokalizację i udostępnianie danych** — odpowiedź na wszystkie brzmi „nie".
+      Aplikacja nie ma żadnych zakupów w aplikacji; jedyne wsparcie to
+      dobrowolna darowizna otwierana w przeglądarce, poza aplikacją (punkt 6).
 
 ### 2.8. Reszta formularzy
 
 * [ ] App access — zaznacz, że **cała funkcjonalność jest dostępna bez logowania**
       (nie ma konta), więc recenzent nie potrzebuje danych dostępowych.
+* [ ] Monetyzacja / ceny — **bezpłatna, bez zakupów w aplikacji**. Aplikacja nie
+      ma subskrypcji, płatnych funkcji ani żadnych zakupów; jedyne wsparcie to
+      dobrowolna darowizna przez zewnętrzny odsyłacz Buy Me a Coffee, otwierany
+      w przeglądarce.
 * [ ] Ads — **aplikacja nie zawiera reklam**.
 * [ ] Target audience — **nie** jest kierowana do dzieci (to upraszcza wymogi
       Families Policy).
@@ -302,9 +306,10 @@ pytania recenzenta:
       adres pomocy technicznej (**Apple wymaga działającego adresu URL wsparcia**).
 * [ ] Export compliance: aplikacja nie zawiera własnej kryptografii —
       przy wysyłce zwykle wystarczy `ITSAppUsesNonExemptEncryption = false`.
-* [ ] **Nie włączaj w wersji na iOS odsyłacza do darowizn.** Zbiórki i „napiwki"
-      poza mechanizmem Apple to typowy powód odrzucenia (wytyczne 3.1.1 / 3.2.1).
-      Skoro `SUPPORT_URL` jest dziś pusty, najprościej zostawić go pustym w buildzie iOS.
+* [ ] **Nie włączaj w wersji na iOS odsyłacza do darowizn (Buy Me a Coffee).**
+      Zbiórki i „napiwki" prowadzone poza App Store to typowy powód odrzucenia
+      (wytyczne 3.1.1 / 3.2.1). Skoro `SUPPORT_URL` jest dziś pusty, najprościej
+      zostawić go pustym w buildzie iOS.
 
 ### 3.3. Ryzyko 4.2 — nazwane wprost
 
@@ -391,13 +396,17 @@ tłumacz.
 
 ## 6. Darowizny — decyzja przed publikacją
 
-W `docs/v5/js/support.js` stała **`SUPPORT_URL` jest pusta**, więc ekran wsparcia
-nie pokazuje żadnego adresu (w komentarzach są tylko przykłady: Buy Me a Coffee,
-Ko-fi, PayPal.me). Sposób wpisania adresu opisuje `INSTRUKCJE.md`, rozdział 5.1.
+Jedyna monetyzacja tej aplikacji to **dobrowolna darowizna przez Buy Me
+a Coffee** — zewnętrzny odsyłacz, który niczego nie odblokowuje i nie jest
+zakupem w aplikacji. W `docs/v5/js/support.js` stała **`SUPPORT_URL` jest
+pusta**, więc ekran wsparcia nie pokazuje żadnego adresu (w komentarzu jest
+tylko przykład adresu Buy Me a Coffee). Sposób wpisania adresu opisuje
+`INSTRUKCJE.md`, rozdział 5.1.
 
 * [ ] **Decyzja: czy odsyłacz do darowizn ma być w wersjach sklepowych.**
-* [ ] Jeśli **tak** — po włączeniu wróć do **ankiety IARC** (punkt 2.7) i do
-      opisu listingu, i sprawdź politykę płatności Google Play dla zbiórek.
+* [ ] Jeśli **tak** — sprawdź w opisie listingu, czy zgadza się ze stanem
+      faktycznym, i upewnij się, że zewnętrzny odsyłacz do darowizn mieści się
+      w aktualnych zasadach Google Play.
 * [ ] Na **iOS zostaw pusty** (punkt 3.2) — to najprostsza droga ominięcia
       sporu o wytyczne 3.1.1 / 3.2.1.
 * [ ] Polityka prywatności ma już rozdział „7. Darowizny" — sprawdź, czy jego

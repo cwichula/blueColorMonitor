@@ -305,7 +305,7 @@
   }
 
   /* A table inside a sheet (SPEC 9). Cells are strings or
-     { textPL, num, head, lock, tone }. */
+     { textPL, num, head, tone }. */
   function table(captionPL, headings, rows) {
     var wrap = el('div', 'ms4-scroll-x');
     var tbl = put(wrap, el('table', 'ms4-table'));

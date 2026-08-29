@@ -399,8 +399,8 @@ export default {
   'support.cta.title': 'Dacă vrei să ajuți',
   'support.cta.button': 'Cumpără-mi o cafea',
   'support.cta.nolink': 'Profilul de donații nu este încă legat. Când va fi, în locul acesta va sta un buton.',
-  'support.cta.privacy': 'Acest link deschide un site extern (de exemplu Buy Me a Coffee) într-o filă nouă. Este singurul moment în care ceva părăsește acest dispozitiv — măsurătoarea în sine rămâne mereu aici.',
-  'support.cta.privacyFuture': 'Când adresa va fi la locul ei, butonul va deschide un site extern (de exemplu Buy Me a Coffee) într-o filă nouă. Va fi singurul moment în care ceva părăsește acest dispozitiv — măsurătoarea în sine rămâne mereu aici.',
+  'support.cta.privacy': 'Acest link deschide pagina externă Buy Me a Coffee într-o filă nouă. Este singurul moment în care ceva părăsește acest dispozitiv — măsurătoarea în sine rămâne mereu aici.',
+  'support.cta.privacyFuture': 'Când adresa va fi la locul ei, butonul va deschide pagina externă Buy Me a Coffee într-o filă nouă. Va fi singurul moment în care ceva părăsește acest dispozitiv — măsurătoarea în sine rămâne mereu aici.',
   'support.cta.note': 'Nu există aici nicio numărătoare inversă, niciun memento și nicio fereastră care se deschide singură. Rugămintea aceasta așteaptă numai în această filă.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

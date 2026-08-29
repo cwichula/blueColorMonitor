@@ -20,9 +20,8 @@
  * (../shared/i18n.js, słowniki ../shared/i18n/ i i18n/). Kształt obiektu jest
  * ten sam co przedtem, więc ekrany czytają go dokładnie tak jak dotąd.
  *
- * Kolory: wyłącznie tokeny przez CSS. Po przejściu na model darowiznowy nie ma
- * w tym pliku ani jednej wartości barwnej — ostatnie hexy należały do ikon
- * dostawców logowania i zniknęły razem z nimi.
+ * Kolory: wyłącznie tokeny przez CSS. W tym pliku nie ma ani jednej wartości
+ * barwnej — żadna z rysowanych tu ikon nie jest kolorowa.
  */
 (function (global) {
   'use strict';

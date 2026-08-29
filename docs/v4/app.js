@@ -776,10 +776,9 @@
     for (var i = 0; i < pending.length; i += 1) registerView(pending[i]);
   }
 
-  /* Sprzątanie po modelu subskrypcyjnym. Wersja 4 trzymała w pamięci przeglądarki
-     dwa klucze, które dziś nie znaczą nic: symulowane konto i symulowane
-     uprawnienie do płatnych wielkości. Kasujemy je raz, przy starcie, żeby nie
-     zostawały w niczyjej przeglądarce w nieskończoność.
+  /* Sprzątanie po starszych wydaniach. Te dwa klucze zostały w pamięci przeglądarek,
+     które uruchomiły wcześniejsze wydanie; dziś nikt ich nie zapisuje i nic nie
+     znaczą. Kasujemy je raz, przy starcie, żeby nie zostawały tam w nieskończoność.
      WYŁĄCZNIE te dwa — pomiary, historia, progi i ustawienia są nietykalne. */
   var STALE_KEYS = ['ms4.account.v1', 'ms4.entitlement.v1'];
 

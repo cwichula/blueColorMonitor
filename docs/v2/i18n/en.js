@@ -25,9 +25,10 @@
  *   'zone.warning'        — wspólne mówi „Caution”, ta wersja od zawsze mówi
  *                           „Warning” (i „Warnings” w podsumowaniu);
  *   'zone.spoken.warning' — to samo słowo dla czytnika ekranu;
- *   'privacy.external', 'privacy.externalPending' — ta wersja wymienia
- *                           z nazwy przykładowy serwis i mówi o pomiarach
- *                           w liczbie mnogiej.
+ *   'privacy.external', 'privacy.externalPending' — ta wersja nazywa Buy Me
+ *                           a Coffee wprost, bo walidacja adresu w support.js
+ *                           nie przepuszcza żadnego innego serwisu; mówi też
+ *                           o pomiarach w liczbie mnogiej.
  */
 window.I18nData = window.I18nData || {};
 window.I18nData['en'] = Object.assign(window.I18nData['en'] || {}, {
@@ -309,7 +310,7 @@ window.I18nData['en'] = Object.assign(window.I18nData['en'] || {}, {
   'support.pendingText': 'There is no address here yet to send support to. It will appear in this spot when it is ready — until then everything in the app works exactly the same.',
 
   /* Nadpisania warstwy wspólnej — patrz nagłówek pliku. */
-  'privacy.external': 'The button opens an external page (Buy Me a Coffee, for example) in a new tab. That is the only moment when anything leaves this device — and it happens only after you press it. Measurements, history and settings stay here.',
+  'privacy.external': 'The button opens an external Buy Me a Coffee page in a new tab. That is the only moment when anything leaves this device — and it happens only after you press it. Measurements, history and settings stay here.',
   'privacy.externalPending': 'Once the address is available, pressing the button will open an external page in a new tab. That will be the only moment when anything leaves this device. Measurements, history and settings stay here.',
 
   /* ==================================================================
@@ -338,9 +339,9 @@ window.I18nData['en'] = Object.assign(window.I18nData['en'] || {}, {
      ================================================================== */
 
   'thresholds.noteTitle': 'What the thresholds do. ',
-  'thresholds.noteText': 'The warning threshold lights up the yellow state, the critical threshold the red one. A change takes effect immediately — including on the reading already on screen. The thresholds are free; only saving your own named sets is paid.',
+  'thresholds.noteText': 'The warning threshold lights up the yellow state, the critical threshold the red one. A change takes effect immediately — including on the reading already on screen. You can save your own set of thresholds under a name and come back to it whenever you like.',
   'thresholds.profilesTitle': 'Threshold profiles',
-  'thresholds.profilesSub': 'The three built-in ones are free',
+  'thresholds.profilesSub': 'The three built-in ones and your own',
   'thresholds.customName': 'Name of your own profile',
   'thresholds.customPlaceholder': 'for example Bedroom in the evening',
   'thresholds.save': 'Save the current thresholds',

@@ -2,13 +2,12 @@
 
 Wersja dokumentu: 2.0 · 2026-08-27 · autor: projektant v4
 
-**Co zmieniło się w wersji 2.0 dokumentu.** Aplikacja przeszła z modelu płatnego na model
-DOBROWOLNEGO WSPARCIA. Zniknęły bez śladu: pakiety i ich ceny, okres bezpłatny na próbę,
-ekran oferty i każdy jego wariant, podział wielkości na dostępne i zamknięte wraz
-z kłódkami i plakietkami dostępu, a także symulowane konto z całą obsługą dostawców.
-Wszystkie siedem wielkości działa dla każdego, od razu i bez warunków. Zakładka, która
-nazywała się „Konto”, nazywa się teraz „Wsparcie” i mieści jedną dobrowolną prośbę
-o darowiznę obok całych ustawień aplikacji.
+**Model aplikacji.** Monitor Światła jest w całości bezpłatny i działa bez konta: nie ma
+tu logowania, profilu użytkownika ani niczego, za co dałoby się zapłacić. Wszystkie
+siedem wielkości działa dla każdego, od razu i bez warunków. Jedyna monetyzacja to
+DOBROWOLNA DAROWIZNA przez Buy Me a Coffee: jeden odnośnik na zewnętrzny profil, wyłącznie
+na zakładce WSPARCIE, i niczego w aplikacji nie odblokowuje ani nie zmienia. Ta zakładka
+mieści tę jedną prośbę obok całych ustawień aplikacji.
 Zakres: wszystko w `docs/v4/`. Nic poza tym katalogiem nie jest zmieniane.
 
 Ten plik jest jedynym źródłem prawdy dla ośmiu autorów piszących równolegle, którzy
@@ -722,7 +721,7 @@ i żadnych efektów `:hover`.
 | `ms4-chip--info` | chip informacyjny | tło `--c-info-soft`, tekst `--c-info` |
 | `ms4-chip__icon` | ikona w chipie | 16×16 px |
 | `ms4-chip__label` | tekst chipa | `--t-label`, `--fw-med` |
-| `ms4-badge` | plakietka nieklikalna („Na żywo”) | wysokość 24 px, `--r-pill`, `--t-caption`, `--fw-bold`, `letter-spacing: .02em`, `padding-inline: 10px`, wersalikowo tylko w wariancie `--demo` (ton not o prywatności — po przejściu na model darowiznowy nie oznacza już żadnej symulacji) |
+| `ms4-badge` | plakietka nieklikalna („Na żywo”) | wysokość 24 px, `--r-pill`, `--t-caption`, `--fw-bold`, `letter-spacing: .02em`, `padding-inline: 10px`, wersalikowo tylko w wariancie `--demo` (ton not o prywatności) |
 | `ms4-badge--good/--warn/--crit/--demo/--info` | tony plakietki | tło pełne w kolorze tonu, tekst `--c-on-*`; wariant `--demo` zawsze pełny `--c-demo` + `--c-surface` jako tekst |
 | `ms4-badge--dot` | plakietka z kropką zamiast tła | tło przezroczyste, kropka 8 px w kolorze tonu + tekst `--c-text-2` |
 | `ms4-stamp` | znacznik strefy przy wskaźniku | pigułka 32 px: kształt + słowo (`Scale.stamp().wordPL`), tło `--c-*-soft`, tekst koloru strefy, `--t-label`, `--fw-bold` |
@@ -945,9 +944,8 @@ i żadnych efektów `:hover`.
 
 ### 5.Q Ekran WSPARCIE
 
-Zakładka, która przed przejściem na model darowiznowy nazywała się KONTO. Nie ma tu
-profilu, konta ani żadnej karty dostępu — zostały dwa bloki: jedna prośba
-o dobrowolne wsparcie i całe ustawienia aplikacji.
+Zakładka WSPARCIE. Nie ma tu konta, logowania ani profilu użytkownika — są dwa bloki:
+jedna prośba o dobrowolne wsparcie i całe ustawienia aplikacji.
 
 | klasa | do czego | jak wygląda |
 |---|---|---|
@@ -960,15 +958,17 @@ Przycisk darowizny jest zwykłym `ms4-btn--tonal --md --full` z ikoną `cup` —
 własnego wariantu, gradientu ani cudzego brandingu. Ma wyglądać jak każdy inny przycisk
 drugorzędny tej wersji.
 
-**Adres profilu darowizn.** W `screen-support.js`, jako pierwsza rzecz po nagłówku pliku,
-stoi jedna stała:
+**Adres profilu darowizn (Buy Me a Coffee).** W `screen-support.js`, jako pierwsza rzecz
+po nagłówku pliku, stoi jedna stała:
 
 ```js
 var SUPPORT_URL = '';
 ```
 
-Walidacja jest jednolinijkowa: przyjmujemy **wyłącznie** adres zaczynający się od
-`https://`; cokolwiek innego (w tym `javascript:`) traktujemy jak brak adresu.
+Walidacja przyjmuje **wyłącznie** adres zaczynający się od `https://buymeacoffee.com/`
+albo `https://www.buymeacoffee.com/` — Buy Me a Coffee jest jedynym dopuszczalnym
+profilem darowizn, a ukośnik na końcu przedrostka zamyka nazwę hosta. Cokolwiek innego
+(w tym `javascript:`) traktujemy jak brak adresu.
 
 Zachowanie przy pustej stałej jest częścią specyfikacji, nie przypadkiem brzegowym:
 
@@ -1014,9 +1014,8 @@ bez zmian; ich klasy — `ms4-themepick*`, `ms4-swatch*`, `ms4-switch`, `ms4-seg
 
 ## 6. Kontrakt ikon — `UI.icon(name, size)`
 
-Reguły rysunku, wspólne dla wszystkich ikon. Po przejściu na model darowiznowy nie ma
-wśród nich ani jednej kolorowej: ikony dostawców logowania zniknęły razem z logowaniem,
-a razem z nimi ostatnie wartości barwne w `ui.js`.
+Reguły rysunku, wspólne dla wszystkich ikon. Nie ma wśród nich ani jednej kolorowej,
+a w `ui.js` nie ma ani jednej wartości barwnej.
 
 * `viewBox="0 0 24 24"`, `fill="none"`, `stroke="currentColor"`, `stroke-width="1.75"`,
   `stroke-linecap="round"`, `stroke-linejoin="round"`, `aria-hidden="true"`, `focusable="false"`.
@@ -1278,9 +1277,9 @@ tools.docsGlossary        = [
 
 ### 7.5 Ekran WSPARCIE — `UI.T.support`
 
-Gałąź, która przed przejściem na model darowiznowy nazywała się `UI.T.account`.
-Klucze konta i dostępu płatnego zniknęły; klucze ustawień zostały bez zmian,
-tylko pod nową nazwą gałęzi.
+Gałąź `UI.T.support` trzyma teksty ekranu WSPARCIE i całych ustawień. Nie ma w niej
+ani jednego klucza o koncie, logowaniu czy dostępie za opłatą — bo nie ma w aplikacji
+żadnej z tych rzeczy.
 
 Cztery rzeczy, krótko i w tej kolejności: co aplikacja daje za darmo, dlaczego jest
 prośba, co daje darowizna (nic — i to musi być napisane wprost) oraz przycisk ze zdaniem
@@ -1296,7 +1295,7 @@ support.nothingTitle = 'Co daje darowizna'
 support.nothingText  = 'Nic w aplikacji. Darowizna niczego nie odblokowuje i niczego nie zmienia — przed nią i po niej wszystko wygląda tak samo. Jedyne, co się dzieje, to że autor wie, że to się komuś przydało.'
 support.donate       = 'Postaw mi kawę'
 support.donateAria   = 'Otwórz profil darowizn w nowej karcie'
-support.donateVia    = 'Odnośnik prowadzi na zewnętrzny profil darowizn (np. Buy Me a Coffee).'
+support.donateVia    = 'Odnośnik prowadzi na zewnętrzny profil darowizn w serwisie Buy Me a Coffee.'
 support.privacyNote  = 'To jedyne miejsce w całej aplikacji, w którym cokolwiek opuszcza to urządzenie: przycisk otwiera stronę zewnętrzną w nowej karcie i dzieje się to dopiero po jego naciśnięciu. Pomiar, historia i ustawienia zostają tutaj.'
 support.noUrlTitle   = 'Profil nie jest jeszcze podłączony'
 support.noUrlText    = 'Adres profilu darowizn nie został jeszcze ustawiony, więc nie ma dokąd prowadzić — i dlatego nie ma tu przycisku. Cała reszta aplikacji działa bez zmian.'
@@ -1304,8 +1303,8 @@ support.thanks       = 'Dziękuję za każde wsparcie — także za samo korzyst
 ```
 
 Czego w tej gałęzi **nie wolno** zapisać: odliczania, „zostało X dni”, „tylko dziś”,
-groźby, że coś przestanie działać bez wsparcia, ani słowa opisującego pakiet płatny
-w jakimkolwiek kontekście.
+groźby, że coś przestanie działać bez wsparcia, ani zdania sugerującego, że cokolwiek
+w aplikacji jest płatne albo że darowizna cokolwiek odblokowuje.
 
 ### 7.6 Ustawienia — dalszy ciąg `UI.T.support`
 
@@ -1350,18 +1349,14 @@ support.licenses          = 'Składniki aplikacji'
 support.licensesText      = 'Aplikacja nie korzysta z żadnej zewnętrznej biblioteki, kroju pisma ani pliku graficznego. Wszystkie ikony są rysowane w kodzie, cały pomiar liczy własny kod w tej karcie przeglądarki, a strona nie pobiera niczego z sieci — dlatego działa też bez połączenia.'
 ```
 
-### 7.7 Gałęzie usunięte
+### 7.7 Czego w słowniku nie ma
 
-Ze słownika `UI.T` zniknęły w całości dwie gałęzie: ta od konta i ta od ekranu oferty.
-Wraz z nimi zniknęły pojedyncze klucze, które opisywały płatny dostęp: dwa w `nav`
-(stan dostępu w stopce nawigacji), dwa w `measure` (napis i zachęta na zamkniętym
-kafelku), jeden w `tools` i dwa w `aria` (nazwa zamkniętego kafelka i nazwa karty
-pakietu).
+Ani `UI.T`, ani `Scale.TEXT` nie mają gałęzi ani klucza mówiącego o koncie użytkownika,
+logowaniu albo dostępie za opłatą — aplikacja nie ma żadnej z tych rzeczy, więc nie ma
+czego nazwać. `help.free` brzmi „Dla wszystkich, bez opłat”, a moduł `10`
+w `Scale.TEXT.modules` opisuje dobrowolne wsparcie.
 
-Ze `Scale.TEXT` zniknęły w ten sam sposób: wartość `stamp` i wartość `verdict` opisujące
-liczbę za opłatą, dwa klucze `channels` od zamkniętego kanału, klucz `help` od płatnego
-dostępu oraz `demo.fairness`. `help.free` brzmi teraz „Dla wszystkich, bez opłat”,
-a moduł `10` w `Scale.TEXT.modules` opisuje wsparcie zamiast płatnego pakietu.
+Dopisanie tu takiego klucza jest błędem nawet wtedy, gdy nic go nie wyświetla.
 
 
 ### 7.8 Błędy — `UI.T.error`
@@ -1448,9 +1443,8 @@ Zdania mówione o wartościach i strefach buduje `Scale.spoken`, `Scale.spokenZo
 Dopisał: autor `screen-support.js`. Klucze wchodzą do `UI.T` w istniejącą gałąź
 `support` (rozdziały 7.5–7.6) — to jej dalszy ciąg, nie nowa gałąź.
 
-Po przejściu na model darowiznowy nie ma tu już nic do dopisania: wszystkie klucze,
-które ten ekran woła, stoją w rozdziałach 7.5 i 7.6, a dwie dawne gałęzie od konta
-i od ekranu oferty przestały istnieć (rozdział 7.7).
+Nie ma tu nic do dopisania: wszystkie klucze, które ten ekran woła, stoją
+w rozdziałach 7.5 i 7.6.
 
 ---
 
@@ -1567,7 +1561,7 @@ Dodatkowo:
 | klucz | właściciel | zawartość |
 |---|---|---|
 | `ms4.settings.v1` | `store.js` | `{theme, accent, textScale, motion, haptics, leadMetric, onboarded, cameraFacing}` |
-| `ms4.account.v1`, `ms4.entitlement.v1` | — | klucze po dawnym koncie i dawnym uprawnieniu. Nikt ich już nie zapisuje; `app.js` kasuje je raz, przy starcie (`dropStaleKeys`), żeby nie zostawały w niczyjej przeglądarce |
+| `ms4.account.v1`, `ms4.entitlement.v1` | — | martwe klucze po starszych wydaniach. Nikt ich już nie zapisuje; `app.js` kasuje je raz, przy starcie (`dropStaleKeys`), żeby nie zostawały w niczyjej przeglądarce |
 | `ms2.history.v1`, `ms2.thresholds.v1`, `ms2.session.v1`, `ms2.calibration.v1` | `engine.js` | NIE DOTYKAĆ — klucze z wersji 2, celowo wspólne, żeby historia przeżyła przejście na v4 |
 
 Każdy zapis w `try/catch`. Brak pamięci (tryb prywatny) nie może wywrócić aplikacji:
@@ -1580,9 +1574,9 @@ dostaje `UI.T.error.storageBlocked` raz na sesję, nie przy każdym zapisie.
 2. Wyłączona sieć: aplikacja startuje, mierzy i rysuje wszystko.
 3. `grep -n "#[0-9A-Fa-f]\{6\}" *.css` daje trafienia tylko w `tokens.css`
    oraz w jednym udokumentowanym miejscu (`ms4-themepick__preview`).
-3a. Grep po całym katalogu wersji za słowami dawnego modelu płatnego (nazwa pakietu,
-   nazwa cyklicznej opłaty, ścianka oferty, wezwanie do logowania) daje zero trafień —
-   także w tym dokumencie.
+3a. Grep po całym katalogu wersji za słowami płatności i logowania (subskrypcja,
+   abonament, cennik, ekran oferty, „zaloguj się”) daje zero trafień — także w tym
+   dokumencie. Wyjątkiem są wyłącznie zdania stwierdzające, że czegoś takiego tu nie ma.
 4. `grep` po polskich znakach w `screen-*.js`, `app.js`, `ui.js` (poza `UI.T`) — zero trafień.
 5. Każda z sześciu palet w obu motywach: tekst czytelny, przycisk główny czytelny,
    strefy odróżnialne od akcentu.
@@ -1716,9 +1710,6 @@ window.Gauge
   tape(container, {metricId, thresholds}) -> {update(points), setRange(ms), destroy()}
   bars(container, {metricId, thresholds}) -> {update(buckets), destroy()}      buckets=[{t,avg,min,max,zone}]
   ring(container, {value, max})           -> {update(v), destroy()}
-
-(Dwa dawne moduły — od konta i od płatności — nie istnieją: usunięto je razem z modelem
- płatnym. Ich zdarzenia magistrali nie są już ani emitowane, ani nasłuchiwane.)
 
 window.App
   registerView({id, labelPL, icon, build(root), enter(params), leave(), desktopOnly})

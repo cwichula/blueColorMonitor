@@ -464,7 +464,7 @@ window.I18nData['id'] = Object.assign(window.I18nData['id'] || {}, {
   'support.keyTitle': 'Kalau Anda ingin membantu',
   'support.keyLabel': 'Traktir saya kopi',
   'support.keyAria': 'Traktir saya kopi — membuka halaman eksternal di tab baru',
-  'support.serviceText': 'Profil donasi dijalankan oleh layanan eksternal, misalnya Buy Me a Coffee. Aplikasi tidak memuat skrip, widget, maupun gambar apa pun darinya — yang berdiri di sini hanyalah tautan biasa dan tidak lebih.',
+  'support.serviceText': 'Profil donasi dijalankan oleh Buy Me a Coffee, dan itulah satu-satunya bentuk dukungan di aplikasi ini. Aplikasi tidak memuat skrip, widget, maupun gambar apa pun darinya — yang berdiri di sini hanyalah tautan biasa dan tidak lebih.',
   'support.privacyText': 'Menekan tombol ini membuka halaman eksternal di tab baru, dan itulah satu-satunya saat ketika ada sesuatu yang meninggalkan perangkat ini. Hasil pengukuran, riwayat, dan pengaturan tetap di tempatnya — di penyimpanan peramban ini.',
   'support.privacyPendingText': 'Begitu alamatnya tersedia, menekan tombol itu akan membuka halaman eksternal di tab baru dan itulah nanti satu-satunya saat ketika ada sesuatu yang meninggalkan perangkat ini. Hasil pengukuran, riwayat, dan pengaturan tetap di tempatnya — di penyimpanan peramban ini.',
   'support.emptyTitle': 'Profilnya belum tersambung',

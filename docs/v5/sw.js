@@ -28,7 +28,7 @@
  * z listy poniżej.
  */
 
-var CACHE = 'ms5-10';
+var CACHE = 'ms5-11';
 var CACHE_PREFIX = 'ms5-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v5/, spod

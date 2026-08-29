@@ -30,12 +30,11 @@ pliku, ale nie zmieniaj tego, co jest.
   się jako `—`, nigdy jako 0 ani jako dobry wynik.
 - **Model: dobrowolne wsparcie.** Wszystkie siedem wielkości, historia,
   narzędzia i tryb offline działają dla każdego, od razu, bez konta i bez
-  opłat. Nie ma uprawnień, kłódek, rozmytych wartości ani żadnego podziału
-  na wielkości darmowe i płatne — jeżeli coś takiego znajdzie się w kodzie,
-  jest to błąd, nie funkcja. Jedyna warstwa pieniędzy to `js/support.js`:
-  jeden adres zewnętrznego profilu darowizn, który użytkownik może kliknąć
-  na ekranie „Wsparcie”. Darowizna **niczego nie odblokowuje** i ekran mówi
-  to wprost.
+  opłat. Nie ma uprawnień, kłódek ani rozmytych wartości — jeżeli coś
+  takiego znajdzie się w kodzie, jest to błąd, nie funkcja. Jedyna warstwa
+  pieniędzy to `js/support.js`: jeden adres profilu Buy Me a Coffee, który
+  użytkownik może kliknąć na ekranie „Wsparcie”. Darowizna **niczego nie
+  odblokowuje** i ekran mówi to wprost.
 - Dostępność jest wymogiem, nie dodatkiem: kontrast tekstu ≥ 4.5:1, cel dotyku
   ≥ 44 px, pełna obsługa klawiaturą, widoczny `:focus-visible`, poprawne role
   ARIA, `prefers-reduced-motion`.
@@ -62,7 +61,7 @@ docs/v5/
   js/store.js                ustawienia (localStorage) + atrybuty na <html>
   js/history.js              bufor i trwałość historii pomiarów
   js/camera.js               getUserMedia, próbkowanie klatek, stan sesji
-  js/support.js              warstwa wsparcia: SUPPORT_URL + walidacja https
+  js/support.js              warstwa wsparcia: SUPPORT_URL + walidacja adresu
   js/router.js               router po hashu
   js/ui/dom.js               h(), utils DOM, focus trap, ikony SVG
   js/ui/overlays.js          arkusz, dialog, toast, scrim
@@ -259,8 +258,8 @@ export function zoneFor(value, warn, crit, invert) -> 'good'|'warn'|'crit'|null
 export const CATALOGUE = [...]   // 7 pozycji, id i kolejność jak w ../shared/metrics.js
 export function byId(id)
 ```
-Katalog **nie ma** pola `premium` ani list `FREE_IDS` / `PREMIUM_IDS`:
-podział na wielkości darmowe i płatne nie istnieje, więc nie ma czym sterować.
+Katalog opisuje wyłącznie wielkości i ich progi — nie ma w nim żadnego pola
+sterującego dostępem, bo wszystkie siedem jest dostępnych zawsze.
 **Uczciwość zwracanych wartości:** `colourTemperature` zwraca `kelvin: null`,
 gdy `reliable` jest fałszem (wielomian poza zakresem ważności albo chromatyczność
 daleko od krzywej Plancka) — obcięta do granicy liczba wyglądałaby jak pomiar.
@@ -272,7 +271,7 @@ rozbicie sumuje się do oceny.
 **`'crit'`** — spójna z tokenami `--zone-crit-*` i z `data-zone="crit"`.
 Etykiety kar w `comfortIndex` zostają po polsku, jak w v4.
 
-Pola pozycji katalogu (jak w v4, minus `premium`, plus `icon`):
+Pola pozycji katalogu (jak w v4, plus `icon`):
 `{id, namePL, unit, shortPL, helpPL, decimals, min, max, warn, crit, invert, icon}`
 gdzie `icon` to nazwa ikony z `ui/dom.js`:
 share→`droplet`, brightness→`sun`, kelvin→`thermometer`, melanopic→`moon`,
@@ -371,9 +370,11 @@ dokładnie jedna stała do wypełnienia przez właściciela:
 const SUPPORT_URL = '';
 ```
 Wymagania, od których nie ma odstępstwa:
-- przyjmujemy **wyłącznie `https://`**; cokolwiek innego (`javascript:`,
-  literówka w schemacie, adres nie do rozebrania) `supportUrl()` zwraca jako
-  `''` — adres trafia prosto do atrybutu `href`,
+- przyjmujemy **wyłącznie `https://` i wyłącznie host `buymeacoffee.com`
+  (albo `www.buymeacoffee.com`)** — lista `SUPPORT_HOSTS` zawęża walidację do
+  jedynej dopuszczalnej monetyzacji; cokolwiek innego (`javascript:`, literówka
+  w schemacie, cudzy serwis, adres nie do rozebrania) `supportUrl()` zwraca
+  jako `''` — adres trafia prosto do atrybutu `href`,
 - gdy adres jest pusty, ekran „Wsparcie” istnieje i wygląda normalnie, ale
   **nie renderuje żadnego odnośnika** — ani martwego, ani prowadzącego donikąd,
 - **żadnego skryptu, widżetu ani obrazka z serwera Buy Me a Coffee.** Ikonę
@@ -508,25 +509,28 @@ wszystko). Każda zmiana zapisuje się natychmiast, bez przycisku „Zapisz”, 
 potwierdza toastem tylko wtedy, gdy efekt nie jest widoczny od razu.
 
 ### screens/support.js
-Ekran statyczny: buduje się raz, nie subskrybuje żadnego zdarzenia i niczego
-nie zapisuje. Cztery karty, w tej kolejności i nie w innej:
+Ekran niczego nie zapisuje i nasłuchuje jednego zdarzenia — `'i18n:changed'`,
+po którym stawia swoje karty od nowa. Cztery karty, w tej kolejności i nie
+w innej:
 
-1. **Co aplikacja daje za darmo** — siedem wielkości, historia, narzędzia,
+1. **Co aplikacja daje** — siedem wielkości, historia, narzędzia,
    tryb offline; bez konta i bez limitów. Jedno–dwa zdania.
 2. **Dlaczego pada prośba** — utrzymanie i rozwój, uczciwie i bez dramatyzowania.
 3. **Co daje darowizna** — nic poza tym, że autor wie, że to się komuś przydało.
    **To musi być napisane wprost.**
 4. **Przycisk** (`<a href target="_blank" rel="noopener noreferrer">` z ikoną
-   `coffee`, wygląd zwykłego `m5-btn--primary`, bez cudzego brandingu)
+   `coffee`, wygląd obrysowego `m5-btn--ghost`, bez cudzego brandingu)
    **plus zdanie o prywatności** stojące tuż przy nim: kliknięcie otwiera
-   stronę zewnętrzną i jest to jedyny moment, w którym cokolwiek opuszcza
-   to urządzenie. Przy pustym `SUPPORT_URL` w miejscu przycisku stoi spokojna
-   informacja dla użytkownika, a odnośnika nie ma w ogóle.
+   zewnętrzną stronę Buy Me a Coffee i jest to jedyny moment, w którym
+   cokolwiek opuszcza to urządzenie. Przy pustym `SUPPORT_URL` w miejscu
+   przycisku stoi spokojna informacja dla użytkownika, a odnośnika nie ma
+   w ogóle.
 
 Czego na tym ekranie (i w całej wersji) **nie wolno**: odliczania, sztucznej
 pilności, wyskakujących próśb, przerywników, okien po N uruchomieniach,
 proszenia w trakcie pomiaru albo na ekranie wyniku, straszenia, że bez wsparcia
-coś przestanie działać, oraz słowa „premium” w jakimkolwiek kontekście.
+coś przestanie działać, oraz jakiegokolwiek sugerowania, że istnieje wersja
+lepsza od tej, którą użytkownik już ma.
 Prośba pojawia się **wyłącznie wtedy, gdy użytkownik sam wejdzie na ten ekran**;
 dyskretnym punktem wejścia jest zakładka w nawigacji i nic ponadto.
 

@@ -575,7 +575,7 @@ window.I18nData['en'] = Object.assign(window.I18nData['en'] || {}, {
   'support.nothingText': 'Nothing in the app. A donation unlocks nothing and changes nothing — everything looks the same before it and after it. All that is left is that I know it was useful to someone.',
   'support.donate': 'Buy me a coffee',
   'support.donateAria': 'Open the donation profile in a new tab',
-  'support.donateVia': 'The link leads to an external donation profile (Buy Me a Coffee, for example).',
+  'support.donateVia': 'The link leads to an external donation profile on Buy Me a Coffee.',
   'support.noUrlTitle': 'The profile is not connected yet',
   'support.noUrlText': 'The address of the donation profile has not been set yet, so there is nowhere to lead — and that is why there is no button here. All the rest of the app works unchanged.',
   'support.thanks': 'Thank you for every bit of support — and for using the app at all.',

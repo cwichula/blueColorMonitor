@@ -550,9 +550,9 @@
 
 /* ===========================================================================
    5.Q  EKRAN WSPARCIE
-   Jedna karta z prośbą i jeden odnośnik na zewnątrz. Żadnego gradientu,
-   żadnej korony i żadnej ceny — przycisk darowizny jest zwykłym przyciskiem
-   drugorzędnym tej wersji (.ms4-btn--tonal), żeby nie wyglądać na naklejkę.
+   Jedna karta z prośbą i jeden odnośnik na zewnątrz. Żadnego gradientu
+   i żadnej korony — przycisk darowizny jest zwykłym przyciskiem drugorzędnym
+   tej wersji (.ms4-btn--tonal), żeby nie wyglądać na naklejkę.
    =========================================================================== */
 
 .ms4-support__action { text-align: left; }

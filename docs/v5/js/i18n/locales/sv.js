@@ -398,8 +398,8 @@ export default {
   'support.cta.title': 'Om du vill hjälpa till',
   'support.cta.button': 'Bjud mig på en kaffe',
   'support.cta.nolink': 'Gåvoprofilen är inte kopplad än. När den är det står det en knapp på den här platsen.',
-  'support.cta.privacy': 'Den här länken öppnar en extern sida (till exempel Buy Me a Coffee) i en ny flik. Det är det enda tillfället då något lämnar den här enheten — själva mätningen stannar alltid här.',
-  'support.cta.privacyFuture': 'När adressen väl är på plats öppnar knappen en extern sida (till exempel Buy Me a Coffee) i en ny flik. Det blir det enda tillfället då något lämnar den här enheten — själva mätningen stannar alltid här.',
+  'support.cta.privacy': 'Den här länken öppnar den externa sidan Buy Me a Coffee i en ny flik. Det är det enda tillfället då något lämnar den här enheten — själva mätningen stannar alltid här.',
+  'support.cta.privacyFuture': 'När adressen väl är på plats öppnar knappen den externa sidan Buy Me a Coffee i en ny flik. Det blir det enda tillfället då något lämnar den här enheten — själva mätningen stannar alltid här.',
   'support.cta.note': 'Här finns ingen nedräkning, inga påminnelser och inget fönster som öppnar sig självt. Den här förfrågan väntar på den här fliken och ingen annanstans.',
 
   /* ────────────────────────────  Wskaźnik i wykres  ──────────────────────── */

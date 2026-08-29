@@ -300,7 +300,7 @@ Model ma **dwa poziomy i ani jednego więcej**. Poziom 1 to Pulpit. Poziom 2 to 
 | **07** | **Test ekranu** | plansze kontrolne, instrukcja krok po kroku | jedyny ekran wychodzący z motywu: pełne plansze |
 | **08** | **Harmonogram** | automatyczne pomiary o zadanych porach | jawnie: „działa tylko przy otwartej aplikacji" |
 | **09** | **Alerty** | powiadomienie po przekroczeniu progu | jawnie: kiedy zadziała, a kiedy nie |
-| **10** | **Wsparcie** | aplikacja jest darmowa; jeden odnośnik na zewnętrzny profil darowizn | bez licznika, bez pilności; klawisz tylko przy wypełnionym `SUPPORT_URL` |
+| **10** | **Wsparcie** | aplikacja jest darmowa; jeden odnośnik na profil Buy Me a Coffee | bez licznika, bez pilności; klawisz tylko przy wypełnionym `SUPPORT_URL` |
 | **11** | **Dokumentacja** | co to mierzy, czego nie mierzy, wzory, zakresy, pełne zastrzeżenie MDR | otwiera się sekcją „Czego ta aplikacja NIE mierzy" |
 | **12** | **Ustawienia** | motyw, rozmiar tekstu ×1 / ×1,15 / ×1,3, „Ogranicz ruch", czyszczenie historii | motyw ustawia `data-theme` na `<html>` |
 
@@ -1179,8 +1179,8 @@ Zdanie składamy z tabeli 8.3, **kluczem `[strefa][id winowajcy]`**. Żadnej odm
 żadnego sklejania nazw z katalogu w środku zdania — polska fleksja bez słownika daje błędy, a błąd
 gramatyczny w tej aplikacji kosztuje zaufanie. Zdania są napisane ręcznie i skończone.
 
-Werdykt **nigdy nie zawiera liczby metryki płatnej** — zdania z 8.3 nie zawierają liczb w ogóle,
-więc dzieje się to samo z siebie. Jest to celowe i nie wolno tego „ulepszyć".
+Werdykt **nigdy nie zawiera liczby** — zdania z 8.3 nie zawierają liczb w ogóle, bo werdykt jest
+zdaniem, a nie odczytem. Jest to celowe i nie wolno tego „ulepszyć".
 
 ### 7.3 Przełączanie kanału głównego
 
@@ -1425,25 +1425,28 @@ Cztery rzeczy, krótko, w tej kolejności — i ani jednej więcej:
    przestanie działać.
 3. **Co darowizna daje.** Zdanie obowiązkowe, wprost:
 
-   > Nic. Żadna liczba, żaden moduł i żadne ustawienie nie odblokowują się po wpłacie, bo wszystko
-   > jest odblokowane od początku.
+   > Nic. Żadna liczba, żaden moduł i żadne ustawienie nie odblokowują się po darowiźnie,
+   > bo wszystko jest odblokowane od początku.
 
 4. **Klawisz** i przy nim zdanie obowiązkowe o prywatności:
 
    > Naciśnięcie tego klawisza otwiera stronę zewnętrzną w nowej karcie i jest to jedyny moment,
    > w którym cokolwiek opuszcza to urządzenie.
 
-Adres profilu to jedna stała `SUPPORT_URL` na górze `support.js`, przyjmowana wyłącznie ze
-schematem `https://`. **Przy pustej stałej ekran istnieje i wygląda normalnie**, w miejscu klawisza
-stoi spokojne zdanie, że profil nie jest jeszcze podłączony, i **nie renderuje się żaden
-odnośnik**. Odnośnik jest zwykłym `<a target="_blank" rel="noopener noreferrer">` z klawiszem
-`--ghost`; kubek rysujemy kształtami CSS jak każdą inną ikonę. Żadnego widżetu, skryptu ani
-obrazka z serwera zbiórki — złamałoby to zasadę 16 z rozdziału 10 i tryb offline.
+Adres profilu to jedna stała `SUPPORT_URL` na górze `support.js`. Buy Me a Coffee jest jedyną
+formą wsparcia w tej aplikacji, więc walidacja jest zawężona do tego serwisu: przyjmujemy wyłącznie
+adres ze schematem `https://` na hoście `buymeacoffee.com` albo `www.buymeacoffee.com`, a każdy
+inny liczy się jak brak adresu. **Przy pustej stałej ekran istnieje i wygląda normalnie**,
+w miejscu klawisza stoi spokojne zdanie, że profil nie jest jeszcze podłączony, i **nie renderuje
+się żaden odnośnik**. Odnośnik jest zwykłym `<a target="_blank" rel="noopener noreferrer">`
+z klawiszem `--ghost`; kubek rysujemy kształtami CSS jak każdą inną ikonę. Żadnego widżetu,
+skryptu ani obrazka z serwera Buy Me a Coffee — złamałoby to zasadę 16 z rozdziału 10
+i tryb offline.
 
 Czego na tym ekranie nie ma: odliczania, „zostało X dni", kwot udających koszyk, licznika wpłat,
 wyskakujących próśb, przerywników i ani jednego słowa sugerującego, że coś w tej aplikacji jest
-płatne albo zamknięte. Prośba pojawia się
-wyłącznie wtedy, gdy użytkownik sam otworzy ten moduł ze spisu.
+płatne albo zamknięte. Prośba pojawia się wyłącznie wtedy, gdy użytkownik sam otworzy ten moduł
+ze spisu.
 
 ### 8.8 Spis modułów — opisy jednym zdaniem
 
