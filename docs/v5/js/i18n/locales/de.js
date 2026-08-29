@@ -103,6 +103,7 @@ export default {
   'measure.intro.start': 'Messung starten',
   'measure.intro.hint': 'Der Browser fragt nach der Erlaubnis für die Kamera. Sobald du sie erteilst, beginnt die Messung.',
   'measure.intro.privacy': 'Das Kamerabild wird auf diesem Gerät verarbeitet und verlässt es nie. Wir senden, speichern und teilen kein einziges Bild.',
+  'measure.intro.honesty': 'Das ist kein Medizinprodukt und keine Untersuchung. Die App zeigt eine Näherung des Lichts um dich herum, urteilt nicht über deine Gesundheit und ersetzt kein Gespräch mit einer Ärztin oder einem Arzt.',
 
   'measure.live.aria': 'Messung läuft',
   'measure.badge.starting': 'Startet',
@@ -296,7 +297,7 @@ export default {
   'accent.rose': 'Rosé',
 
   'tools.thresholds.title': 'Schwellen',
-  'tools.thresholds.subtitle': 'Ab welchem Wert die App „mäßig“ sagen soll und ab welchem „schädlich“. Die Standardschwellen sind unser Vorschlag, keine Norm — stell sie auf dich ein.',
+  'tools.thresholds.subtitle': 'Ab welchem Wert die App „mäßig“ sagen soll und ab welchem „schlecht“. Die Standardschwellen sind unser Vorschlag, keine Norm — stell sie auf dich ein.',
   'tools.thresholds.warn': 'Warnschwelle',
   'tools.thresholds.crit': 'Alarmschwelle',
   'tools.thresholds.warn.aria': 'Warnschwelle — {metric}',
@@ -356,6 +357,7 @@ export default {
   'tools.about.limit.medical.title': 'Das ist weder eine ärztliche Untersuchung noch ärztlicher Rat',
   'tools.about.limit.medical.text': 'Die App hilft dir zu bemerken, dass das Licht um dich herum kalt, hell oder unruhig ist, und schlägt vor, was sich dagegen tun lässt. Sie urteilt nicht über deine Gesundheit und ersetzt weder das Gespräch mit einem Arzt noch eine Messung mit einem professionellen Messgerät.',
   'tools.about.privacy': 'Alles wird auf deinem Gerät berechnet. Das Kamerabild wird nirgendwohin gesendet und nirgends gespeichert — in den Speicher gelangen ausschließlich die berechneten Zahlen.',
+  'tools.about.privacyPolicy': 'Vollständige Datenschutzerklärung',
 
   'tools.data.title': 'Daten',
   'tools.data.subtitle': 'Alles liegt im Speicher dieses Browsers und geht von hier nirgendwohin.',
@@ -464,7 +466,7 @@ export default {
   'metric.melanopic.help': 'Eine Näherung des melanopischen Faktors. 1,00 ist neutrales Tageslichtweiß; am Abend lohnt es sich, unter 0,50 zu gehen.',
   'metric.flicker.name': 'Flimmern',
   'metric.flicker.short': 'Unsichtbares Pulsieren der Lichtquelle.',
-  'metric.flicker.help': 'Billige Dimmer und Hintergrundbeleuchtungen pulsieren. Das Auge sieht es nicht, es gilt aber als Ursache von Müdigkeit und Kopfschmerzen.',
+  'metric.flicker.help': 'Billige Dimmer und Hintergrundbeleuchtungen pulsieren. Das Auge sieht es nicht, es gilt aber als mögliche Ursache von Müdigkeit und Kopfschmerzen.',
   'metric.uniformity.name': 'Gleichmäßigkeit',
   'metric.uniformity.short': 'Ob sich das Licht gleichmäßig über das Bild verteilt.',
   'metric.uniformity.help': 'Ein niedriger Wert bedeutet auf einem Bildschirm durchscheinende Hintergrundbeleuchtung oder eine Spiegelung; auf dem Schreibtisch — eine schlecht gestellte Lampe.',
@@ -476,9 +478,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'sicher',
+  'zone.good': 'gut',
   'zone.warn': 'mäßig',
-  'zone.crit': 'schädlich',
+  'zone.crit': 'schlecht',
   'zone.none': 'keine Daten',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -549,7 +551,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'Die Erlaubnis für den Kamerazugriff wurde nicht erteilt. Erlaube die Kamera für diese Seite in den Browsereinstellungen und versuch es erneut.',
+  'camera.error.denied': 'Die Erlaubnis für den Kamerazugriff wurde nicht erteilt. Erlaube die Kamera für diese Seite in den Einstellungen des Browsers oder des Systems und versuch es erneut.',
   'camera.error.notfound': 'Keine Kamera gefunden. Prüfe, ob das Gerät eine hat und ob sie im System nicht abgeschaltet ist.',
   'camera.error.inuse': 'Die Kamera ist von einer anderen App belegt. Schließ diese App oder den Tab und versuch es erneut.',
   'camera.error.insecure': 'Die Kamera funktioniert nur über HTTPS oder auf localhost. Öffne diese Seite unter einer Adresse, die mit „https://“ beginnt.',

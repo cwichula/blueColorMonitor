@@ -867,7 +867,18 @@ function aboutCard(settings) {
     ...limits().map((limit) => h('div.m5-tools__limit', null,
       h('span.m5-tools__limittitle', { text: limit.title }),
       h('p.m5-tools__note', { text: limit.text }))),
-    h('p.m5-tools__note.m5-tools__note--quiet', { text: t('tools.about.privacy') })));
+    h('p.m5-tools__note.m5-tools__note--quiet', { text: t('tools.about.privacy') }),
+    /* Odsyłacz do pełnej polityki. Oba sklepy wymagają go WEWNĄTRZ aplikacji,
+       a nie tylko w formularzu konsoli — zapewnienia o prywatności rozsiane po
+       ekranach polityką nie są, bo nie mówią o administratorze ani o retencji.
+       Cel leży w zakresie aplikacji (docs/v5/prywatnosc.html) i jest w
+       APP_SHELL, więc otwiera się bez paska adresu i działa bez sieci. */
+    h('p.m5-tools__note', null,
+      h('a', {
+        href: './prywatnosc.html',
+        rel: 'noopener',
+        text: t('tools.about.privacyPolicy')
+      }))));
 
   function sync(next) {
     items.forEach((i) => i.sync(next));

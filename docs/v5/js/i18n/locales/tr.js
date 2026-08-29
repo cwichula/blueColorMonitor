@@ -111,6 +111,7 @@ export default {
   'measure.intro.start': 'Ölçümü başlat',
   'measure.intro.hint': 'Tarayıcı kamera izni isteyecek. İzni verdiğiniz anda ölçüm başlar.',
   'measure.intro.privacy': 'Kamera görüntüsü bu cihazda işlenir ve cihazdan hiç çıkmaz. Hiçbir kareyi göndermiyor, kaydetmiyor ve paylaşmıyoruz.',
+  'measure.intro.honesty': 'Bu bir tıbbi cihaz ya da muayene değildir. Uygulama çevrenizdeki ışığın yaklaşık bir görüntüsünü verir; sağlığınız hakkında hüküm vermez ve hekimle görüşmenin yerini tutmaz.',
 
   'measure.live.aria': 'Ölçüm sürüyor',
   'measure.badge.starting': 'Başlatılıyor',
@@ -304,7 +305,7 @@ export default {
   'accent.rose': 'Gül',
 
   'tools.thresholds.title': 'Eşikler',
-  'tools.thresholds.subtitle': 'Uygulamanın hangi değerden sonra “orta düzey”, hangi değerden sonra “zararlı” diyeceği. Varsayılan eşikler bizim önerimizdir, bir standart değil — kendinize göre ayarlayın.',
+  'tools.thresholds.subtitle': 'Uygulamanın hangi değerden sonra “orta düzey”, hangi değerden sonra “kötü” diyeceği. Varsayılan eşikler bizim önerimizdir, bir standart değil — kendinize göre ayarlayın.',
   'tools.thresholds.warn': 'Uyarı eşiği',
   'tools.thresholds.crit': 'Alarm eşiği',
   'tools.thresholds.warn.aria': 'Uyarı eşiği — {metric}',
@@ -364,6 +365,7 @@ export default {
   'tools.about.limit.medical.title': 'Bu bir tıbbi tetkik ya da tıbbi tavsiye değildir',
   'tools.about.limit.medical.text': 'Uygulama, çevrenizdeki ışığın soğuk, parlak ya da huzursuz olduğunu fark etmenize yardım eder ve bu konuda neler yapılabileceğini önerir. Sağlığınız hakkında hüküm vermez; doktorla yapılacak bir görüşmenin ya da profesyonel bir ölçüm cihazıyla yapılan ölçümün yerini tutmaz.',
   'tools.about.privacy': 'Her şey cihazınızda hesaplanır. Kamera görüntüsü hiçbir yere gönderilmez ve kaydedilmez — belleğe yalnızca hesaplanan sayılar gider.',
+  'tools.about.privacyPolicy': 'Gizlilik politikasının tamamı',
 
   'tools.data.title': 'Veriler',
   'tools.data.subtitle': 'Her şey bu tarayıcının belleğinde durur ve buradan hiçbir yere gitmez.',
@@ -472,7 +474,7 @@ export default {
   'metric.melanopic.help': 'Melanopik oranın yaklaşık değeri. 1,00 nötr gün ışığı beyazıdır; akşamları 0,50 altına inmekte yarar var.',
   'metric.flicker.name': 'Kırpışma',
   'metric.flicker.short': 'Işık kaynağının gözle görülmeyen yanıp sönmesi.',
-  'metric.flicker.help': 'Ucuz karartıcılar ve arka aydınlatmalar yanıp söner. Göz bunu fark etmez ama yorgunluğun ve baş ağrısının bilinen bir nedenidir.',
+  'metric.flicker.help': 'Ucuz karartıcılar ve arka aydınlatmalar yanıp söner. Göz bunu fark etmez ama yorgunluğun ve baş ağrısının olası nedenlerinden biri sayılır.',
   'metric.uniformity.name': 'Düzgünlük',
   'metric.uniformity.short': 'Işık karede eşit dağılıyor mu.',
   'metric.uniformity.help': 'Ekranda düşük bir değer arka aydınlatma sızması ya da yansıma demektir; masada ise kötü yerleştirilmiş bir lamba.',
@@ -484,9 +486,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'güvenli',
+  'zone.good': 'iyi',
   'zone.warn': 'orta düzey',
-  'zone.crit': 'zararlı',
+  'zone.crit': 'kötü',
   'zone.none': 'veri yok',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -557,7 +559,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'Kamera erişimi için izin verilmedi. Tarayıcı ayarlarında bu sayfa için kameraya izin verin ve yeniden deneyin.',
+  'camera.error.denied': 'Kamera erişimi için izin verilmedi. Tarayıcı veya sistem ayarlarında bu sayfa için kameraya izin verin ve yeniden deneyin.',
   'camera.error.notfound': 'Kamera bulunamadı. Cihazda kamera olup olmadığını ve sistemde kapatılmadığını kontrol edin.',
   'camera.error.inuse': 'Kamera başka bir uygulama tarafından kullanılıyor. O uygulamayı ya da sekmeyi kapatıp yeniden deneyin.',
   'camera.error.insecure': 'Kamera yalnızca HTTPS üzerinden ya da localhost’ta çalışır. Bu sayfayı “https://” ile başlayan bir adreste açın.',

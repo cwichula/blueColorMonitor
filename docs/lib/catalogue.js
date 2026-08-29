@@ -46,8 +46,12 @@ export const CATALOGUE = [
     unit: 'K',
     shortPL: 'Czy światło jest ciepłe, czy chłodne.',
     helpPL: 'Poniżej 3000 K światło jest ciepłe i wieczorem łagodniejsze. 6500 K to domyślna biel większości ekranów.',
+    /* Próg krytyczny stoi POWYŻEJ bieli dziennej celowo. Przy crit 6000 K
+       zwykłe światło dnia i domyślna biel ekranu (6500 K) wpadały do strefy
+       najgorszej, a pomoc tej samej wielkości nazywa 6500 K stanem normalnym —
+       aplikacja przeczyłaby sama sobie w tej samej sesji. */
     decimals: 0, min: 1500, max: 9000,
-    warn: 4600, crit: 6000, invert: false, icon: 'thermometer'
+    warn: 4600, crit: 7000, invert: false, icon: 'thermometer'
   },
   {
     id: 'melanopic',
@@ -55,8 +59,11 @@ export const CATALOGUE = [
     unit: '×',
     shortPL: 'Jak mocno to światło działa na zegar biologiczny.',
     helpPL: 'Przybliżenie współczynnika melanopicznego. 1,00 to neutralna biel dzienna; wieczorem warto schodzić poniżej 0,50.',
+    /* Tak samo jak przy kelwinach: 1,00 to z definicji neutralna biel dzienna,
+       więc próg krytyczny równy 1,00 wrzucał ją do strefy najgorszej — mimo że
+       pomoc tej wielkości opisuje ją jako punkt odniesienia. */
     decimals: 2, min: 0, max: 1.6,
-    warn: 0.75, crit: 1.0, invert: false, icon: 'moon'
+    warn: 0.75, crit: 1.25, invert: false, icon: 'moon'
   },
   {
     id: 'flicker',

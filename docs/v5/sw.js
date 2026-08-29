@@ -28,7 +28,7 @@
  * z listy poniżej.
  */
 
-var CACHE = 'ms5-11';
+var CACHE = 'ms5-12';
 var CACHE_PREFIX = 'ms5-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v5/, spod
@@ -39,6 +39,11 @@ var CACHE_PREFIX = 'ms5-';
 var APP_SHELL = [
   './index.html',
   './manifest.webmanifest',
+  /* Polityka prywatności jest CZĘŚCIĄ aplikacji, nie odsyłaczem na zewnątrz:
+     oba sklepy wymagają jej wewnątrz aplikacji, a skoro leży w zakresie
+     (scope: './'), otwiera się bez paska adresu. Wozimy ją na urządzenie,
+     bo bez sieci też musi się otworzyć. */
+  './prywatnosc.html',
 
   './css/tokens.css',
   './css/base.css',

@@ -25,7 +25,7 @@
  * Numer w nazwie pamięci podbijamy przy KAŻDEJ zmianie któregokolwiek pliku z listy.
  */
 
-var CACHE = 'ms4-15';
+var CACHE = 'ms4-16';
 var CACHE_PREFIX = 'ms4-';
 
 /* Ścieżki względne celowo: aplikacja ma działać spod /v4/, spod

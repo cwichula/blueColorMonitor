@@ -315,7 +315,7 @@
       shortPL: 'Czy światło jest ciepłe, czy chłodne.',
       helpPL: 'Poniżej 3000 K światło jest ciepłe i wieczorem łagodniejsze. 6500 K to domyślna biel większości ekranów.',
       decimals: 0, min: 1500, max: 9000,
-      warn: 4600, crit: 6000, invert: false
+      warn: 4600, crit: 7000, invert: false
     },
     {
       id: 'melanopic',
@@ -324,7 +324,7 @@
       shortPL: 'Jak mocno to światło działa na zegar biologiczny.',
       helpPL: 'Przybliżenie współczynnika melanopicznego. 1,00 to neutralna biel dzienna; wieczorem warto schodzić poniżej 0,50.',
       decimals: 2, min: 0, max: 1.6,
-      warn: 0.75, crit: 1.0, invert: false
+      warn: 0.75, crit: 1.25, invert: false
     },
     {
       id: 'flicker',

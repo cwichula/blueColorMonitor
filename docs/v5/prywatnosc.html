@@ -1,9 +1,10 @@
 <!doctype html>
-<!-- UWAGA: ten plik ma BLIŹNIAKA w docs/v5/prywatnosc.html.
-     Kopia w v5 istnieje, bo oba sklepy wymagają polityki WEWNĄTRZ aplikacji,
-     a katalog v5 jest zakresem paczki sklepowej i jej pamięci offline.
-     Każdą zmianę treści wprowadzaj W OBU PLIKACH — inaczej sklep dostanie
-     inny dokument niż użytkownik witryny. -->
+<!-- UWAGA: to jest KOPIA docs/prywatnosc.html, wożona razem z aplikacją.
+     Istnieje, bo oba sklepy wymagają polityki wewnątrz aplikacji, a katalog v5
+     jest zakresem paczki (scope './') i listy APP_SHELL w sw.js — dzięki temu
+     otwiera się bez paska adresu i działa bez sieci.
+     Każdą zmianę treści wprowadzaj W OBU PLIKACH. Po zmianie podnieś CACHE
+     w docs/v5/sw.js, inaczej telefony zostaną przy starej kopii. -->
 <html lang="pl">
 <head>
 <meta charset="utf-8">
@@ -114,7 +115,7 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 44px 0 32px; }
 
 <div class="wrap">
 
-  <a class="back" href="./">← Monitor Światła</a>
+  <a class="back" href="./index.html">← Monitor Światła</a>
 
   <h1>Polityka prywatności</h1>
   <p class="updated">Dotyczy aplikacji <strong>Monitor Światła</strong> — w sklepach i w wersji

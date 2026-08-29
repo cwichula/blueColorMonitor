@@ -1,7 +1,7 @@
 {
   "name": "Light Monitor",
   "short_name": "Light Monitor",
-  "description": "Measures seven qualities of the light around you with your camera: blue share, scene brightness, colour temperature, circadian impact, flicker, uniformity and visual comfort. Everything is computed on this device, it works offline and nothing is sent to the network. All seven are available right away, with no account and no payment.",
+  "description": "Reads the light around you with your camera: it measures blue share, scene brightness, flicker and uniformity, and estimates colour temperature, circadian impact and visual comfort from them. Everything is computed on this device, it works offline and nothing is sent to the network. All seven readings are available right away, with no account and no payment. Not a medical device.",
   "id": "./",
   "start_url": "./index.html",
   "scope": "./",
@@ -10,7 +10,7 @@
   "orientation": "portrait",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["utilities", "health", "productivity"],
+  "categories": ["utilities", "productivity"],
   "background_color": "#eff2f8",
   "theme_color": "#eff2f8",
   "icons": [

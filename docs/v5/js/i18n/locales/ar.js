@@ -110,6 +110,7 @@ export default {
   'measure.intro.start': 'ابدأ القياس',
   'measure.intro.hint': 'سيطلب المتصفح الإذن باستخدام الكاميرا. ويبدأ القياس فور منحه.',
   'measure.intro.privacy': 'تُعالَج صورة الكاميرا في هذا الجهاز ولا تغادره أبدًا. لا نرسل أي إطار ولا نحفظه ولا نشاركه.',
+  'measure.intro.honesty': 'هذا ليس جهازًا طبيًا ولا فحصًا. يعرض التطبيق تقديرًا للضوء من حولك، ولا يحكم على صحتك ولا يغني عن استشارة الطبيب.',
 
   'measure.live.aria': 'القياس جارٍ',
   'measure.badge.starting': 'جارٍ التشغيل',
@@ -305,7 +306,7 @@ export default {
   'accent.rose': 'وردي',
 
   'tools.thresholds.title': 'العتبات',
-  'tools.thresholds.subtitle': 'القيمة التي يبدأ التطبيق عندها بقول «معتدل»، والقيمة التي يقول عندها «ضار». والعتبات الافتراضية اقتراح منّا لا معيار — اضبطها على ما يناسبك.',
+  'tools.thresholds.subtitle': 'القيمة التي يبدأ التطبيق عندها بقول «معتدل»، والقيمة التي يقول عندها «ضعيف». والعتبات الافتراضية اقتراح منّا لا معيار — اضبطها على ما يناسبك.',
   'tools.thresholds.warn': 'عتبة التحذير',
   'tools.thresholds.crit': 'عتبة الإنذار',
   'tools.thresholds.warn.aria': 'عتبة التحذير — {metric}',
@@ -365,6 +366,7 @@ export default {
   'tools.about.limit.medical.title': 'هذا ليس فحصًا طبيًا ولا استشارة طبية',
   'tools.about.limit.medical.text': 'يساعدك التطبيق على ملاحظة أن الضوء من حولك بارد أو ساطع أو مضطرب، ويقترح ما يمكن فعله حيال ذلك. وهو لا يحكم في أمر صحتك ولا يحلّ محلّ الحديث مع طبيب ولا محلّ القياس بجهاز احترافي.',
   'tools.about.privacy': 'كل الحساب يجري على جهازك. وصورة الكاميرا لا تُرسل ولا تُحفظ في أي مكان — ولا يصل إلى الذاكرة سوى الأرقام المحسوبة.',
+  'tools.about.privacyPolicy': 'سياسة الخصوصية الكاملة',
 
   'tools.data.title': 'البيانات',
   'tools.data.subtitle': 'كل شيء موجود في ذاكرة هذا المتصفح ولا يخرج من هنا إلى أي مكان.',
@@ -474,7 +476,7 @@ export default {
   'metric.melanopic.help': 'تقريب للنسبة الميلانوبية. القيمة 1.00 بياض نهاري محايد؛ ويحسن النزول دون 0.50 في المساء.',
   'metric.flicker.name': 'الوميض',
   'metric.flicker.short': 'نبض غير مرئي في مصدر الضوء.',
-  'metric.flicker.help': 'مخفّتات الإضاءة والإضاءات الخلفية الرخيصة تنبض. لا تراه العين، لكنه سبب معروف للإرهاق والصداع.',
+  'metric.flicker.help': 'مخفّتات الإضاءة والإضاءات الخلفية الرخيصة تنبض. لا تراه العين، لكنه يُذكر بين الأسباب المحتملة للإرهاق والصداع.',
   'metric.uniformity.name': 'الانتظام',
   'metric.uniformity.short': 'هل يتوزّع الضوء بانتظام في الإطار.',
   'metric.uniformity.help': 'القيمة المنخفضة على الشاشة تعني تسرّب الإضاءة الخلفية أو انعكاسًا؛ وعلى المكتب — مصباحًا سيّئ الوضع.',
@@ -486,9 +488,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'آمن',
+  'zone.good': 'جيد',
   'zone.warn': 'معتدل',
-  'zone.crit': 'ضار',
+  'zone.crit': 'ضعيف',
   'zone.none': 'لا بيانات',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -569,7 +571,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'لم يُمنح الإذن باستخدام الكاميرا. اسمح بالكاميرا لهذه الصفحة في إعدادات المتصفح وحاول مرة أخرى.',
+  'camera.error.denied': 'لم يُمنح الإذن باستخدام الكاميرا. اسمح بالكاميرا لهذه الصفحة في إعدادات المتصفح أو النظام وحاول مرة أخرى.',
   'camera.error.notfound': 'لم يُعثر على كاميرا. تحقّق من أن الجهاز فيه كاميرا وأنها ليست معطّلة في النظام.',
   'camera.error.inuse': 'الكاميرا مشغولة بتطبيق آخر. أغلق ذلك التطبيق أو علامة التبويب وحاول مرة أخرى.',
   'camera.error.insecure': 'لا تعمل الكاميرا إلا عبر HTTPS أو على localhost. افتح هذه الصفحة على عنوان يبدأ بـ «https://».',

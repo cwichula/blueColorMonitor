@@ -106,6 +106,7 @@ export default {
   'measure.intro.start': '測定を開始',
   'measure.intro.hint': 'ブラウザーがカメラの使用許可を求めます。許可するとすぐに測定が始まります。',
   'measure.intro.privacy': 'カメラの映像はこの端末の中で処理され、外に出ることはありません。1 フレームも送信・保存・共有しません。',
+  'measure.intro.honesty': 'これは医療機器でも検査でもありません。周囲の光のおおよその状態を示すだけで、健康を判定するものではなく、医師への相談に代わるものでもありません。',
 
   'measure.live.aria': '測定中',
   'measure.badge.starting': '起動中',
@@ -299,7 +300,7 @@ export default {
   'accent.rose': 'ローズ',
 
   'tools.thresholds.title': 'しきい値',
-  'tools.thresholds.subtitle': 'どの値から「中程度」と言い、どの値から「有害」と言うか。既定のしきい値は私たちの提案であって基準ではありません — ご自分に合わせて設定してください。',
+  'tools.thresholds.subtitle': 'どの値から「中程度」と言い、どの値から「不良」と言うか。既定のしきい値は私たちの提案であって基準ではありません — ご自分に合わせて設定してください。',
   'tools.thresholds.warn': '警告のしきい値',
   'tools.thresholds.crit': '警報のしきい値',
   'tools.thresholds.warn.aria': '警告のしきい値 — {metric}',
@@ -359,6 +360,7 @@ export default {
   'tools.about.limit.medical.title': 'これは医学的検査でも医学的助言でもありません',
   'tools.about.limit.medical.text': 'このアプリは、周りの光が冷たい、明るい、あるいは落ち着かないことに気づく手助けをし、それに対してできることを提案します。健康について判断を下すものではなく、医師との相談や、専門の測定器による計測に代わるものでもありません。',
   'tools.about.privacy': 'すべてはあなたの端末の中で計算されます。カメラの映像はどこにも送信も保存もされません — 保存領域に入るのは、計算された数値だけです。',
+  'tools.about.privacyPolicy': 'プライバシーポリシー全文',
 
   'tools.data.title': 'データ',
   'tools.data.subtitle': 'すべてはこのブラウザーの保存領域にあり、ここからどこへも出ません。',
@@ -468,7 +470,7 @@ export default {
   'metric.melanopic.help': 'メラノピック比の近似値です。1.00 は中性的な昼光色の白で、夜は 0.50 を下回るとよいでしょう。',
   'metric.flicker.name': 'フリッカー',
   'metric.flicker.short': '光源の、目に見えない明滅。',
-  'metric.flicker.help': '安価な調光器やバックライトは明滅します。目には見えませんが、疲れや頭痛の原因として知られています。',
+  'metric.flicker.help': '安価な調光器やバックライトは明滅します。目には見えませんが、疲れや頭痛の原因のひとつとして指摘されています。',
   'metric.uniformity.name': '均一性',
   'metric.uniformity.short': '光がフレーム全体に均等に広がっているか。',
   'metric.uniformity.help': '画面で値が低ければバックライトの漏れか映り込み、机の上ならランプの置き方が悪いということです。',
@@ -480,9 +482,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': '安全',
+  'zone.good': '良好',
   'zone.warn': '中程度',
-  'zone.crit': '有害',
+  'zone.crit': '不良',
   'zone.none': 'データなし',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -559,7 +561,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'カメラの使用が許可されていません。ブラウザーの設定でこのページにカメラを許可して、もう一度お試しください。',
+  'camera.error.denied': 'カメラの使用が許可されていません。ブラウザーまたはシステムの設定でこのページにカメラを許可して、もう一度お試しください。',
   'camera.error.notfound': 'カメラが見つかりません。この端末にカメラがあるか、システムで無効になっていないかを確認してください。',
   'camera.error.inuse': 'カメラをほかのアプリが使っています。そのアプリかタブを閉じて、もう一度お試しください。',
   'camera.error.insecure': 'カメラは HTTPS または localhost でしか動きません。「https://」で始まるアドレスでこのページを開いてください。',

@@ -74,6 +74,10 @@ const STYLE = `
 :where(.m5-measure__privacy){display:flex;align-items:flex-start;gap:var(--sp-2);
   max-width:44ch;margin-top:var(--sp-2);color:var(--text-3);
   font-size:var(--fs-xs);line-height:var(--lh-normal);text-align:left}
+/* Zastrzeżenie medyczne: ten sam rozmiar co reszta podpowiedzi, ale ciszej
+   i z kreską odcinającą je od obietnic ekranu. Ma być widoczne, nie krzykliwe. */
+:where(.m5-measure__hint--quiet){max-width:44ch;margin-top:var(--sp-3);
+  padding-top:var(--sp-3);border-top:1px solid var(--line-1);color:var(--text-3)}
 
 /* Podgląd + kolumna statusu w jednym rzędzie. flex-wrap jest ostatnią deską
    ratunku: przy skali tekstu 1,3 na 320 px kolumna statusu nie zmieści się
@@ -358,6 +362,12 @@ export function create() {
   const introHint = h('p.m5-measure__hint');
   const introPrivacy = h('span');
 
+  /* Zastrzeżenie medyczne stoi TUTAJ, a nie tylko w arkuszu powitalnym.
+     Arkusz pokazuje się raz na urządzenie, a w opakowaniu sklepowym dzieli
+     pamięć z przeglądarką — kto wcześniej odwiedził stronę, nie zobaczy go
+     w aplikacji ani razu. Ten ekran widać przed każdym pomiarem. */
+  const introHonesty = h('p.m5-measure__hint.m5-measure__hint--quiet');
+
   const introView = h('section.m5-measure__view.m5-measure__intro', null,
     h('span.m5-measure__mark', icon('gauge', { size: 40 })),
     introHeadline,
@@ -366,7 +376,8 @@ export function create() {
     introHint,
     h('p.m5-measure__privacy', null,
       icon('lock', { size: 16 }),
-      introPrivacy)
+      introPrivacy),
+    introHonesty
   );
 
   /* ---- widok: praca (startowanie / praca / pauza) ---- */
@@ -481,6 +492,7 @@ export function create() {
     startBtnLabel.nodeValue = t('measure.intro.start');
     introHint.textContent = t('measure.intro.hint');
     introPrivacy.textContent = t('measure.intro.privacy');
+    introHonesty.textContent = t('measure.intro.honesty');
 
     liveView.setAttribute('aria-label', t('measure.live.aria'));
     staleText.textContent = t('measure.stale');

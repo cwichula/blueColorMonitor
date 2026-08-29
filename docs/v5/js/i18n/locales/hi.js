@@ -115,6 +115,7 @@ export default {
   'measure.intro.start': 'माप शुरू करें',
   'measure.intro.hint': 'ब्राउज़र कैमरे की अनुमति माँगेगा। अनुमति देते ही माप शुरू हो जाती है।',
   'measure.intro.privacy': 'कैमरे की तस्वीर इसी डिवाइस पर संसाधित होती है और कभी इससे बाहर नहीं जाती। हम एक भी फ़्रेम न भेजते हैं, न सहेजते हैं, न साझा करते हैं।',
+  'measure.intro.honesty': 'यह कोई चिकित्सा उपकरण या जाँच नहीं है। ऐप आसपास की रोशनी का अनुमान दिखाता है; यह सेहत के बारे में फ़ैसला नहीं करता और डॉक्टर से बातचीत की जगह नहीं लेता।',
 
   'measure.live.aria': 'माप चल रही है',
   'measure.badge.starting': 'शुरू हो रहा है',
@@ -308,7 +309,7 @@ export default {
   'accent.rose': 'गुलाब',
 
   'tools.thresholds.title': 'सीमाएँ',
-  'tools.thresholds.subtitle': 'किस मान से ऐप “मध्यम” कहे और किससे “हानिकारक”। डिफ़ॉल्ट सीमाएँ हमारा सुझाव हैं, कोई मानक नहीं — इन्हें अपने हिसाब से सेट करें।',
+  'tools.thresholds.subtitle': 'किस मान से ऐप “मध्यम” कहे और किससे “खराब”। डिफ़ॉल्ट सीमाएँ हमारा सुझाव हैं, कोई मानक नहीं — इन्हें अपने हिसाब से सेट करें।',
   'tools.thresholds.warn': 'चेतावनी की सीमा',
   'tools.thresholds.crit': 'अलार्म की सीमा',
   'tools.thresholds.warn.aria': 'चेतावनी की सीमा — {metric}',
@@ -368,6 +369,7 @@ export default {
   'tools.about.limit.medical.title': 'यह न चिकित्सा जाँच है, न चिकित्सकीय सलाह',
   'tools.about.limit.medical.text': 'ऐप आपको यह देखने में मदद करता है कि आसपास की रोशनी ठंडी, तेज़ या बेचैन है, और सुझाता है कि इसके बारे में क्या किया जा सकता है। यह आपके स्वास्थ्य के बारे में कोई निर्णय नहीं देता और न ही डॉक्टर से बातचीत या पेशेवर मीटर से की गई माप की जगह लेता है।',
   'tools.about.privacy': 'सब कुछ आपके डिवाइस पर गिना जाता है। कैमरे की तस्वीर कहीं भी न भेजी जाती है, न सहेजी जाती है — स्टोरेज तक सिर्फ़ गिनी हुई संख्याएँ पहुँचती हैं।',
+  'tools.about.privacyPolicy': 'पूरी गोपनीयता नीति',
 
   'tools.data.title': 'डेटा',
   'tools.data.subtitle': 'सब कुछ इसी ब्राउज़र के स्टोरेज में पड़ा है और यहाँ से कहीं नहीं जाता।',
@@ -476,7 +478,7 @@ export default {
   'metric.melanopic.help': 'मेलानोपिक अनुपात का एक अनुमान। 1.00 तटस्थ दिन की सफ़ेदी है; शाम को 0.50 से नीचे जाना ठीक रहता है।',
   'metric.flicker.name': 'झिलमिलाहट',
   'metric.flicker.short': 'रोशनी के स्रोत की न दिखने वाली धड़कन।',
-  'metric.flicker.help': 'सस्ते डिमर और बैकलाइट धड़कते हैं। आँख इसे देख नहीं पाती, पर यह थकान और सिरदर्द की जानी-मानी वजह है।',
+  'metric.flicker.help': 'सस्ते डिमर और बैकलाइट धड़कते हैं। आँख इसे देख नहीं पाती, पर इसे थकान और सिरदर्द की एक संभावित वजह माना जाता है।',
   'metric.uniformity.name': 'एकरूपता',
   'metric.uniformity.short': 'रोशनी फ़्रेम में एक-सी फैली है या नहीं।',
   'metric.uniformity.help': 'स्क्रीन पर कम मान का मतलब बैकलाइट का रिसना या कोई परावर्तन है; मेज़ पर — ग़लत जगह रखा हुआ लैंप।',
@@ -488,9 +490,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'सुरक्षित',
+  'zone.good': 'अच्छा',
   'zone.warn': 'मध्यम',
-  'zone.crit': 'हानिकारक',
+  'zone.crit': 'खराब',
   'zone.none': 'कोई डेटा नहीं',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -561,7 +563,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'कैमरे के इस्तेमाल की अनुमति नहीं मिली। अपने ब्राउज़र की सेटिंग में इस पेज के लिए कैमरे की अनुमति दें और फिर कोशिश करें।',
+  'camera.error.denied': 'कैमरे के इस्तेमाल की अनुमति नहीं मिली। अपने ब्राउज़र या सिस्टम की सेटिंग में इस पेज के लिए कैमरे की अनुमति दें और फिर कोशिश करें।',
   'camera.error.notfound': 'कोई कैमरा नहीं मिला। जाँचें कि डिवाइस में कैमरा है और वह सिस्टम में बंद तो नहीं है।',
   'camera.error.inuse': 'कैमरा किसी दूसरे ऐप में व्यस्त है। उस ऐप या टैब को बंद करें और फिर कोशिश करें।',
   'camera.error.insecure': 'कैमरा सिर्फ़ HTTPS पर या localhost पर चलता है। इस पेज को “https://” से शुरू होने वाले पते पर खोलें।',

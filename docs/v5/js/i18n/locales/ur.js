@@ -116,6 +116,7 @@ export default {
   'measure.intro.start': 'پیمائش شروع کریں',
   'measure.intro.hint': 'براؤزر کیمرے کی اجازت مانگے گا۔ اجازت دیتے ہی پیمائش شروع ہو جاتی ہے۔',
   'measure.intro.privacy': 'کیمرے کی تصویر اسی ڈیوائس پر پروسیس ہوتی ہے اور کبھی اس سے باہر نہیں جاتی۔ ہم ایک فریم بھی نہ بھیجتے ہیں، نہ محفوظ کرتے ہیں، نہ کسی کو دیتے ہیں۔',
+  'measure.intro.honesty': 'یہ کوئی طبی آلہ یا معائنہ نہیں ہے۔ ایپ آس پاس کی روشنی کا تخمینہ دکھاتی ہے؛ یہ صحت کے بارے میں فیصلہ نہیں دیتی اور ڈاکٹر سے بات کا متبادل نہیں ہے۔',
 
   'measure.live.aria': 'پیمائش جاری ہے',
   'measure.badge.starting': 'شروع ہو رہا ہے',
@@ -309,7 +310,7 @@ export default {
   'accent.rose': 'گلابی',
 
   'tools.thresholds.title': 'حدیں',
-  'tools.thresholds.subtitle': 'کس قدر سے ایپ «معتدل» کہے اور کس سے «نقصان دہ»۔ طے شدہ حدیں ہماری تجویز ہیں، کوئی معیار نہیں — انہیں اپنی ضرورت کے مطابق سیٹ کریں۔',
+  'tools.thresholds.subtitle': 'کس قدر سے ایپ «معتدل» کہے اور کس سے «خراب»۔ طے شدہ حدیں ہماری تجویز ہیں، کوئی معیار نہیں — انہیں اپنی ضرورت کے مطابق سیٹ کریں۔',
   'tools.thresholds.warn': 'تنبیہ کی حد',
   'tools.thresholds.crit': 'خطرے کی حد',
   'tools.thresholds.warn.aria': 'تنبیہ کی حد — {metric}',
@@ -369,6 +370,7 @@ export default {
   'tools.about.limit.medical.title': 'یہ نہ طبی معائنہ ہے اور نہ طبی مشورہ',
   'tools.about.limit.medical.text': 'ایپ آپ کو یہ محسوس کرنے میں مدد دیتی ہے کہ ارد گرد کی روشنی ٹھنڈی، تیز یا بےچین ہے، اور تجویز دیتی ہے کہ اس کا کیا کیا جا سکتا ہے۔ یہ آپ کی صحت کے بارے میں کوئی فیصلہ نہیں دیتی اور نہ ڈاکٹر سے بات چیت یا پیشہ ورانہ میٹر سے پیمائش کا متبادل ہے۔',
   'tools.about.privacy': 'سارا حساب آپ کی ڈیوائس پر ہوتا ہے۔ کیمرے کی تصویر کہیں نہیں بھیجی جاتی اور نہ کہیں محفوظ کی جاتی ہے — میموری میں صرف حساب کیے ہوئے اعداد جاتے ہیں۔',
+  'tools.about.privacyPolicy': 'مکمل رازداری کی پالیسی',
 
   'tools.data.title': 'ڈیٹا',
   'tools.data.subtitle': 'سب کچھ اسی براؤزر کی میموری میں پڑا ہے اور یہاں سے کہیں نہیں جاتا۔',
@@ -478,7 +480,7 @@ export default {
   'metric.melanopic.help': 'میلانوپک تناسب کا تخمینہ۔ 1.00 غیر جانبدار دن کی سفیدی ہے؛ شام کو 0.50 سے نیچے آنا بہتر رہتا ہے۔',
   'metric.flicker.name': 'جھلملاہٹ',
   'metric.flicker.short': 'روشنی کے ذریعے کی غیر مرئی دھڑکن۔',
-  'metric.flicker.help': 'سستے ڈِمر اور بیک لائٹیں دھڑکتی ہیں۔ آنکھ اسے نہیں دیکھتی، مگر یہ تھکن اور سر درد کی معروف وجہ ہے۔',
+  'metric.flicker.help': 'سستے ڈِمر اور بیک لائٹیں دھڑکتی ہیں۔ آنکھ اسے نہیں دیکھتی، مگر اسے تھکن اور سر درد کی ایک ممکنہ وجہ سمجھا جاتا ہے۔',
   'metric.uniformity.name': 'یکسانیت',
   'metric.uniformity.short': 'روشنی فریم میں یکساں پھیلتی ہے یا نہیں۔',
   'metric.uniformity.help': 'اسکرین پر کم قدر کا مطلب بیک لائٹ کا رِساؤ یا انعکاس ہے؛ میز پر — غلط رکھا ہوا لیمپ۔',
@@ -490,9 +492,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'محفوظ',
+  'zone.good': 'اچھا',
   'zone.warn': 'معتدل',
-  'zone.crit': 'نقصان دہ',
+  'zone.crit': 'خراب',
   'zone.none': 'کوئی ڈیٹا نہیں',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -562,7 +564,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'کیمرے کے استعمال کی اجازت نہیں دی گئی۔ براؤزر کی ترتیبات میں اس صفحے کے لیے کیمرے کی اجازت دیں اور دوبارہ کوشش کریں۔',
+  'camera.error.denied': 'کیمرے کے استعمال کی اجازت نہیں دی گئی۔ براؤزر یا سسٹم کی ترتیبات میں اس صفحے کے لیے کیمرے کی اجازت دیں اور دوبارہ کوشش کریں۔',
   'camera.error.notfound': 'کوئی کیمرا نہیں ملا۔ دیکھیں کہ ڈیوائس میں کیمرا موجود ہے اور نظام میں بند تو نہیں۔',
   'camera.error.inuse': 'کیمرا کسی دوسری ایپ کے زیرِ استعمال ہے۔ وہ ایپ یا ٹیب بند کریں اور دوبارہ کوشش کریں۔',
   'camera.error.insecure': 'کیمرا صرف HTTPS پر یا localhost پر کام کرتا ہے۔ یہ صفحہ ایسے پتے پر کھولیں جو «https://» سے شروع ہوتا ہو۔',

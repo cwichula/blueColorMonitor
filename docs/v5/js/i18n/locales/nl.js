@@ -106,6 +106,7 @@ export default {
   'measure.intro.start': 'Meting starten',
   'measure.intro.hint': 'De browser vraagt toestemming voor de camera. Zodra je die geeft, begint de meting.',
   'measure.intro.privacy': 'Het camerabeeld wordt op dit apparaat verwerkt en verlaat het nooit. We versturen, bewaren of delen geen enkel frame.',
+  'measure.intro.honesty': 'Dit is geen medisch hulpmiddel en geen onderzoek. De app toont een benadering van het licht om je heen; hij oordeelt niet over je gezondheid en vervangt geen gesprek met een arts.',
 
   'measure.live.aria': 'Meting bezig',
   'measure.badge.starting': 'Starten',
@@ -299,7 +300,7 @@ export default {
   'accent.rose': 'Roze',
 
   'tools.thresholds.title': 'Drempels',
-  'tools.thresholds.subtitle': 'Vanaf welke waarde de app “matig” moet zeggen en vanaf welke “schadelijk”. De standaarddrempels zijn ons voorstel, geen norm — stel ze op jezelf af.',
+  'tools.thresholds.subtitle': 'Vanaf welke waarde de app “matig” moet zeggen en vanaf welke “slecht”. De standaarddrempels zijn ons voorstel, geen norm — stel ze op jezelf af.',
   'tools.thresholds.warn': 'Waarschuwingsdrempel',
   'tools.thresholds.crit': 'Alarmdrempel',
   'tools.thresholds.warn.aria': 'Waarschuwingsdrempel — {metric}',
@@ -359,6 +360,7 @@ export default {
   'tools.about.limit.medical.title': 'Dit is geen medisch onderzoek en geen medisch advies',
   'tools.about.limit.medical.text': 'De app helpt je opmerken dat het licht om je heen koel, fel of onrustig is, en geeft aan wat je eraan kunt doen. Ze doet geen uitspraak over je gezondheid en vervangt geen gesprek met een arts of een meting met een professionele meter.',
   'tools.about.privacy': 'Alles wordt op jouw apparaat berekend. Het camerabeeld wordt nergens naartoe gestuurd en nergens opgeslagen — alleen de berekende getallen komen in het geheugen terecht.',
+  'tools.about.privacyPolicy': 'Volledig privacybeleid',
 
   'tools.data.title': 'Gegevens',
   'tools.data.subtitle': 'Alles staat in het geheugen van deze browser en gaat hier nergens naartoe.',
@@ -468,7 +470,7 @@ export default {
   'metric.melanopic.help': 'Een benadering van de melanopische factor. 1,00 is neutraal daglichtwit; ’s avonds is het goed om onder 0,50 te blijven.',
   'metric.flicker.name': 'Flikkering',
   'metric.flicker.short': 'Onzichtbaar pulseren van de lichtbron.',
-  'metric.flicker.help': 'Goedkope dimmers en achtergrondverlichting pulseren. Het oog ziet het niet, maar het geldt als oorzaak van vermoeidheid en hoofdpijn.',
+  'metric.flicker.help': 'Goedkope dimmers en achtergrondverlichting pulseren. Het oog ziet het niet, maar het geldt als mogelijke oorzaak van vermoeidheid en hoofdpijn.',
   'metric.uniformity.name': 'Gelijkmatigheid',
   'metric.uniformity.short': 'Of het licht zich gelijkmatig over het beeld verdeelt.',
   'metric.uniformity.help': 'Een lage waarde betekent op een scherm doorschijnende achtergrondverlichting of een spiegeling; op het bureau — een slecht geplaatste lamp.',
@@ -480,9 +482,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'veilig',
+  'zone.good': 'goed',
   'zone.warn': 'matig',
-  'zone.crit': 'schadelijk',
+  'zone.crit': 'slecht',
   'zone.none': 'geen gegevens',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -553,7 +555,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'Er is geen toestemming voor de camera gegeven. Sta de camera voor deze pagina toe in de instellingen van je browser en probeer het opnieuw.',
+  'camera.error.denied': 'Er is geen toestemming voor de camera gegeven. Sta de camera voor deze pagina toe in de instellingen van je browser of systeem en probeer het opnieuw.',
   'camera.error.notfound': 'Geen camera gevonden. Controleer of het apparaat er een heeft en of die niet in het systeem is uitgeschakeld.',
   'camera.error.inuse': 'De camera is bezet door een andere app. Sluit die app of dat tabblad en probeer het opnieuw.',
   'camera.error.insecure': 'De camera werkt alleen via HTTPS of op localhost. Open deze pagina op een adres dat met “https://” begint.',

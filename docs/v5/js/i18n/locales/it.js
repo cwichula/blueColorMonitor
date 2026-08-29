@@ -105,6 +105,7 @@ export default {
   'measure.intro.start': 'Inizia la misurazione',
   'measure.intro.hint': 'Il browser chiederà il permesso di usare la fotocamera. La misurazione parte appena lo concedi.',
   'measure.intro.privacy': 'L’immagine della fotocamera viene elaborata su questo dispositivo e non lo lascia mai. Non inviamo, non salviamo e non condividiamo nessun fotogramma.',
+  'measure.intro.honesty': 'Questo non è un dispositivo medico né un esame. L’app mostra un’approssimazione della luce intorno a te; non giudica la tua salute e non sostituisce il parere di un medico.',
 
   'measure.live.aria': 'Misurazione in corso',
   'measure.badge.starting': 'Avvio',
@@ -298,7 +299,7 @@ export default {
   'accent.rose': 'Rosa',
 
   'tools.thresholds.title': 'Soglie',
-  'tools.thresholds.subtitle': 'Il valore a partire dal quale l’app deve dire «moderata» e quello a partire dal quale deve dire «dannosa». Le soglie predefinite sono una nostra proposta, non una norma — impostale come preferisci.',
+  'tools.thresholds.subtitle': 'Il valore a partire dal quale l’app deve dire «moderata» e quello a partire dal quale deve dire «scarsa». Le soglie predefinite sono una nostra proposta, non una norma — impostale come preferisci.',
   'tools.thresholds.warn': 'Soglia di avviso',
   'tools.thresholds.crit': 'Soglia di allarme',
   'tools.thresholds.warn.aria': 'Soglia di avviso — {metric}',
@@ -358,6 +359,7 @@ export default {
   'tools.about.limit.medical.title': 'Non è né un esame né un consiglio medico',
   'tools.about.limit.medical.text': 'L’app aiuta a notare che la luce intorno a te è fredda, intensa o irrequieta, e suggerisce che cosa si può fare. Non esprime giudizi sulla tua salute e non sostituisce un colloquio con un medico né una misura con uno strumento professionale.',
   'tools.about.privacy': 'Tutto viene calcolato sul tuo dispositivo. L’immagine della fotocamera non viene mai inviata né salvata da nessuna parte — in memoria finiscono soltanto i numeri calcolati.',
+  'tools.about.privacyPolicy': 'Informativa sulla privacy completa',
 
   'tools.data.title': 'Dati',
   'tools.data.subtitle': 'Tutto sta nella memoria di questo browser e da qui non va da nessuna parte.',
@@ -466,7 +468,7 @@ export default {
   'metric.melanopic.help': 'Un’approssimazione del rapporto melanopico. 1,00 è il bianco neutro della luce diurna; alla sera conviene scendere sotto 0,50.',
   'metric.flicker.name': 'Sfarfallio',
   'metric.flicker.short': 'Pulsazione invisibile della sorgente di luce.',
-  'metric.flicker.help': 'I dimmer e le retroilluminazioni economiche pulsano. L’occhio non lo vede, ma è una causa nota di stanchezza e mal di testa.',
+  'metric.flicker.help': 'I dimmer e le retroilluminazioni economiche pulsano. L’occhio non lo vede, ma viene indicato come possibile causa di stanchezza e mal di testa.',
   'metric.uniformity.name': 'Uniformità',
   'metric.uniformity.short': 'Se la luce si distribuisce in modo uniforme nell’inquadratura.',
   'metric.uniformity.help': 'Un valore basso su uno schermo indica una perdita di retroilluminazione o un riflesso; sulla scrivania — una lampada messa male.',
@@ -478,9 +480,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'sicura',
+  'zone.good': 'buona',
   'zone.warn': 'moderata',
-  'zone.crit': 'dannosa',
+  'zone.crit': 'scarsa',
   'zone.none': 'nessun dato',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -551,7 +553,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, bez rady,
      co zrobić dalej. Każdy kod ma tu jedno zdanie diagnozy i jedno zdanie
      rady. */
-  'camera.error.denied': 'Il permesso di usare la fotocamera non è stato concesso. Consenti l’accesso alla fotocamera per questa pagina nelle impostazioni del browser e riprova.',
+  'camera.error.denied': 'Il permesso di usare la fotocamera non è stato concesso. Consenti l’accesso alla fotocamera per questa pagina nelle impostazioni del browser o del sistema e riprova.',
   'camera.error.notfound': 'Nessuna fotocamera trovata. Controlla che il dispositivo ne abbia una e che non sia disattivata nel sistema.',
   'camera.error.inuse': 'La fotocamera è occupata da un’altra app. Chiudi quell’app o quella scheda e riprova.',
   'camera.error.insecure': 'La fotocamera funziona solo tramite HTTPS oppure su localhost. Apri questa pagina a un indirizzo che inizia con «https://».',

@@ -108,6 +108,7 @@ export default {
   'measure.intro.start': 'Începe măsurarea',
   'measure.intro.hint': 'Browserul îți va cere permisiunea de a folosi camera. Măsurarea pornește imediat ce o acorzi.',
   'measure.intro.privacy': 'Imaginea de la cameră este prelucrată pe acest dispozitiv și nu îl părăsește niciodată. Nu trimitem, nu salvăm și nu partajăm niciun cadru.',
+  'measure.intro.honesty': 'Aceasta nu este un dispozitiv medical și nici o investigație. Aplicația arată o aproximare a luminii din jur; nu se pronunță asupra sănătății tale și nu înlocuiește discuția cu un medic.',
 
   'measure.live.aria': 'Măsurătoare în curs',
   'measure.badge.starting': 'Pornește',
@@ -301,7 +302,7 @@ export default {
   'accent.rose': 'Trandafir',
 
   'tools.thresholds.title': 'Praguri',
-  'tools.thresholds.subtitle': 'De la ce valoare să spună aplicația „moderat” și de la care „dăunător”. Pragurile implicite sunt propunerea noastră, nu o normă — potrivește-le după tine.',
+  'tools.thresholds.subtitle': 'De la ce valoare să spună aplicația „moderat” și de la care „slab”. Pragurile implicite sunt propunerea noastră, nu o normă — potrivește-le după tine.',
   'tools.thresholds.warn': 'Prag de avertizare',
   'tools.thresholds.crit': 'Prag de alarmă',
   'tools.thresholds.warn.aria': 'Prag de avertizare — {metric}',
@@ -361,6 +362,7 @@ export default {
   'tools.about.limit.medical.title': 'Aceasta nu este nici un examen medical, nici un sfat medical',
   'tools.about.limit.medical.text': 'Aplicația te ajută să observi că lumina din jur este rece, puternică sau neliniștită și îți sugerează ce se poate face. Nu se pronunță asupra sănătății tale și nu înlocuiește discuția cu un medic și nici măsurarea cu un aparat profesional.',
   'tools.about.privacy': 'Totul se calculează pe dispozitivul tău. Imaginea de la cameră nu este trimisă și nu este salvată nicăieri — în memorie ajung numai numerele calculate.',
+  'tools.about.privacyPolicy': 'Politica de confidențialitate completă',
 
   'tools.data.title': 'Date',
   'tools.data.subtitle': 'Totul stă în memoria acestui browser și nu pleacă nicăieri de aici.',
@@ -469,7 +471,7 @@ export default {
   'metric.melanopic.help': 'O aproximare a raportului melanopic. 1,00 este albul neutru al zilei; seara merită să cobori sub 0,50.',
   'metric.flicker.name': 'Pâlpâire',
   'metric.flicker.short': 'Pulsația invizibilă a sursei de lumină.',
-  'metric.flicker.help': 'Variatoarele ieftine și iluminarea de fundal pulsează. Ochiul nu o vede, dar este o cauză cunoscută de oboseală și de dureri de cap.',
+  'metric.flicker.help': 'Variatoarele ieftine și iluminarea de fundal pulsează. Ochiul nu o vede, dar este semnalat drept o posibilă cauză de oboseală și de dureri de cap.',
   'metric.uniformity.name': 'Uniformitate',
   'metric.uniformity.short': 'Dacă lumina se împrăștie uniform în cadru.',
   'metric.uniformity.help': 'O valoare mică pe un ecran înseamnă scurgeri ale iluminării de fundal sau o reflexie; pe birou — o lampă prost așezată.',
@@ -481,9 +483,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'sigur',
+  'zone.good': 'bun',
   'zone.warn': 'moderat',
-  'zone.crit': 'dăunător',
+  'zone.crit': 'slab',
   'zone.none': 'fără date',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -553,7 +555,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, bez rady,
      co zrobić dalej. Każdy kod ma tu jedno zdanie diagnozy i jedno zdanie
      rady. */
-  'camera.error.denied': 'Permisiunea de a folosi camera nu a fost acordată. Permite camera pentru această pagină din setările browserului și încearcă din nou.',
+  'camera.error.denied': 'Permisiunea de a folosi camera nu a fost acordată. Permite camera pentru această pagină din setările browserului sau ale sistemului și încearcă din nou.',
   'camera.error.notfound': 'Nu a fost găsită nicio cameră. Verifică dacă dispozitivul are una și dacă nu este dezactivată în sistem.',
   'camera.error.inuse': 'Camera este ocupată de altă aplicație. Închide acea aplicație sau filă și încearcă din nou.',
   'camera.error.insecure': 'Camera funcționează numai prin HTTPS sau pe localhost. Deschide această pagină la o adresă care începe cu „https://”.',

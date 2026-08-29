@@ -107,6 +107,7 @@ export default {
   'measure.intro.start': 'Iniciar medição',
   'measure.intro.hint': 'O navegador vai pedir permissão para usar a câmera. A medição começa assim que você conceder.',
   'measure.intro.privacy': 'A imagem da câmera é processada neste dispositivo e nunca sai dele. Não enviamos, não salvamos e não compartilhamos nenhum quadro.',
+  'measure.intro.honesty': 'Isto não é um dispositivo médico nem um exame. O app mostra uma aproximação da luz ao seu redor; não julga a sua saúde e não substitui uma conversa com um médico.',
 
   'measure.live.aria': 'Medição em andamento',
   'measure.badge.starting': 'Iniciando',
@@ -300,7 +301,7 @@ export default {
   'accent.rose': 'Rosa',
 
   'tools.thresholds.title': 'Limiares',
-  'tools.thresholds.subtitle': 'A partir de que valor o aplicativo deve dizer “moderado” e a partir de qual deve dizer “prejudicial”. Os limiares padrão são a nossa sugestão, não uma norma — ajuste-os ao seu caso.',
+  'tools.thresholds.subtitle': 'A partir de que valor o aplicativo deve dizer “moderado” e a partir de qual deve dizer “fraco”. Os limiares padrão são a nossa sugestão, não uma norma — ajuste-os ao seu caso.',
   'tools.thresholds.warn': 'Limiar de alerta',
   'tools.thresholds.crit': 'Limiar de alarme',
   'tools.thresholds.warn.aria': 'Limiar de alerta — {metric}',
@@ -360,6 +361,7 @@ export default {
   'tools.about.limit.medical.title': 'Isto não é um exame nem uma orientação médica',
   'tools.about.limit.medical.text': 'O aplicativo ajuda a perceber que a luz ao redor está fria, forte ou inquieta, e sugere o que dá para fazer a respeito. Ele não emite juízo sobre a sua saúde e não substitui uma conversa com um médico nem uma medição com um medidor profissional.',
   'tools.about.privacy': 'Tudo é calculado no seu dispositivo. A imagem da câmera nunca é enviada nem salva em lugar nenhum — só os números calculados chegam à memória.',
+  'tools.about.privacyPolicy': 'Política de privacidade completa',
 
   'tools.data.title': 'Dados',
   'tools.data.subtitle': 'Tudo fica na memória deste navegador e não sai daqui para lugar nenhum.',
@@ -468,7 +470,7 @@ export default {
   'metric.melanopic.help': 'Uma aproximação do fator melanópico. 1,00 é o branco neutro da luz do dia; à noite vale a pena descer abaixo de 0,50.',
   'metric.flicker.name': 'Cintilação',
   'metric.flicker.short': 'A pulsação invisível da fonte de luz.',
-  'metric.flicker.help': 'Dimmers e luzes de fundo baratos pulsam. O olho não vê, mas essa é uma causa conhecida de cansaço e dor de cabeça.',
+  'metric.flicker.help': 'Dimmers e luzes de fundo baratos pulsam. O olho não vê, mas é apontado como possível causa de cansaço e dor de cabeça.',
   'metric.uniformity.name': 'Uniformidade',
   'metric.uniformity.short': 'Se a luz se espalha por igual pelo quadro.',
   'metric.uniformity.help': 'Um valor baixo em uma tela significa vazamento da luz de fundo ou reflexo; em uma mesa — luminária mal posicionada.',
@@ -480,9 +482,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'seguro',
+  'zone.good': 'bom',
   'zone.warn': 'moderado',
-  'zone.crit': 'prejudicial',
+  'zone.crit': 'fraco',
   'zone.none': 'sem dados',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -555,7 +557,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'A permissão para usar a câmera não foi concedida. Libere a câmera para esta página nas configurações do navegador e tente de novo.',
+  'camera.error.denied': 'A permissão para usar a câmera não foi concedida. Libere a câmera para esta página nas configurações do navegador ou do sistema e tente de novo.',
   'camera.error.notfound': 'Nenhuma câmera encontrada. Verifique se o dispositivo tem uma e se ela não está desligada no sistema.',
   'camera.error.inuse': 'A câmera está ocupada por outro aplicativo. Feche aquele aplicativo ou aba e tente de novo.',
   'camera.error.insecure': 'A câmera só funciona por HTTPS ou em localhost. Abra esta página em um endereço que comece com “https://”.',

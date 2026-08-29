@@ -109,6 +109,7 @@ export default {
   'measure.intro.start': 'Mulai mengukur',
   'measure.intro.hint': 'Peramban akan meminta izin memakai kamera. Pengukuran mulai begitu izin diberikan.',
   'measure.intro.privacy': 'Gambar kamera diproses di perangkat ini dan tidak pernah meninggalkannya. Kami tidak mengirim, menyimpan, atau membagikan satu bingkai pun.',
+  'measure.intro.honesty': 'Ini bukan alat kesehatan dan bukan pemeriksaan. Aplikasi menampilkan perkiraan cahaya di sekitar Anda; ia tidak menilai kesehatan Anda dan tidak menggantikan percakapan dengan dokter.',
 
   'measure.live.aria': 'Pengukuran sedang berjalan',
   'measure.badge.starting': 'Menyalakan',
@@ -302,7 +303,7 @@ export default {
   'accent.rose': 'Mawar',
 
   'tools.thresholds.title': 'Ambang',
-  'tools.thresholds.subtitle': 'Mulai nilai berapa aplikasi menyebut “sedang”, dan mulai berapa menyebut “berbahaya”. Ambang bawaan adalah usulan kami, bukan standar — aturlah sesuai kebutuhan Anda.',
+  'tools.thresholds.subtitle': 'Mulai nilai berapa aplikasi menyebut “sedang”, dan mulai berapa menyebut “buruk”. Ambang bawaan adalah usulan kami, bukan standar — aturlah sesuai kebutuhan Anda.',
   'tools.thresholds.warn': 'Ambang peringatan',
   'tools.thresholds.crit': 'Ambang alarm',
   'tools.thresholds.warn.aria': 'Ambang peringatan — {metric}',
@@ -362,6 +363,7 @@ export default {
   'tools.about.limit.medical.title': 'Ini bukan pemeriksaan medis dan bukan saran medis',
   'tools.about.limit.medical.text': 'Aplikasi membantu Anda menyadari bahwa cahaya di sekitar terasa dingin, terang, atau gelisah, dan menyarankan apa yang bisa dilakukan. Aplikasi tidak memberi penilaian tentang kesehatan Anda dan tidak menggantikan percakapan dengan dokter atau pengukuran dengan alat ukur profesional.',
   'tools.about.privacy': 'Semuanya dihitung di perangkat Anda. Gambar kamera tidak pernah dikirim atau disimpan ke mana pun — hanya angka hasil perhitungan yang masuk ke penyimpanan.',
+  'tools.about.privacyPolicy': 'Kebijakan privasi lengkap',
 
   'tools.data.title': 'Data',
   'tools.data.subtitle': 'Semuanya berada di penyimpanan peramban ini dan tidak pernah pergi dari sini.',
@@ -470,7 +472,7 @@ export default {
   'metric.melanopic.help': 'Pendekatan dari rasio melanopik. 1,00 adalah putih siang yang netral; pada malam hari sebaiknya turun di bawah 0,50.',
   'metric.flicker.name': 'Kedipan',
   'metric.flicker.short': 'Denyut sumber cahaya yang tidak terlihat.',
-  'metric.flicker.help': 'Peredup dan lampu latar murah berdenyut. Mata tidak melihatnya, tetapi itu penyebab kelelahan dan sakit kepala yang sudah dikenal.',
+  'metric.flicker.help': 'Peredup dan lampu latar murah berdenyut. Mata tidak melihatnya, tetapi hal itu disebut sebagai salah satu kemungkinan penyebab kelelahan dan sakit kepala.',
   'metric.uniformity.name': 'Keseragaman',
   'metric.uniformity.short': 'Apakah cahaya tersebar merata di seluruh bingkai.',
   'metric.uniformity.help': 'Nilai rendah pada layar berarti rembesan lampu latar atau pantulan; di meja — lampu yang salah letak.',
@@ -482,9 +484,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'aman',
+  'zone.good': 'baik',
   'zone.warn': 'sedang',
-  'zone.crit': 'berbahaya',
+  'zone.crit': 'buruk',
   'zone.none': 'tidak ada data',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -555,7 +557,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'Izin memakai kamera tidak diberikan. Izinkan kamera untuk halaman ini di pengaturan peramban Anda lalu coba lagi.',
+  'camera.error.denied': 'Izin memakai kamera tidak diberikan. Izinkan kamera untuk halaman ini di pengaturan peramban atau sistem Anda lalu coba lagi.',
   'camera.error.notfound': 'Kamera tidak ditemukan. Periksa apakah perangkat ini punya kamera dan apakah kamera tidak dimatikan di sistem.',
   'camera.error.inuse': 'Kamera sedang dipakai aplikasi lain. Tutup aplikasi atau tab itu lalu coba lagi.',
   'camera.error.insecure': 'Kamera hanya bekerja lewat HTTPS atau di localhost. Buka halaman ini pada alamat yang diawali “https://”.',

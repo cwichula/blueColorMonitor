@@ -108,6 +108,7 @@ export default {
   'measure.intro.start': 'Spustit měření',
   'measure.intro.hint': 'Prohlížeč požádá o přístup ke kameře. Měření začne hned, jakmile ho povolíte.',
   'measure.intro.privacy': 'Obraz z kamery se zpracovává v tomto zařízení a nikdy ho neopouští. Neodesíláme, neukládáme ani nesdílíme jediný snímek.',
+  'measure.intro.honesty': 'Toto není zdravotnický prostředek ani vyšetření. Aplikace ukazuje přibližný obraz světla kolem vás, nevynáší soud o zdraví a nenahrazuje rozhovor s lékařem.',
 
   'measure.live.aria': 'Probíhá měření',
   'measure.badge.starting': 'Spouštím',
@@ -301,7 +302,7 @@ export default {
   'accent.rose': 'Růže',
 
   'tools.thresholds.title': 'Prahy',
-  'tools.thresholds.subtitle': 'Od jaké hodnoty má aplikace říkat „mírná“ a od jaké „škodlivá“. Výchozí prahy jsou náš návrh, ne norma — nastavte si je po svém.',
+  'tools.thresholds.subtitle': 'Od jaké hodnoty má aplikace říkat „mírná“ a od jaké „špatná“. Výchozí prahy jsou náš návrh, ne norma — nastavte si je po svém.',
   'tools.thresholds.warn': 'Práh varování',
   'tools.thresholds.crit': 'Práh poplachu',
   'tools.thresholds.warn.aria': 'Práh varování — {metric}',
@@ -361,6 +362,7 @@ export default {
   'tools.about.limit.medical.title': 'Toto není vyšetření ani lékařská rada',
   'tools.about.limit.medical.text': 'Aplikace pomáhá všimnout si, že světlo kolem je studené, jasné nebo neklidné, a napovídá, co se s tím dá dělat. Nevynáší žádný soud o zdraví a nenahrazuje rozhovor s lékařem ani měření profesionálním přístrojem.',
   'tools.about.privacy': 'Všechno se počítá ve vašem zařízení. Obraz z kamery se nikam neodesílá ani neukládá — do paměti se dostanou pouze spočítaná čísla.',
+  'tools.about.privacyPolicy': 'Úplné zásady ochrany soukromí',
 
   'tools.data.title': 'Data',
   'tools.data.subtitle': 'Všechno leží v paměti tohoto prohlížeče a nikam odsud neodchází.',
@@ -480,9 +482,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'bezpečná',
+  'zone.good': 'dobrá',
   'zone.warn': 'mírná',
-  'zone.crit': 'škodlivá',
+  'zone.crit': 'špatná',
   'zone.none': 'bez dat',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -553,7 +555,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, bez rady,
      co zrobić dalej. Każdy kod ma tu jedno zdanie diagnozy i jedno zdanie
      rady. */
-  'camera.error.denied': 'Přístup ke kameře nebyl povolen. Povolte kameru pro tuto stránku v nastavení prohlížeče a zkuste to znovu.',
+  'camera.error.denied': 'Přístup ke kameře nebyl povolen. Povolte kameru pro tuto stránku v nastavení prohlížeče nebo systému a zkuste to znovu.',
   'camera.error.notfound': 'Kamera nebyla nalezena. Zkontrolujte, jestli zařízení fotoaparát má a jestli není v systému vypnutý.',
   'camera.error.inuse': 'Kameru používá jiná aplikace. Zavřete ji, případně její kartu, a zkuste to znovu.',
   'camera.error.insecure': 'Kamera funguje jen přes HTTPS nebo na localhostu. Otevřete tuto stránku na adrese, která začíná na „https://“.',

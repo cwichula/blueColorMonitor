@@ -107,6 +107,7 @@ export default {
   'measure.intro.start': 'Starta mätning',
   'measure.intro.hint': 'Webbläsaren ber om tillstånd att använda kameran. Mätningen börjar så snart du ger det.',
   'measure.intro.privacy': 'Kamerabilden behandlas på den här enheten och lämnar den aldrig. Vi skickar, sparar och delar inte en enda bildruta.',
+  'measure.intro.honesty': 'Det här är ingen medicinteknisk produkt och ingen undersökning. Appen visar en uppskattning av ljuset omkring dig; den bedömer inte din hälsa och ersätter inte ett samtal med läkare.',
 
   'measure.live.aria': 'Mätning pågår',
   'measure.badge.starting': 'Startar',
@@ -300,7 +301,7 @@ export default {
   'accent.rose': 'Ros',
 
   'tools.thresholds.title': 'Trösklar',
-  'tools.thresholds.subtitle': 'Från vilket värde appen ska säga ”måttligt” och från vilket ”skadligt”. Standardtrösklarna är vårt förslag, inte en norm — ställ in dem efter dig själv.',
+  'tools.thresholds.subtitle': 'Från vilket värde appen ska säga ”måttligt” och från vilket ”dåligt”. Standardtrösklarna är vårt förslag, inte en norm — ställ in dem efter dig själv.',
   'tools.thresholds.warn': 'Varningströskel',
   'tools.thresholds.crit': 'Larmtröskel',
   'tools.thresholds.warn.aria': 'Varningströskel — {metric}',
@@ -360,6 +361,7 @@ export default {
   'tools.about.limit.medical.title': 'Det här är varken en medicinsk undersökning eller medicinsk rådgivning',
   'tools.about.limit.medical.text': 'Appen hjälper dig att märka att ljuset omkring dig är kallt, starkt eller oroligt, och föreslår vad som går att göra åt det. Den uttalar sig inte om din hälsa och ersätter inte ett samtal med läkare eller en mätning med ett professionellt instrument.',
   'tools.about.privacy': 'Allt räknas ut på din enhet. Kamerabilden skickas eller sparas aldrig någonstans — bara de uträknade talen når lagringen.',
+  'tools.about.privacyPolicy': 'Fullständig integritetspolicy',
 
   'tools.data.title': 'Data',
   'tools.data.subtitle': 'Allt ligger i den här webbläsarens lagring och går aldrig någonstans härifrån.',
@@ -469,7 +471,7 @@ export default {
   'metric.melanopic.help': 'En uppskattning av den melanopiska kvoten. 1,00 är neutralt dagsljusvitt; på kvällen är det värt att gå under 0,50.',
   'metric.flicker.name': 'Flimmer',
   'metric.flicker.short': 'Osynligt pulserande hos ljuskällan.',
-  'metric.flicker.help': 'Billiga dimrar och bakgrundsbelysningar pulserar. Ögat ser det inte, men det är en känd orsak till trötthet och huvudvärk.',
+  'metric.flicker.help': 'Billiga dimrar och bakgrundsbelysningar pulserar. Ögat ser det inte, men det anges som en möjlig orsak till trötthet och huvudvärk.',
   'metric.uniformity.name': 'Jämnhet',
   'metric.uniformity.short': 'Om ljuset fördelar sig jämnt över bildrutan.',
   'metric.uniformity.help': 'Ett lågt värde på en skärm betyder ljusläckage från bakgrundsbelysningen eller en reflex; på ett skrivbord — en illa placerad lampa.',
@@ -481,9 +483,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'säkert',
+  'zone.good': 'bra',
   'zone.warn': 'måttligt',
-  'zone.crit': 'skadligt',
+  'zone.crit': 'dåligt',
   'zone.none': 'inga data',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -553,7 +555,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'Tillstånd att använda kameran gavs inte. Tillåt kameran för den här sidan i webbläsarens inställningar och försök igen.',
+  'camera.error.denied': 'Tillstånd att använda kameran gavs inte. Tillåt kameran för den här sidan i webbläsarens eller systemets inställningar och försök igen.',
   'camera.error.notfound': 'Ingen kamera hittades. Kontrollera att enheten har en och att den inte är avstängd i systemet.',
   'camera.error.inuse': 'Kameran är upptagen av en annan app. Stäng den appen eller fliken och försök igen.',
   'camera.error.insecure': 'Kameran fungerar bara över HTTPS eller på localhost. Öppna den här sidan på en adress som börjar med ”https://”.',

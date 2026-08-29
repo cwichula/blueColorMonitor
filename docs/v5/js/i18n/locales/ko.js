@@ -113,6 +113,7 @@ export default {
   'measure.intro.start': '측정 시작',
   'measure.intro.hint': '브라우저가 카메라 사용 권한을 묻습니다. 허용하는 즉시 측정이 시작됩니다.',
   'measure.intro.privacy': '카메라 영상은 이 기기 안에서 처리되며 결코 기기를 벗어나지 않습니다. 어떤 프레임도 전송하거나 저장하거나 공유하지 않습니다.',
+  'measure.intro.honesty': '이 앱은 의료기기도 검사도 아닙니다. 주변 빛의 대략적인 상태를 보여줄 뿐, 건강을 판정하지 않으며 의사와의 상담을 대신하지 않습니다.',
 
   'measure.live.aria': '측정 진행 중',
   'measure.badge.starting': '시작 중',
@@ -306,7 +307,7 @@ export default {
   'accent.rose': '로즈',
 
   'tools.thresholds.title': '임계값',
-  'tools.thresholds.subtitle': '앱이 어느 값부터 “중간”이라고, 어느 값부터 “유해”라고 말할지 정합니다. 기본 임계값은 규격이 아니라 저희의 제안이니, 자신에게 맞게 맞추세요.',
+  'tools.thresholds.subtitle': '앱이 어느 값부터 “중간”이라고, 어느 값부터 “불량”라고 말할지 정합니다. 기본 임계값은 규격이 아니라 저희의 제안이니, 자신에게 맞게 맞추세요.',
   'tools.thresholds.warn': '경고 임계값',
   'tools.thresholds.crit': '경보 임계값',
   'tools.thresholds.warn.aria': '경고 임계값 — {metric}',
@@ -366,6 +367,7 @@ export default {
   'tools.about.limit.medical.title': '이것은 의학적 검사도, 의학적 조언도 아닙니다',
   'tools.about.limit.medical.text': '이 앱은 주변의 빛이 차갑거나 밝거나 불안정하다는 것을 알아차리도록 돕고, 그에 대해 무엇을 할 수 있는지 알려 줍니다. 건강에 관해 판단하지 않으며, 의사와의 상담이나 전문 계측기를 통한 측정을 대신하지 않습니다.',
   'tools.about.privacy': '모든 계산은 사용자의 기기에서 이루어집니다. 카메라 영상은 어디로도 전송되거나 저장되지 않으며, 저장 공간에는 계산된 숫자만 들어갑니다.',
+  'tools.about.privacyPolicy': '개인정보 처리방침 전문',
 
   'tools.data.title': '데이터',
   'tools.data.subtitle': '모든 것은 이 브라우저의 저장 공간에 있으며, 여기서 어디로도 나가지 않습니다.',
@@ -487,9 +489,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': '안전',
+  'zone.good': '양호',
   'zone.warn': '중간',
-  'zone.crit': '유해',
+  'zone.crit': '불량',
   'zone.none': '데이터 없음',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -562,7 +564,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': '카메라 사용 권한이 허용되지 않았습니다. 브라우저 설정에서 이 페이지에 카메라를 허용한 뒤 다시 시도하세요.',
+  'camera.error.denied': '카메라 사용 권한이 허용되지 않았습니다. 브라우저 또는 시스템 설정에서 이 페이지에 카메라를 허용한 뒤 다시 시도하세요.',
   'camera.error.notfound': '카메라를 찾지 못했습니다. 기기에 카메라가 있는지, 시스템에서 꺼져 있지는 않은지 확인하세요.',
   'camera.error.inuse': '다른 앱이 카메라를 사용하고 있습니다. 그 앱이나 탭을 닫고 다시 시도하세요.',
   'camera.error.insecure': '카메라는 HTTPS 또는 localhost에서만 동작합니다. “https://”로 시작하는 주소에서 이 페이지를 열어 주세요.',

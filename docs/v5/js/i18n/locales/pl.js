@@ -97,6 +97,7 @@ export default {
   'measure.intro.start': 'Rozpocznij pomiar',
   'measure.intro.hint': 'Przeglądarka poprosi o zgodę na kamerę. Pomiar rusza od razu po jej udzieleniu.',
   'measure.intro.privacy': 'Obraz z kamery jest przetwarzany w tym urządzeniu i nigdy go nie opuszcza. Nie wysyłamy, nie zapisujemy i nie udostępniamy żadnej klatki.',
+  'measure.intro.honesty': 'To nie jest wyrób medyczny ani badanie. Aplikacja pokazuje przybliżenie światła wokół Ciebie, nie orzeka o zdrowiu i nie zastępuje rozmowy z lekarzem.',
 
   'measure.live.aria': 'Pomiar w toku',
   'measure.badge.starting': 'Uruchamiam',
@@ -290,7 +291,7 @@ export default {
   'accent.rose': 'Róża',
 
   'tools.thresholds.title': 'Progi',
-  'tools.thresholds.subtitle': 'Od jakiej wartości aplikacja ma mówić „umiarkowanie”, a od jakiej „szkodliwie”. Progi domyślne są naszą propozycją, nie normą — ustaw je pod siebie.',
+  'tools.thresholds.subtitle': 'Od jakiej wartości aplikacja ma mówić „umiarkowanie”, a od jakiej „słabo”. Progi domyślne są naszą propozycją, nie normą — ustaw je pod siebie.',
   'tools.thresholds.warn': 'Próg ostrzeżenia',
   'tools.thresholds.crit': 'Próg alarmu',
   'tools.thresholds.warn.aria': 'Próg ostrzeżenia — {metric}',
@@ -350,6 +351,7 @@ export default {
   'tools.about.limit.medical.title': 'To nie jest badanie ani porada lekarska',
   'tools.about.limit.medical.text': 'Aplikacja pomaga zauważyć, że światło wokół jest chłodne, jasne albo niespokojne, i podpowiada, co da się z tym zrobić. Nie orzeka o zdrowiu i nie zastępuje rozmowy z lekarzem ani pomiaru profesjonalnym miernikiem.',
   'tools.about.privacy': 'Wszystko liczy się na Twoim urządzeniu. Obraz z kamery nigdzie nie jest wysyłany ani zapisywany — do pamięci trafiają wyłącznie policzone liczby.',
+  'tools.about.privacyPolicy': 'Pełna polityka prywatności',
 
   'tools.data.title': 'Dane',
   'tools.data.subtitle': 'Wszystko leży w pamięci tej przeglądarki i nigdzie stąd nie wychodzi.',
@@ -470,9 +472,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'bezpiecznie',
+  'zone.good': 'dobrze',
   'zone.warn': 'umiarkowanie',
-  'zone.crit': 'szkodliwie',
+  'zone.crit': 'słabo',
   'zone.none': 'brak danych',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -540,7 +542,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'Brak zgody na dostęp do kamery. Zezwól na kamerę w ustawieniach przeglądarki dla tej strony i spróbuj ponownie.',
+  'camera.error.denied': 'Brak zgody na dostęp do kamery. Zezwól na kamerę w ustawieniach przeglądarki lub systemu dla tej strony i spróbuj ponownie.',
   'camera.error.notfound': 'Nie znaleziono kamery. Sprawdź, czy urządzenie ma aparat i czy nie jest wyłączony w systemie.',
   'camera.error.inuse': 'Kamera jest zajęta przez inną aplikację. Zamknij tamtą aplikację lub zakładkę i spróbuj ponownie.',
   'camera.error.insecure': 'Kamera działa tylko przez HTTPS albo na localhost. Otwórz tę stronę pod adresem zaczynającym się od „https://”.',

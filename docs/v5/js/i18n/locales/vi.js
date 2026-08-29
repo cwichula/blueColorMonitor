@@ -105,6 +105,7 @@ export default {
   'measure.intro.start': 'Bắt đầu đo',
   'measure.intro.hint': 'Trình duyệt sẽ hỏi quyền dùng camera. Phép đo chạy ngay khi bạn cấp quyền.',
   'measure.intro.privacy': 'Hình ảnh từ camera được xử lý ngay trên thiết bị này và không bao giờ rời khỏi nó. Chúng tôi không gửi, không lưu và không chia sẻ bất kỳ khung hình nào.',
+  'measure.intro.honesty': 'Đây không phải thiết bị y tế và cũng không phải một xét nghiệm. Ứng dụng chỉ đưa ra ước lượng về ánh sáng quanh bạn; nó không phán xét sức khỏe và không thay thế cuộc trò chuyện với bác sĩ.',
 
   'measure.live.aria': 'Phép đo đang diễn ra',
   'measure.badge.starting': 'Đang khởi động',
@@ -298,7 +299,7 @@ export default {
   'accent.rose': 'Hồng',
 
   'tools.thresholds.title': 'Ngưỡng',
-  'tools.thresholds.subtitle': 'Từ giá trị nào thì ứng dụng nói “vừa phải”, và từ giá trị nào thì nói “có hại”. Các ngưỡng mặc định là đề xuất của chúng tôi, không phải tiêu chuẩn — hãy đặt cho hợp với bạn.',
+  'tools.thresholds.subtitle': 'Từ giá trị nào thì ứng dụng nói “vừa phải”, và từ giá trị nào thì nói “kém”. Các ngưỡng mặc định là đề xuất của chúng tôi, không phải tiêu chuẩn — hãy đặt cho hợp với bạn.',
   'tools.thresholds.warn': 'Ngưỡng cảnh báo',
   'tools.thresholds.crit': 'Ngưỡng báo động',
   'tools.thresholds.warn.aria': 'Ngưỡng cảnh báo — {metric}',
@@ -358,6 +359,7 @@ export default {
   'tools.about.limit.medical.title': 'Đây không phải xét nghiệm y tế, cũng không phải lời khuyên y tế',
   'tools.about.limit.medical.text': 'Ứng dụng giúp bạn nhận ra rằng ánh sáng quanh mình lạnh, chói hay chập chờn, và gợi ý có thể làm gì với điều đó. Ứng dụng không đưa ra phán xét nào về sức khỏe của bạn và không thay thế cuộc trò chuyện với bác sĩ hay phép đo bằng máy đo chuyên nghiệp.',
   'tools.about.privacy': 'Mọi thứ được tính trên thiết bị của bạn. Hình ảnh từ camera không bao giờ được gửi hay lưu đi đâu cả — chỉ những con số đã tính mới vào bộ nhớ.',
+  'tools.about.privacyPolicy': 'Chính sách quyền riêng tư đầy đủ',
 
   'tools.data.title': 'Dữ liệu',
   'tools.data.subtitle': 'Mọi thứ nằm trong bộ nhớ của trình duyệt này và không đi đâu khỏi đây.',
@@ -467,7 +469,7 @@ export default {
   'metric.melanopic.help': 'Một phép xấp xỉ của tỷ lệ melanopic. 1,00 là ánh trắng ban ngày trung tính; buổi tối nên xuống dưới 0,50.',
   'metric.flicker.name': 'Nhấp nháy',
   'metric.flicker.short': 'Nhịp đập không nhìn thấy được của nguồn sáng.',
-  'metric.flicker.help': 'Bộ điều chỉnh độ sáng và đèn nền rẻ tiền thường đập nhịp. Mắt không thấy, nhưng đó là một nguyên nhân đã biết của mỏi mắt và đau đầu.',
+  'metric.flicker.help': 'Bộ điều chỉnh độ sáng và đèn nền rẻ tiền thường đập nhịp. Mắt không thấy, nhưng nó được xem là một nguyên nhân có thể gây mỏi mắt và đau đầu.',
   'metric.uniformity.name': 'Độ đồng đều',
   'metric.uniformity.short': 'Ánh sáng có trải đều khắp khung hình hay không.',
   'metric.uniformity.help': 'Giá trị thấp trên màn hình nghĩa là hở sáng đèn nền hoặc có phản chiếu; trên mặt bàn — là đèn đặt sai chỗ.',
@@ -479,9 +481,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'an toàn',
+  'zone.good': 'tốt',
   'zone.warn': 'vừa phải',
-  'zone.crit': 'có hại',
+  'zone.crit': 'kém',
   'zone.none': 'không có dữ liệu',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -553,7 +555,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': 'Chưa được cấp quyền dùng camera. Hãy cho phép camera cho trang này trong thiết lập trình duyệt rồi thử lại.',
+  'camera.error.denied': 'Chưa được cấp quyền dùng camera. Hãy cho phép camera cho trang này trong thiết lập trình duyệt hoặc hệ thống rồi thử lại.',
   'camera.error.notfound': 'Không tìm thấy camera. Hãy kiểm tra xem thiết bị có camera không và nó có bị tắt trong hệ thống không.',
   'camera.error.inuse': 'Camera đang bị một ứng dụng khác chiếm. Hãy đóng ứng dụng hoặc thẻ đó rồi thử lại.',
   'camera.error.insecure': 'Camera chỉ hoạt động qua HTTPS hoặc trên localhost. Hãy mở trang này ở địa chỉ bắt đầu bằng “https://”.',

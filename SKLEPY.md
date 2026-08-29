@@ -29,7 +29,7 @@ z pamięci. Przy każdym jest plik, w którym to widać.
       `icon-512.png` **spełnia wprost wymóg Google Play** na ikonę aplikacji
       (512 × 512, 32-bitowy PNG z alfą, poniżej 1024 KB) — można go wgrać bez zmian.
       Ten sam komplet leży w `docs/icons/` dla strony rozgałęzienia.
-* [x] **Service worker v5** — `docs/v5/sw.js`, pamięć `ms5-10`. Nawigacja:
+* [x] **Service worker v5** — `docs/v5/sw.js`. Numer pamięci **odczytaj z `docs/v5/sw.js:31`** (stała `CACHE`) i podnieś o jeden przy każdej zmianie któregokolwiek pliku z listy `APP_SHELL` — nie przepisuj go z tego dokumentu, bo tu zdąży się zestarzeć. Nawigacja:
       najpierw sieć, w jej braku pamięć podręczna. Reszta (CSS, moduły JS, ikony,
       manifest): stale-while-revalidate. Obsługuje `/v5/` **oraz** wspólną
       bibliotekę `/lib/`, a cudze żądania przepuszcza nietknięte i kasuje wyłącznie
@@ -119,6 +119,10 @@ zostaje na GitHub Pages; do sklepu idzie tylko opakowanie.
 * [ ] Zbuduj paczkę: [pwabuilder.com](https://www.pwabuilder.com/) → adres
       `https://cwichula.github.io/blueColorMonitor/v5/` → Android → Google Play.
       Alternatywa dla wiersza poleceń: `bubblewrap init --manifest=…`.
+      **Do Play Console idzie plik `.aab`** (Android App Bundle). Plik `.apk`
+      służy wyłącznie do testu na własnym telefonie i to jego dotyczy
+      `INSTRUKCJE.md` krok 5. Wymóg App Signing dla nowych aplikacji opisuje
+      `developer.android.com/guide/app-bundle/faq`.
 * [ ] Zapisz **klucz podpisujący** (plik `.keystore` + hasła) w miejscu, którego
       nie zgubisz. Utrata klucza przy wyłączonym Play App Signing = koniec
       możliwości aktualizowania aplikacji.
@@ -127,7 +131,12 @@ zostaje na GitHub Pages; do sklepu idzie tylko opakowanie.
       przy odcisku w punkcie 2.4.
 * [ ] Sprawdź **`targetSdkVersion`** wygenerowanej paczki. Play co roku (koniec
       sierpnia) podnosi minimalny próg dla nowych aplikacji i aktualizacji.
-      Aktualny próg jest w Play Console przy wysyłce — nie zgaduj, odczytaj.
+      **Od 31 sierpnia 2026 próg to API 36 (Android 16), a generatory paczek
+      bywają o rok w tyle** — szablon Bubblewrap ustawia 35. Otwórz
+      `build.gradle` modułu `app`, podnieś `targetSdkVersion` do 36
+      i przebuduj. Sprawdź to **przed pierwszym uploadem, także testowym** —
+      bramka działa również na torze testów zamkniętych, więc zatrzymuje
+      zegar 14 dni z punktu 2.1.
 
 ### 2.3. Test na urządzeniu przed wysyłką
 
@@ -141,6 +150,13 @@ zostaje na GitHub Pages; do sklepu idzie tylko opakowanie.
       uruchomieniu z siecią.
 * [ ] Sprawdź, że **nie widać paska adresu** (jeśli widać — punkt 2.4 nie jest
       zrobiony).
+* [ ] Sprawdź **eksport CSV i eksport JSON**. Aplikacja klika ukryty
+      `<a download>` i pokazuje komunikat o powodzeniu **bezwarunkowo**, więc
+      „wygląda, że działa” nie jest dowodem — sprawdź, czy plik faktycznie
+      wylądował w pobranych.
+* [ ] Jeśli `SUPPORT_URL` jest wypełniony: sprawdź **odsyłacz darowizn** —
+      czy otwiera stronę Buy Me a Coffee w osobnej karcie i czy „Wstecz”
+      wraca do aplikacji, a nie zamyka jej.
 
 ### 2.4. `assetlinks.json` — najważniejszy punkt techniczny
 
@@ -253,8 +269,26 @@ pytania recenzenta:
 * [ ] Ads — **aplikacja nie zawiera reklam**.
 * [ ] Target audience — **nie** jest kierowana do dzieci (to upraszcza wymogi
       Families Policy).
-* [ ] Government apps / Financial features / Health apps — **nie**. Przy „Health"
-      trzymaj się deklaracji z interfejsu: to nie jest wyrób medyczny.
+* [ ] **Government apps** — nie dotyczy.
+* [ ] **Financial features** — nie dotyczy. Aplikacja nie prowadzi płatności,
+      przelewów ani zbiórki; odsyłacz do cudzej strony nie czyni z niej funkcji
+      finansowej.
+* [ ] **Health apps declaration — TO NIE JEST PYTANIE „czy dotyczy”.** Formularz
+      jest **obowiązkowy dla każdej aplikacji w Google Play**, łącznie z tymi na
+      torze testów zamkniętych (answer/14738291). Dopóki go nie złożysz,
+      **Play nie przyjmie do recenzji żadnej zmiany** — więc złóż go od razu po
+      założeniu konta, zanim ruszy zegar 14 dni.
+      Treść deklaracji jest osobną decyzją i nie jest darmowa w żadną stronę:
+      za „brak funkcji zdrowotnych” przemawia to, że aplikacja mierzy otoczenie,
+      a nie człowieka; przeciw — że wskaźnik nazywa się „Wpływ na rytm dobowy”,
+      a porady mówią o godzinach przed snem. Jeśli wybierzesz kategorię
+      (np. Sleep Management), formularz dopyta o status wyrobu medycznego.
+      **Niczego z sekcji Medical nie deklaruj.**
+* [ ] Niezależnie od powyższego wklej do **opisu w sklepie** formułę, której
+      Google wymaga wprost (answer/16679511), po angielsku i po polsku:
+      „Light Monitor is not a medical device and does not diagnose, treat, cure,
+      or prevent any medical condition. Consult a healthcare professional for
+      medical advice, diagnosis or treatment.”
 * [ ] Adres e-mail kontaktowy dewelopera (widoczny publicznie na karcie sklepu)
       — **ten sam, który wpiszesz w polityce prywatności**.
 
@@ -271,8 +305,11 @@ pytania recenzenta:
   Swift (PWABuilder generuje taki szkielet; można też Capacitor).
 * [ ] **Apple Developer Program: 99 USD rocznie**, płatne co roku, plus
       weryfikacja tożsamości. Bez opłaty nie ma wysyłki.
-* [ ] Do zbudowania i wysłania paczki potrzebny jest **komputer z macOS i Xcode**
-      (albo usługa budująca w chmurze). Z Windowsa się tego nie zrobi.
+* [ ] Do zbudowania i wysłania paczki potrzebny jest **Xcode na macOS** — własny
+      albo wynajęty (Codemagic, Bitrise, `macos` runner w GitHub Actions; wysyłkę
+      wykonuje się kluczem App Store Connect API). Własny Mac nie jest więc
+      bezwzględnie konieczny, ale **fizyczny iPhone jest**: symulator nie ma
+      kamery, więc główna funkcja aplikacji nie da się na nim sprawdzić.
 
 ### 3.2. Co trzeba przygotować
 
@@ -306,10 +343,24 @@ pytania recenzenta:
       adres pomocy technicznej (**Apple wymaga działającego adresu URL wsparcia**).
 * [ ] Export compliance: aplikacja nie zawiera własnej kryptografii —
       przy wysyłce zwykle wystarczy `ITSAppUsesNonExemptEncryption = false`.
-* [ ] **Nie włączaj w wersji na iOS odsyłacza do darowizn (Buy Me a Coffee).**
-      Zbiórki i „napiwki" prowadzone poza App Store to typowy powód odrzucenia
-      (wytyczne 3.1.1 / 3.2.1). Skoro `SUPPORT_URL` jest dziś pusty, najprościej
-      zostawić go pustym w buildzie iOS.
+* [ ] **Rozstrzygnij, czy odsyłacz do darowizn ma być w wersji na iOS.**
+      Właściwe wytyczne to **3.1.1(a)** (zakaz przycisków i odnośników do
+      mechanizmów zakupowych innych niż IAP — **z wyłączeniem storefrontu USA,
+      gdzie zakaz nie obowiązuje**) oraz **3.2.2(iv)**, która zbieranie środków
+      poza aplikacją wprost **dopuszcza** („may only collect funds outside of the
+      app, such as via Safari or SMS”). Wcześniejsza wersja tego dokumentu
+      powoływała się na 3.2.1 — to sekcja zatytułowana **„Acceptable”**, czyli
+      katalog rzeczy dozwolonych, i cytowanie jej jako zakazu było błędem.
+* [ ] Jeśli decyzja brzmi „zostawiamy pusty `SUPPORT_URL`”, to **nie jest to
+      wariant darmowy**: ekran Wsparcie zapowiada wtedy przycisk, którego nie ma
+      (`support.cta.nolink`, `support.cta.privacyFuture`), a Apple 2.1(a) każe
+      usunąć treść tymczasową przed wysyłką. Trzeba zmienić te dwa klucze
+      w **30 słownikach** na zdania zamknięte — kluczy nie usuwać, bo
+      `keys.test.js` pilnuje parytetu.
+* [ ] **Uwaga przy wariancie zdalnym:** polecenie „zostaw pusty w buildzie iOS”
+      jest wtedy niewykonalne — kontener czyta ten sam `docs/v5/js/support.js`
+      co witryna, więc nie ma osobnego „buildu iOS”, w którym dałoby się coś
+      zostawić.
 
 ### 3.3. Ryzyko 4.2 — nazwane wprost
 
@@ -355,11 +406,14 @@ adres** co w polityce, bo rozjazd bywa wyłapywany przy weryfikacji.
 * [ ] Wpisz **imię i nazwisko albo nazwę firmy** oraz **adres e-mail, który
       naprawdę odbierasz**. Adres będzie **publiczny** na karcie sklepu — jeśli
       to ma nie być adres prywatny, załóż osobny przed wysyłką.
-* [ ] **Zatwierdź i wypchnij plik na GitHuba.** Na dzień 29 sierpnia 2026
-      `docs/prywatnosc.html` leży tylko na dysku — git widzi go jako plik
-      nieśledzony (`??`), czyli **na GitHub Pages go jeszcze nie ma i podany
-      niżej adres nie odpowiada**. Dopóki tak jest, formularz w Play Console
-      odrzuci adres polityki jako niedziałający.
+* [ ] Po uzupełnieniu **zatwierdź i wypchnij plik**, a potem podnieś `CACHE`
+      w `docs/v5/sw.js` — kopia polityki jedzie razem z aplikacją i bez podbicia
+      numeru telefony zostaną przy poprzedniej wersji dokumentu.
+* [ ] **Pamiętaj o bliźniaku.** Polityka istnieje w DWÓCH plikach:
+      `docs/prywatnosc.html` (witryna) i `docs/v5/prywatnosc.html` (kopia wożona
+      z aplikacją, bo oba sklepy wymagają polityki wewnątrz aplikacji). Każdą
+      zmianę treści wprowadzaj w obu — rozjazd między nimi znaczy, że recenzent
+      i użytkownik czytają różne dokumenty.
 * [ ] Po uzupełnieniu i wypchnięciu sprawdź, że strona otwiera się pod adresem
       `https://cwichula.github.io/blueColorMonitor/prywatnosc.html` i **że nie
       wymaga logowania** (recenzent otwiera ją anonimowo).
@@ -407,8 +461,20 @@ tylko przykład adresu Buy Me a Coffee). Sposób wpisania adresu opisuje
 * [ ] Jeśli **tak** — sprawdź w opisie listingu, czy zgadza się ze stanem
       faktycznym, i upewnij się, że zewnętrzny odsyłacz do darowizn mieści się
       w aktualnych zasadach Google Play.
-* [ ] Na **iOS zostaw pusty** (punkt 3.2) — to najprostsza droga ominięcia
-      sporu o wytyczne 3.1.1 / 3.2.1.
+* [ ] Na **iOS** — patrz punkt 3.2. Właściwe wytyczne to 3.1.1(a) i 3.2.2(iv),
+      nie 3.2.1.
+* [ ] **Warunek po stronie profilu Buy Me a Coffee.** Wyjątek płatniczy Google
+      (peer-to-peer, answer/10281818) trzyma się wyłącznie dopóty, dopóki wpłata
+      **nie daje dostępu do żadnej treści ani usługi cyfrowej**. Na profilu,
+      którego adres trafi do `SUPPORT_URL`, muszą więc zostać **wyłączone
+      Memberships i Extras** — inaczej odsyłacz prowadzi do sprzedaży treści
+      cyfrowej i obrona rozsypuje się po obu stronach, u Google i u Apple.
+      Walidacja w kodzie sprawdza tylko protokół i host, nie ścieżkę, więc
+      tego warunku **nie da się wymusić technicznie** — trzeba go pilnować.
+* [ ] `SUPPORT_URL` jest w **pięciu** plikach, nie w jednym: `docs/v1/support.js`,
+      `docs/v2/support.js`, `docs/v3/support.js`, `docs/v4/screen-support.js`,
+      `docs/v5/js/support.js`. Jedna czynność z `INSTRUKCJE.md` włącza pięć
+      odsyłaczy płatniczych w tym samym pochodzeniu.
 * [ ] Polityka prywatności ma już rozdział „7. Darowizny" — sprawdź, czy jego
       treść zgadza się z tym, co ostatecznie zrobisz.
 

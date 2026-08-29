@@ -100,6 +100,7 @@ export default {
   'measure.intro.start': 'Mérés indítása',
   'measure.intro.hint': 'A böngésző engedélyt kér a kamera használatához. A mérés az engedély megadása után azonnal elindul.',
   'measure.intro.privacy': 'A kamera képét ezen az eszközön dolgozzuk fel, és soha nem hagyja el. Egyetlen képkockát sem küldünk el, nem tárolunk és nem osztunk meg.',
+  'measure.intro.honesty': 'Ez nem orvostechnikai eszköz és nem vizsgálat. Az alkalmazás a körülötted lévő fény közelítését mutatja, nem mond ítéletet az egészségedről, és nem helyettesíti az orvossal folytatott beszélgetést.',
 
   'measure.live.aria': 'Mérés folyamatban',
   'measure.badge.starting': 'Indítás',
@@ -293,7 +294,7 @@ export default {
   'accent.rose': 'Rózsa',
 
   'tools.thresholds.title': 'Küszöbök',
-  'tools.thresholds.subtitle': 'Melyik értéktől mondja az alkalmazás, hogy „mérsékelt”, és melyiktől, hogy „káros”. Az alapértelmezett küszöbök a mi javaslatunk, nem szabvány — állítsd őket magadhoz.',
+  'tools.thresholds.subtitle': 'Melyik értéktől mondja az alkalmazás, hogy „mérsékelt”, és melyiktől, hogy „rossz”. Az alapértelmezett küszöbök a mi javaslatunk, nem szabvány — állítsd őket magadhoz.',
   'tools.thresholds.warn': 'Figyelmeztetési küszöb',
   'tools.thresholds.crit': 'Riasztási küszöb',
   'tools.thresholds.warn.aria': 'Figyelmeztetési küszöb — {metric}',
@@ -353,6 +354,7 @@ export default {
   'tools.about.limit.medical.title': 'Ez nem orvosi vizsgálat és nem orvosi tanács',
   'tools.about.limit.medical.text': 'Az alkalmazás segít észrevenni, hogy a körülötted lévő fény hideg, erős vagy nyugtalan, és javaslatot tesz, mit lehet ezzel kezdeni. Nem mond ítéletet az egészségedről, és nem helyettesíti sem az orvossal folytatott beszélgetést, sem a szakműszerrel végzett mérést.',
   'tools.about.privacy': 'Minden számítás a te eszközödön történik. A kamera képét sehová nem küldjük el és nem mentjük el — csak a kiszámolt számok kerülnek a tárolóba.',
+  'tools.about.privacyPolicy': 'Teljes adatvédelmi tájékoztató',
 
   'tools.data.title': 'Adatok',
   'tools.data.subtitle': 'Minden ennek a böngészőnek a tárolójában van, és innen sehová nem kerül.',
@@ -461,7 +463,7 @@ export default {
   'metric.melanopic.help': 'A melanopikus arány közelítése. Az 1,00 a semleges nappali fehér; este érdemes 0,50 alá menni.',
   'metric.flicker.name': 'Villódzás',
   'metric.flicker.short': 'A fényforrás láthatatlan lüktetése.',
-  'metric.flicker.help': 'Az olcsó fényerőszabályzók és háttérvilágítások lüktetnek. A szem ezt nem látja, de ismert oka a fáradtságnak és a fejfájásnak.',
+  'metric.flicker.help': 'Az olcsó fényerőszabályzók és háttérvilágítások lüktetnek. A szem ezt nem látja, de a fáradtság és a fejfájás egyik lehetséges okaként tartják számon.',
   'metric.uniformity.name': 'Egyenletesség',
   'metric.uniformity.short': 'Egyenletesen oszlik-e el a fény a képen.',
   'metric.uniformity.help': 'Képernyőn az alacsony érték háttérvilágítás-átszűrődést vagy tükröződést jelent; asztalon rosszul beállított lámpát.',
@@ -473,9 +475,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'biztonságos',
+  'zone.good': 'jó',
   'zone.warn': 'mérsékelt',
-  'zone.crit': 'káros',
+  'zone.crit': 'rossz',
   'zone.none': 'nincs adat',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -548,7 +550,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, bez rady,
      co zrobić dalej. Każdy kod ma tu jedno zdanie diagnozy i jedno zdanie
      rady. */
-  'camera.error.denied': 'A kamera használatához nem kaptunk engedélyt. Engedélyezd a kamerát ehhez az oldalhoz a böngésző beállításaiban, és próbáld újra.',
+  'camera.error.denied': 'A kamera használatához nem kaptunk engedélyt. Engedélyezd a kamerát ehhez az oldalhoz a böngésző vagy a rendszer beállításaiban, és próbáld újra.',
   'camera.error.notfound': 'Nem található kamera. Ellenőrizd, hogy van-e az eszközön kamera, és hogy nincs-e kikapcsolva a rendszerben.',
   'camera.error.inuse': 'A kamerát egy másik alkalmazás foglalja. Zárd be azt az alkalmazást vagy lapot, és próbáld újra.',
   'camera.error.insecure': 'A kamera csak HTTPS-en vagy localhoston működik. Nyisd meg ezt az oldalt „https://” kezdetű címen.',

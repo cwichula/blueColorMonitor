@@ -105,6 +105,7 @@ export default {
   'measure.intro.start': '开始测量',
   'measure.intro.hint': '浏览器会请求使用摄像头的权限。你一同意，测量就开始。',
   'measure.intro.privacy': '摄像头画面在本设备上处理，绝不离开设备。我们不发送、不保存、也不分享任何一帧画面。',
+  'measure.intro.honesty': '这不是医疗器械，也不是检查。应用只给出周围光线的大致情况，不对健康下判断，也不能代替医生的诊断。',
 
   'measure.live.aria': '测量进行中',
   'measure.badge.starting': '正在启动',
@@ -298,7 +299,7 @@ export default {
   'accent.rose': '玫瑰',
 
   'tools.thresholds.title': '阈值',
-  'tools.thresholds.subtitle': '从哪个值起，应用该说“中等”，又从哪个值起该说“有害”。默认阈值是我们的建议，不是标准 — 请按自己的情况设定。',
+  'tools.thresholds.subtitle': '从哪个值起，应用该说“中等”，又从哪个值起该说“较差”。默认阈值是我们的建议，不是标准 — 请按自己的情况设定。',
   'tools.thresholds.warn': '警告阈值',
   'tools.thresholds.crit': '警报阈值',
   'tools.thresholds.warn.aria': '警告阈值 — {metric}',
@@ -358,6 +359,7 @@ export default {
   'tools.about.limit.medical.title': '这既不是医学检查，也不是医疗建议',
   'tools.about.limit.medical.text': '本应用帮你注意到周围的光偏冷、偏亮或不安定，并提示可以做些什么。它不对你的健康作出判断，也不能取代与医生的交谈，或用专业仪器所作的测量。',
   'tools.about.privacy': '一切都在你的设备上计算。摄像头画面绝不会被发送或保存到任何地方 — 只有算出来的数字会进入存储。',
+  'tools.about.privacyPolicy': '完整隐私政策',
 
   'tools.data.title': '数据',
   'tools.data.subtitle': '所有内容都存在这个浏览器里，绝不从这里出去。',
@@ -467,7 +469,7 @@ export default {
   'metric.melanopic.help': '这是黑视素比值的近似。1.00 相当于中性的日光白；晚上值得降到 0.50 以下。',
   'metric.flicker.name': '频闪',
   'metric.flicker.short': '光源看不见的脉动。',
-  'metric.flicker.help': '廉价的调光器和背光会脉动。眼睛看不见，但它是疲劳和头痛的已知原因之一。',
+  'metric.flicker.help': '廉价的调光器和背光会脉动。眼睛看不见，但它被认为可能是疲劳和头痛的原因之一。',
   'metric.uniformity.name': '均匀度',
   'metric.uniformity.short': '光在画面里分布得均不均匀。',
   'metric.uniformity.help': '在屏幕上，数值低意味着背光漏光或有反光；在桌面上 — 则是灯放得不对。',
@@ -479,9 +481,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': '安全',
+  'zone.good': '良好',
   'zone.warn': '中等',
-  'zone.crit': '有害',
+  'zone.crit': '较差',
   'zone.none': '无数据',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -557,7 +559,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, po
      angielsku i bez rady, co zrobić dalej. Każdy kod ma tu jedno zdanie
      diagnozy i jedno zdanie rady. */
-  'camera.error.denied': '没有获得使用摄像头的权限。请在浏览器设置中允许本页使用摄像头，然后重试。',
+  'camera.error.denied': '没有获得使用摄像头的权限。请在浏览器或系统设置中允许本页使用摄像头，然后重试。',
   'camera.error.notfound': '没有找到摄像头。请检查这台设备是否有摄像头，以及它是不是在系统里被关掉了。',
   'camera.error.inuse': '摄像头正被另一个应用占用。请关掉那个应用或标签页，然后重试。',
   'camera.error.insecure': '摄像头只能通过 HTTPS 或在 localhost 上工作。请用以“https://”开头的地址打开本页。',

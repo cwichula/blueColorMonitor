@@ -105,6 +105,7 @@ export default {
   'measure.intro.start': 'Démarrer la mesure',
   'measure.intro.hint': 'Le navigateur va demander l’autorisation d’utiliser la caméra. La mesure démarre dès que vous l’accordez.',
   'measure.intro.privacy': 'L’image de la caméra est traitée sur cet appareil et ne le quitte jamais. Nous n’envoyons, n’enregistrons et ne partageons aucune image.',
+  'measure.intro.honesty': 'Ceci n’est ni un dispositif médical ni un examen. L’application montre une approximation de la lumière qui vous entoure ; elle ne juge pas votre santé et ne remplace pas une consultation médicale.',
 
   'measure.live.aria': 'Mesure en cours',
   'measure.badge.starting': 'Démarrage',
@@ -298,7 +299,7 @@ export default {
   'accent.rose': 'Rose',
 
   'tools.thresholds.title': 'Seuils',
-  'tools.thresholds.subtitle': 'À partir de quelle valeur l’application doit dire «\u00A0modéré\u00A0», et à partir de laquelle «\u00A0nocif\u00A0». Les seuils par défaut sont notre proposition, pas une norme — réglez-les à votre convenance.',
+  'tools.thresholds.subtitle': 'À partir de quelle valeur l’application doit dire «\u00A0modéré\u00A0», et à partir de laquelle «\u00A0mauvais\u00A0». Les seuils par défaut sont notre proposition, pas une norme — réglez-les à votre convenance.',
   'tools.thresholds.warn': 'Seuil d’alerte',
   'tools.thresholds.crit': 'Seuil d’alarme',
   'tools.thresholds.warn.aria': 'Seuil d’alerte — {metric}',
@@ -358,6 +359,7 @@ export default {
   'tools.about.limit.medical.title': 'Ce n’est ni un examen médical ni un avis médical',
   'tools.about.limit.medical.text': 'L’application vous aide à remarquer que la lumière autour de vous est froide, vive ou agitée, et suggère ce qu’on peut y faire. Elle ne se prononce pas sur votre santé et ne remplace ni une conversation avec un médecin ni une mesure avec un appareil professionnel.',
   'tools.about.privacy': 'Tout est calculé sur votre appareil. L’image de la caméra n’est jamais envoyée ni enregistrée nulle part — seuls les nombres calculés arrivent en mémoire.',
+  'tools.about.privacyPolicy': 'Politique de confidentialité complète',
 
   'tools.data.title': 'Données',
   'tools.data.subtitle': 'Tout se trouve dans la mémoire de ce navigateur et n’en sort jamais.',
@@ -466,7 +468,7 @@ export default {
   'metric.melanopic.help': 'Une approximation du rapport mélanopique. 1,00, c’est le blanc neutre du jour\u00A0; le soir, mieux vaut descendre en dessous de 0,50.',
   'metric.flicker.name': 'Papillotement',
   'metric.flicker.short': 'La pulsation invisible de la source de lumière.',
-  'metric.flicker.help': 'Les variateurs et les rétroéclairages bon marché pulsent. L’œil ne le voit pas, mais c’est une cause connue de fatigue et de maux de tête.',
+  'metric.flicker.help': 'Les variateurs et les rétroéclairages bon marché pulsent. L’œil ne le voit pas, mais il est signalé comme une cause possible de fatigue et de maux de tête.',
   'metric.uniformity.name': 'Uniformité',
   'metric.uniformity.short': 'Si la lumière se répartit également dans le cadre.',
   'metric.uniformity.help': 'Une valeur basse sur un écran signale une fuite de rétroéclairage ou un reflet\u00A0; sur un bureau — une lampe mal placée.',
@@ -478,9 +480,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'sans risque',
+  'zone.good': 'bon',
   'zone.warn': 'modéré',
-  'zone.crit': 'nocif',
+  'zone.crit': 'mauvais',
   'zone.none': 'aucune donnée',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -549,7 +551,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, bez rady,
      co zrobić dalej. Każdy kod ma tu jedno zdanie diagnozy i jedno zdanie
      rady. */
-  'camera.error.denied': 'L’autorisation d’accéder à la caméra n’a pas été accordée. Autorisez la caméra pour cette page dans les réglages du navigateur et réessayez.',
+  'camera.error.denied': 'L’autorisation d’accéder à la caméra n’a pas été accordée. Autorisez la caméra pour cette page dans les réglages du navigateur ou du système et réessayez.',
   'camera.error.notfound': 'Aucune caméra trouvée. Vérifiez que l’appareil en a une et qu’elle n’est pas désactivée dans le système.',
   'camera.error.inuse': 'La caméra est occupée par une autre application. Fermez cette application ou cet onglet et réessayez.',
   'camera.error.insecure': 'La caméra ne fonctionne qu’en HTTPS ou sur localhost. Ouvrez cette page à une adresse commençant par «\u00A0https://\u00A0».',

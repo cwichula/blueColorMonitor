@@ -101,6 +101,7 @@ export default {
   'measure.intro.start': 'Start measuring',
   'measure.intro.hint': 'The browser will ask for permission to use the camera. Measuring begins the moment you grant it.',
   'measure.intro.privacy': 'The camera image is processed on this device and never leaves it. We do not send, store or share a single frame.',
+  'measure.intro.honesty': 'This is not a medical device and not a medical test. The app shows an approximation of the light around you; it does not judge your health and does not replace a conversation with a doctor.',
 
   'measure.live.aria': 'Measurement in progress',
   'measure.badge.starting': 'Starting',
@@ -294,7 +295,7 @@ export default {
   'accent.rose': 'Rose',
 
   'tools.thresholds.title': 'Thresholds',
-  'tools.thresholds.subtitle': 'The value from which the app should say “moderate”, and the one from which it should say “harmful”. The default thresholds are our suggestion, not a standard — set them to suit you.',
+  'tools.thresholds.subtitle': 'The value from which the app should say “moderate”, and the one from which it should say “poor”. The default thresholds are our suggestion, not a standard — set them to suit you.',
   'tools.thresholds.warn': 'Warning threshold',
   'tools.thresholds.crit': 'Alarm threshold',
   'tools.thresholds.warn.aria': 'Warning threshold — {metric}',
@@ -354,6 +355,7 @@ export default {
   'tools.about.limit.medical.title': 'This is neither a medical test nor medical advice',
   'tools.about.limit.medical.text': 'The app helps you notice that the light around you is cool, bright or restless, and suggests what can be done about it. It makes no judgement about your health and does not replace a conversation with a doctor or a measurement with a professional meter.',
   'tools.about.privacy': 'Everything is computed on your device. The camera image is never sent or saved anywhere — only the computed numbers reach storage.',
+  'tools.about.privacyPolicy': 'Full privacy policy',
 
   'tools.data.title': 'Data',
   'tools.data.subtitle': 'Everything sits in this browser’s storage and never goes anywhere from here.',
@@ -462,7 +464,7 @@ export default {
   'metric.melanopic.help': 'An approximation of the melanopic ratio. 1.00 is neutral daylight white; in the evening it is worth going below 0.50.',
   'metric.flicker.name': 'Flicker',
   'metric.flicker.short': 'Invisible pulsing of the light source.',
-  'metric.flicker.help': 'Cheap dimmers and backlights pulse. The eye does not see it, but it is a known cause of tiredness and headaches.',
+  'metric.flicker.help': 'Cheap dimmers and backlights pulse. The eye does not see it, but it is reported as a possible cause of tiredness and headaches.',
   'metric.uniformity.name': 'Uniformity',
   'metric.uniformity.short': 'Whether the light spreads evenly across the frame.',
   'metric.uniformity.help': 'A low value on a screen means backlight bleed or a reflection; on a desk — a badly placed lamp.',
@@ -474,9 +476,9 @@ export default {
 
   /* Słowna nazwa strefy jest obowiązkowa wszędzie, gdzie strefę pokazuje kolor —
      sam kolor nie wystarcza przy deuteranopii. */
-  'zone.good': 'safe',
+  'zone.good': 'good',
   'zone.warn': 'moderate',
-  'zone.crit': 'harmful',
+  'zone.crit': 'poor',
   'zone.none': 'no data',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
@@ -547,7 +549,7 @@ export default {
   /* Interfejs nigdy nie pokazuje err.message: to teksty przeglądarki, bez rady,
      co zrobić dalej. Każdy kod ma tu jedno zdanie diagnozy i jedno zdanie
      rady. */
-  'camera.error.denied': 'Permission to use the camera was not granted. Allow the camera for this page in your browser settings and try again.',
+  'camera.error.denied': 'Permission to use the camera was not granted. Allow the camera for this page in your browser or system settings and try again.',
   'camera.error.notfound': 'No camera found. Check that the device has one and that it is not switched off in the system.',
   'camera.error.inuse': 'The camera is busy in another app. Close that app or tab and try again.',
   'camera.error.insecure': 'The camera only works over HTTPS or on localhost. Open this page at an address that starts with “https://”.',
