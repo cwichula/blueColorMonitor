@@ -295,7 +295,7 @@ export default {
   'accent.rose': 'Rose',
 
   'tools.thresholds.title': 'Thresholds',
-  'tools.thresholds.subtitle': 'The value from which the app should say “moderate”, and the one from which it should say “poor”. The default thresholds are our suggestion, not a standard — set them to suit you.',
+  'tools.thresholds.subtitle': 'The value from which the app should say “moderate”, and the one from which it should say “critical”. The default thresholds are our suggestion, not a standard — set them to suit you.',
   'tools.thresholds.warn': 'Warning threshold',
   'tools.thresholds.crit': 'Alarm threshold',
   'tools.thresholds.warn.aria': 'Warning threshold — {metric}',
@@ -478,7 +478,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'good',
   'zone.warn': 'moderate',
-  'zone.crit': 'poor',
+  'zone.crit': 'critical',
   'zone.none': 'no data',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

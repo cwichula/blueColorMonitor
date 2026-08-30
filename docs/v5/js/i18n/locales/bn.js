@@ -305,7 +305,7 @@ export default {
   'accent.rose': 'গোলাপ',
 
   'tools.thresholds.title': 'সীমা',
-  'tools.thresholds.subtitle': 'কোন মান থেকে অ্যাপ “মাঝারি” বলবে, আর কোনটি থেকে “খারাপ”। ডিফল্ট সীমাগুলো আমাদের প্রস্তাব, কোনো মানদণ্ড নয় — নিজের মতো করে ঠিক করে নিন।',
+  'tools.thresholds.subtitle': 'কোন মান থেকে অ্যাপ “মাঝারি” বলবে, আর কোনটি থেকে “সংকটজনক”। ডিফল্ট সীমাগুলো আমাদের প্রস্তাব, কোনো মানদণ্ড নয় — নিজের মতো করে ঠিক করে নিন।',
   'tools.thresholds.warn': 'সতর্কতার সীমা',
   'tools.thresholds.crit': 'বিপদের সীমা',
   'tools.thresholds.warn.aria': 'সতর্কতার সীমা — {metric}',
@@ -489,7 +489,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'ভালো',
   'zone.warn': 'মাঝারি',
-  'zone.crit': 'খারাপ',
+  'zone.crit': 'সংকটজনক',
   'zone.none': 'কোনো ডেটা নেই',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

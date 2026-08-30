@@ -297,7 +297,7 @@ export default {
   'accent.rose': 'Rosé',
 
   'tools.thresholds.title': 'Schwellen',
-  'tools.thresholds.subtitle': 'Ab welchem Wert die App „mäßig“ sagen soll und ab welchem „schlecht“. Die Standardschwellen sind unser Vorschlag, keine Norm — stell sie auf dich ein.',
+  'tools.thresholds.subtitle': 'Ab welchem Wert die App „mäßig“ sagen soll und ab welchem „kritisch“. Die Standardschwellen sind unser Vorschlag, keine Norm — stell sie auf dich ein.',
   'tools.thresholds.warn': 'Warnschwelle',
   'tools.thresholds.crit': 'Alarmschwelle',
   'tools.thresholds.warn.aria': 'Warnschwelle — {metric}',
@@ -480,7 +480,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'gut',
   'zone.warn': 'mäßig',
-  'zone.crit': 'schlecht',
+  'zone.crit': 'kritisch',
   'zone.none': 'keine Daten',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

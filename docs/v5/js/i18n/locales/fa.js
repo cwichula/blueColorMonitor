@@ -314,7 +314,7 @@ export default {
   'accent.rose': 'گل‌سرخ',
 
   'tools.thresholds.title': 'آستانه‌ها',
-  'tools.thresholds.subtitle': 'از چه مقداری برنامه بگوید «متوسط» و از چه مقداری بگوید «بد». آستانه‌های پیش‌فرض پیشنهاد ما هستند، نه استاندارد — آن‌ها را به‌اندازهٔ خودتان تنظیم کنید.',
+  'tools.thresholds.subtitle': 'از چه مقداری برنامه بگوید «متوسط» و از چه مقداری بگوید «بحرانی». آستانه‌های پیش‌فرض پیشنهاد ما هستند، نه استاندارد — آن‌ها را به‌اندازهٔ خودتان تنظیم کنید.',
   'tools.thresholds.warn': 'آستانهٔ هشدار',
   'tools.thresholds.crit': 'آستانهٔ خطر',
   'tools.thresholds.warn.aria': 'آستانهٔ هشدار — {metric}',
@@ -497,7 +497,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'خوب',
   'zone.warn': 'متوسط',
-  'zone.crit': 'بد',
+  'zone.crit': 'بحرانی',
   'zone.none': 'داده‌ای نیست',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

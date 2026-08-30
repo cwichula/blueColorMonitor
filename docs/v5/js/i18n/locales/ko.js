@@ -307,7 +307,7 @@ export default {
   'accent.rose': '로즈',
 
   'tools.thresholds.title': '임계값',
-  'tools.thresholds.subtitle': '앱이 어느 값부터 “중간”이라고, 어느 값부터 “불량”라고 말할지 정합니다. 기본 임계값은 규격이 아니라 저희의 제안이니, 자신에게 맞게 맞추세요.',
+  'tools.thresholds.subtitle': '앱이 어느 값부터 “중간”이라고, 어느 값부터 “심각”라고 말할지 정합니다. 기본 임계값은 규격이 아니라 저희의 제안이니, 자신에게 맞게 맞추세요.',
   'tools.thresholds.warn': '경고 임계값',
   'tools.thresholds.crit': '경보 임계값',
   'tools.thresholds.warn.aria': '경고 임계값 — {metric}',
@@ -491,7 +491,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': '양호',
   'zone.warn': '중간',
-  'zone.crit': '불량',
+  'zone.crit': '심각',
   'zone.none': '데이터 없음',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

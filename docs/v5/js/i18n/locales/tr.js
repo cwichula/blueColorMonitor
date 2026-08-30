@@ -305,7 +305,7 @@ export default {
   'accent.rose': 'Gül',
 
   'tools.thresholds.title': 'Eşikler',
-  'tools.thresholds.subtitle': 'Uygulamanın hangi değerden sonra “orta düzey”, hangi değerden sonra “kötü” diyeceği. Varsayılan eşikler bizim önerimizdir, bir standart değil — kendinize göre ayarlayın.',
+  'tools.thresholds.subtitle': 'Uygulamanın hangi değerden sonra “orta düzey”, hangi değerden sonra “kritik” diyeceği. Varsayılan eşikler bizim önerimizdir, bir standart değil — kendinize göre ayarlayın.',
   'tools.thresholds.warn': 'Uyarı eşiği',
   'tools.thresholds.crit': 'Alarm eşiği',
   'tools.thresholds.warn.aria': 'Uyarı eşiği — {metric}',
@@ -488,7 +488,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'iyi',
   'zone.warn': 'orta düzey',
-  'zone.crit': 'kötü',
+  'zone.crit': 'kritik',
   'zone.none': 'veri yok',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

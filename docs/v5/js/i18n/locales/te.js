@@ -307,7 +307,7 @@ export default {
   'accent.rose': 'గులాబీ',
 
   'tools.thresholds.title': 'పరిమితులు',
-  'tools.thresholds.subtitle': 'ఏ విలువ నుంచి యాప్ “మధ్యస్థం” అనాలి, ఏ విలువ నుంచి “చెడ్డది” అనాలి. డిఫాల్ట్ పరిమితులు మా సూచన మాత్రమే, ప్రమాణం కాదు — మీకు తగ్గట్టు సర్దుకోండి.',
+  'tools.thresholds.subtitle': 'ఏ విలువ నుంచి యాప్ “మధ్యస్థం” అనాలి, ఏ విలువ నుంచి “తీవ్రం” అనాలి. డిఫాల్ట్ పరిమితులు మా సూచన మాత్రమే, ప్రమాణం కాదు — మీకు తగ్గట్టు సర్దుకోండి.',
   'tools.thresholds.warn': 'హెచ్చరిక పరిమితి',
   'tools.thresholds.crit': 'అలారం పరిమితి',
   'tools.thresholds.warn.aria': 'హెచ్చరిక పరిమితి — {metric}',
@@ -490,7 +490,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'మంచిది',
   'zone.warn': 'మధ్యస్థం',
-  'zone.crit': 'చెడ్డది',
+  'zone.crit': 'తీవ్రం',
   'zone.none': 'డేటా లేదు',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

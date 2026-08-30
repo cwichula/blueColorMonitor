@@ -291,7 +291,7 @@ export default {
   'accent.rose': 'Róża',
 
   'tools.thresholds.title': 'Progi',
-  'tools.thresholds.subtitle': 'Od jakiej wartości aplikacja ma mówić „umiarkowanie”, a od jakiej „słabo”. Progi domyślne są naszą propozycją, nie normą — ustaw je pod siebie.',
+  'tools.thresholds.subtitle': 'Od jakiej wartości aplikacja ma mówić „umiarkowanie”, a od jakiej „krytycznie”. Progi domyślne są naszą propozycją, nie normą — ustaw je pod siebie.',
   'tools.thresholds.warn': 'Próg ostrzeżenia',
   'tools.thresholds.crit': 'Próg alarmu',
   'tools.thresholds.warn.aria': 'Próg ostrzeżenia — {metric}',
@@ -474,7 +474,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'dobrze',
   'zone.warn': 'umiarkowanie',
-  'zone.crit': 'słabo',
+  'zone.crit': 'krytycznie',
   'zone.none': 'brak danych',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

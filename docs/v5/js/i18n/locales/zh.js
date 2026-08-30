@@ -299,7 +299,7 @@ export default {
   'accent.rose': '玫瑰',
 
   'tools.thresholds.title': '阈值',
-  'tools.thresholds.subtitle': '从哪个值起，应用该说“中等”，又从哪个值起该说“较差”。默认阈值是我们的建议，不是标准 — 请按自己的情况设定。',
+  'tools.thresholds.subtitle': '从哪个值起，应用该说“中等”，又从哪个值起该说“严重”。默认阈值是我们的建议，不是标准 — 请按自己的情况设定。',
   'tools.thresholds.warn': '警告阈值',
   'tools.thresholds.crit': '警报阈值',
   'tools.thresholds.warn.aria': '警告阈值 — {metric}',
@@ -483,7 +483,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': '良好',
   'zone.warn': '中等',
-  'zone.crit': '较差',
+  'zone.crit': '严重',
   'zone.none': '无数据',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

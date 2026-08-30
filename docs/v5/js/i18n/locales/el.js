@@ -302,7 +302,7 @@ export default {
   'accent.rose': 'Τριανταφυλλί',
 
   'tools.thresholds.title': 'Κατώφλια',
-  'tools.thresholds.subtitle': 'Από ποια τιμή και πάνω η εφαρμογή θα λέει «μέτριο» και από ποια «κακό». Τα προεπιλεγμένα κατώφλια είναι δική μας πρόταση, όχι πρότυπο — ρυθμίστε τα όπως σας ταιριάζει.',
+  'tools.thresholds.subtitle': 'Από ποια τιμή και πάνω η εφαρμογή θα λέει «μέτριο» και από ποια «κρίσιμο». Τα προεπιλεγμένα κατώφλια είναι δική μας πρόταση, όχι πρότυπο — ρυθμίστε τα όπως σας ταιριάζει.',
   'tools.thresholds.warn': 'Κατώφλι προειδοποίησης',
   'tools.thresholds.crit': 'Κατώφλι συναγερμού',
   'tools.thresholds.warn.aria': 'Κατώφλι προειδοποίησης — {metric}',
@@ -485,7 +485,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'καλό',
   'zone.warn': 'μέτριο',
-  'zone.crit': 'κακό',
+  'zone.crit': 'κρίσιμο',
   'zone.none': 'χωρίς δεδομένα',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

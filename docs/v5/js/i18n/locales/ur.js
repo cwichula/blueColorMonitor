@@ -310,7 +310,7 @@ export default {
   'accent.rose': 'گلابی',
 
   'tools.thresholds.title': 'حدیں',
-  'tools.thresholds.subtitle': 'کس قدر سے ایپ «معتدل» کہے اور کس سے «خراب»۔ طے شدہ حدیں ہماری تجویز ہیں، کوئی معیار نہیں — انہیں اپنی ضرورت کے مطابق سیٹ کریں۔',
+  'tools.thresholds.subtitle': 'کس قدر سے ایپ «معتدل» کہے اور کس سے «تشویشناک»۔ طے شدہ حدیں ہماری تجویز ہیں، کوئی معیار نہیں — انہیں اپنی ضرورت کے مطابق سیٹ کریں۔',
   'tools.thresholds.warn': 'تنبیہ کی حد',
   'tools.thresholds.crit': 'خطرے کی حد',
   'tools.thresholds.warn.aria': 'تنبیہ کی حد — {metric}',
@@ -494,7 +494,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'اچھا',
   'zone.warn': 'معتدل',
-  'zone.crit': 'خراب',
+  'zone.crit': 'تشویشناک',
   'zone.none': 'کوئی ڈیٹا نہیں',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

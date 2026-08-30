@@ -301,7 +301,7 @@ export default {
   'accent.rose': 'Rosa',
 
   'tools.thresholds.title': 'Limiares',
-  'tools.thresholds.subtitle': 'A partir de que valor o aplicativo deve dizer “moderado” e a partir de qual deve dizer “fraco”. Os limiares padrão são a nossa sugestão, não uma norma — ajuste-os ao seu caso.',
+  'tools.thresholds.subtitle': 'A partir de que valor o aplicativo deve dizer “moderado” e a partir de qual deve dizer “crítico”. Os limiares padrão são a nossa sugestão, não uma norma — ajuste-os ao seu caso.',
   'tools.thresholds.warn': 'Limiar de alerta',
   'tools.thresholds.crit': 'Limiar de alarme',
   'tools.thresholds.warn.aria': 'Limiar de alerta — {metric}',
@@ -484,7 +484,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'bom',
   'zone.warn': 'moderado',
-  'zone.crit': 'fraco',
+  'zone.crit': 'crítico',
   'zone.none': 'sem dados',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

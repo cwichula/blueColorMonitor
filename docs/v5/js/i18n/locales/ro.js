@@ -302,7 +302,7 @@ export default {
   'accent.rose': 'Trandafir',
 
   'tools.thresholds.title': 'Praguri',
-  'tools.thresholds.subtitle': 'De la ce valoare să spună aplicația „moderat” și de la care „slab”. Pragurile implicite sunt propunerea noastră, nu o normă — potrivește-le după tine.',
+  'tools.thresholds.subtitle': 'De la ce valoare să spună aplicația „moderat” și de la care „critic”. Pragurile implicite sunt propunerea noastră, nu o normă — potrivește-le după tine.',
   'tools.thresholds.warn': 'Prag de avertizare',
   'tools.thresholds.crit': 'Prag de alarmă',
   'tools.thresholds.warn.aria': 'Prag de avertizare — {metric}',
@@ -485,7 +485,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'bun',
   'zone.warn': 'moderat',
-  'zone.crit': 'slab',
+  'zone.crit': 'critic',
   'zone.none': 'fără date',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

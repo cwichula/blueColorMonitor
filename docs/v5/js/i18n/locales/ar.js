@@ -306,7 +306,7 @@ export default {
   'accent.rose': 'وردي',
 
   'tools.thresholds.title': 'العتبات',
-  'tools.thresholds.subtitle': 'القيمة التي يبدأ التطبيق عندها بقول «معتدل»، والقيمة التي يقول عندها «ضعيف». والعتبات الافتراضية اقتراح منّا لا معيار — اضبطها على ما يناسبك.',
+  'tools.thresholds.subtitle': 'القيمة التي يبدأ التطبيق عندها بقول «معتدل»، والقيمة التي يقول عندها «حرج». والعتبات الافتراضية اقتراح منّا لا معيار — اضبطها على ما يناسبك.',
   'tools.thresholds.warn': 'عتبة التحذير',
   'tools.thresholds.crit': 'عتبة الإنذار',
   'tools.thresholds.warn.aria': 'عتبة التحذير — {metric}',
@@ -490,7 +490,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'جيد',
   'zone.warn': 'معتدل',
-  'zone.crit': 'ضعيف',
+  'zone.crit': 'حرج',
   'zone.none': 'لا بيانات',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

@@ -198,7 +198,7 @@ export function dateTime(ts) -> '24 sie, 14:07'
 export function duration(ms) -> '1 godz. 12 min' / '45 s'
 export function relative(ts, now = Date.now()) -> 'przed chwilą' / '3 min temu' / 'wczoraj'
 export function plural(n, key) -> string   // klucz form CLDR: '1 pomiar' / '2 pomiary' / '5 pomiarów'
-export function zoneLabel(zone) -> 'dobrze' | 'umiarkowanie' | 'słabo' | 'brak danych'
+export function zoneLabel(zone) -> 'dobrze' | 'umiarkowanie' | 'krytycznie' | 'brak danych'
 export const ZONE_LABEL = {good, warn, crit, none}   // PRZEJŚCIOWE: gettery na zoneLabel(), znika w etapie 3
 ```
 Ani jednego napisu w tym pliku: wzorce (`'{day} {month}'`, `'{minutes} min

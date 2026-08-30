@@ -302,7 +302,7 @@ export default {
   'accent.rose': 'Růže',
 
   'tools.thresholds.title': 'Prahy',
-  'tools.thresholds.subtitle': 'Od jaké hodnoty má aplikace říkat „mírná“ a od jaké „špatná“. Výchozí prahy jsou náš návrh, ne norma — nastavte si je po svém.',
+  'tools.thresholds.subtitle': 'Od jaké hodnoty má aplikace říkat „mírná“ a od jaké „kritická“. Výchozí prahy jsou náš návrh, ne norma — nastavte si je po svém.',
   'tools.thresholds.warn': 'Práh varování',
   'tools.thresholds.crit': 'Práh poplachu',
   'tools.thresholds.warn.aria': 'Práh varování — {metric}',
@@ -484,7 +484,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'dobrá',
   'zone.warn': 'mírná',
-  'zone.crit': 'špatná',
+  'zone.crit': 'kritická',
   'zone.none': 'bez dat',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

@@ -303,7 +303,7 @@ export default {
   'accent.rose': 'Mawar',
 
   'tools.thresholds.title': 'Ambang',
-  'tools.thresholds.subtitle': 'Mulai nilai berapa aplikasi menyebut “sedang”, dan mulai berapa menyebut “buruk”. Ambang bawaan adalah usulan kami, bukan standar — aturlah sesuai kebutuhan Anda.',
+  'tools.thresholds.subtitle': 'Mulai nilai berapa aplikasi menyebut “sedang”, dan mulai berapa menyebut “kritis”. Ambang bawaan adalah usulan kami, bukan standar — aturlah sesuai kebutuhan Anda.',
   'tools.thresholds.warn': 'Ambang peringatan',
   'tools.thresholds.crit': 'Ambang alarm',
   'tools.thresholds.warn.aria': 'Ambang peringatan — {metric}',
@@ -486,7 +486,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'baik',
   'zone.warn': 'sedang',
-  'zone.crit': 'buruk',
+  'zone.crit': 'kritis',
   'zone.none': 'tidak ada data',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

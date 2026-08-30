@@ -299,7 +299,7 @@ export default {
   'accent.rose': 'Hồng',
 
   'tools.thresholds.title': 'Ngưỡng',
-  'tools.thresholds.subtitle': 'Từ giá trị nào thì ứng dụng nói “vừa phải”, và từ giá trị nào thì nói “kém”. Các ngưỡng mặc định là đề xuất của chúng tôi, không phải tiêu chuẩn — hãy đặt cho hợp với bạn.',
+  'tools.thresholds.subtitle': 'Từ giá trị nào thì ứng dụng nói “vừa phải”, và từ giá trị nào thì nói “nghiêm trọng”. Các ngưỡng mặc định là đề xuất của chúng tôi, không phải tiêu chuẩn — hãy đặt cho hợp với bạn.',
   'tools.thresholds.warn': 'Ngưỡng cảnh báo',
   'tools.thresholds.crit': 'Ngưỡng báo động',
   'tools.thresholds.warn.aria': 'Ngưỡng cảnh báo — {metric}',
@@ -483,7 +483,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'tốt',
   'zone.warn': 'vừa phải',
-  'zone.crit': 'kém',
+  'zone.crit': 'nghiêm trọng',
   'zone.none': 'không có dữ liệu',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

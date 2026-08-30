@@ -299,7 +299,7 @@ export default {
   'accent.rose': 'Rose',
 
   'tools.thresholds.title': 'Seuils',
-  'tools.thresholds.subtitle': 'À partir de quelle valeur l’application doit dire «\u00A0modéré\u00A0», et à partir de laquelle «\u00A0mauvais\u00A0». Les seuils par défaut sont notre proposition, pas une norme — réglez-les à votre convenance.',
+  'tools.thresholds.subtitle': 'À partir de quelle valeur l’application doit dire «\u00A0modéré\u00A0», et à partir de laquelle «\u00A0critique\u00A0». Les seuils par défaut sont notre proposition, pas une norme — réglez-les à votre convenance.',
   'tools.thresholds.warn': 'Seuil d’alerte',
   'tools.thresholds.crit': 'Seuil d’alarme',
   'tools.thresholds.warn.aria': 'Seuil d’alerte — {metric}',
@@ -482,7 +482,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'bon',
   'zone.warn': 'modéré',
-  'zone.crit': 'mauvais',
+  'zone.crit': 'critique',
   'zone.none': 'aucune donnée',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

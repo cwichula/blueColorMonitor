@@ -309,7 +309,7 @@ export default {
   'accent.rose': 'गुलाब',
 
   'tools.thresholds.title': 'सीमाएँ',
-  'tools.thresholds.subtitle': 'किस मान से ऐप “मध्यम” कहे और किससे “खराब”। डिफ़ॉल्ट सीमाएँ हमारा सुझाव हैं, कोई मानक नहीं — इन्हें अपने हिसाब से सेट करें।',
+  'tools.thresholds.subtitle': 'किस मान से ऐप “मध्यम” कहे और किससे “गंभीर”। डिफ़ॉल्ट सीमाएँ हमारा सुझाव हैं, कोई मानक नहीं — इन्हें अपने हिसाब से सेट करें।',
   'tools.thresholds.warn': 'चेतावनी की सीमा',
   'tools.thresholds.crit': 'अलार्म की सीमा',
   'tools.thresholds.warn.aria': 'चेतावनी की सीमा — {metric}',
@@ -492,7 +492,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'अच्छा',
   'zone.warn': 'मध्यम',
-  'zone.crit': 'खराब',
+  'zone.crit': 'गंभीर',
   'zone.none': 'कोई डेटा नहीं',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

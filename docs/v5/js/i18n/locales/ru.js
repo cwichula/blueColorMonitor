@@ -294,7 +294,7 @@ export default {
   'accent.rose': 'Роза',
 
   'tools.thresholds.title': 'Пороги',
-  'tools.thresholds.subtitle': 'С какого значения приложение должно говорить «умеренно», а с какого — «плохо». Пороги по умолчанию — наше предложение, а не норма: настройте их под себя.',
+  'tools.thresholds.subtitle': 'С какого значения приложение должно говорить «умеренно», а с какого — «критически». Пороги по умолчанию — наше предложение, а не норма: настройте их под себя.',
   'tools.thresholds.warn': 'Порог предупреждения',
   'tools.thresholds.crit': 'Порог тревоги',
   'tools.thresholds.warn.aria': 'Порог предупреждения — {metric}',
@@ -476,7 +476,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'хорошо',
   'zone.warn': 'умеренно',
-  'zone.crit': 'плохо',
+  'zone.crit': 'критически',
   'zone.none': 'нет данных',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

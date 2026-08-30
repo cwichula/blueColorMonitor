@@ -300,7 +300,7 @@ export default {
   'accent.rose': 'Roze',
 
   'tools.thresholds.title': 'Drempels',
-  'tools.thresholds.subtitle': 'Vanaf welke waarde de app “matig” moet zeggen en vanaf welke “slecht”. De standaarddrempels zijn ons voorstel, geen norm — stel ze op jezelf af.',
+  'tools.thresholds.subtitle': 'Vanaf welke waarde de app “matig” moet zeggen en vanaf welke “kritiek”. De standaarddrempels zijn ons voorstel, geen norm — stel ze op jezelf af.',
   'tools.thresholds.warn': 'Waarschuwingsdrempel',
   'tools.thresholds.crit': 'Alarmdrempel',
   'tools.thresholds.warn.aria': 'Waarschuwingsdrempel — {metric}',
@@ -484,7 +484,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'goed',
   'zone.warn': 'matig',
-  'zone.crit': 'slecht',
+  'zone.crit': 'kritiek',
   'zone.none': 'geen gegevens',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

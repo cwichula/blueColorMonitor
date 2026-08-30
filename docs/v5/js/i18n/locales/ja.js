@@ -300,7 +300,7 @@ export default {
   'accent.rose': 'ローズ',
 
   'tools.thresholds.title': 'しきい値',
-  'tools.thresholds.subtitle': 'どの値から「中程度」と言い、どの値から「不良」と言うか。既定のしきい値は私たちの提案であって基準ではありません — ご自分に合わせて設定してください。',
+  'tools.thresholds.subtitle': 'どの値から「中程度」と言い、どの値から「危険域」と言うか。既定のしきい値は私たちの提案であって基準ではありません — ご自分に合わせて設定してください。',
   'tools.thresholds.warn': '警告のしきい値',
   'tools.thresholds.crit': '警報のしきい値',
   'tools.thresholds.warn.aria': '警告のしきい値 — {metric}',
@@ -484,7 +484,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': '良好',
   'zone.warn': '中程度',
-  'zone.crit': '不良',
+  'zone.crit': '危険域',
   'zone.none': 'データなし',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

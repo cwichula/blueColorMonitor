@@ -310,7 +310,7 @@ export default {
   'accent.rose': 'กุหลาบ',
 
   'tools.thresholds.title': 'เกณฑ์',
-  'tools.thresholds.subtitle': 'ค่าที่แอปควรเริ่มบอกว่า “ปานกลาง” และค่าที่ควรเริ่มบอกว่า “แย่” เกณฑ์เริ่มต้นเป็นข้อเสนอของเรา ไม่ใช่มาตรฐาน — ปรับให้เข้ากับตัวคุณได้',
+  'tools.thresholds.subtitle': 'ค่าที่แอปควรเริ่มบอกว่า “ปานกลาง” และค่าที่ควรเริ่มบอกว่า “วิกฤต” เกณฑ์เริ่มต้นเป็นข้อเสนอของเรา ไม่ใช่มาตรฐาน — ปรับให้เข้ากับตัวคุณได้',
   'tools.thresholds.warn': 'เกณฑ์เตือน',
   'tools.thresholds.crit': 'เกณฑ์อันตราย',
   'tools.thresholds.warn.aria': 'เกณฑ์เตือน — {metric}',
@@ -494,7 +494,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'ดี',
   'zone.warn': 'ปานกลาง',
-  'zone.crit': 'แย่',
+  'zone.crit': 'วิกฤต',
   'zone.none': 'ไม่มีข้อมูล',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

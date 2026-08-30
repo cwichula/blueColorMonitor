@@ -299,7 +299,7 @@ export default {
   'accent.rose': 'Rosa',
 
   'tools.thresholds.title': 'Soglie',
-  'tools.thresholds.subtitle': 'Il valore a partire dal quale l’app deve dire «moderata» e quello a partire dal quale deve dire «scarsa». Le soglie predefinite sono una nostra proposta, non una norma — impostale come preferisci.',
+  'tools.thresholds.subtitle': 'Il valore a partire dal quale l’app deve dire «moderata» e quello a partire dal quale deve dire «critica». Le soglie predefinite sono una nostra proposta, non una norma — impostale come preferisci.',
   'tools.thresholds.warn': 'Soglia di avviso',
   'tools.thresholds.crit': 'Soglia di allarme',
   'tools.thresholds.warn.aria': 'Soglia di avviso — {metric}',
@@ -482,7 +482,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'buona',
   'zone.warn': 'moderata',
-  'zone.crit': 'scarsa',
+  'zone.crit': 'critica',
   'zone.none': 'nessun dato',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

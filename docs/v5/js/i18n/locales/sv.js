@@ -301,7 +301,7 @@ export default {
   'accent.rose': 'Ros',
 
   'tools.thresholds.title': 'Trösklar',
-  'tools.thresholds.subtitle': 'Från vilket värde appen ska säga ”måttligt” och från vilket ”dåligt”. Standardtrösklarna är vårt förslag, inte en norm — ställ in dem efter dig själv.',
+  'tools.thresholds.subtitle': 'Från vilket värde appen ska säga ”måttligt” och från vilket ”kritiskt”. Standardtrösklarna är vårt förslag, inte en norm — ställ in dem efter dig själv.',
   'tools.thresholds.warn': 'Varningströskel',
   'tools.thresholds.crit': 'Larmtröskel',
   'tools.thresholds.warn.aria': 'Varningströskel — {metric}',
@@ -485,7 +485,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'bra',
   'zone.warn': 'måttligt',
-  'zone.crit': 'dåligt',
+  'zone.crit': 'kritiskt',
   'zone.none': 'inga data',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

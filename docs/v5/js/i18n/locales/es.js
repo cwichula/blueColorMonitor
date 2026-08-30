@@ -304,7 +304,7 @@ export default {
   'accent.rose': 'Rosa',
 
   'tools.thresholds.title': 'Umbrales',
-  'tools.thresholds.subtitle': 'A partir de qué valor debe decir la app «moderado» y a partir de cuál «malo». Los umbrales por defecto son nuestra propuesta, no una norma — ajústalos a tu medida.',
+  'tools.thresholds.subtitle': 'A partir de qué valor debe decir la app «moderado» y a partir de cuál «crítico». Los umbrales por defecto son nuestra propuesta, no una norma — ajústalos a tu medida.',
   'tools.thresholds.warn': 'Umbral de aviso',
   'tools.thresholds.crit': 'Umbral de alarma',
   'tools.thresholds.warn.aria': 'Umbral de aviso — {metric}',
@@ -487,7 +487,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'bueno',
   'zone.warn': 'moderado',
-  'zone.crit': 'malo',
+  'zone.crit': 'crítico',
   'zone.none': 'sin datos',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

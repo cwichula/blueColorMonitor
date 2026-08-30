@@ -294,7 +294,7 @@ export default {
   'accent.rose': 'Rózsa',
 
   'tools.thresholds.title': 'Küszöbök',
-  'tools.thresholds.subtitle': 'Melyik értéktől mondja az alkalmazás, hogy „mérsékelt”, és melyiktől, hogy „rossz”. Az alapértelmezett küszöbök a mi javaslatunk, nem szabvány — állítsd őket magadhoz.',
+  'tools.thresholds.subtitle': 'Melyik értéktől mondja az alkalmazás, hogy „mérsékelt”, és melyiktől, hogy „kritikus”. Az alapértelmezett küszöbök a mi javaslatunk, nem szabvány — állítsd őket magadhoz.',
   'tools.thresholds.warn': 'Figyelmeztetési küszöb',
   'tools.thresholds.crit': 'Riasztási küszöb',
   'tools.thresholds.warn.aria': 'Figyelmeztetési küszöb — {metric}',
@@ -477,7 +477,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'jó',
   'zone.warn': 'mérsékelt',
-  'zone.crit': 'rossz',
+  'zone.crit': 'kritikus',
   'zone.none': 'nincs adat',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */

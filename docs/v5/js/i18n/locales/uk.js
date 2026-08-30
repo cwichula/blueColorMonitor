@@ -300,7 +300,7 @@ export default {
   'accent.rose': 'Троянда',
 
   'tools.thresholds.title': 'Пороги',
-  'tools.thresholds.subtitle': 'Від якого значення застосунок має казати «помірно», а від якого — «погано». Типові пороги — це наша пропозиція, а не норма: налаштуйте їх під себе.',
+  'tools.thresholds.subtitle': 'Від якого значення застосунок має казати «помірно», а від якого — «критично». Типові пороги — це наша пропозиція, а не норма: налаштуйте їх під себе.',
   'tools.thresholds.warn': 'Поріг попередження',
   'tools.thresholds.crit': 'Поріг тривоги',
   'tools.thresholds.warn.aria': 'Поріг попередження — {metric}',
@@ -483,7 +483,7 @@ export default {
      sam kolor nie wystarcza przy deuteranopii. */
   'zone.good': 'добре',
   'zone.warn': 'помірно',
-  'zone.crit': 'погано',
+  'zone.crit': 'критично',
   'zone.none': 'немає даних',
 
   /* ────────────────────────────  Czas i liczebniki  ──────────────────────── */
